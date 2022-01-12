@@ -1,7 +1,8 @@
 {
   "name": "poc",
   "scripts": {
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "clean": "hardhat clean"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.4",
