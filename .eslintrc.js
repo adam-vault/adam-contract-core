@@ -6,16 +6,20 @@ module.exports = {
     node: true,
   },
   extends: [
-    "standard",
-    "plugin:prettier/recommended",
-    "plugin:node/recommended",
+    'standard',
+    // 'plugin:prettier/recommended',
+    'plugin:node/recommended',
   ],
   parserOptions: {
     ecmaVersion: 12,
   },
+  rules: {
+    'comma-dangle': [2, 'always-multiline'],
+    semi: [2, 'always'],
+  },
   overrides: [
     {
-      files: ["hardhat.config.js"],
+      files: ['hardhat.config.js'],
       globals: { task: true },
     },
   ],
