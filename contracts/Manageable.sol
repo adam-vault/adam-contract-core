@@ -29,7 +29,7 @@ contract Manageable {
     }
 
     function isManager(address _address) public view returns (bool) {
-        return managerDetails[msg.sender].isExist;
+        return managerDetails[_address].isExist;
     }
 
     function isOwner(address _address) public view returns (bool) {
