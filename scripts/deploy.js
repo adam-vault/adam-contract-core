@@ -24,7 +24,7 @@ async function main() {
       ToString: toString.address,
     },
   });
-  const assetManager = await AssetManager.deploy();
+  const assetManager = await AssetManager.deploy("AM Ltd");
 
   await assetManager.deployed();
 
