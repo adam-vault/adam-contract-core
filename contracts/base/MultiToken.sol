@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-import "./ToString.sol";
-import "./Base64.sol";
+import "../lib/ToString.sol";
+import "../lib/Base64.sol";
 
 contract MultiToken is ERC1155 {
     // list strategy

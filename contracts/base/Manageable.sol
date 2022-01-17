@@ -23,16 +23,17 @@ contract Manageable {
         _;
     }
 
-    constructor() {
-        owner = msg.sender;
-        managerDetails[msg.sender] = Manager(Role.OWNER, managerList.length, true);
+    function _initOwner(address _owner) internal {
+        require(owner == address(0x0), "owner is initialized");
+        owner = _owner;
+        managerDetails[_owner] = Manager(Role.OWNER, managerList.length, true);
     }
 
     function isManager(address _address) public view returns (bool) {
         return managerDetails[_address].isExist;
     }
 
-    function isOwner(address _address) public view returns (bool) {
+    function isOwner(address _address) public view virtual returns (bool) {
         return _address == owner;
     }
 

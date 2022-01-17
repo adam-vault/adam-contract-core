@@ -2,13 +2,14 @@
 
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "./Strategy.sol";
-import "./interface/IStrategy.sol";
-
-import "./ToString.sol";
-import "./Manageable.sol";
-import "./MultiToken.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "./interface/IStrategy.sol";
+import "./interface/IAssetManager.sol";
+
+import "./lib/ToString.sol";
+import "./base/Manageable.sol";
+import "./base/MultiToken.sol";
+
 
 contract AssetManager is MultiToken, Manageable {
     // list strategy
@@ -17,7 +18,7 @@ contract AssetManager is MultiToken, Manageable {
     using ToString for address;
 
     Counters.Counter private _tokenIds;
-    Strategy[] public strategyList;
+    IStrategy[] public strategyList;
     
     mapping(address => bool) public strategies;
     mapping(address => uint) erc20ToTokenId;
@@ -25,7 +26,8 @@ contract AssetManager is MultiToken, Manageable {
 
     string public managerName;
 
-    constructor(string memory _managerName) MultiToken("(Adam)") Manageable() {
+    constructor(address _owner, string memory _managerName) MultiToken("(Adam)") Manageable() {
+        _initOwner(_owner);
         managerName = _managerName;
     }
 
@@ -41,18 +43,20 @@ contract AssetManager is MultiToken, Manageable {
         _;
     }
 
+    modifier onlyAdam() {
+        require(
+            strategies[msg.sender],
+            "msg.sender is not strategy"
+        );
+        _;
+    }
+    function addStrategy(address _strategy) public onlyAdam {
+        strategyList.push(IStrategy(_strategy));
+    }
+    
     function strategyCount() public view returns (uint) {
         return strategyList.length;
     }
-
-    function createStrategy(string calldata _name) public onlyManager returns (address) {
-        Strategy s = new Strategy(_name);
-        strategyList.push(s);
-        strategies[address(s)] = true;
-
-        return address(s);
-    }
-
     function deposit(address assetOwner) external onlyStrategy payable {
         require(msg.value > 0, "please pass ethers");
         _mint(assetOwner, addressToId[address(0)], msg.value, "");

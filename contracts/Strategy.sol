@@ -3,14 +3,10 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./Base64.sol";
+import "./lib/Base64.sol";
+import "./lib/ToString.sol";
 import "./Portfolio.sol";
-import "./ToString.sol";
-
-
-interface IAssetManager {
-    function deposit(address portfolio) payable external;
-}
+import "./interface/IAssetManager.sol";
 
 contract Strategy is ERC721 {
     using Counters for Counters.Counter;
@@ -23,8 +19,8 @@ contract Strategy is ERC721 {
     Counters.Counter private _tokenIds;
     mapping(uint => Portfolio) public tokenIdToPortfolio;
 
-    constructor(string memory name) ERC721(string(abi.encodePacked(name, " Portfolio")), "PFLO") {
-        assetManager = payable(msg.sender);
+    constructor(address _assetManager, string memory name) ERC721(string(abi.encodePacked(name, " Portfolio")), "PFLO") {
+        assetManager = payable(_assetManager);
     }
 
     function deposit() external payable {
