@@ -11,7 +11,7 @@ import "./base/Manageable.sol";
 import "./base/MultiToken.sol";
 
 
-contract AssetManager is MultiToken, Manageable {
+contract AssetManager is MultiToken, Manageable, IAssetManager {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -50,14 +50,14 @@ contract AssetManager is MultiToken, Manageable {
         );
         _;
     }
-    function addStrategy(address _strategy) public onlyAdam {
+    function addStrategy(address _strategy) public onlyAdam override {
         strategyList.push(IStrategy(_strategy));
     }
     
     function strategyCount() public view returns (uint) {
         return strategyList.length;
     }
-    function deposit(address assetOwner) external onlyStrategy payable {
+    function deposit(address assetOwner) external onlyStrategy payable override {
         require(msg.value > 0, "please pass ethers");
         _mint(assetOwner, addressToId[address(0)], msg.value, "");
     }

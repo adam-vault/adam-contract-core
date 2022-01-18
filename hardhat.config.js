@@ -24,7 +24,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 module.exports = {
   // defaultNetwork: "ropsten",
   solidity: {
-    version: "0.8.4",
+    version: '0.8.4',
     settings: {
       optimizer: {
         enabled: true,
@@ -37,16 +37,21 @@ module.exports = {
       chainId: 1337,
     },
     ropsten: {
-      url: process.env.ROPSTEN_URL || "",
+      url: process.env.ROPSTEN_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      gas: 2100000,
+      gasPrice: 8000000000,
     },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
-    currency: "USD",
+    currency: 'USD',
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+  mocha: {
+    timeout: 10000000,
   },
 };

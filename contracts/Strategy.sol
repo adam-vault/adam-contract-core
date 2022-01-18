@@ -7,8 +7,9 @@ import "./lib/Base64.sol";
 import "./lib/ToString.sol";
 import "./Portfolio.sol";
 import "./interface/IAssetManager.sol";
+import "./interface/IStrategy.sol";
 
-contract Strategy is ERC721 {
+contract Strategy is ERC721, IStrategy {
     using Counters for Counters.Counter;
     using Strings for uint256;
     using ToString for address;
@@ -23,15 +24,15 @@ contract Strategy is ERC721 {
         assetManager = payable(_assetManager);
     }
 
-    function deposit() external payable {
-        _tokenIds.increment();
-        uint256 newId = _tokenIds.current();
+    function deposit() external payable override {
+        // _tokenIds.increment();
+        // uint256 newId = _tokenIds.current();
 
-        tokenIdToPortfolio[newId] = new Portfolio(msg.sender, address(this));
-        portfolioList.push(address(tokenIdToPortfolio[newId]));
-        _safeMint(msg.sender, newId);
+        // tokenIdToPortfolio[newId] = new Portfolio(msg.sender, address(this));
+        // portfolioList.push(address(tokenIdToPortfolio[newId]));
+        // _safeMint(msg.sender, newId);
 
-        IAssetManager(assetManager).deposit{value: msg.value}(address(tokenIdToPortfolio[newId]));
+        // IAssetManager(assetManager).deposit{value: msg.value}(address(tokenIdToPortfolio[newId]));
     }
 
     function getLastTokenId() public view returns (uint) {

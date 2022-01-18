@@ -1,16 +1,18 @@
 const hre = require("hardhat");
 
 // ropsten
-const AssetManagerAddress = '0x059A2a91291f292eE6Be0ee262DA7C41185989Ab';
+const adamAddress = '0x4984aA79B387c1cFeE5Cf8B79CCB0424865e6f96';
 const ToStringAddress = '0x02897463e921e8b3a19eC704DC206e84faB2F60F';
 
 async function main() {
-  const AssetManager = await hre.ethers.getContractFactory("AssetManager", {
+  const Adam = await hre.ethers.getContractFactory('Adam', {
     libraries: {
       ToString: ToStringAddress,
     },
   });
-  const Strategy = await hre.ethers.getContractFactory("Strategy", {
+
+  
+  const Strategy = await hre.ethers.getContractFactory('Strategy', {
     libraries: {
       ToString: ToStringAddress,
     },
