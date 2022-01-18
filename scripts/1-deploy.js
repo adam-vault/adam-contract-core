@@ -24,7 +24,7 @@ async function main () {
   };
 
   const AssetManagerFactory = await hre.ethers.getContractFactory('AssetManagerFactory', { libraries });
-  const StrategyFactory = await hre.ethers.getContractFactory('StrategyFactory');
+  const StrategyFactory = await hre.ethers.getContractFactory('StrategyFactory', { libraries });
   const Adam = await hre.ethers.getContractFactory('Adam');
 
   const assetManagerFactory = await AssetManagerFactory.deploy();

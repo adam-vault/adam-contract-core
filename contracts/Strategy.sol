@@ -38,25 +38,28 @@ contract Strategy is ERC721, IStrategy {
         emit CreatePortfolio(address(tokenIdToPortfolio[newId]), msg.sender);
     }
 
-    function getLastTokenId() public view returns (uint) {
+    function getLastTokenId() public view returns (uint256) {
         return _tokenIds.current();
     }
 
-    // function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    function countPortfolio() public view returns (uint256) {
+        return portfolioList.length;
+    }
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
 
-    //     string memory metadata = string(abi.encodePacked(
-    //         "{\"name\": \"Adam Portfolio #",
-    //         tokenId.toString(),
-    //         "\", \"description\": \"\", \"attributes\":",
-    //         "[{\"key\":\"address\",\"value\":\"",
-    //         address(tokenIdToPortfolio[tokenId]).toString(),
-    //         "\"}]",
-    //         "}"
-    //     ));
+        string memory metadata = string(abi.encodePacked(
+            "{\"name\": \"Adam Portfolio #",
+            tokenId.toString(),
+            "\", \"description\": \"\", \"attributes\":",
+            "[{\"key\":\"address\",\"value\":\"",
+            address(tokenIdToPortfolio[tokenId]).toString(),
+            "\"}]",
+            "}"
+        ));
 
-    //     return string(abi.encodePacked(
-    //         "data:application/json;base64,",
-    //         bytes(metadata).base64()
-    //     ));
-    // }
+        return string(abi.encodePacked(
+            "data:application/json;base64,",
+            bytes(metadata).base64()
+        ));
+    }
 }

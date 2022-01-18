@@ -13,7 +13,7 @@ contract AdamOwned is IAdamOwned {
     }
 
     function setAdam(address __adam) public override {
-        require (_adam == address(0), "Adam is set");
+        require (_adam == address(0x0), "Adam is set");
         _adam = __adam;
     }
 

@@ -1,30 +1,26 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
-describe('Adam', function () {
+describe('Create AssetManager', function () {
   let creator;
   let adam, strategyFactory, assetManagerFactory;
-
   let libraries;
 
   before(async function () {
     const [libCreator] = await ethers.getSigners();
     const ToString = await ethers.getContractFactory('ToString', libCreator);
-    // const Base64 = await ethers.getContractFactory('Base64', libCreator);
     const toString = await ToString.deploy();
-    // const base64 = await Base64.deploy();
     await toString.deployed();
 
     libraries = {
       ToString: toString.address,
-      // Base64: base64.address,
     };
   });
 
   beforeEach(async function () {
     [creator] = await ethers.getSigners();
     const AssetManagerFactory = await ethers.getContractFactory('AssetManagerFactory', { signer: creator, libraries });
-    const StrategyFactory = await ethers.getContractFactory('StrategyFactory', { signer: creator });
+    const StrategyFactory = await ethers.getContractFactory('StrategyFactory', { signer: creator, libraries });
     const Adam = await ethers.getContractFactory('Adam', { signer: creator });
 
     assetManagerFactory = await AssetManagerFactory.deploy();
@@ -35,15 +31,6 @@ describe('Adam', function () {
 
     adam = await Adam.deploy(assetManagerFactory.address, strategyFactory.address);
     await adam.deployed();
-  });
-
-  it('has no assetManagers when deploy', async function () {
-    expect(await adam.countAssetManagers()).to.equal(0);
-  });
-
-  it('run factory setAdam', async function () {
-    expect(await assetManagerFactory.adam()).to.equal(adam.address);
-    expect(await strategyFactory.adam()).to.equal(adam.address);
   });
 
   it('can create assetManager', async function () {
@@ -87,5 +74,15 @@ describe('Adam', function () {
 
     const strategy = await ethers.getContractAt('Strategy', sAddr);
     await strategy.deposit({ value: ethers.utils.parseEther('0.000123') });
+
+    expect(await strategy.balanceOf(creator.address)).to.equal(1);
+    expect(await strategy.countPortfolio()).to.equal(1);
+
+    const base64String = (await strategy.tokenURI(1)).split(',')[1];
+    const uriResponse = Buffer.from(base64String, 'base64');
+    const jsonResponse = JSON.parse(uriResponse);
+
+    expect(jsonResponse.name).to.equal('Adam Portfolio #1');
+    expect(jsonResponse.attributes[0].value).to.not.be.empty;
   });
 });
