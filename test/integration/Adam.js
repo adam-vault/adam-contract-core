@@ -85,4 +85,23 @@ describe('Create AssetManager', function () {
     expect(jsonResponse.name).to.equal('Adam Portfolio #1');
     expect(jsonResponse.attributes[0].value).to.not.be.empty;
   });
+
+  it('should not recreate Portfolio when deposit() again by same EOA', async function () {
+    const tx1 = await adam.createAssetManager('AM Ltd');
+    await tx1.wait();
+
+    const amAddr = await adam.assetManagers(0);
+    const tx2 = await adam.createStrategy(amAddr, 'AM Ltd', false);
+    await tx2.wait();
+    const sAddr = await adam.publicStrategies(0);
+
+    const strategy = await ethers.getContractAt('Strategy', sAddr);
+    await strategy.deposit({ value: ethers.utils.parseEther('0.000123') });
+    await strategy.deposit({ value: ethers.utils.parseEther('0.000123') });
+    await strategy.deposit({ value: ethers.utils.parseEther('0.000123') });
+
+    expect(await strategy.balanceOf(creator.address)).to.equal(1);
+    expect(await strategy.countPortfolio()).to.equal(1);
+    expect(await ethers.provider.getBalance(amAddr)).to.equal(ethers.utils.parseEther('0.000369'));
+  });
 });
