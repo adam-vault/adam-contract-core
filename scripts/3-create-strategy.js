@@ -1,14 +1,25 @@
 const hre = require('hardhat');
-
+const _ = require('lodash');
 // ropsten
-const adamAddress = '0x023aff4b687c5b0ea878e239bed8cf6260b03ac5';
-const assetManager = '0xb10901d0af06c58f1f9ad3cbc787f4c8ae73ec29';
+const adamAddress = '0x12b66E9f992337eCC16046C0De1748928B469402';
+const assetManager = '0x36f02785051f349B9a37bCB0393D7cCd960Ce589';
+const sName = 'Global Assets';
 
 async function main () {
   const adam = await hre.ethers.getContractAt('Adam', adamAddress);
-  const tx = await adam.createStrategy(assetManager, 'Global Assets', false);
+  const tx = await adam.createStrategy(assetManager, sName, false);
   const receipt = await tx.wait();
-  console.log(receipt);
+  const creationEventLog = _.find(receipt.events, { event: 'CreateStrategy' });
+  console.log(creationEventLog);
+  console.log('strategy created at:', creationEventLog.args.strategy);
+
+  await hre.run('verify:verify', {
+    address: creationEventLog.args.strategy,
+    constructorArguments: [
+      assetManager,
+      sName,
+    ],
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere
