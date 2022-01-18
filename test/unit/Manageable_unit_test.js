@@ -1,7 +1,7 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
-describe('Manageable', () => {
+describe('Manageable.sol', () => {
   let creator, owner, stranger;
   let MockManageable;
   let contract;

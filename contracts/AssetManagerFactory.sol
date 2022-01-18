@@ -7,7 +7,7 @@ import "./AssetManager.sol";
 
 contract AssetManagerFactory is AdamOwned {
     function create(address _creator, string calldata _name) public onlyAdam returns (address) {
-        return address(new AssetManager(_creator, _name));
+        return address(new AssetManager(adam(), _creator, _name));
     }
 
 }

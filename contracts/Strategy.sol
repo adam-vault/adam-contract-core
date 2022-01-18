@@ -7,8 +7,9 @@ import "./lib/Base64.sol";
 import "./lib/ToString.sol";
 import "./Portfolio.sol";
 import "./interface/IAssetManager.sol";
+import "./interface/IStrategy.sol";
 
-contract Strategy is ERC721 {
+contract Strategy is ERC721, IStrategy {
     using Counters for Counters.Counter;
     using Strings for uint256;
     using ToString for address;
@@ -19,11 +20,13 @@ contract Strategy is ERC721 {
     Counters.Counter private _tokenIds;
     mapping(uint => Portfolio) public tokenIdToPortfolio;
 
+    event CreatePortfolio(address _portfolio, address _owner);
+
     constructor(address _assetManager, string memory name) ERC721(string(abi.encodePacked(name, " Portfolio")), "PFLO") {
         assetManager = payable(_assetManager);
     }
 
-    function deposit() external payable {
+    function deposit() external payable override {
         _tokenIds.increment();
         uint256 newId = _tokenIds.current();
 
@@ -32,27 +35,31 @@ contract Strategy is ERC721 {
         _safeMint(msg.sender, newId);
 
         IAssetManager(assetManager).deposit{value: msg.value}(address(tokenIdToPortfolio[newId]));
+        emit CreatePortfolio(address(tokenIdToPortfolio[newId]), msg.sender);
     }
 
-    function getLastTokenId() public view returns (uint) {
+    function getLastTokenId() public view returns (uint256) {
         return _tokenIds.current();
     }
 
-    // function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    function countPortfolio() public view returns (uint256) {
+        return portfolioList.length;
+    }
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
 
-    //     string memory metadata = string(abi.encodePacked(
-    //         "{\"name\": \"Adam Portfolio #",
-    //         tokenId.toString(),
-    //         "\", \"description\": \"\", \"attributes\":",
-    //         "[{\"key\":\"address\",\"value\":\"",
-    //         address(tokenIdToPortfolio[tokenId]).toString(),
-    //         "\"}]",
-    //         "}"
-    //     ));
+        string memory metadata = string(abi.encodePacked(
+            "{\"name\": \"Adam Portfolio #",
+            tokenId.toString(),
+            "\", \"description\": \"\", \"attributes\":",
+            "[{\"key\":\"address\",\"value\":\"",
+            address(tokenIdToPortfolio[tokenId]).toString(),
+            "\"}]",
+            "}"
+        ));
 
-    //     return string(abi.encodePacked(
-    //         "data:application/json;base64,",
-    //         bytes(metadata).base64()
-    //     ));
-    // }
+        return string(abi.encodePacked(
+            "data:application/json;base64,",
+            bytes(metadata).base64()
+        ));
+    }
 }

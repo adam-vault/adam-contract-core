@@ -9,9 +9,10 @@ import "./interface/IAssetManager.sol";
 import "./lib/ToString.sol";
 import "./base/Manageable.sol";
 import "./base/MultiToken.sol";
+import "./base/AdamOwned.sol";
 
 
-contract AssetManager is MultiToken, Manageable {
+contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -26,7 +27,8 @@ contract AssetManager is MultiToken, Manageable {
 
     string public managerName;
 
-    constructor(address _owner, string memory _managerName) MultiToken("(Adam)") Manageable() {
+    constructor(address _adam, address _owner, string memory _managerName) MultiToken("(Adam)") Manageable() {
+        setAdam(_adam);
         _initOwner(_owner);
         managerName = _managerName;
     }
@@ -43,21 +45,15 @@ contract AssetManager is MultiToken, Manageable {
         _;
     }
 
-    modifier onlyAdam() {
-        require(
-            strategies[msg.sender],
-            "msg.sender is not strategy"
-        );
-        _;
-    }
-    function addStrategy(address _strategy) public onlyAdam {
+    function addStrategy(address _strategy) public onlyAdam override {
         strategyList.push(IStrategy(_strategy));
+        strategies[_strategy] = true;
     }
     
-    function strategyCount() public view returns (uint) {
+    function countStrategy() public view returns (uint) {
         return strategyList.length;
     }
-    function deposit(address assetOwner) external onlyStrategy payable {
+    function deposit(address assetOwner) external onlyStrategy payable override {
         require(msg.value > 0, "please pass ethers");
         _mint(assetOwner, addressToId[address(0)], msg.value, "");
     }
