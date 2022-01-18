@@ -1,11 +1,12 @@
 const hre = require('hardhat');
 
 // ropsten
-const adamAddress = '0x023aff4b687c5b0ea878e239bed8cf6260b03ac5';
+
+const strategyAddress = '0x0364d0d294a505205Ed5815B6619B0dc2122753d';
 
 async function main () {
-  const adam = await hre.ethers.getContractAt('Adam', adamAddress);
-  const tx = await adam.createAssetManager('Allen Ltd');
+  const strategy = await hre.ethers.getContractAt('Strategy', strategyAddress);
+  const tx = await strategy.deposit({ value: hre.ethers.utils.parseEther('0.000345') });
   const receipt = await tx.wait();
   console.log(receipt);
 }

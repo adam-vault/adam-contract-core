@@ -29,6 +29,7 @@ describe('Adam', function () {
 
     assetManagerFactory = await AssetManagerFactory.deploy();
     strategyFactory = await StrategyFactory.deploy();
+
     await strategyFactory.deployed();
     await assetManagerFactory.deployed();
 
@@ -40,42 +41,51 @@ describe('Adam', function () {
     expect(await adam.countAssetManagers()).to.equal(0);
   });
 
+  it('run factory setAdam', async function () {
+    expect(await assetManagerFactory.adam()).to.equal(adam.address);
+    expect(await strategyFactory.adam()).to.equal(adam.address);
+  });
+
   it('can create assetManager', async function () {
-    await expect(adam.createAssetManager(toBytes32('AM Ltd')))
+    await expect(adam.createAssetManager('AM Ltd'))
       .to.emit(adam, 'CreateAssetManager');
+
+    const amAddr = await adam.assetManagers(0);
+    const assetManager = await ethers.getContractAt('AssetManager', amAddr);
+
+    expect(await assetManager.adam()).to.equal(adam.address);
     expect(await adam.countAssetManagers()).to.equal(1);
   });
 
   it('can create public strategy', async function () {
-    await adam.createAssetManager(toBytes32('AM Ltd'));
+    await adam.createAssetManager('AM Ltd');
     const amAddr = await adam.assetManagers(0);
-    await expect(adam.createStrategy(amAddr, web3StringToBytes32('AM Ltd'), false))
+    const assetManager = await ethers.getContractAt('AssetManager', amAddr);
+    await expect(adam.createStrategy(amAddr, 'AM Ltd', false))
       .to.emit(adam, 'CreateStrategy');
+    expect(await assetManager.countStrategy()).to.equal(1);
     expect(await adam.countPublicStrategies()).to.equal(1);
   });
 
   it('can create private strategy', async function () {
-    await adam.createAssetManager(toBytes32('AM Ltd'));
+    await adam.createAssetManager('AM Ltd');
     const amAddr = await adam.assetManagers(0);
-    await expect(adam.createStrategy(amAddr, toBytes32('AM Ltd'), true))
+    await expect(adam.createStrategy(amAddr, 'AM Ltd', true))
       .to.emit(adam, 'CreateStrategy');
     expect(await adam.countPublicStrategies()).to.equal(0);
     expect(await adam.countStrategies()).to.equal(1);
   });
 
   it('create Portfolio when deposit()', async function () {
-    const tx1 = await adam.createAssetManager(toBytes32('AM Ltd'));
+    const tx1 = await adam.createAssetManager('AM Ltd');
     await tx1.wait();
 
     const amAddr = await adam.assetManagers(0);
-    const tx2 = await adam.createStrategy(amAddr, toBytes32('AM Ltd'), false);
+    const tx2 = await adam.createStrategy(amAddr, 'AM Ltd', false);
     await tx2.wait();
     const sAddr = await adam.publicStrategies(0);
 
-    console.log(sAddr);
-
-    const Strategy = await ethers.getContractFactory('Strategy');
-    const strategy = await Strategy.attach(sAddr);
-    await strategy.deposit();
+    const strategy = await ethers.getContractAt('Strategy', sAddr);
+    await strategy.deposit({ value: ethers.utils.parseEther('0.000123') });
   });
 });

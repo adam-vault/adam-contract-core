@@ -23,9 +23,9 @@ async function main () {
     ToString: toString.address,
   };
 
-  const AssetManagerFactory = await ethers.getContractFactory('AssetManagerFactory', { libraries });
-  const StrategyFactory = await ethers.getContractFactory('StrategyFactory');
-  const Adam = await ethers.getContractFactory('Adam');
+  const AssetManagerFactory = await hre.ethers.getContractFactory('AssetManagerFactory', { libraries });
+  const StrategyFactory = await hre.ethers.getContractFactory('StrategyFactory');
+  const Adam = await hre.ethers.getContractFactory('Adam');
 
   const assetManagerFactory = await AssetManagerFactory.deploy();
   const strategyFactory = await StrategyFactory.deploy();

@@ -56,6 +56,7 @@ contract Adam {
         address _s = strategyFactory.create(_assetManager, _name);
         _strategies.push(_s);
         strategyRegistry[_s] = true;
+        IAssetManager(_assetManager).addStrategy(_s);
         if (!_private) {
             publicStrategies.push(_s);
         }
