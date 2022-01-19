@@ -3,13 +3,13 @@ const { expect } = require('chai');
 
 describe('Manageable.sol', () => {
   let creator, owner, stranger;
-  let MockManageable;
+  let Manageable;
   let contract;
 
   beforeEach(async () => {
     [creator, owner, stranger] = await ethers.getSigners();
-    MockManageable = await ethers.getContractFactory('MockManageable', creator);
-    contract = await MockManageable.deploy();
+    Manageable = await ethers.getContractFactory('ExposedManageable', creator);
+    contract = await Manageable.deploy();
   });
 
   it('assigns initial owner', async () => {

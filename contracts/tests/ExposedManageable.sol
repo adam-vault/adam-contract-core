@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../base/Manageable.sol";
 
-contract MockManageable is Manageable {
+contract ExposedManageable is Manageable {
     function initOwner(address _owner) public {
         return _initOwner(_owner);
     }
