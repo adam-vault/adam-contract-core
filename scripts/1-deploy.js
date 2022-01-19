@@ -36,13 +36,8 @@ async function main () {
   const adam = await Adam.deploy(assetManagerFactory.address, strategyFactory.address);
   await adam.deployed();
 
-  // const assetManager = await AssetManager.deploy("AM Ltd");
-
-  // await assetManager.deployed();
-
   console.log('assetManagerFactory deployed to: ', assetManagerFactory.address);
   console.log('strategyFactory deployed to: ', strategyFactory.address);
-
   console.log('adam deployed to: ', adam.address);
 
   await hre.run('verify:verify', {
@@ -51,6 +46,12 @@ async function main () {
       assetManagerFactory.address,
       strategyFactory.address,
     ],
+  });
+  await hre.run('verify:verify', {
+    address: assetManagerFactory.address,
+  });
+  await hre.run('verify:verify', {
+    address: strategyFactory.address,
   });
 }
 

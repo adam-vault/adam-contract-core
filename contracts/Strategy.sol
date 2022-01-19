@@ -19,23 +19,32 @@ contract Strategy is ERC721, IStrategy {
     address payable public assetManager;
     Counters.Counter private _tokenIds;
     mapping(uint => Portfolio) public tokenIdToPortfolio;
+    mapping(address => uint) public ownerToTokenId;
 
-    event CreatePortfolio(address _portfolio, address _owner);
+    event CreatePortfolio(address portfolio, address owner);
+    event Deposit(address portfolio, uint amount);
 
     constructor(address _assetManager, string memory name) ERC721(string(abi.encodePacked(name, " Portfolio")), "PFLO") {
         assetManager = payable(_assetManager);
     }
 
     function deposit() external payable override {
-        _tokenIds.increment();
-        uint256 newId = _tokenIds.current();
+        uint256 tokenId = _upsertPortfolio(msg.sender);
+        IAssetManager(assetManager).deposit{value: msg.value}(address(tokenIdToPortfolio[tokenId]));
+        emit Deposit(address(tokenIdToPortfolio[tokenId]), msg.value);
+    }
 
-        tokenIdToPortfolio[newId] = new Portfolio(msg.sender, address(this));
-        portfolioList.push(address(tokenIdToPortfolio[newId]));
-        _safeMint(msg.sender, newId);
-
-        IAssetManager(assetManager).deposit{value: msg.value}(address(tokenIdToPortfolio[newId]));
-        emit CreatePortfolio(address(tokenIdToPortfolio[newId]), msg.sender);
+    function _upsertPortfolio(address owner) internal returns (uint256) {
+        if (ownerToTokenId[owner] == 0) {
+            _tokenIds.increment();
+            uint256 newId = _tokenIds.current();
+            tokenIdToPortfolio[newId] = new Portfolio(owner, address(this));
+            ownerToTokenId[owner] = newId;
+            portfolioList.push(address(tokenIdToPortfolio[newId]));
+            _safeMint(msg.sender, newId);
+            emit CreatePortfolio(address(tokenIdToPortfolio[newId]), msg.sender);
+        }
+        return ownerToTokenId[owner];
     }
 
     function getLastTokenId() public view returns (uint256) {

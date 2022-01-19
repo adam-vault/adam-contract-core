@@ -30,6 +30,8 @@
     "solidity-coverage": "^0.7.17"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.4.1"
+    "@defi-wonderland/smock": "^2.0.7",
+    "@openzeppelin/contracts": "^4.4.1",
+    "lodash": "^4.17.21"
   }
 }

@@ -22,19 +22,21 @@ contract MultiToken is ERC1155 {
     mapping(address => uint256) public addressToId;
     mapping(uint256 => address) public idToAddress;
     mapping(uint256 => string) public idToName;
+    mapping(uint256 => uint256) public idToDecimal;
 
     constructor(string memory _postfix) ERC1155("") {
         postfix = _postfix;
         // default init ether as 0x0 address
-        createToken(address(0x0), "ETH");
+        _createToken(address(0x0), "ETH", 18);
     }
 
-    function createToken(address _contractAddress, string memory _name) internal returns (uint) {
+    function _createToken(address _contractAddress, string memory _name, uint256 _decimal) internal returns (uint) {
         _tokenIds.increment();
         mintedContracts.push(_contractAddress);
         addressToId[_contractAddress] = _tokenIds.current();
         idToAddress[_tokenIds.current()] = _contractAddress;
         idToName[_tokenIds.current()] = _name;
+        idToDecimal[_tokenIds.current()] = _decimal;
 
         return _tokenIds.current();
     }
@@ -44,7 +46,9 @@ contract MultiToken is ERC1155 {
             "{\"name\": \"",
             idToName[_id],
             postfix,
-            "\", \"description\": \"\", \"attributes\":",
+            "\", \"decimal\": ",
+            idToDecimal[_id].toString(),
+            ", \"description\": \"\", \"attributes\":",
             "[{\"key\":\"address\",\"value\":\"",
             idToAddress[_id].toString(),
             "\"}]",
