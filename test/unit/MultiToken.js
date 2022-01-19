@@ -1,9 +1,7 @@
 const { ethers } = require('hardhat');
 const chai = require('chai');
-const { smock } = require('@defi-wonderland/smock');
 const { expect } = chai;
 
-chai.use(smock.matchers);
 
 describe('MultiToken.sol', function () {
   let creator;
