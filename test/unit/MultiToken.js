@@ -33,11 +33,11 @@ describe('MultiToken.sol', function () {
 
     it('should register token ETH (Adam) as 0x0 address', async () => {
       expect(await contract.addressToId(ethers.constants.AddressZero)).to.equal(1);
-      expect(await contract.idToName(1)).to.equal('ETH');
+      expect(await contract.name(1)).to.equal('ETH');
     });
   });
 
-  describe('createToken(contractAddress,name,decimal)', function () {
+  describe('createToken(contractAddress,name,decimals)', function () {
     let contract, id, address;
 
     beforeEach(async function () {
@@ -53,9 +53,9 @@ describe('MultiToken.sol', function () {
     });
 
     it('adds the info into mapping', async () => {
-      expect((await contract.idToAddress(id)).toLowerCase()).to.be.equal(address);
-      expect(await contract.idToName(id)).to.be.equal('DAI');
-      expect(await contract.idToDecimal(id)).to.be.equal(ethers.BigNumber.from(18));
+      expect((await contract.contractAddress(id)).toLowerCase()).to.be.equal(address);
+      expect(await contract.name(id)).to.be.equal('DAI');
+      expect(await contract.decimals(id)).to.be.equal(ethers.BigNumber.from(18));
     });
   });
 
@@ -75,7 +75,7 @@ describe('MultiToken.sol', function () {
       const uriResponse = Buffer.from(base64String, 'base64');
       const jsonResponse = JSON.parse(uriResponse);
       expect(jsonResponse.name).to.equal('ETHPostfix');
-      expect(jsonResponse.decimal).to.equal(18);
+      expect(jsonResponse.decimals).to.equal(18);
       expect(jsonResponse.attributes[0].value.toLowerCase()).to.equal(ethers.constants.AddressZero.toLowerCase());
     });
 
@@ -84,7 +84,7 @@ describe('MultiToken.sol', function () {
       const uriResponse = Buffer.from(base64String, 'base64');
       const jsonResponse = JSON.parse(uriResponse);
       expect(jsonResponse.name).to.equal('DAIPostfix');
-      expect(jsonResponse.decimal).to.equal(10);
+      expect(jsonResponse.decimals).to.equal(10);
       expect(jsonResponse.attributes[0].value.toLowerCase()).to.equal(address);
     });
   });
