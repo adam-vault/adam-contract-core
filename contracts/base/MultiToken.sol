@@ -12,17 +12,26 @@ contract MultiToken is ERC1155 {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
+    using Strings for uint8;
     using ToString for address;
     using Base64 for bytes;
+    struct Token {
+        uint256 id;
+        string name;
+        address contractAddress;
+        uint8 decimals;
+        uint256 totalSupply;
+        bool isExist;
+    }
 
     Counters.Counter private _tokenIds;
     string public postfix;
     address[] public mintedContracts;
 
     mapping(address => uint256) public addressToId;
-    mapping(uint256 => address) public idToAddress;
-    mapping(uint256 => string) public idToName;
-    mapping(uint256 => uint256) public idToDecimal;
+    mapping(uint256 => Token) public tokenRegistry;
+
+    event CreateToken(uint256 id, string name, address contractAddress, uint8 decimal);
 
     constructor(string memory _postfix) ERC1155("") {
         postfix = _postfix;
@@ -30,27 +39,50 @@ contract MultiToken is ERC1155 {
         _createToken(address(0x0), "ETH", 18);
     }
 
-    function _createToken(address _contractAddress, string memory _name, uint256 _decimal) internal returns (uint) {
-        _tokenIds.increment();
-        mintedContracts.push(_contractAddress);
-        addressToId[_contractAddress] = _tokenIds.current();
-        idToAddress[_tokenIds.current()] = _contractAddress;
-        idToName[_tokenIds.current()] = _name;
-        idToDecimal[_tokenIds.current()] = _decimal;
+    function name(uint256 _id) public view returns (string memory) {
+        return tokenRegistry[_id].name;
+    }
 
-        return _tokenIds.current();
+    function contractAddress(uint256 _id) public view returns (address) {
+        return tokenRegistry[_id].contractAddress;
+    }
+    function decimals(uint256 _id) public view returns (uint8) {
+        return tokenRegistry[_id].decimals;
+    }
+
+    function totalSupply(uint256 _id) public view returns (uint256) {
+        return tokenRegistry[_id].totalSupply;
+    }
+
+    function _createToken(address _contractAddress, string memory _name, uint8 _decimals) internal returns (uint256) {
+        _tokenIds.increment();
+        uint256 id = _tokenIds.current();
+        mintedContracts.push(_contractAddress);
+        addressToId[_contractAddress] = id;
+        tokenRegistry[id] = Token({
+            id: id,
+            name: _name,
+            contractAddress: _contractAddress,
+            decimals: _decimals,
+            totalSupply: 0,
+            isExist: true
+        });
+        emit CreateToken(id, _name, _contractAddress, _decimals);
+        return id;
     }
     
     function uri(uint256 _id) public view override returns (string memory) {
         string memory metadata = string(abi.encodePacked(
             "{\"name\": \"",
-            idToName[_id],
+            tokenRegistry[_id].name,
             postfix,
-            "\", \"decimal\": ",
-            idToDecimal[_id].toString(),
+            "\", \"decimals\": ",
+            tokenRegistry[_id].decimals.toString(),
+            ", \"totalSupply\": ",
+            tokenRegistry[_id].totalSupply.toString(),
             ", \"description\": \"\", \"attributes\":",
             "[{\"key\":\"address\",\"value\":\"",
-            idToAddress[_id].toString(),
+            tokenRegistry[_id].contractAddress.toString(),
             "\"}]",
             "}"
         ));

@@ -1,9 +1,12 @@
-const { expect } = require('chai');
+const chai = require('chai');
 const { ethers } = require('hardhat');
 const _ = require('lodash');
+const { smock } = require('@defi-wonderland/smock');
+const { expect } = chai;
+chai.use(smock.matchers);
 
 describe('Create AssetManager', function () {
-  let creator;
+  let creator, owner1, owner2, owner3;
   let adam, strategyFactory, assetManagerFactory;
   let libraries;
 
@@ -19,7 +22,7 @@ describe('Create AssetManager', function () {
   });
 
   beforeEach(async function () {
-    [creator] = await ethers.getSigners();
+    [creator, owner1, owner2, owner3] = await ethers.getSigners();
     const AssetManagerFactory = await ethers.getContractFactory('AssetManagerFactory', { signer: creator, libraries });
     const StrategyFactory = await ethers.getContractFactory('StrategyFactory', { signer: creator, libraries });
     const Adam = await ethers.getContractFactory('Adam', { signer: creator });
@@ -64,12 +67,13 @@ describe('Create AssetManager', function () {
     expect(await adam.countStrategies()).to.equal(1);
   });
   describe('Create AssetManager', function () {
-    let strategy, amAddr;
+    let strategy, amAddr, assetManager;
     beforeEach(async function () {
       const tx1 = await adam.createAssetManager('AM Ltd');
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateAssetManager' });
       amAddr = creationEventLog.args.assetManager;
+      assetManager = await ethers.getContractAt('AssetManager', amAddr);
       const tx2 = await adam.createStrategy(amAddr, 'AM Ltd', false);
       await tx2.wait();
       const sAddr = await adam.publicStrategies(0);
@@ -114,6 +118,93 @@ describe('Create AssetManager', function () {
       expect(await strategy.balanceOf(creator.address)).to.equal(1);
       expect(await strategy.countPortfolio()).to.equal(1);
       expect(await ethers.provider.getBalance(amAddr)).to.equal(ethers.utils.parseEther('0.000369'));
+    });
+  });
+
+  describe('Interact with WETH', function () {
+    let strategy, amAddr, assetManager, mockWETH9;
+    beforeEach(async function () {
+      const MockWETH9 = await ethers.getContractFactory('MockWETH9', creator);
+      mockWETH9 = await MockWETH9.deploy();
+      await mockWETH9.deployed();
+
+      const tx1 = await adam.createAssetManager('AM Ltd');
+      const receipt = await tx1.wait();
+      const creationEventLog = _.find(receipt.events, { event: 'CreateAssetManager' });
+      amAddr = creationEventLog.args.assetManager;
+      assetManager = await ethers.getContractAt('AssetManager', amAddr);
+      const tx2 = await adam.createStrategy(amAddr, 'AM Ltd', false);
+      await tx2.wait();
+      const sAddr = await adam.publicStrategies(0);
+      strategy = await ethers.getContractAt('Strategy', sAddr);
+    });
+
+    it('swaps ERC1155 token when exchanges', async function () {
+      const [p1, p2, p3] = await Promise.all([owner1, owner2, owner3].map(async (owner) => {
+        const tx = await strategy.connect(owner).deposit({ value: ethers.utils.parseEther('0.000123') });
+        const receipt = await tx.wait();
+        const creationEventLog = _.find(receipt.events, { event: 'CreatePortfolio' });
+        return creationEventLog.args.portfolio;
+      }));
+
+      await assetManager.depositAnyContract(ethers.constants.AddressZero, mockWETH9.address,
+        [p1, p2, p3],
+        [
+          ethers.utils.parseEther('0.000123'),
+          ethers.utils.parseEther('0.0001'),
+          ethers.utils.parseEther('0.0001'),
+        ]);
+      expect(await assetManager.balanceOf(p1, 1)).to.equal(ethers.utils.parseEther('0'));
+      expect(await assetManager.balanceOf(p1, 2)).to.equal(ethers.utils.parseEther('0.000123'));
+      expect(await assetManager.balanceOf(p2, 1)).to.equal(ethers.utils.parseEther('0.000023'));
+      expect(await assetManager.balanceOf(p2, 2)).to.equal(ethers.utils.parseEther('0.000100'));
+      expect(await assetManager.balanceOf(p3, 1)).to.equal(ethers.utils.parseEther('0.000023'));
+      expect(await assetManager.balanceOf(p3, 2)).to.equal(ethers.utils.parseEther('0.000100'));
+
+      expect(await mockWETH9.balanceOf(assetManager.address)).to.equal(ethers.utils.parseEther('0.000323'));
+    });
+  });
+
+  describe('Check subscription is Recursive', function () {
+    let am1, am2, am3, s1, s2, s3, p1, p2, p3;
+    beforeEach(async function () {
+      [am1, am2, am3] = await Promise.all(['AM1 Ltd', 'AM2 Ltd', 'AM3 Ltd'].map(async (name) => {
+        const tx = await adam.createAssetManager(name);
+        const receipt = await tx.wait();
+        const creationEventLog = _.find(receipt.events, { event: 'CreateAssetManager' });
+        const address = await creationEventLog.args.assetManager;
+        return ethers.getContractAt('AssetManager', address);
+      }));
+
+      [s1, s2, s3] = await Promise.all([am1, am2, am3].map(async (am) => {
+        const tx = await adam.createStrategy(am.address, 'S', false);
+        const receipt = await tx.wait();
+        const creationEventLog = _.find(receipt.events, { event: 'CreateStrategy' });
+        const address = await creationEventLog.args.strategy;
+        return ethers.getContractAt('Strategy', address);
+      }));
+
+      [p1, p2, p3] = await Promise.all([s1, s2, s3].map(async (s) => {
+        const tx = await s.deposit({ value: ethers.utils.parseEther('0.000123') });
+        const receipt = await tx.wait();
+        const creationEventLog = _.find(receipt.events, { event: 'CreatePortfolio' });
+        const address = creationEventLog.args.portfolio;
+        return ethers.getContractAt('Portfolio', address);
+      }));
+    });
+
+    it('returns true when isSubscriptionValid if subscription is recursive', async function () {
+      const tx = await am1.subscribeStrategy(ethers.constants.AddressZero, s2.address, [p1.address], [ethers.utils.parseEther('0.000123')]);
+      const receipt = await tx.wait();
+      const creationEventLog = _.find(receipt.events, { event: 'SubscribeStrategy' });
+      const address = creationEventLog.args.portfolio;
+
+      await am2.subscribeStrategy(ethers.constants.AddressZero, s3.address, [address], [ethers.utils.parseEther('0.000123')]);
+
+      expect(await s2.isSubscriptionValid(s1.address)).to.equal(false);
+      expect(await s1.isSubscriptionValid(s2.address)).to.equal(true);
+      expect(await s3.isSubscriptionValid(s1.address)).to.equal(false);
+      expect(await s1.isSubscriptionValid(s3.address)).to.equal(true);
     });
   });
 });

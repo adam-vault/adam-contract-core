@@ -1,7 +1,7 @@
 {
   "name": "poc",
   "scripts": {
-    "test": "hardhat test test/unit/*.js",
+    "test": "hardhat test",
     "test-integration": "hardhat test test/integration/*.js --network ropsten",
     "clean": "hardhat clean",
     "compile": "hardhat compile",
