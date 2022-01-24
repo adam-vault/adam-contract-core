@@ -126,9 +126,9 @@ contract TestTreasury is Context, ERC20, AdamOwned {
         
         emit ExchangeEve(coinPrice, tokenSymbol, quantity, perEVE);
 
-        uint256 amount = uint256(perEVE) * quantity / (10 ** 8);
+        uint256 amount = uint256(perEVE) * quantity / (10 ** 18);
         // token.approve(from, amount);
-        token.transferFrom(from, address(this), amount);
+        token.transferFrom(from, address(this), quantity);
         _mint(to, amount);
 
         return int(amount);
