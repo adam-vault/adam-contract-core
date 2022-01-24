@@ -90,7 +90,7 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
             _swap(portfolio[i], _ERC20tokenId(_src), _ERC20tokenId(_dst), amount[i], amount[i]);
             sum += amount[i];
         }
-        IWETH9(_src).withdraw(sum);
+        IWETH9(_dst).withdraw(sum);
     }
 
     function _swap(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount ) internal {
