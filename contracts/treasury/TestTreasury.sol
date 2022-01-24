@@ -101,11 +101,6 @@ contract TestTreasury is Context, ERC20, AdamOwned {
         return evePrice;
     }
 
-    function debugGetXUsdPrice(string memory symbol) public view returns (int256) {
-        return getXUsdPrice(symbol);
-    }
-
-
     function exchangeEVE(address to, ERC20 token, uint256 quantity) public payable returns (int256) {
         address from = _msgSender();
         string memory tokenSymbol = token.symbol();
@@ -133,7 +128,7 @@ contract TestTreasury is Context, ERC20, AdamOwned {
 
         uint256 amount = uint256(perEVE) * quantity / (10 ** 8);
         // token.approve(from, amount);
-        // token.transferFrom(from, address(this), amount);
+        token.transferFrom(from, address(this), amount);
         _mint(to, amount);
 
         return int(amount);
