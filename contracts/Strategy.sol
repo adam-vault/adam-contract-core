@@ -28,10 +28,12 @@ contract Strategy is ERC721, IStrategy {
         assetManager = payable(_assetManager);
     }
 
-    function deposit() external payable override {
+    function deposit() external payable override returns (address) {
         uint256 tokenId = _upsertPortfolio(msg.sender);
-        IAssetManager(assetManager).deposit{value: msg.value}(address(tokenIdToPortfolio[tokenId]));
-        emit Deposit(address(tokenIdToPortfolio[tokenId]), msg.value);
+        address _portfolio = address(tokenIdToPortfolio[tokenId]);
+        IAssetManager(assetManager).deposit{value: msg.value}(_portfolio);
+        emit Deposit(_portfolio, msg.value);
+        return _portfolio;
     }
 
     function _upsertPortfolio(address owner) internal returns (uint256) {
@@ -53,6 +55,9 @@ contract Strategy is ERC721, IStrategy {
 
     function countPortfolio() public view returns (uint256) {
         return portfolioList.length;
+    }
+    function isSubscriptionValid(address target) public view override returns (bool) {
+        return IAssetManager(assetManager).isSubscriptionValid(target);
     }
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
 

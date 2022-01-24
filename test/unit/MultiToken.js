@@ -2,7 +2,6 @@ const { ethers } = require('hardhat');
 const chai = require('chai');
 const { expect } = chai;
 
-
 describe('MultiToken.sol', function () {
   let creator;
   let MultiToken;
