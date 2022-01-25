@@ -2,8 +2,8 @@ const hre = require('hardhat');
 const _ = require('lodash');
 
 // rinkeby
-const adamAddress = '0x12b66E9f992337eCC16046C0De1748928B469402';
-const amName = 'Peter';
+const adamAddress = '0x414592a53A0ce977cfE7Ad5255dd072F815a002e';
+const amName = 'Peter Chan';
 
 async function main () {
   const adam = await hre.ethers.getContractAt('Adam', adamAddress);

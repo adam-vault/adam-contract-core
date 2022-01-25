@@ -154,6 +154,11 @@ describe('Create AssetManager', function () {
           ethers.utils.parseEther('0.0001'),
           ethers.utils.parseEther('0.0001'),
         ]);
+      const base64String = (await assetManager.uri(await assetManager.ethId())).split(',')[1];
+      const uriResponse = Buffer.from(base64String, 'base64');
+      const jsonResponse = JSON.parse(uriResponse);
+      expect(jsonResponse.totalSupply).to.equal(46000000000000);
+
       expect(await assetManager.balanceOf(p1, 1)).to.equal(ethers.utils.parseEther('0'));
       expect(await assetManager.balanceOf(p1, 2)).to.equal(ethers.utils.parseEther('0.000123'));
       expect(await assetManager.balanceOf(p2, 1)).to.equal(ethers.utils.parseEther('0.000023'));

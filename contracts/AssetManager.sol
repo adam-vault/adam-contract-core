@@ -68,7 +68,7 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
     }
     function deposit(address assetOwner) external onlyStrategy payable override {
         require(msg.value > 0, "please pass ethers");
-        _mint(assetOwner, addressToId[address(0)], msg.value, "");
+        _mintToken(assetOwner, ethId, msg.value, "");
     }
 
     function depositAnyContract(address _src, address _dst, address[] calldata portfolio, uint256[] calldata amount) public onlyManager {
@@ -94,8 +94,8 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
     }
 
     function _swap(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount ) internal {
-        _burn(_portfolio, _src, _srcAmount);
-        _mint(_portfolio, _dst, _dstAmount, "");
+        _burnToken(_portfolio, _src, _srcAmount);
+        _mintToken(_portfolio, _dst, _dstAmount, "");
     }
 
     function _ERC20tokenId(address contractAddress) public returns (uint256){
