@@ -30,13 +30,15 @@ contract MultiToken is ERC1155 {
 
     mapping(address => uint256) public addressToId;
     mapping(uint256 => Token) public tokenRegistry;
+    address public constant ethAddress = address(0x0);
+    uint256 public ethId;
 
     event CreateToken(uint256 id, string name, address contractAddress, uint8 decimal);
 
     constructor(string memory _postfix) ERC1155("") {
         postfix = _postfix;
         // default init ether as 0x0 address
-        _createToken(address(0x0), "ETH", 18);
+        ethId = _createToken(ethAddress, "ETH", 18);
     }
 
     function name(uint256 _id) public view returns (string memory) {
@@ -70,7 +72,28 @@ contract MultiToken is ERC1155 {
         emit CreateToken(id, _name, _contractAddress, _decimals);
         return id;
     }
+
+    function _mintToken(
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes memory data
+    ) internal {
+        tokenRegistry[id].totalSupply += amount;
+        return _mint(to, id, amount, data);
+    }
     
+
+    function _burnToken(
+        address from,
+        uint256 id,
+        uint256 amount
+    ) internal {
+        tokenRegistry[id].totalSupply -= amount;
+        return _burn(from, id, amount);
+    }
+    
+
     function uri(uint256 _id) public view override returns (string memory) {
         string memory metadata = string(abi.encodePacked(
             "{\"name\": \"",
