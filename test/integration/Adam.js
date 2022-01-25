@@ -3,38 +3,24 @@ const { ethers } = require('hardhat');
 const _ = require('lodash');
 const { smock } = require('@defi-wonderland/smock');
 const { expect } = chai;
+const { createToString, createAdam } = require('../utils/createContract');
 chai.use(smock.matchers);
 
 describe('Create AssetManager', function () {
   let creator, owner1, owner2, owner3;
   let adam, strategyFactory, assetManagerFactory;
-  let libraries;
+  let toString;
 
   before(async function () {
-    const [libCreator] = await ethers.getSigners();
-    const ToString = await ethers.getContractFactory('ToString', libCreator);
-    const toString = await ToString.deploy();
-    await toString.deployed();
-
-    libraries = {
-      ToString: toString.address,
-    };
+    toString = await createToString();
   });
 
   beforeEach(async function () {
     [creator, owner1, owner2, owner3] = await ethers.getSigners();
-    const AssetManagerFactory = await ethers.getContractFactory('AssetManagerFactory', { signer: creator, libraries });
-    const StrategyFactory = await ethers.getContractFactory('StrategyFactory', { signer: creator, libraries });
-    const Adam = await ethers.getContractFactory('Adam', { signer: creator });
-
-    assetManagerFactory = await AssetManagerFactory.deploy();
-    strategyFactory = await StrategyFactory.deploy();
-
-    await strategyFactory.deployed();
-    await assetManagerFactory.deployed();
-
-    adam = await Adam.deploy(assetManagerFactory.address, strategyFactory.address);
-    await adam.deployed();
+    const result = await createAdam(toString);
+    adam = result.adam;
+    strategyFactory = result.strategyFactory;
+    assetManagerFactory = result.assetManagerFactory;
   });
 
   it('can create assetManager', async function () {
