@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "../interface/IAdamOwned.sol";
+import "../interface/IAdam.sol";
 
 contract AdamOwned is IAdamOwned {
     address private _adam;
@@ -19,5 +20,10 @@ contract AdamOwned is IAdamOwned {
 
     function adam() public view override returns (address) {
         return _adam;
+    }
+
+    modifier onlyAssetManager() {
+        require(IAdam(_adam).assetManagerRegistry(msg.sender), "Access deneied");
+        _;
     }
 }

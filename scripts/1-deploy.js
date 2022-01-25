@@ -40,6 +40,20 @@ async function main () {
   console.log('strategyFactory deployed to: ', strategyFactory.address);
   console.log('adam deployed to: ', adam.address);
 
+  const PriceConverter = await hre.ethers.getContractFactory('PriceConverter');
+  const priceConverter = await PriceConverter.deploy();
+  await priceConverter.deployed();
+
+  const Treasury = await hre.ethers.getContractFactory('TestTreasury');
+  const treasury = await Treasury.deploy(
+      adam.address,
+      priceConverter.address,
+  );
+  await treasury.deployed();
+
+  console.log('priceConverter deployed to: ', priceConverter.address);
+  console.log('treasury deployed to: ', treasury.address);
+
   await hre.run('verify:verify', {
     address: adam.address,
     constructorArguments: [
@@ -52,6 +66,26 @@ async function main () {
   });
   await hre.run('verify:verify', {
     address: strategyFactory.address,
+  });
+
+  await hre.run('verify:verify', {
+    address: priceConverter.address,
+  });
+
+  await hre.run('verify:verify', {
+    address: treasury.address,
+    constructorArguments: [
+    adam.address,
+      priceConverter.address,
+    ],
+  });
+
+  await hre.run('verify:verify', {
+    address: treasury.address,
+    constructorArguments: [
+      adam.address,
+      priceConverter.address,
+    ],
   });
 }
 

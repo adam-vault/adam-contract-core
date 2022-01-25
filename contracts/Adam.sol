@@ -8,9 +8,10 @@ import "./interface/IAssetManager.sol";
 import "./interface/IStrategy.sol";
 import "./interface/IAdamOwned.sol";
 import "./interface/IManageable.sol";
+import "./interface/IAdam.sol";
 import "hardhat/console.sol";
 
-contract Adam {
+contract Adam is IAdam {
     IAssetManagerFactory public assetManagerFactory;
     IStrategyFactory public strategyFactory;
 
@@ -18,7 +19,7 @@ contract Adam {
     address[] private _strategies;
     address[] public publicStrategies;
 
-    mapping(address => bool) public assetManagerRegistry;
+    mapping(address => bool) public override assetManagerRegistry;
     mapping(address => bool) public strategyRegistry;
 
     event CreateAssetManager(address assetManager, string name, address creator);
