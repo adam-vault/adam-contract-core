@@ -14,26 +14,17 @@ async function main () {
   // await hre.run('compile');
 
   // We get the contract to deploy
-
-  const ToString = await hre.ethers.getContractFactory('ToString');
-  const toString = await ToString.deploy();
-  await toString.deployed();
-
-  const libraries = {
-    ToString: toString.address,
-  };
-
-  const AssetManagerFactory = await hre.ethers.getContractFactory('AssetManagerFactory', { libraries });
-  const StrategyFactory = await hre.ethers.getContractFactory('StrategyFactory', { libraries });
+  const AssetManagerFactory = await hre.ethers.getContractFactory('AssetManagerFactory');
+  const StrategyFactory = await hre.ethers.getContractFactory('StrategyFactory');
   const Adam = await hre.ethers.getContractFactory('Adam');
 
-  const assetManagerFactory = await AssetManagerFactory.deploy();
-  const strategyFactory = await StrategyFactory.deploy();
+  const assetManagerFactory = await hre.upgrades.deployProxy(AssetManagerFactory, [], { kind: 'uups' });
+  const strategyFactory = await hre.upgrades.deployProxy(StrategyFactory, [], { kind: 'uups' });
 
   await strategyFactory.deployed();
   await assetManagerFactory.deployed();
 
-  const adam = await Adam.deploy(assetManagerFactory.address, strategyFactory.address);
+  const adam = await hre.upgrades.deployProxy(Adam, [assetManagerFactory.address, strategyFactory.address], { kind: 'uups' });
   await adam.deployed();
 
   console.log('assetManagerFactory deployed to: ', assetManagerFactory.address);
@@ -53,20 +44,6 @@ async function main () {
 
   console.log('priceConverter deployed to: ', priceConverter.address);
   console.log('treasury deployed to: ', treasury.address);
-
-  await hre.run('verify:verify', {
-    address: adam.address,
-    constructorArguments: [
-      assetManagerFactory.address,
-      strategyFactory.address,
-    ],
-  });
-  await hre.run('verify:verify', {
-    address: assetManagerFactory.address,
-  });
-  await hre.run('verify:verify', {
-    address: strategyFactory.address,
-  });
 
   await hre.run('verify:verify', {
     address: priceConverter.address,
