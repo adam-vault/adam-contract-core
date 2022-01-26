@@ -18,3 +18,6 @@ typechain
 cache
 artifacts
 build
+
+.vscode
+.openzeppelin
