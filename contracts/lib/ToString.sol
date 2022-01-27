@@ -2,16 +2,16 @@
 pragma solidity ^0.8.0;
 
 library ToString {
-    function toString(address account) public pure returns(string memory) {
+    function toString(address account) internal pure returns(string memory) {
         return toString(abi.encodePacked(account));
     }
-    function toString(uint256 value) public pure returns(string memory) {
+    function toString(uint256 value) internal pure returns(string memory) {
         return toString(abi.encodePacked(value));
     }
-    function toString(bytes32 value) public pure returns(string memory) {
+    function toString(bytes32 value) internal pure returns(string memory) {
         return toString(abi.encodePacked(value));
     }
-    function toString(bytes memory data) public pure returns(string memory) {
+    function toString(bytes memory data) internal pure returns(string memory) {
         bytes memory alphabet = "0123456789abcdef";
 
         bytes memory str = new bytes(2 + data.length * 2);

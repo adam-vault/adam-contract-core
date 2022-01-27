@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { createAdam } = require('../utils/createContract');
 
 describe('Deployment(Treasury)', function () {
   let creator;
@@ -7,14 +8,16 @@ describe('Deployment(Treasury)', function () {
 
   before(async function () {
     [creator] = await ethers.getSigners();
+    const { adam } = await createAdam();
     const PriceConverter = await ethers.getContractFactory('PriceConverter');
     const priceConverter = await PriceConverter.deploy();
     await priceConverter.deployed();
-  
+
     const Treasury = await ethers.getContractFactory('TestTreasury');
     treasury = await Treasury.deploy(
-        priceConverter.address,
-      );
+      adam.address,
+      priceConverter.address,
+    );
     await treasury.deployed();
   });
 

@@ -10,7 +10,6 @@ import "./interface/IStrategy.sol";
 import "./interface/IAssetManager.sol";
 import "./interface/IWETH9.sol";
 
-import "./lib/ToString.sol";
 import "./base/Manageable.sol";
 import "./base/MultiToken.sol";
 import "./base/AdamOwned.sol";
@@ -21,7 +20,6 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
-    using ToString for address;
 
     Counters.Counter private _ERC20tokenIds;
     IStrategy[] public strategyList;

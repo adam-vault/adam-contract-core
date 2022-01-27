@@ -5,17 +5,10 @@ const { expect } = chai;
 describe('MultiToken.sol', function () {
   let creator;
   let MultiToken;
-  let libraries;
 
   before(async function () {
     [creator] = await ethers.getSigners();
-    const ToString = await ethers.getContractFactory('ToString', creator);
-    const toString = await ToString.deploy();
-    await toString.deployed();
-    libraries = {
-      ToString: toString.address,
-    };
-    MultiToken = await ethers.getContractFactory('ExposedMultiToken', { libraries, signer: creator });
+    MultiToken = await ethers.getContractFactory('ExposedMultiToken', { signer: creator });
   });
 
   describe('__constructor(postfix)', function () {

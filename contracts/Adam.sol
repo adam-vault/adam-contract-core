@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity ^0.8.0;
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./interface/IAssetManagerFactory.sol";
 import "./interface/IStrategyFactory.sol";
@@ -11,7 +13,7 @@ import "./interface/IManageable.sol";
 import "./interface/IAdam.sol";
 import "hardhat/console.sol";
 
-contract Adam is IAdam {
+contract Adam is IAdam, Initializable, UUPSUpgradeable {
     IAssetManagerFactory public assetManagerFactory;
     IStrategyFactory public strategyFactory;
 
@@ -24,14 +26,15 @@ contract Adam is IAdam {
 
     event CreateAssetManager(address assetManager, string name, address creator);
     event CreateStrategy(address assetManager, address strategy, string name, address creator, bool isPrivate);
-
-    constructor (address _assetManagerFactory, address _strategyFactory) {
+    
+    function initialize(address _assetManagerFactory, address _strategyFactory) public initializer {
         assetManagerFactory = IAssetManagerFactory(_assetManagerFactory);
         strategyFactory = IStrategyFactory(_strategyFactory);
         IAdamOwned(_assetManagerFactory).setAdam(address(this));
         IAdamOwned(_strategyFactory).setAdam(address(this));
     }
-    
+    function _authorizeUpgrade(address) internal override initializer {}
+
     function countAssetManagers() public view returns (uint256) {
         return assetManagers.length;
     }

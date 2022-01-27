@@ -3,21 +3,16 @@ const { ethers } = require('hardhat');
 const _ = require('lodash');
 const { smock } = require('@defi-wonderland/smock');
 const { expect } = chai;
-const { createToString, createAdam } = require('../utils/createContract');
+const { createAdam } = require('../utils/createContract');
 chai.use(smock.matchers);
 
 describe('Create AssetManager', function () {
   let creator, owner1, owner2, owner3;
   let adam, strategyFactory, assetManagerFactory;
-  let toString;
-
-  before(async function () {
-    toString = await createToString();
-  });
 
   beforeEach(async function () {
     [creator, owner1, owner2, owner3] = await ethers.getSigners();
-    const result = await createAdam(toString);
+    const result = await createAdam();
     adam = result.adam;
     strategyFactory = result.strategyFactory;
     assetManagerFactory = result.assetManagerFactory;
