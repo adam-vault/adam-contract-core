@@ -3,38 +3,19 @@ const { ethers } = require('hardhat');
 const _ = require('lodash');
 const { smock } = require('@defi-wonderland/smock');
 const { expect } = chai;
+const { createAdam } = require('../utils/createContract');
 chai.use(smock.matchers);
 
 describe('Create AssetManager', function () {
   let creator, owner1, owner2, owner3;
   let adam, strategyFactory, assetManagerFactory;
-  let libraries;
-
-  before(async function () {
-    const [libCreator] = await ethers.getSigners();
-    const ToString = await ethers.getContractFactory('ToString', libCreator);
-    const toString = await ToString.deploy();
-    await toString.deployed();
-
-    libraries = {
-      ToString: toString.address,
-    };
-  });
 
   beforeEach(async function () {
     [creator, owner1, owner2, owner3] = await ethers.getSigners();
-    const AssetManagerFactory = await ethers.getContractFactory('AssetManagerFactory', { signer: creator, libraries });
-    const StrategyFactory = await ethers.getContractFactory('StrategyFactory', { signer: creator, libraries });
-    const Adam = await ethers.getContractFactory('Adam', { signer: creator });
-
-    assetManagerFactory = await AssetManagerFactory.deploy();
-    strategyFactory = await StrategyFactory.deploy();
-
-    await strategyFactory.deployed();
-    await assetManagerFactory.deployed();
-
-    adam = await Adam.deploy(assetManagerFactory.address, strategyFactory.address);
-    await adam.deployed();
+    const result = await createAdam();
+    adam = result.adam;
+    strategyFactory = result.strategyFactory;
+    assetManagerFactory = result.assetManagerFactory;
   });
 
   it('can create assetManager', async function () {
@@ -154,6 +135,11 @@ describe('Create AssetManager', function () {
           ethers.utils.parseEther('0.0001'),
           ethers.utils.parseEther('0.0001'),
         ]);
+      const base64String = (await assetManager.uri(await assetManager.ethId())).split(',')[1];
+      const uriResponse = Buffer.from(base64String, 'base64');
+      const jsonResponse = JSON.parse(uriResponse);
+      expect(jsonResponse.totalSupply).to.equal(46000000000000);
+
       expect(await assetManager.balanceOf(p1, 1)).to.equal(ethers.utils.parseEther('0'));
       expect(await assetManager.balanceOf(p1, 2)).to.equal(ethers.utils.parseEther('0.000123'));
       expect(await assetManager.balanceOf(p2, 1)).to.equal(ethers.utils.parseEther('0.000023'));

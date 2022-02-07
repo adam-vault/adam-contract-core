@@ -12,7 +12,6 @@ import "./interface/IAssetManager.sol";
 import "./interface/IWETH9.sol";
 import "./interface/ITreasury.sol";
 
-import "./lib/ToString.sol";
 import "./base/Manageable.sol";
 import "./base/MultiToken.sol";
 import "./base/AdamOwned.sol";
@@ -23,7 +22,6 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
-    using ToString for address;
 
     Counters.Counter private _ERC20tokenIds;
     IStrategy[] public strategyList;
@@ -70,8 +68,7 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
     }
     function deposit(address assetOwner) external onlyStrategy payable override {
         require(msg.value > 0, "please pass ethers");
-
-        _mint(assetOwner, addressToId[address(0)], msg.value, "");
+        _mintToken(assetOwner, ethId, msg.value, "");
     }
 
     function depositAnyContract(address _src, address _dst, address[] calldata portfolio, uint256[] calldata amount) public onlyManager {
@@ -93,12 +90,12 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
             _swap(portfolio[i], _ERC20tokenId(_src), _ERC20tokenId(_dst), amount[i], amount[i]);
             sum += amount[i];
         }
-        IWETH9(_src).withdraw(sum);
+        IWETH9(_dst).withdraw(sum);
     }
 
     function _swap(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount ) internal {
-        _burn(_portfolio, _src, _srcAmount);
-        _mint(_portfolio, _dst, _dstAmount, "");
+        _burnToken(_portfolio, _src, _srcAmount);
+        _mintToken(_portfolio, _dst, _dstAmount, "");
     }
 
     function _ERC20tokenId(address contractAddress) public returns (uint256){

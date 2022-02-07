@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+
+
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 import "./lib/Base64.sol";
 import "./lib/ToString.sol";
 import "./Portfolio.sol";
@@ -12,7 +18,7 @@ import "./interface/IStrategy.sol";
 import "hardhat/console.sol";
 import "./interface/IManageable.sol";
 
-contract Strategy is ERC721, IStrategy {
+contract Strategy is Initializable, UUPSUpgradeable, ERC721Upgradeable, IStrategy {
     using Counters for Counters.Counter;
     using Strings for uint256;
     using ToString for address;
@@ -27,8 +33,8 @@ contract Strategy is ERC721, IStrategy {
 
     event CreatePortfolio(address portfolio, address owner);
     event Deposit(address portfolio, uint amount);
-
-    constructor(address _assetManager, string memory name) ERC721(string(abi.encodePacked(name, " Portfolio")), "PFLO") {
+    function initialize(address _assetManager, string memory name) public initializer {
+        __ERC721_init(string(abi.encodePacked(name, " Portfolio")), "PFLO");
         assetManager = payable(_assetManager);
         mtFeeAccount = address(
             new ManagementFee(
@@ -98,4 +104,6 @@ contract Strategy is ERC721, IStrategy {
         IAssetManager(assetManager).redempManagementFee(msg.sender, to);
         return true;
     }
+
+    function _authorizeUpgrade(address) internal override {}
 }

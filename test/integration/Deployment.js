@@ -1,36 +1,17 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { createAdam } = require('../utils/createContract');
 
 describe('Deployment', function () {
   let creator;
   let adam, strategyFactory, assetManagerFactory;
-  let libraries;
-
-  before(async function () {
-    const [libCreator] = await ethers.getSigners();
-    const ToString = await ethers.getContractFactory('ToString', libCreator);
-    const toString = await ToString.deploy();
-    await toString.deployed();
-
-    libraries = {
-      ToString: toString.address,
-    };
-  });
 
   beforeEach(async function () {
     [creator] = await ethers.getSigners();
-    const AssetManagerFactory = await ethers.getContractFactory('AssetManagerFactory', { signer: creator, libraries });
-    const StrategyFactory = await ethers.getContractFactory('StrategyFactory', { signer: creator, libraries });
-    const Adam = await ethers.getContractFactory('Adam', { signer: creator });
-
-    assetManagerFactory = await AssetManagerFactory.deploy();
-    strategyFactory = await StrategyFactory.deploy();
-
-    await strategyFactory.deployed();
-    await assetManagerFactory.deployed();
-
-    adam = await Adam.deploy(assetManagerFactory.address, strategyFactory.address);
-    await adam.deployed();
+    const result = await createAdam();
+    adam = result.adam;
+    strategyFactory = result.strategyFactory;
+    assetManagerFactory = result.assetManagerFactory;
   });
 
   describe('when initialize adam', function () {
