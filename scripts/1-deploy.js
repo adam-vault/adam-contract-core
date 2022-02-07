@@ -43,10 +43,7 @@ async function main () {
   await priceConverter.deployed();
 
   const Treasury = await hre.ethers.getContractFactory('TestTreasury');
-  const treasury = await Treasury.deploy(
-    adam.address,
-    priceConverter.address,
-  );
+  const treasury = await Treasury.upgrades.deployProxy(Treasury, [adam.address, priceConverter.address]);
   await treasury.deployed();
 
   console.log('priceConverter deployed to: ', priceConverter.address);
