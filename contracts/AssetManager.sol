@@ -1,24 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 
 import "./interface/IStrategy.sol";
 import "./interface/IAssetManager.sol";
 import "./interface/IWETH9.sol";
 import "./interface/ITreasury.sol";
 
+import "./base/AdamOwned.sol";
 import "./base/Manageable.sol";
 import "./base/MultiToken.sol";
 import "./base/AdamOwned.sol";
 import "hardhat/console.sol";
 
 
-contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC721Holder {
+contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable, IAssetManager, ERC721HolderUpgradeable, AdamOwned {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -37,9 +39,11 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
 
     event SubscribeStrategy(address strategy, address portfolio, uint price);
 
-    constructor(address _adam, address _owner, string memory _managerName) MultiToken("(Adam)") Manageable() {
-        setAdam(_adam);
+    function initialize(address _adam, address _owner, string memory _managerName) public override initializer {
+        __ERC721Holder_init();
+        __MultiToken_init(" (Adam)");
         _initOwner(_owner);
+        setAdam(_adam);
         managerName = _managerName;
     }
 
@@ -58,7 +62,7 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
         _;
     }
 
-    function addStrategy(address _strategy) public onlyAdam override {
+    function addStrategy(address _strategy) public override onlyAdam {
         strategyList.push(IStrategy(_strategy));
         strategies[_strategy] = true;
     }
@@ -166,4 +170,6 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
 
         return true;
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override {}
 }

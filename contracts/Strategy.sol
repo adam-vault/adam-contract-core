@@ -33,7 +33,7 @@ contract Strategy is Initializable, UUPSUpgradeable, ERC721Upgradeable, IStrateg
 
     event CreatePortfolio(address portfolio, address owner);
     event Deposit(address portfolio, uint amount);
-    function initialize(address _assetManager, string memory name) public initializer {
+    function initialize(address _assetManager, string memory name) public override initializer {
         __ERC721_init(string(abi.encodePacked(name, " Portfolio")), "PFLO");
         assetManager = payable(_assetManager);
         mtFeeAccount = address(

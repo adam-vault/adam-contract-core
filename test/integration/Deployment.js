@@ -15,12 +15,12 @@ describe('Deployment', function () {
   });
 
   describe('when initialize adam', function () {
-    it('has assetManagerFactory', async function () {
-      expect(await adam.assetManagerFactory()).to.not.be.empty;
-    });
-    it('has strategyFactory', async function () {
-      expect(await adam.strategyFactory()).to.not.be.empty;
-    });
+    // it('has assetManagerFactory', async function () {
+    //   expect(await adam.assetManagerFactory()).to.not.be.empty;
+    // });
+    // it('has strategyFactory', async function () {
+    //   expect(await adam.strategyFactory()).to.not.be.empty;
+    // });
     it('has no AssetManagers when deploy', async function () {
       expect(await adam.countAssetManagers()).to.equal(0);
     });
@@ -31,18 +31,18 @@ describe('Deployment', function () {
       expect(await adam.countPublicStrategies()).to.equal(0);
     });
   });
-  describe('when adam uses assetManagerFactory', async function () {
-    it('set adam address', async function () {
-      expect(await assetManagerFactory.adam()).to.equal(adam.address);
-    });
-    it('cannot set adam address twice', async function () {
-      await expect(assetManagerFactory.setAdam(ethers.constants.AddressZero)).to.be.revertedWith('Adam is set');
-    });
-    it('set adam address', async function () {
-      expect(await strategyFactory.adam()).to.equal(adam.address);
-    });
-    it('cannot set adam address twice', async function () {
-      await expect(strategyFactory.setAdam(ethers.constants.AddressZero)).to.be.revertedWith('Adam is set');
-    });
-  });
+  // describe('when adam uses assetManagerFactory', async function () {
+  //   it('set adam address', async function () {
+  //     expect(await assetManagerFactory.adam()).to.equal(adam.address);
+  //   });
+  //   it('cannot set adam address twice', async function () {
+  //     await expect(assetManagerFactory.setAdam(ethers.constants.AddressZero)).to.be.revertedWith('Adam is set');
+  //   });
+  //   it('set adam address', async function () {
+  //     expect(await strategyFactory.adam()).to.equal(adam.address);
+  //   });
+  //   it('cannot set adam address twice', async function () {
+  //     await expect(strategyFactory.setAdam(ethers.constants.AddressZero)).to.be.revertedWith('Adam is set');
+  //   });
+  // });
 });

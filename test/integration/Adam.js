@@ -8,14 +8,12 @@ chai.use(smock.matchers);
 
 describe('Create AssetManager', function () {
   let creator, owner1, owner2, owner3;
-  let adam, strategyFactory, assetManagerFactory;
+  let adam;
 
   beforeEach(async function () {
     [creator, owner1, owner2, owner3] = await ethers.getSigners();
     const result = await createAdam();
     adam = result.adam;
-    strategyFactory = result.strategyFactory;
-    assetManagerFactory = result.assetManagerFactory;
   });
 
   it('can create assetManager', async function () {
