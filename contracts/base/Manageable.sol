@@ -29,6 +29,10 @@ contract Manageable {
         managerDetails[_owner] = Manager(Role.OWNER, managerList.length, true);
     }
 
+    function getOwner() external view returns (address) {
+        return owner;
+    }
+
     function isManager(address _address) public view returns (bool) {
         return managerDetails[_address].isExist;
     }

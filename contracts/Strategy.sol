@@ -6,8 +6,11 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./lib/Base64.sol";
 import "./lib/ToString.sol";
 import "./Portfolio.sol";
+import "./ManagementFee.sol";
 import "./interface/IAssetManager.sol";
 import "./interface/IStrategy.sol";
+import "hardhat/console.sol";
+import "./interface/IManageable.sol";
 
 contract Strategy is ERC721, IStrategy {
     using Counters for Counters.Counter;
@@ -16,6 +19,7 @@ contract Strategy is ERC721, IStrategy {
     using Base64 for bytes;
 
     address[] public portfolioList;
+    address public mtFeeAccount;
     address payable public assetManager;
     Counters.Counter private _tokenIds;
     mapping(uint => Portfolio) public tokenIdToPortfolio;
@@ -26,12 +30,25 @@ contract Strategy is ERC721, IStrategy {
 
     constructor(address _assetManager, string memory name) ERC721(string(abi.encodePacked(name, " Portfolio")), "PFLO") {
         assetManager = payable(_assetManager);
+        mtFeeAccount = address(
+            new ManagementFee(
+                IManageable(_assetManager).getOwner(),
+                address(this)
+            )
+        );
+    }
+
+    modifier onlyManagementFee {
+        require(mtFeeAccount == msg.sender, 'Access denied');
+        _;
     }
 
     function deposit() external payable override returns (address) {
         uint256 tokenId = _upsertPortfolio(msg.sender);
         address _portfolio = address(tokenIdToPortfolio[tokenId]);
+
         IAssetManager(assetManager).deposit{value: msg.value}(_portfolio);
+
         emit Deposit(_portfolio, msg.value);
         return _portfolio;
     }
@@ -75,5 +92,10 @@ contract Strategy is ERC721, IStrategy {
             "data:application/json;base64,",
             bytes(metadata).base64()
         ));
+    }
+
+    function redempManagementFee(address to) external onlyManagementFee override returns (bool) {
+        IAssetManager(assetManager).redempManagementFee(msg.sender, to);
+        return true;
     }
 }

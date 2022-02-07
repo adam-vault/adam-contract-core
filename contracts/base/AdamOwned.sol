@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "../interface/IAdamOwned.sol";
 import "../interface/IAdam.sol";
+import "hardhat/console.sol";
 
 contract AdamOwned is IAdamOwned {
     address private _adam;
@@ -23,7 +24,7 @@ contract AdamOwned is IAdamOwned {
     }
 
     modifier onlyAssetManager() {
-        require(IAdam(_adam).assetManagerRegistry(msg.sender), "Access deneied");
+        require(IAdam(_adam).assetManagerRegistry(msg.sender), "Access denied");
         _;
     }
 }

@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
@@ -9,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "./interface/IStrategy.sol";
 import "./interface/IAssetManager.sol";
 import "./interface/IWETH9.sol";
+import "./interface/ITreasury.sol";
 
 import "./lib/ToString.sol";
 import "./base/Manageable.sol";
@@ -68,6 +70,7 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
     }
     function deposit(address assetOwner) external onlyStrategy payable override {
         require(msg.value > 0, "please pass ethers");
+
         _mint(assetOwner, addressToId[address(0)], msg.value, "");
     }
 
@@ -138,4 +141,32 @@ contract AssetManager is MultiToken, Manageable, AdamOwned, IAssetManager, ERC72
         return result;
     }
 
+    function approve(ERC20 token, address spender, uint256 amount) external onlyOwner returns (bool) {
+        return token.approve(spender, amount);
+    }
+
+
+    function chargeManagementFee(address strategyMgtFeeAddr) external onlyOwner returns (bool) {
+        _mint(strategyMgtFeeAddr, 0, 10**18, "");
+        
+        return true;
+    }
+
+    function redempManagementFee(address mgtFeeAccount, address to) external override onlyStrategy returns (bool) {
+        uint mgtFee = balanceOf(mgtFeeAccount, 0);
+        _burn(mgtFeeAccount, 0, mgtFee);
+        
+        /**
+            Assuming redemp ether
+        */
+
+        address treasury = IAdam(adam()).getTreasury();
+        ITreasury(treasury).exchangeEVE{ value: mgtFee }(
+            to,
+            address(0x0),
+            0
+        );
+
+        return true;
+    }
 }

@@ -9,11 +9,13 @@ import "./interface/IStrategy.sol";
 import "./interface/IAdamOwned.sol";
 import "./interface/IManageable.sol";
 import "./interface/IAdam.sol";
+import "./interface/ITreasury.sol";
 import "hardhat/console.sol";
 
 contract Adam is IAdam {
     IAssetManagerFactory public assetManagerFactory;
     IStrategyFactory public strategyFactory;
+    ITreasury private _treasury;
 
     address[] public assetManagers;
     address[] private _strategies;
@@ -63,5 +65,15 @@ contract Adam is IAdam {
         }
         emit CreateStrategy(_assetManager, _s, _name, msg.sender, _private);
         return _s;
+    }
+
+    function setTreasury(address treasury) external override {
+        _treasury = ITreasury(treasury);
+    }
+
+    function getTreasury() external view override returns (address) {
+        require(assetManagerRegistry[msg.sender], "not assetManager");
+        
+        return address(_treasury);
     }
 }

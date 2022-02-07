@@ -5,6 +5,14 @@
 // Runtime Environment's members available in the global scope.
 const hre = require('hardhat');
 
+function delay(t, val) {
+  return new Promise(function(resolve) {
+      setTimeout(function() {
+          resolve(val);
+      }, t);
+  });
+}
+
 async function main () {
   // Hardhat always runs the compile task when running scripts with its command
   // line interface.
@@ -54,43 +62,34 @@ async function main () {
   console.log('priceConverter deployed to: ', priceConverter.address);
   console.log('treasury deployed to: ', treasury.address);
 
+  await delay(20000);
+
   await hre.run('verify:verify', {
-    address: adam.address,
-    constructorArguments: [
+      address: adam.address,
+      constructorArguments: [
       assetManagerFactory.address,
       strategyFactory.address,
-    ],
+      ],
   });
   await hre.run('verify:verify', {
-    address: assetManagerFactory.address,
+      address: assetManagerFactory.address,
   });
   await hre.run('verify:verify', {
-    address: strategyFactory.address,
-  });
-
-  await hre.run('verify:verify', {
-    address: priceConverter.address,
+      address: strategyFactory.address,
   });
 
   await hre.run('verify:verify', {
-    address: treasury.address,
-    constructorArguments: [
-    adam.address,
-      priceConverter.address,
-    ],
+      address: priceConverter.address,
   });
-
   await hre.run('verify:verify', {
-    address: treasury.address,
-    constructorArguments: [
+      address: treasury.address,
+      constructorArguments: [
       adam.address,
       priceConverter.address,
-    ],
+      ],
   });
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
