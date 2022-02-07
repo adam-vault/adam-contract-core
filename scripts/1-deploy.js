@@ -15,20 +15,20 @@ async function main () {
 
   // We get the contract to deploy
   const AssetManagerFactory = await hre.ethers.getContractFactory('AssetManagerFactory');
-  const StrategyFactory = await hre.ethers.getContractFactory('StrategyFactory');
+  const Strategy = await hre.ethers.getContractFactory('Strategy');
   const Adam = await hre.ethers.getContractFactory('Adam');
 
   const assetManagerFactory = await hre.upgrades.deployProxy(AssetManagerFactory, [], { kind: 'uups' });
-  const strategyFactory = await hre.upgrades.deployProxy(StrategyFactory, [], { kind: 'uups' });
+  const strategy = await Strategy.deploy();
+  await strategy.deployed();
 
-  await strategyFactory.deployed();
   await assetManagerFactory.deployed();
 
-  const adam = await hre.upgrades.deployProxy(Adam, [assetManagerFactory.address, strategyFactory.address], { kind: 'uups' });
+  const adam = await hre.upgrades.deployProxy(Adam, [assetManagerFactory.address, strategy.address], { kind: 'uups' });
   await adam.deployed();
 
   console.log('assetManagerFactory deployed to: ', assetManagerFactory.address);
-  console.log('strategyFactory deployed to: ', strategyFactory.address);
+  console.log('strategyFactory deployed to: ', strategy.address);
   console.log('adam deployed to: ', adam.address);
 
   const PriceConverter = await hre.ethers.getContractFactory('PriceConverter');

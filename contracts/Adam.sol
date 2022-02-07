@@ -3,6 +3,9 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "@openzeppelin/contracts/proxy/beacon/IBeacon.sol";
 
 import "./interface/IAssetManagerFactory.sol";
 import "./interface/IStrategyFactory.sol";
@@ -15,7 +18,7 @@ import "hardhat/console.sol";
 
 contract Adam is IAdam, Initializable, UUPSUpgradeable {
     IAssetManagerFactory public assetManagerFactory;
-    IStrategyFactory public strategyFactory;
+    IBeacon public strategyBeacon;
 
     address[] public assetManagers;
     address[] private _strategies;
@@ -27,11 +30,10 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     event CreateAssetManager(address assetManager, string name, address creator);
     event CreateStrategy(address assetManager, address strategy, string name, address creator, bool isPrivate);
     
-    function initialize(address _assetManagerFactory, address _strategyFactory) public initializer {
+    function initialize(address _assetManagerFactory, address _strategy) public initializer {
         assetManagerFactory = IAssetManagerFactory(_assetManagerFactory);
-        strategyFactory = IStrategyFactory(_strategyFactory);
         IAdamOwned(_assetManagerFactory).setAdam(address(this));
-        IAdamOwned(_strategyFactory).setAdam(address(this));
+        strategyBeacon = new UpgradeableBeacon(_strategy);
     }
     function _authorizeUpgrade(address) internal override initializer {}
 
@@ -56,15 +58,18 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     function createStrategy(address _assetManager, string calldata _name, bool _private) public returns (address) {
         require(assetManagerRegistry[_assetManager], "not assetManager");
         require(IManageable(_assetManager).isOwner(msg.sender), "access denied");
+        
+        BeaconProxy _s = new BeaconProxy(address(strategyBeacon), "");
+        address strategyAddress = address(_s);
+        IStrategy(strategyAddress).initialize(_assetManager, _name);
 
-        address _s = strategyFactory.create(_assetManager, _name);
-        _strategies.push(_s);
-        strategyRegistry[_s] = true;
-        IAssetManager(_assetManager).addStrategy(_s);
+        _strategies.push(strategyAddress);
+        strategyRegistry[strategyAddress] = true;
+        IAssetManager(_assetManager).addStrategy(strategyAddress);
         if (!_private) {
-            publicStrategies.push(_s);
+            publicStrategies.push(strategyAddress);
         }
-        emit CreateStrategy(_assetManager, _s, _name, msg.sender, _private);
-        return _s;
+        emit CreateStrategy(_assetManager, strategyAddress, _name, msg.sender, _private);
+        return strategyAddress;
     }
 }

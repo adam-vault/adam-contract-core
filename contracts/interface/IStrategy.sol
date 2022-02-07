@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 interface IStrategy {
+    function initialize(address _assetManager, string memory name) external;
     function deposit() external payable returns (address);
     function isSubscriptionValid(address target) external view returns (bool);
 }
