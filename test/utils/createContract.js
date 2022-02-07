@@ -2,20 +2,19 @@ const { ethers, upgrades } = require('hardhat');
 
 const createAdam = async () => {
   const [creator] = await ethers.getSigners();
-  const AssetManagerFactory = await ethers.getContractFactory('AssetManagerFactory', { signer: creator });
+  const AssetManager = await ethers.getContractFactory('AssetManager', { signer: creator });
   const Strategy = await ethers.getContractFactory('Strategy', { signer: creator });
   const Adam = await ethers.getContractFactory('Adam', { signer: creator });
 
-  const assetManagerFactory = await upgrades.deployProxy(AssetManagerFactory, [], { kind: 'uups' });
+  const assetManager = await AssetManager.deploy();
   const strategy = await Strategy.deploy();
+  await assetManager.deployed();
   await strategy.deployed();
 
-  await assetManagerFactory.deployed();
-
-  const adam = await upgrades.deployProxy(Adam, [assetManagerFactory.address, strategy.address], { kind: 'uups' });
+  const adam = await upgrades.deployProxy(Adam, [assetManager.address, strategy.address], { kind: 'uups' });
   await adam.deployed();
   return {
-    assetManagerFactory,
+    assetManager,
     strategy,
     adam,
   };

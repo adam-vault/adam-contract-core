@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "../lib/ToString.sol";
 import "../lib/Base64.sol";
 
-contract MultiToken is ERC1155 {
+contract MultiToken is ERC1155Upgradeable {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -34,8 +35,8 @@ contract MultiToken is ERC1155 {
     uint256 public ethId;
 
     event CreateToken(uint256 id, string name, address contractAddress, uint8 decimal);
-
-    constructor(string memory _postfix) ERC1155("") {
+    function __MultiToken_init(string memory _postfix) internal onlyInitializing {
+        __ERC1155_init("");
         postfix = _postfix;
         // default init ether as 0x0 address
         ethId = _createToken(ethAddress, "ETH", 18);
