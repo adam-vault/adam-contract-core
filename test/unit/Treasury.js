@@ -3,24 +3,12 @@ const { smock } = require('@defi-wonderland/smock');
 const { ethers, waffle } = require('hardhat');
 
 describe('Treasury', function() {
-    let priceConverter;
-    let treasury;
+    let priceConverter, treasury, adam;
     let creator, owner1, owner2, owner3;
-    let adam, strategyFactory, assetManagerFactory;
-    let libraries;
     let tokenA;
     const provider = waffle.provider;
 
     before(async function () {
-        const [libCreator] = await ethers.getSigners();
-        const ToString = await ethers.getContractFactory('ToString', libCreator);
-        const toString = await ToString.deploy();
-        await toString.deployed();
-    
-        libraries = {
-          ToString: toString.address,
-        };
-
         const TokenA = await ethers.getContractFactory('TokenA');
         tokenA = await TokenA.deploy();
         await tokenA.deployed();
@@ -28,16 +16,16 @@ describe('Treasury', function() {
 
     beforeEach(async function() {
         [creator, owner1, owner2, owner3] = await ethers.getSigners();
-        const AssetManagerFactory = await ethers.getContractFactory('AssetManagerFactory', { signer: creator, libraries });
-        const StrategyFactory = await ethers.getContractFactory('StrategyFactory', { signer: creator, libraries });
-        const Adam = await ethers.getContractFactory('Adam', { signer: creator });
-    
-        assetManagerFactory = await AssetManagerFactory.deploy();
-        strategyFactory = await StrategyFactory.deploy();
-    
-        await strategyFactory.deployed();
-        await assetManagerFactory.deployed();
-        adam = await Adam.deploy(assetManagerFactory.address, strategyFactory.address);
+        const AssetManager = await ethers.getContractFactory('AssetManager');
+        const Strategy = await ethers.getContractFactory('Strategy');
+        const Adam = await ethers.getContractFactory('Adam');
+      
+        const assetManager = await AssetManager.deploy();
+        await assetManager.deployed();
+        const strategy = await Strategy.deploy();
+        await strategy.deployed();
+      
+        adam = await hre.upgrades.deployProxy(Adam, [assetManager.address, strategy.address], { kind: 'uups' });
         await adam.deployed();
         /**
          * Mocks are deployed contract wrappers that have all of the fake’s functionality and even more.
@@ -50,7 +38,7 @@ describe('Treasury', function() {
          * Prepare to modify the internal storage of contract via smoddit
         */
         const Treasury = await smock.mock("ExposedTreasury");
-        treasury = await Treasury.deploy(adam.address, priceConverter.address);
+        treasury = await hre.upgrades.deployProxy(Treasury, [adam.address, priceConverter.address]);
         await treasury.deployed();
     });
 

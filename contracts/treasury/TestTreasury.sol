@@ -6,13 +6,14 @@ import "./PriceConverter.sol";
 import "../interface/IAdam.sol";
 import "../interface/IManageable.sol";
 import "../interface/ITreasury.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import '../base/AdamOwned.sol';
+import "../base/AdamOwned.sol";
 import "hardhat/console.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
-contract TestTreasury is Context, ERC20, AdamOwned, ITreasury {
+contract TestTreasury is ERC20Upgradeable, AdamOwned, ITreasury {
     using DSMath for uint256;
 
     string[] public basketCoins;
@@ -25,7 +26,8 @@ contract TestTreasury is Context, ERC20, AdamOwned, ITreasury {
     event ExchangeEve(int256 coinPrice, string tokenName, uint256 quatityToExchange, int256 perEVE);
     event PreExchangeEve(int256 coinPrice, string tokenName, uint256 quatityToExchange);
 
-    constructor(address adam, address priceConverter) ERC20("Eve", "EVE") {
+    function initialize(address adam, address priceConverter) public initializer {
+        __ERC20_init("Eve", "EVE");
         setAdam(adam);
         IAdam(adam).setTreasury(address(this));
         _priceConverter = IPriceConverter(priceConverter);

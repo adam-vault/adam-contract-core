@@ -21,6 +21,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address[] public assetManagers;
     address[] private _strategies;
     address[] public publicStrategies;
+    ITreasury public _treasury;
 
     mapping(address => bool) public override assetManagerRegistry;
     mapping(address => bool) public strategyRegistry;
