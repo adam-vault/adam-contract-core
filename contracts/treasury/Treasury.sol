@@ -6,14 +6,14 @@ import "./PriceConverter.sol";
 import "../interface/IAdam.sol";
 import "../interface/IManageable.sol";
 import "../interface/ITreasury.sol";
-import "@openzeppelin/contracts/utils/Context.sol";
-import "../base/AdamOwned.sol";
-import "hardhat/console.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
+import '../base/AdamOwned.sol';
+import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
-contract TestTreasury is ERC20Upgradeable, AdamOwned, ITreasury {
+contract Treasury is ERC20Upgradeable, AdamOwned, ITreasury {
     using DSMath for uint256;
 
     string[] public basketCoins;
@@ -26,17 +26,20 @@ contract TestTreasury is ERC20Upgradeable, AdamOwned, ITreasury {
     event ExchangeEve(int256 coinPrice, string tokenName, uint256 quatityToExchange, int256 perEVE);
     event PreExchangeEve(int256 coinPrice, string tokenName, uint256 quatityToExchange);
 
-    function initialize(address adam, address priceConverter) public initializer {
+    function initialize((address adam, address priceConverter) {
         __ERC20_init("Eve", "EVE");
         setAdam(adam);
         IAdam(adam).setTreasury(address(this));
         _priceConverter = IPriceConverter(priceConverter);
         _owner = _msgSender();
 
-        basketCoins = ["ETH"];
+        basketCoins = ["BTC", "ETH", "BNB", "LINK"];
 
         // value would need to div by 10**4
-        basket["ETH"] = 10000;
+        basket["BTC"] = 100;
+        basket["ETH"] = 629;
+        basket["BNB"] = 881;
+        basket["LINK"] = 1894;
 
         /**
             provided by chainlink
@@ -44,14 +47,46 @@ contract TestTreasury is ERC20Upgradeable, AdamOwned, ITreasury {
         */
 
         //kovan
+        priceFeed["BTC/USD"] = AggregatorV3Interface(0x6135b13325bfC4B00278B4abC5e20bbce2D6580e);
         priceFeed["ETH/USD"] = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
+        priceFeed["BNB/USD"] = AggregatorV3Interface(0x8993ED705cdf5e84D0a3B754b5Ee0e1783fcdF16);
+        priceFeed["LINK/ETH"] = AggregatorV3Interface(0x3Af8C569ab77af5230596Acf0E8c2F9351d24C38);
     }
 
-    function getXUsdPrice(string memory coin) public pure returns (int256) {
+    function getXUsdPrice(string memory coin) public view returns (int256) {
         if (
+            keccak256(abi.encodePacked(coin)) == keccak256(abi.encodePacked("BTC"))
+        ) {
+            (,int256 price,,,) = priceFeed["BTC/USD"].latestRoundData();
+
+            return price;
+        } else if (
             keccak256(abi.encodePacked(coin)) == keccak256(abi.encodePacked("ETH"))
         ) {
-            return 307000000000;
+            (,int256 price,,,) = priceFeed["ETH/USD"].latestRoundData();
+
+            return price;
+        } else if (
+            keccak256(abi.encodePacked(coin)) == keccak256(abi.encodePacked("BNB"))
+        ) {
+            (,int256 price,,,) = priceFeed["BNB/USD"].latestRoundData();
+
+            return price;
+        } else if (
+            keccak256(abi.encodePacked(coin)) == keccak256(abi.encodePacked("LINK"))
+        ) {
+            (,int256 linkToEth,,,) = priceFeed["LINK/ETH"].latestRoundData();
+            (,int256 ethToUsd,,,) = priceFeed["ETH/USD"].latestRoundData();
+
+            int256 convertedPrice = _priceConverter.getExchangePrice(
+                linkToEth,
+                priceFeed["LINK/ETH"].decimals(),
+                ethToUsd,
+                priceFeed["ETH/USD"].decimals(),
+                8
+            );
+            
+            return convertedPrice;
         }
 
         return 0;
@@ -75,6 +110,7 @@ contract TestTreasury is ERC20Upgradeable, AdamOwned, ITreasury {
         address from = _msgSender();
 
         string memory tokenSymbol = "";
+
         if (msg.value != 0) {
             tokenSymbol = "ETH";
             quantity = msg.value;

@@ -11,6 +11,7 @@ import "./interface/IAssetManager.sol";
 import "./interface/IStrategy.sol";
 import "./interface/IManageable.sol";
 import "./interface/IAdam.sol";
+import "./interface/ITreasury.sol";
 import "hardhat/console.sol";
 
 contract Adam is IAdam, Initializable, UUPSUpgradeable {
@@ -20,6 +21,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address[] public assetManagers;
     address[] private _strategies;
     address[] public publicStrategies;
+    ITreasury public _treasury;
 
     mapping(address => bool) public override assetManagerRegistry;
     mapping(address => bool) public strategyRegistry;
@@ -70,5 +72,15 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         }
         emit CreateStrategy(_assetManager, strategyAddress, _name, msg.sender, _private);
         return strategyAddress;
+    }
+
+    function setTreasury(address treasury) external override {
+        _treasury = ITreasury(treasury);
+    }
+
+    function getTreasury() external view override returns (address) {
+        require(assetManagerRegistry[msg.sender], "not assetManager");
+        
+        return address(_treasury);
     }
 }

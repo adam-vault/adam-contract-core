@@ -21,12 +21,21 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
+ * 
+ * Why need storageLayout
+ * `smoddit` requires access to the internal storage layout of your smart contracts.
+ * The Solidity compiler exposes this via the `storageLayout` flag, which you need to enable at your hardhat config.
  */
 module.exports = {
-  // defaultNetwork: "ropsten",
+  defaultNetwork: "hardhat",
   solidity: {
     version: '0.8.4',
     settings: {
+      outputSelection: {
+        "*": {
+            "*": ["storageLayout"],
+        },
+      },
       optimizer: {
         enabled: true,
         runs: 200,
