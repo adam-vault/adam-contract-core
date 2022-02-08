@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/proxy/beacon/IBeacon.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./interface/IAssetManager.sol";
 import "./interface/IStrategy.sol";
@@ -31,7 +32,9 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     
     function initialize(address _assetManager, address _strategy) public initializer {
         assetManagerBeacon = new UpgradeableBeacon(_assetManager);
+        Ownable(address(assetManagerBeacon)).transferOwnership(msg.sender);
         strategyBeacon = new UpgradeableBeacon(_strategy);
+        Ownable(address(strategyBeacon)).transferOwnership(msg.sender);
     }
     function _authorizeUpgrade(address) internal override initializer {}
 
