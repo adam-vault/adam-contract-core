@@ -48,33 +48,48 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         return publicStrategies.length;
     }
 
-    function createAssetManager(string calldata _name) public returns (address) {
-        BeaconProxy _am = new BeaconProxy(address(assetManagerBeacon), "");
-        address amAddress = address(_am);
-        IAssetManager(amAddress).initialize(address(this), msg.sender, _name);
-
-        assetManagers.push(amAddress);
-        assetManagerRegistry[amAddress] = true;
-        emit CreateAssetManager(amAddress, _name, msg.sender);
-        return amAddress;
+    function _addAssetManager(address _am) internal {
+        assetManagers.push(_am);
+        assetManagerRegistry[_am] = true;
     }
 
-    function createStrategy(address _assetManager, string calldata _name, bool _private) public returns (address) {
-        require(assetManagerRegistry[_assetManager], "not assetManager");
-        require(IManageable(_assetManager).isOwner(msg.sender), "access denied");
-        
-        BeaconProxy _s = new BeaconProxy(address(strategyBeacon), "");
-        address strategyAddress = address(_s);
-        IStrategy(strategyAddress).initialize(_assetManager, _name);
-
-        _strategies.push(strategyAddress);
-        strategyRegistry[strategyAddress] = true;
-        IAssetManager(_assetManager).addStrategy(strategyAddress);
+    function _addStrategy(address _s, bool _private) internal {
+        _strategies.push(_s);
+        strategyRegistry[_s] = true;
         if (!_private) {
-            publicStrategies.push(strategyAddress);
+            publicStrategies.push(_s);
         }
-        emit CreateStrategy(_assetManager, strategyAddress, _name, msg.sender, _private);
-        return strategyAddress;
+    }
+
+    function _initAssetManager(string calldata _name) internal returns (address) {
+        BeaconProxy _am = new BeaconProxy(address(assetManagerBeacon), "");
+        IAssetManager(address(_am)).initialize(address(this), msg.sender, _name);
+        return address(_am);
+    }
+
+    function _initStrategy(address _assetManager, string calldata _name) internal returns (address) {
+        BeaconProxy _s = new BeaconProxy(address(strategyBeacon), "");
+        IStrategy(address(_s)).initialize(_assetManager, _name);
+        return address(_s);
+    }
+
+    function createAssetManager(string calldata _name) public returns (address) {
+        address addr = _initAssetManager(_name);
+        _addAssetManager(addr);
+        emit CreateAssetManager(addr, _name, msg.sender);
+        return addr;
+    }
+
+    function createStrategy(address _am, string calldata _name, bool _private) public returns (address) {
+        require(assetManagerRegistry[_am], "not assetManager");
+        require(IManageable(_am).isOwner(msg.sender), "access denied");
+        
+        address addr = _initStrategy(_am,  _name);
+        _addStrategy(addr, _private);
+        IAssetManager(_am).addStrategy(addr);
+
+        emit CreateStrategy(_am, addr, _name, msg.sender, _private);
+        return addr;
     }
 
     function setTreasury(address treasury) external override {
