@@ -26,7 +26,7 @@ contract Treasury is ERC20Upgradeable, AdamOwned, ITreasury {
     event ExchangeEve(int256 coinPrice, string tokenName, uint256 quatityToExchange, int256 perEVE);
     event PreExchangeEve(int256 coinPrice, string tokenName, uint256 quatityToExchange);
 
-    function initialize((address adam, address priceConverter) {
+    function initialize(address adam, address priceConverter) public initializer {
         __ERC20_init("Eve", "EVE");
         setAdam(adam);
         IAdam(adam).setTreasury(address(this));

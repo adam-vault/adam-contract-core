@@ -5,7 +5,8 @@
     "test-integration": "hardhat test test/integration/*.js --network ropsten",
     "clean": "hardhat clean",
     "compile": "hardhat compile",
-    "coverage": "hardhat coverage && COVERAGE=true yarn test"
+    "coverage": "hardhat coverage && COVERAGE=true yarn test",
+    "size": "hardhat size-contracts"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.4",
@@ -35,6 +36,7 @@
     "@defi-wonderland/smock": "^2.0.7",
     "@openzeppelin/contracts": "^4.4.1",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
+    "hardhat-contract-sizer": "^2.4.0",
     "lodash": "^4.17.21"
   }
 }
