@@ -1,0 +1,32 @@
+name: test contracts
+
+on:
+  push:
+    branches: [$default-branch]
+    paths:
+      - "contracts/**"
+      - "test/**"
+  pull_request:
+    branches:
+      - "*"
+    paths:
+      - "contracts/**"
+      - "test/**"
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+jobs:
+  test_on_linux:
+    name: Test on Ubuntu with Node 14
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Install
+        run: npm run install
+      - name: Run tests
+        run: npm run test
