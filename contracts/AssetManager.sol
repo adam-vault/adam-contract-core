@@ -13,6 +13,8 @@ import "./interface/IAssetManager.sol";
 import "./interface/IWETH9.sol";
 import "./interface/ITreasury.sol";
 
+import "./lib/Concat.sol";
+
 import "./base/AdamOwned.sol";
 import "./base/Manageable.sol";
 import "./base/MultiToken.sol";
@@ -26,6 +28,7 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
+    using Concat for string;
 
     Counters.Counter private _ERC20tokenIds;
     IStrategy[] public strategyList;
@@ -50,17 +53,14 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     }
 
     function name() public view returns (string memory) {
-        return string(abi.encodePacked(managerName, " Multi-token"));
+        return managerName.concat(" Multi-token");
     }
     function symbol() public view returns (string memory) {
-        return string(abi.encodePacked(managerName, "MT"));
+        return managerName.concat(" MT");
     }
 
     modifier onlyStrategy() {
-        require(
-            strategies[msg.sender],
-            "msg.sender is not strategy"
-        );
+        require(strategies[msg.sender], "msg.sender is not strategy");
         _;
     }
 
@@ -105,16 +105,20 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     }
 
     function _ERC20tokenId(address contractAddress) public returns (uint256){
-        if (addressToId[contractAddress] == 0) {
+        if (!contractRegistered(contractAddress)) {
             _createToken(contractAddress, IERC20Metadata(contractAddress).name(), IERC20Metadata(contractAddress).decimals());
         }
         return addressToId[contractAddress];
     }
     function _ERC721tokenId(address contractAddress) public returns (uint256){
-        if (addressToId[contractAddress] == 0) {
+        if (!contractRegistered(contractAddress)) {
             _createToken(contractAddress, IERC20Metadata(contractAddress).name(), 0);
         }
         return addressToId[contractAddress];
+    }
+
+    function contractRegistered(address contractAddress) public view returns (bool) {
+        return addressToId[contractAddress] != 0;
     }
 
     function subscribeStrategy(address src, address strategy, address[] calldata portfolio, uint256[] calldata amount) external payable {

@@ -1,6 +1,6 @@
-// const { expect } = require('chai');
-// const { ethers } = require('hardhat');
-// const { createAdam } = require('../utils/createContract');
+const { expect } = require('chai');
+const { ethers } = require('hardhat');
+const { createAdam } = require('../utils/createContract');
 
 // describe('Deployment(Treasury)', function () {
 //   let creator;
