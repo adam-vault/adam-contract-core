@@ -8,8 +8,9 @@ import "../interface/IManageable.sol";
 import "../interface/ITreasury.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import '../base/AdamOwned.sol';
+import "../base/AdamOwned.sol";
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
@@ -26,7 +27,7 @@ contract Treasury is ERC20Upgradeable, AdamOwned, ITreasury {
     event ExchangeEve(int256 coinPrice, string tokenName, uint256 quatityToExchange, int256 perEVE);
     event PreExchangeEve(int256 coinPrice, string tokenName, uint256 quatityToExchange);
 
-    function initialize((address adam, address priceConverter) {
+    function initialize(address adam, address priceConverter) public initializer {
         __ERC20_init("Eve", "EVE");
         setAdam(adam);
         IAdam(adam).setTreasury(address(this));
@@ -53,6 +54,7 @@ contract Treasury is ERC20Upgradeable, AdamOwned, ITreasury {
         priceFeed["LINK/ETH"] = AggregatorV3Interface(0x3Af8C569ab77af5230596Acf0E8c2F9351d24C38);
     }
 
+    // change to mapping
     function getXUsdPrice(string memory coin) public view returns (int256) {
         if (
             keccak256(abi.encodePacked(coin)) == keccak256(abi.encodePacked("BTC"))
@@ -144,6 +146,7 @@ contract Treasury is ERC20Upgradeable, AdamOwned, ITreasury {
 
         return int(amount);
     }
+
 
     fallback() external payable {}
     receive() external payable {}

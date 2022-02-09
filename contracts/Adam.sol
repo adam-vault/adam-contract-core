@@ -12,7 +12,10 @@ import "./interface/IStrategy.sol";
 import "./interface/IManageable.sol";
 import "./interface/IAdam.sol";
 import "./interface/ITreasury.sol";
+import "./interface/IManagementFee.sol";
 import "hardhat/console.sol";
+
+import "./Strategy.sol";
 
 contract Adam is IAdam, Initializable, UUPSUpgradeable {
     IBeacon public strategyBeacon;
@@ -21,7 +24,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address[] public assetManagers;
     address[] private _strategies;
     address[] public publicStrategies;
-    ITreasury public _treasury;
+    address public treasury;
 
     mapping(address => bool) public override assetManagerRegistry;
     mapping(address => bool) public strategyRegistry;
@@ -62,7 +65,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         
         BeaconProxy _s = new BeaconProxy(address(strategyBeacon), "");
         address strategyAddress = address(_s);
-        IStrategy(strategyAddress).initialize(_assetManager, _name);
+        IStrategy(strategyAddress).initialize(_assetManager, _name, address(this));
 
         _strategies.push(strategyAddress);
         strategyRegistry[strategyAddress] = true;
@@ -74,13 +77,17 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         return strategyAddress;
     }
 
-    function setTreasury(address treasury) external override {
-        _treasury = ITreasury(treasury);
+    function setTreasury(address _treasury) external override {
+        treasury = _treasury;
     }
 
-    function getTreasury() external view override returns (address) {
-        require(assetManagerRegistry[msg.sender], "not assetManager");
-        
-        return address(_treasury);
+    function redempAllManagementFee(address to) public {
+        //require(msg.sender == "Admin")
+
+        for (uint i = 0; i < countStrategies(); i ++) {
+            address mgtFeeAccount = Strategy(_strategies[i]).mtFeeAccount();
+
+            IManagementFee(mgtFeeAccount).redemption(to);
+        }
     }
 }

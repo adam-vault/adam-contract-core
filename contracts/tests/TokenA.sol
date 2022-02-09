@@ -7,4 +7,8 @@ contract TokenA is ERC20("TokenA", "A") {
         token.transferFrom(from, address(this), 100);
         return true;
     }
+
+    function mint(address to, uint amount) public {
+        _mint(to, amount);
+    }
 }

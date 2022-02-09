@@ -25,7 +25,7 @@ contract MultiToken is ERC1155Upgradeable {
         bool isExist;
     }
 
-    Counters.Counter private _tokenIds;
+    Counters.Counter public _tokenIds;
     string public postfix;
     address[] public mintedContracts;
 
