@@ -3,7 +3,7 @@ const { ethers, upgrades } = require('hardhat');
 const _ = require('lodash');
 const { smock } = require('@defi-wonderland/smock');
 const { expect } = chai;
-const { createAdam } = require('../utils/createContract');
+const { createAdam } = require('../utils/createBeaconContract');
 chai.use(smock.matchers);
 
 describe('Create AssetManager', function () {
@@ -28,6 +28,7 @@ describe('Create AssetManager', function () {
   });
 
   it('can upgrade assetManager', async function () {
+    const amBeacon = await adam.assetManagerBeacon();
     await adam.createAssetManager('AM1');
     await adam.createAssetManager('AM2');
 
@@ -35,13 +36,19 @@ describe('Create AssetManager', function () {
     const mockAssetManagerV2 = await MockAssetManagerV2.deploy();
     await mockAssetManagerV2.deployed();
 
-    const amAddr1 = await adam.assetManagers(0);
-    const assetManagerOld = await ethers.getContractAt('AssetManager', amAddr1);
-    await assetManagerOld.upgradeTo(mockAssetManagerV2.address);
+    const beacon = await ethers.getContractAt('UpgradeableBeacon', amBeacon);
 
+    await beacon.upgradeTo(mockAssetManagerV2.address);
+
+    const amAddr1 = await adam.assetManagers(0);
+    const amAddr2 = await adam.assetManagers(1);
     const assetManager1 = await ethers.getContractAt('MockAssetManagerV2', amAddr1);
+    const assetManager2 = await ethers.getContractAt('MockAssetManagerV2', amAddr2);
+
+
 
     expect(await assetManager1.v2()).to.equal(true);
+    expect(await assetManager2.v2()).to.equal(true);
   });
 
   it('can create public strategy', async function () {
