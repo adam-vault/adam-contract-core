@@ -16,7 +16,16 @@ describe('Treasury', function() {
 
     beforeEach(async function() {
         [creator, owner1, owner2, owner3] = await ethers.getSigners();
-        const AssetManager = await ethers.getContractFactory('AssetManager');
+
+        const UniswapSwaper = await ethers.getContractFactory('UniswapSwaper', { signer: creator });
+        const uniswapSwaper = await UniswapSwaper.deploy();
+        await uniswapSwaper.deployed();
+      
+        const libraries = {
+          UniswapSwaper: uniswapSwaper.address,
+        };
+
+        const AssetManager = await ethers.getContractFactory('AssetManager', { libraries });
         const Strategy = await ethers.getContractFactory('Strategy');
         const Adam = await ethers.getContractFactory('Adam');
       

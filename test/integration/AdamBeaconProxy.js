@@ -9,10 +9,12 @@ chai.use(smock.matchers);
 describe('Create AssetManager', function () {
   let creator, owner1, owner2, owner3;
   let adam;
+  let libraries;
 
   beforeEach(async function () {
     [creator, owner1, owner2, owner3] = await ethers.getSigners();
     const result = await createAdam();
+    libraries = result.libraries;
     adam = result.adam;
   });
 
@@ -32,7 +34,7 @@ describe('Create AssetManager', function () {
     await adam.createAssetManager('AM1');
     await adam.createAssetManager('AM2');
 
-    const MockAssetManagerV2 = await ethers.getContractFactory('MockAssetManagerV2');
+    const MockAssetManagerV2 = await ethers.getContractFactory('MockAssetManagerV2', { libraries });
     const mockAssetManagerV2 = await MockAssetManagerV2.deploy();
     await mockAssetManagerV2.deployed();
 
