@@ -18,11 +18,12 @@ import "hardhat/console.sol";
 contract AdamBeaconProxy is IAdam, Initializable, UUPSUpgradeable {
     IBeacon public strategyBeacon;
     IBeacon public assetManagerBeacon;
+    address public override treasury;
+
 
     address[] public assetManagers;
     address[] private _strategies;
     address[] public publicStrategies;
-    ITreasury public _treasury;
 
     mapping(address => bool) public override assetManagerRegistry;
     mapping(address => bool) public strategyRegistry;
@@ -92,7 +93,7 @@ contract AdamBeaconProxy is IAdam, Initializable, UUPSUpgradeable {
         return addr;
     }
 
-    function setTreasury(address treasury) external override {
-        _treasury = ITreasury(treasury);
+    function setTreasury(address _treasury) external override {
+        treasury = _treasury;
     }
 }

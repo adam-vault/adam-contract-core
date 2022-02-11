@@ -33,6 +33,6 @@ contract ManagementFee is ERC1155Holder {
 
     function redemption() external isOwnerOrAdam returns (bool) {
         require(beneficiary != address(0x0), "No beneficiary account" );
-        return IStrategy(strategy).redempManagementFee(beneficiary);
+        return IStrategy(strategy).redeemManagementFee(beneficiary);
     }
 }

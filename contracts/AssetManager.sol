@@ -19,7 +19,6 @@ import "./base/AdamOwned.sol";
 import "./base/Manageable.sol";
 import "./base/MultiToken.sol";
 import "./base/AdamOwned.sol";
-import "./Adam.sol";
 import "hardhat/console.sol";
 
 import "./lib/ToString.sol";
@@ -171,8 +170,8 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
         return true;
     }
 
-    function redempManagementFee(address mgtFeeAccount, address to) external override onlyStrategy returns (bool) {
-        address treasury = Adam(adam()).treasury();
+    function redeemManagementFee(address mgtFeeAccount, address to) external override onlyStrategy returns (bool) {
+        address treasury = IAdam(adam()).treasury();
 
         for (uint i = 1; i < _tokenIds.current() + 1; i++) {
             uint mgtFee = balanceOf(mgtFeeAccount, i);
