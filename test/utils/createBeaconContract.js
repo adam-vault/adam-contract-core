@@ -3,12 +3,14 @@ const { ethers, upgrades } = require('hardhat');
 const createAdam = async () => {
   const [creator] = await ethers.getSigners();
 
-  const UniswapSwaper = await ethers.getContractFactory('UniswapSwaper', { signer: creator });
-  const uniswapSwaper = await UniswapSwaper.deploy();
-  await uniswapSwaper.deployed();
+  const UniswapSwapper = await ethers.getContractFactory("UniswapSwapper", {
+    signer: creator,
+  });
+  const uniswapSwapper = await UniswapSwapper.deploy();
+  await uniswapSwapper.deployed();
 
   const libraries = {
-    UniswapSwaper: uniswapSwaper.address,
+    UniswapSwapper: uniswapSwapper.address,
   };
 
   const AssetManager = await ethers.getContractFactory('AssetManager', { signer: creator, libraries });

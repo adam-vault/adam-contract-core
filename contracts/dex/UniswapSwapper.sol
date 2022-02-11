@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "../lib/BytesLib.sol";
 
-library UniswapSwaper {
+library UniswapSwapper {
 
     address constant EthAddress = address(0x0);
     address constant WethAddress = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
@@ -16,7 +16,7 @@ library UniswapSwaper {
             bytes[] memory emptyArray;
             //TODO: find a better way to handle with/without results
             (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, emptyArray, amount);
-        } else if (to == address(0xc778417E063141139Fce010982780140Aa0cD5Ab)) {
+        } else if (to == WethAddress) {
             // WETH9
             (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
         } else {
