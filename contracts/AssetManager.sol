@@ -22,6 +22,7 @@ import "./base/AdamOwned.sol";
 import "hardhat/console.sol";
 
 import "./lib/ToString.sol";
+import "./dex/UniswapSwaper.sol";
 
 contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable, IAssetManager, ERC721HolderUpgradeable, AdamOwned {
     // list strategy
@@ -192,4 +193,38 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     }
 
     function _authorizeUpgrade(address newImplementation) internal override {}
+
+    // TODO: add onlyOwner
+    function execSwapTransaction(address to, bytes memory _data, uint256 value, address[] calldata portfolio) external {
+        
+        (bool success, bytes memory results) = to.call{ value: value }(_data);
+
+        require(success == true, "Failed");
+
+        (bytes[] memory decodedResults) = abi.decode(results, (bytes[]));
+        
+        if(to == address(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45)) {
+            // Uniswap Swap Router
+            (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) = UniswapSwaper._decodeUniswapRouter(_data, decodedResults, value);
+            if(estimatedIn == true || estimatedOut == true) {
+                revert("Unexpected");
+            }
+
+            // TODO: handle multiple portfolio
+            _swap(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
+
+        } else if (to == address(0xc778417E063141139Fce010982780140Aa0cD5Ab)) {
+            // WETH9
+            (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) = UniswapSwaper._decodeWETH9(_data, value);
+
+            // TODO: handle multiple portfolio
+            _swap(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
+
+        } else {
+            revert("Unexpected");
+        }
+
+    }
+
+    receive() external payable {}
 }

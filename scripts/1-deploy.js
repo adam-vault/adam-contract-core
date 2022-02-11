@@ -14,7 +14,16 @@ function delay(t, val) {
 }
 
 async function main () {
-    const AssetManager = await hre.ethers.getContractFactory('AssetManager');
+
+    const UniswapSwaper = await hre.ethers.getContractFactory('UniswapSwaper');
+    const uniswapSwaper = await UniswapSwaper.deploy();
+    await uniswapSwaper.deployed();
+
+    const libraries = {
+      UniswapSwaper: uniswapSwaper.address,
+    };
+
+    const AssetManager = await hre.ethers.getContractFactory('AssetManager', { libraries });
     const Strategy = await hre.ethers.getContractFactory('Strategy');
     const Adam = await hre.ethers.getContractFactory('Adam');
 
