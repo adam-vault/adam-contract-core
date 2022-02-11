@@ -27,19 +27,22 @@ contract Strategy is Initializable, UUPSUpgradeable, ERC721Upgradeable, IStrateg
     address[] public portfolioList;
     address public mtFeeAccount;
     address payable public assetManager;
+    address public adam;
     Counters.Counter private _tokenIds;
     mapping(uint => Portfolio) public tokenIdToPortfolio;
     mapping(address => uint) public ownerToTokenId;
 
     event CreatePortfolio(address portfolio, address owner);
     event Deposit(address portfolio, uint amount);
-    function initialize(address _assetManager, string memory name) public override initializer {
+    function initialize(address _assetManager, string memory name, address _adam) public override initializer {
         __ERC721_init(string(abi.encodePacked(name, " Portfolio")), "PFLO");
         assetManager = payable(_assetManager);
+        adam = _adam;
         mtFeeAccount = address(
             new ManagementFee(
                 IManageable(_assetManager).getOwner(),
-                address(this)
+                address(this),
+                _adam
             )
         );
     }

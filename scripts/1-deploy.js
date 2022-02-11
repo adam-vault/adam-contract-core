@@ -14,54 +14,31 @@ function delay(t, val) {
 }
 
 async function main () {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+    const AssetManager = await hre.ethers.getContractFactory('AssetManager');
+    const Strategy = await hre.ethers.getContractFactory('Strategy');
+    const Adam = await hre.ethers.getContractFactory('Adam');
 
-  // We get the contract to deploy
-  const AssetManager = await hre.ethers.getContractFactory('AssetManager');
-  const Strategy = await hre.ethers.getContractFactory('Strategy');
-  const Adam = await hre.ethers.getContractFactory('Adam');
+    const assetManager = await AssetManager.deploy();
+    await assetManager.deployed();
+    const strategy = await Strategy.deploy();
+    await strategy.deployed();
 
-  const assetManager = await AssetManager.deploy();
-  await assetManager.deployed();
-  const strategy = await Strategy.deploy();
-  await strategy.deployed();
+    adam = await hre.upgrades.deployProxy(Adam, [assetManager.address, strategy.address], { kind: 'uups' });
+    await adam.deployed();
 
-  const adam = await hre.upgrades.deployProxy(Adam, [assetManager.address, strategy.address], { kind: 'uups' });
-  await adam.deployed();
+    const PriceConverter = await hre.ethers.getContractFactory('PriceConverter');
+    const priceConverter = await PriceConverter.deploy();
+    await priceConverter.deployed();
 
-  console.log('assetManager deployed to: ', assetManager.address);
-  console.log('strategy deployed to: ', strategy.address);
-  console.log('adam deployed to: ', adam.address);
+    const Treasury = await hre.ethers.getContractFactory('Treasury');
+    treasury = await hre.upgrades.deployProxy(Treasury, [adam.address, priceConverter.address]);
+    await treasury.deployed();
 
-  const PriceConverter = await hre.ethers.getContractFactory('PriceConverter');
-  const priceConverter = await PriceConverter.deploy();
-  await priceConverter.deployed();
-
-  const Treasury = await hre.ethers.getContractFactory('TestTreasury');
-  const treasury = await Treasury.upgrades.deployProxy(Treasury, [adam.address, priceConverter.address]);
-  await treasury.deployed();
-
-  console.log('priceConverter deployed to: ', priceConverter.address);
-  console.log('treasury deployed to: ', treasury.address);
-
-  await delay(20000);
-
-  await hre.run('verify:verify', {
-    address: priceConverter.address,
-  });
-
-  await hre.run('verify:verify', {
-      address: treasury.address,
-      constructorArguments: [
-      adam.address,
-      priceConverter.address,
-      ],
-  });
+    console.log('assetManager deployed to: ', assetManager.address);
+    console.log('strategy deployed to: ', strategy.address);
+    console.log('adam deployed to: ', adam.address);
+    console.log('price converter deployed to: ', priceConverter.address);
+    console.log('treasury deployed to: ', treasury.address);
 }
 
 main().catch((error) => {

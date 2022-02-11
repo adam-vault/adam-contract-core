@@ -19,8 +19,10 @@ import "./base/AdamOwned.sol";
 import "./base/Manageable.sol";
 import "./base/MultiToken.sol";
 import "./base/AdamOwned.sol";
+import "./Adam.sol";
 import "hardhat/console.sol";
 
+import "./lib/ToString.sol";
 
 contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable, IAssetManager, ERC721HolderUpgradeable, AdamOwned {
     // list strategy
@@ -151,26 +153,41 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     }
 
 
-    function chargeManagementFee(address strategyMgtFeeAddr) external onlyOwner returns (bool) {
-        _mint(strategyMgtFeeAddr, 0, 10**18, "");
-        
+    function chargeManagementFee(address token, address strategyMgtFeeAddr) external onlyOwner returns (bool) {
+        // expect to have tokens and ethers
+
+        // For development
+        _createToken(token, "A", 18);
+        _createToken(token, "A", 18);
+
+        _mintToken(strategyMgtFeeAddr, 1, 10*10**18, "");
+        _mintToken(strategyMgtFeeAddr, 2, 5*10**18, "");
+        _mintToken(strategyMgtFeeAddr, 3, 5*10**18, "");
+
+        // For demo
+        // _createToken(token, "LINK", 18);
+        // _mintToken(strategyMgtFeeAddr, 1, 1*10**16, "");
+        // _mintToken(strategyMgtFeeAddr, 2, 1*10**16, "");
         return true;
     }
 
     function redempManagementFee(address mgtFeeAccount, address to) external override onlyStrategy returns (bool) {
-        uint mgtFee = balanceOf(mgtFeeAccount, 0);
-        _burn(mgtFeeAccount, 0, mgtFee);
-        
-        /**
-            Assuming redemp ether
-        */
+        address treasury = Adam(adam()).treasury();
 
-        address treasury = IAdam(adam()).getTreasury();
-        ITreasury(treasury).exchangeEVE{ value: mgtFee }(
-            to,
-            address(0x0),
-            0
-        );
+        for (uint i = 1; i < _tokenIds.current() + 1; i++) {
+            uint mgtFee = balanceOf(mgtFeeAccount, i);
+
+            // special handle for ether
+            if (mgtFee > 0 && i == 1) {
+                _burn(mgtFeeAccount, i, mgtFee);
+                ITreasury(treasury).exchangeEVE{ value: mgtFee }(to, contractAddress(i), 0);
+            }
+
+            if (mgtFee > 0 && i != 1) {
+                _burn(mgtFeeAccount, i, mgtFee);
+                ITreasury(treasury).exchangeEVE(to, contractAddress(i), mgtFee);
+            }
+        }
 
         return true;
     }

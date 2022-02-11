@@ -69,7 +69,7 @@ contract AdamBeaconProxy is IAdam, Initializable, UUPSUpgradeable {
 
     function _initStrategy(address _assetManager, string calldata _name) internal returns (address) {
         BeaconProxy _s = new BeaconProxy(address(strategyBeacon), "");
-        IStrategy(address(_s)).initialize(_assetManager, _name);
+        IStrategy(address(_s)).initialize(_assetManager, _name, address(this));
         return address(_s);
     }
 
@@ -94,11 +94,5 @@ contract AdamBeaconProxy is IAdam, Initializable, UUPSUpgradeable {
 
     function setTreasury(address treasury) external override {
         _treasury = ITreasury(treasury);
-    }
-
-    function getTreasury() external view override returns (address) {
-        require(assetManagerRegistry[msg.sender], "not assetManager");
-        
-        return address(_treasury);
     }
 }

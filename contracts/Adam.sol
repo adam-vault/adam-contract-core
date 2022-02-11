@@ -11,7 +11,10 @@ import "./interface/IStrategy.sol";
 import "./interface/IManageable.sol";
 import "./interface/IAdam.sol";
 import "./interface/ITreasury.sol";
+import "./interface/IManagementFee.sol";
 import "hardhat/console.sol";
+
+import "./Strategy.sol";
 
 contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address public strategy;
@@ -20,7 +23,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address[] public assetManagers;
     address[] private _strategies;
     address[] public publicStrategies;
-    ITreasury public _treasury;
+    address public treasury;
 
     mapping(address => bool) public override assetManagerRegistry;
     mapping(address => bool) public strategyRegistry;
@@ -65,7 +68,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
 
     function _initStrategy(address _assetManager, string calldata _name) internal returns (address) {
         ERC1967Proxy _s = new ERC1967Proxy(strategy, "");
-        IStrategy(address(_s)).initialize(_assetManager, _name);
+        IStrategy(address(_s)).initialize(_assetManager, _name, address(this));
         return address(_s);
     }
 
@@ -88,13 +91,17 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         return addr;
     }
 
-    function setTreasury(address treasury) external override {
-        _treasury = ITreasury(treasury);
+    function setTreasury(address _treasury) external override {
+        treasury = _treasury;
     }
 
-    function getTreasury() external view override returns (address) {
-        require(assetManagerRegistry[msg.sender], "not assetManager");
-        
-        return address(_treasury);
+    function redeemAllManagementFee() public {
+        //require(msg.sender == "Admin")
+
+        for (uint i = 0; i < countStrategies(); i ++) {
+            address mgtFeeAccount = Strategy(_strategies[i]).mtFeeAccount();
+
+            IManagementFee(mgtFeeAccount).redemption();
+        }
     }
 }

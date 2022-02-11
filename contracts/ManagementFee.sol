@@ -13,18 +13,26 @@ import "./interface/IStrategy.sol";
 contract ManagementFee is ERC1155Holder {
     address public owner;
     address public strategy;
+    address public adam;
+    address public beneficiary;
 
-    modifier isOwner() {
-        require(msg.sender == owner, "Caller is not owner");
+    modifier isOwnerOrAdam() {
+        require(msg.sender == owner || msg.sender == adam, "Caller is not owner or Adam Admin");
         _;
     }
     
-    constructor(address _owner, address _strategy){
+    constructor(address _owner, address _strategy, address _adam) {
         owner = _owner;
         strategy = _strategy;
+        adam = _adam;
     }
 
-    function redemption(address to) external isOwner returns (bool){
-        return IStrategy(strategy).redempManagementFee(to);
+    function setBeneficiary(address _beneficiary) external isOwnerOrAdam {
+        beneficiary = _beneficiary;
+    }
+
+    function redemption() external isOwnerOrAdam returns (bool) {
+        require(beneficiary != address(0x0), "No beneficiary account" );
+        return IStrategy(strategy).redempManagementFee(beneficiary);
     }
 }

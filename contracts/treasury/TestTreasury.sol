@@ -9,7 +9,7 @@ import "../interface/ITreasury.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "../base/AdamOwned.sol";
 import "hardhat/console.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 
@@ -18,7 +18,6 @@ contract TestTreasury is ERC20Upgradeable, AdamOwned, ITreasury {
 
     string[] public basketCoins;
     mapping(string => uint256) public basket;
-    mapping(string => AggregatorV3Interface) public priceFeed;
 
     IPriceConverter private _priceConverter;
     address private _owner;
@@ -33,25 +32,22 @@ contract TestTreasury is ERC20Upgradeable, AdamOwned, ITreasury {
         _priceConverter = IPriceConverter(priceConverter);
         _owner = _msgSender();
 
-        basketCoins = ["ETH"];
+        basketCoins = ["ETH", "A"];
 
         // value would need to div by 10**4
-        basket["ETH"] = 10000;
-
-        /**
-            provided by chainlink
-            REMARK: ETH qoute = 18 decimals, USD quote = 8 decimals
-        */
-
-        //kovan
-        priceFeed["ETH/USD"] = AggregatorV3Interface(0x9326BFA02ADD2366b30bacB125260Af641031331);
+        basket["ETH"] = 5000;
+        basket["A"] = 5000;
     }
 
     function getXUsdPrice(string memory coin) public pure returns (int256) {
         if (
             keccak256(abi.encodePacked(coin)) == keccak256(abi.encodePacked("ETH"))
         ) {
-            return 307000000000;
+            return 1000000000;
+        } else if (
+            keccak256(abi.encodePacked(coin)) == keccak256(abi.encodePacked("A"))
+        ) {
+            return 500000000;
         }
 
         return 0;
@@ -72,6 +68,42 @@ contract TestTreasury is ERC20Upgradeable, AdamOwned, ITreasury {
     }
 
     function exchangeEVE(address to, address token, uint256 quantity) external payable onlyAssetManager override returns (int256) {
+        address from = _msgSender();
+
+        string memory tokenSymbol = "";
+        if (msg.value != 0) {
+            tokenSymbol = "ETH";
+            quantity = msg.value;
+        } else {
+            tokenSymbol = ERC20(token).symbol();
+        }
+
+        int256 evePrice = int256(getEVEPrice());
+        int256 coinPrice = getXUsdPrice(tokenSymbol);
+        emit PreExchangeEve(coinPrice, tokenSymbol, quantity);
+
+        //UNKNOW / USD / EDT / USD ==> UNKNOW / EDT
+        int256 perEVE = _priceConverter.getDerivedPrice(
+            coinPrice,
+            8,
+            evePrice,
+            8,
+            18
+        );
+        
+        emit ExchangeEve(coinPrice, tokenSymbol, quantity, perEVE);
+
+        uint256 amount = uint256(perEVE) * quantity / (10 ** 18);
+        if (keccak256(abi.encodePacked(tokenSymbol)) != keccak256(abi.encodePacked("ETH"))) {
+            ERC20(token).transferFrom(from, address(this), quantity);
+        }
+
+        _mint(to, amount);
+        return int(amount);
+    }
+
+    // remove onlyAssetmanager for ease of testing
+    function exchangeEVE2(address to, address token, uint256 quantity) public payable returns (int256) {
         address from = _msgSender();
 
         string memory tokenSymbol = "";
