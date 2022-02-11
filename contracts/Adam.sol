@@ -95,7 +95,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         treasury = _treasury;
     }
 
-    function redempAllManagementFee() public {
+    function redeemAllManagementFee() public {
         //require(msg.sender == "Admin")
 
         for (uint i = 0; i < countStrategies(); i ++) {

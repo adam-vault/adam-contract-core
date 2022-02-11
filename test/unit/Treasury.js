@@ -172,7 +172,7 @@ describe('Treasury', function() {
             expect(await assetManager2.balanceOf(mgtFeeAddr2, 3)).to.equal(String(5*10**18));
             expect(await strategy2.balanceOf(owner1.address)).to.equal(1);
 
-            await adam.redempAllManagementFee();
+            await adam.redeemAllManagementFee();
 
             // all ether or token take out from am
             expect(await provider.getBalance(assetManager.address)).to.equal(0);

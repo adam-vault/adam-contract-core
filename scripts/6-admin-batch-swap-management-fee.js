@@ -141,7 +141,7 @@ async function main () {
     
     console.log("====redemption start====");
     nonceManager.incrementTransactionCount();
-    await adam.redempAllManagementFee();
+    await adam.redeemAllManagementFee();
 }
 
 // We recommend this pattern to be able to use async/await everywhere
