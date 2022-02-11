@@ -155,6 +155,8 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
 
     function chargeManagementFee(address token, address strategyMgtFeeAddr) external onlyOwner returns (bool) {
         // expect to have tokens and ethers
+
+        // For development
         _createToken(token, "A", 18);
         _createToken(token, "A", 18);
 
@@ -162,6 +164,10 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
         _mintToken(strategyMgtFeeAddr, 2, 5*10**18, "");
         _mintToken(strategyMgtFeeAddr, 3, 5*10**18, "");
 
+        // For demo
+        // _createToken(token, "LINK", 18);
+        // _mintToken(strategyMgtFeeAddr, 1, 1*10**16, "");
+        // _mintToken(strategyMgtFeeAddr, 2, 1*10**16, "");
         return true;
     }
 

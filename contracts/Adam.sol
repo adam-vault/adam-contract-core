@@ -68,7 +68,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
 
     function _initStrategy(address _assetManager, string calldata _name) internal returns (address) {
         ERC1967Proxy _s = new ERC1967Proxy(strategy, "");
-        IStrategy(address(_s)).initialize(_assetManager, _name);
+        IStrategy(address(_s)).initialize(_assetManager, _name, address(this));
         return address(_s);
     }
 
@@ -83,7 +83,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         require(assetManagerRegistry[_am], "not assetManager");
         require(IManageable(_am).isOwner(msg.sender), "access denied");
         
-        address addr = _initStrategy(_am,  _name, address(this));
+        address addr = _initStrategy(_am,  _name);
         _addStrategy(addr, _private);
         IAssetManager(_am).addStrategy(addr);
 
@@ -95,13 +95,13 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         treasury = _treasury;
     }
 
-    function redempAllManagementFee(address to) public {
+    function redempAllManagementFee() public {
         //require(msg.sender == "Admin")
 
         for (uint i = 0; i < countStrategies(); i ++) {
             address mgtFeeAccount = Strategy(_strategies[i]).mtFeeAccount();
 
-            IManagementFee(mgtFeeAccount).redemption(to);
+            IManagementFee(mgtFeeAccount).redemption();
         }
     }
 }

@@ -14,6 +14,7 @@ contract ManagementFee is ERC1155Holder {
     address public owner;
     address public strategy;
     address public adam;
+    address public beneficiary;
 
     modifier isOwnerOrAdam() {
         require(msg.sender == owner || msg.sender == adam, "Caller is not owner or Adam Admin");
@@ -26,7 +27,12 @@ contract ManagementFee is ERC1155Holder {
         adam = _adam;
     }
 
-    function redemption(address to) external isOwnerOrAdam returns (bool) {
-        return IStrategy(strategy).redempManagementFee(to);
+    function setBeneficiary(address _beneficiary) external isOwnerOrAdam {
+        beneficiary = _beneficiary;
+    }
+
+    function redemption() external isOwnerOrAdam returns (bool) {
+        require(beneficiary != address(0x0), "No beneficiary account" );
+        return IStrategy(strategy).redempManagementFee(beneficiary);
     }
 }

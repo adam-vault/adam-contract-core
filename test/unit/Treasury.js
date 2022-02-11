@@ -104,7 +104,8 @@ describe('Treasury', function() {
             expect(await strategy.balanceOf(owner1.address)).to.equal(1);
 
             const mgtFee = await ethers.getContractAt('ManagementFee', mgtFeeAddr);
-            await mgtFee.redemption(owner2.address);
+            await mgtFee.setBeneficiary(owner2.address);
+            await mgtFee.redemption();
 
             // all ether or token take out from am
             expect(await provider.getBalance(assetManager.address)).to.equal(0);
@@ -141,6 +142,8 @@ describe('Treasury', function() {
             expect(await provider.getBalance(assetManager.address)).to.equal(ethers.utils.parseEther('10.0'));
 
             const mgtFeeAddr = await strategy.mtFeeAccount();
+            const mgtFee = await ethers.getContractAt('ManagementFee', mgtFeeAddr);
+            await mgtFee.setBeneficiary(owner2.address);
             await assetManager.chargeManagementFee(tokenA.address, mgtFeeAddr);
             await tokenA.mint(assetManager.address, String(10*10**18));
             expect(await assetManager.balanceOf(mgtFeeAddr, 1)).to.equal(String(10*10**18));
@@ -160,6 +163,8 @@ describe('Treasury', function() {
             expect(await provider.getBalance(assetManager.address)).to.equal(ethers.utils.parseEther('10.0'));
 
             const mgtFeeAddr2 = await strategy2.mtFeeAccount();
+            const mgtFee2 = await ethers.getContractAt('ManagementFee', mgtFeeAddr2);
+            await mgtFee2.setBeneficiary(owner2.address);
             await assetManager2.chargeManagementFee(tokenA.address, mgtFeeAddr2);
             await tokenA.mint(assetManager2.address, String(10*10**18));
             expect(await assetManager2.balanceOf(mgtFeeAddr2, 1)).to.equal(String(10*10**18));
@@ -167,7 +172,7 @@ describe('Treasury', function() {
             expect(await assetManager2.balanceOf(mgtFeeAddr2, 3)).to.equal(String(5*10**18));
             expect(await strategy2.balanceOf(owner1.address)).to.equal(1);
 
-            await adam.redempAllManagementFee(owner2.address);
+            await adam.redempAllManagementFee();
 
             // all ether or token take out from am
             expect(await provider.getBalance(assetManager.address)).to.equal(0);
