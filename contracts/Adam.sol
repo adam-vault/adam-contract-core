@@ -19,11 +19,11 @@ import "./Strategy.sol";
 contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address public strategy;
     address public assetManager;
+    address public override treasury;
 
     address[] public assetManagers;
     address[] private _strategies;
     address[] public publicStrategies;
-    address public treasury;
 
     mapping(address => bool) public override assetManagerRegistry;
     mapping(address => bool) public strategyRegistry;

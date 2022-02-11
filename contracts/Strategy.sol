@@ -48,7 +48,7 @@ contract Strategy is Initializable, UUPSUpgradeable, ERC721Upgradeable, IStrateg
     }
 
     modifier onlyManagementFee {
-        require(mtFeeAccount == msg.sender, 'Access denied');
+        require(mtFeeAccount == msg.sender, "Access denied");
         _;
     }
 
@@ -103,8 +103,8 @@ contract Strategy is Initializable, UUPSUpgradeable, ERC721Upgradeable, IStrateg
         ));
     }
 
-    function redempManagementFee(address to) external onlyManagementFee override returns (bool) {
-        IAssetManager(assetManager).redempManagementFee(msg.sender, to);
+    function redeemManagementFee(address to) external onlyManagementFee override returns (bool) {
+        IAssetManager(assetManager).redeemManagementFee(msg.sender, to);
         return true;
     }
 
