@@ -6,6 +6,8 @@ import "../lib/BytesLib.sol";
 
 library UniswapSwapper {
 
+    using BytesLib for bytes;
+
     address public constant UNISWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
     address public constant ETH = address(0x0);
     address public constant WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
@@ -27,10 +29,10 @@ library UniswapSwapper {
 
     function _decodeWETH9(bytes memory _data, uint256 amount) public pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) {
 
-        if(BytesLib.toBytes4(_data, 0) == 0xd0e30db0) {
+        if(_data.toBytes4(0) == 0xd0e30db0) {
             // deposit()
             return (ETH, WETH, amount, amount);
-        } else if (BytesLib.toBytes4(_data, 0) == 0x2e1a7d4d) {
+        } else if (_data.toBytes4(0) == 0x2e1a7d4d) {
             // withdraw(uint256)
             return (WETH, ETH, amount, amount);
         }
@@ -41,15 +43,15 @@ library UniswapSwapper {
     function _decodeUniswapRouter(bytes memory _data, bytes[] memory _results, uint256 amount) public pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
 
         // Uniswap multicall(uint256,bytes[])
-        require(BytesLib.toBytes4(_data, 0) == 0x5ae401dc, "Unexpected");
+        require(_data.toBytes4(0) == 0x5ae401dc, "Unexpected");
 
-        (, bytes[] memory multicallBytesArray) = abi.decode(BytesLib.slice(_data, 4, _data.length - 4), (uint256, bytes[]));
+        (, bytes[] memory multicallBytesArray) = abi.decode(_data.slice(4, _data.length - 4), (uint256, bytes[]));
 
         for(uint i=0; i < multicallBytesArray.length; i++) {
 
             // exactOutputSingle((address,address,uint24,address,uint256,uint256,uint160))
-            if(BytesLib.toBytes4(multicallBytesArray[i], 0) == 0x5023b4df) {
-                (address _tokenIn, address _tokenOut,,, uint256 _amountOut, uint256 _amountInMaximum,) = abi.decode(BytesLib.slice(multicallBytesArray[i], 4, multicallBytesArray[i].length - 4), (address, address, uint24, address, uint256, uint256, uint160));
+            if(multicallBytesArray[i].toBytes4(0) == 0x5023b4df) {
+                (address _tokenIn, address _tokenOut,,, uint256 _amountOut, uint256 _amountInMaximum,) = abi.decode(multicallBytesArray[i].slice(4, multicallBytesArray[i].length - 4), (address, address, uint24, address, uint256, uint256, uint160));
                 tokenIn = _tokenIn;
                 tokenOut = _tokenOut;
                 amountOut += _amountOut;
@@ -62,8 +64,8 @@ library UniswapSwapper {
                 }
             }
             // exactInputSingle((address,address,uint24,address,uint256,uint256,uint160))
-            else if (BytesLib.toBytes4(multicallBytesArray[i], 0) == 0x04e45aaf) {
-            (address _tokenIn, address _tokenOut,,, uint256 _amountIn,uint256 _amountOutMinimum,) = abi.decode(BytesLib.slice(multicallBytesArray[i], 4, multicallBytesArray[i].length - 4), (address, address, uint24, address, uint256, uint256, uint160));
+            else if (multicallBytesArray[i].toBytes4(0) == 0x04e45aaf) {
+            (address _tokenIn, address _tokenOut,,, uint256 _amountIn,uint256 _amountOutMinimum,) = abi.decode(multicallBytesArray[i].slice(4, multicallBytesArray[i].length - 4), (address, address, uint24, address, uint256, uint256, uint160));
                 tokenIn = _tokenIn;
                 tokenOut = _tokenOut;
                 amountIn += _amountIn;
@@ -76,8 +78,8 @@ library UniswapSwapper {
                 }
             } 
             // exactInput((bytes,address,uint256,uint256))
-            else if (BytesLib.toBytes4(multicallBytesArray[i], 0) == 0xb858183f) {
-                (bytes memory _path,,uint256 _amountIn,uint256 _amountOutMinimum) = abi.decode(BytesLib.slice(multicallBytesArray[i], 4, multicallBytesArray[i].length - 4), (bytes, uint24, uint256, uint256));
+            else if (multicallBytesArray[i].toBytes4(0) == 0xb858183f) {
+                (bytes memory _path,,uint256 _amountIn,uint256 _amountOutMinimum) = abi.decode(multicallBytesArray[i].slice(4, multicallBytesArray[i].length - 4), (bytes, uint24, uint256, uint256));
                 (address _tokenIn,,address _tokenOut) = abi.decode(_path, (address, uint24, address));
                 tokenIn = _tokenIn;
                 tokenOut = _tokenOut;
@@ -91,8 +93,8 @@ library UniswapSwapper {
                 }
             }
             // exactOutput((bytes,address,uint256,uint256)) 
-            else if (BytesLib.toBytes4(multicallBytesArray[i], 0) == 0x09b81346) {
-                (bytes memory _path,, uint256 _amountOut, uint256 _amountInMaximum) = abi.decode(BytesLib.slice(multicallBytesArray[i], 4, multicallBytesArray[i].length - 4), (bytes, uint24, uint256, uint256));
+            else if (multicallBytesArray[i].toBytes4(0) == 0x09b81346) {
+                (bytes memory _path,, uint256 _amountOut, uint256 _amountInMaximum) = abi.decode(multicallBytesArray[i].slice(4, multicallBytesArray[i].length - 4), (bytes, uint24, uint256, uint256));
                 (address _tokenIn,,address _tokenOut) = abi.decode(_path, (address, uint24, address));
                 tokenIn = _tokenIn;
                 tokenOut = _tokenOut;
@@ -106,8 +108,8 @@ library UniswapSwapper {
                 }
             }
             // swapExactTokensForTokens(uint256,uint256,address[],address)
-            else if (BytesLib.toBytes4(multicallBytesArray[i], 0) == 0x472b43f3) {
-                (uint256 _amountIn, uint256 _amountOutMinimum, address[] memory path,) = abi.decode(BytesLib.slice(multicallBytesArray[i], 4, multicallBytesArray[i].length - 4), (uint256, uint256, address[], address));
+            else if (multicallBytesArray[i].toBytes4(0) == 0x472b43f3) {
+                (uint256 _amountIn, uint256 _amountOutMinimum, address[] memory path,) = abi.decode(multicallBytesArray[i].slice(4, multicallBytesArray[i].length - 4), (uint256, uint256, address[], address));
                 address _tokenIn = path[0];
                 address _tokenOut = path[path.length - 1];
                 tokenIn = _tokenIn;
@@ -122,8 +124,8 @@ library UniswapSwapper {
                 }
             }
             // swapTokensForExactTokens(uint256,uint256,address[],address)
-            else if (BytesLib.toBytes4(multicallBytesArray[i], 0) == 0x42712a67) {
-                (uint256 _amountOut, uint256 _amountInMaximum, address[] memory path,) = abi.decode(BytesLib.slice(multicallBytesArray[i], 4, multicallBytesArray[i].length - 4), (uint256, uint256, address[], address));
+            else if (multicallBytesArray[i].toBytes4(0) == 0x42712a67) {
+                (uint256 _amountOut, uint256 _amountInMaximum, address[] memory path,) = abi.decode(multicallBytesArray[i].slice(4, multicallBytesArray[i].length - 4), (uint256, uint256, address[], address));
                 address _tokenIn = path[0];
                 address _tokenOut = path[path.length - 1];
                 tokenIn = _tokenIn;
@@ -138,7 +140,7 @@ library UniswapSwapper {
                 }
             }
             // refundETH() 
-            else if (BytesLib.toBytes4(multicallBytesArray[i], 0) == 0x12210e8a) {
+            else if (multicallBytesArray[i].toBytes4(0) == 0x12210e8a) {
                 // no need handling
             } else {
                 revert("Unexpected");

@@ -228,5 +228,9 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
 
     }
 
+    function decodeSwapData(address to, bytes memory _data, uint256 value) public pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+        return UniswapSwapper.decodeUniswapData(to, _data, value);
+    }
+
     receive() external payable {}
 }
