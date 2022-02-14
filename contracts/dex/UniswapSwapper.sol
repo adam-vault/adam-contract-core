@@ -6,17 +6,18 @@ import "../lib/BytesLib.sol";
 
 library UniswapSwapper {
 
-    address constant EthAddress = address(0x0);
-    address constant WethAddress = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
+    address public constant UNISWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+    address public constant ETH = address(0x0);
+    address public constant WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
 
     function decodeUniswapData(address to, bytes memory _data, uint256 amount) public pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         
-        if(to == address(0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45)) {
+        if(to == UNISWAP_ROUTER) {
             // Uniswap Swap Router
             bytes[] memory emptyArray;
             //TODO: find a better way to handle with/without results
             (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, emptyArray, amount);
-        } else if (to == WethAddress) {
+        } else if (to == WETH) {
             // WETH9
             (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
         } else {
@@ -28,10 +29,10 @@ library UniswapSwapper {
 
         if(BytesLib.toBytes4(_data, 0) == 0xd0e30db0) {
             // deposit()
-            return (EthAddress, WethAddress, amount, amount);
+            return (ETH, WETH, amount, amount);
         } else if (BytesLib.toBytes4(_data, 0) == 0x2e1a7d4d) {
             // withdraw(uint256)
-            return (WethAddress, EthAddress, amount, amount);
+            return (WETH, ETH, amount, amount);
         }
 
         revert("Unexpected");
@@ -145,8 +146,8 @@ library UniswapSwapper {
         }
 
         // Uniswap treat ETH as WETH
-        if(tokenIn == WethAddress && amount >= amountIn) {
-            tokenIn = EthAddress;
+        if(tokenIn == WETH && amount >= amountIn) {
+            tokenIn = ETH;
         }
     }    
 }
