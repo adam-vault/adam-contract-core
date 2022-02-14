@@ -22,6 +22,7 @@ import "./base/AdamOwned.sol";
 import "hardhat/console.sol";
 
 import "./lib/ToString.sol";
+import "./dex/UniswapSwapper.sol";
 
 contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable, IAssetManager, ERC721HolderUpgradeable, AdamOwned {
     // list strategy
@@ -37,9 +38,11 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     mapping(address => bool) public subscriptions;
     mapping(address => uint) erc20ToTokenId;
     mapping(uint => address) tokenIdToErc20;
-    // address constant WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
 
     string public managerName;
+
+    address public constant UNISWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
+    address public constant WETH9 = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
 
     event SubscribeStrategy(address strategy, address portfolio, uint price);
 
@@ -192,4 +195,42 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     }
 
     function _authorizeUpgrade(address newImplementation) internal override {}
+
+    // TODO: add onlyOwner
+    function execSwapTransaction(address to, bytes memory _data, uint256 value, address[] calldata portfolio) external {
+        
+        (bool success, bytes memory results) = to.call{ value: value }(_data);
+
+        require(success == true, "Failed");
+        
+        if(to == UNISWAP_ROUTER) {
+            // Uniswap Swap Router
+            (bytes[] memory decodedResults) = abi.decode(results, (bytes[]));
+
+            (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) = UniswapSwapper._decodeUniswapRouter(_data, decodedResults, value);
+            if(estimatedIn == true || estimatedOut == true) {
+                revert("Unexpected");
+            }
+
+            // TODO: handle multiple portfolio
+            _swap(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
+
+        } else if (to == WETH9) {
+            // WETH9
+            (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) = UniswapSwapper._decodeWETH9(_data, value);
+
+            // TODO: handle multiple portfolio
+            _swap(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
+
+        } else {
+            revert("Unexpected");
+        }
+
+    }
+
+    function decodeSwapData(address to, bytes memory _data, uint256 value) public pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+        return UniswapSwapper.decodeUniswapData(to, _data, value);
+    }
+
+    receive() external payable {}
 }

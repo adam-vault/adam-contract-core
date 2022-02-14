@@ -37,6 +37,7 @@
     "@ethersproject/experimental": "^5.5.0",
     "@openzeppelin/contracts": "^4.4.1",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
+    "@uniswap/v3-periphery": "^1.4.0",
     "hardhat-contract-sizer": "^2.4.0",
     "lodash": "^4.17.21"
   }
