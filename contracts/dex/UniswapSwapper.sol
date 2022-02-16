@@ -153,6 +153,14 @@ library UniswapSwapper {
                     estimatedIn = true;
                 }
             }
+            // unwrapWETH9(uint256,address)
+            else if (multicallBytesArray[i].toBytes4(0) == 0x49404b7c) {
+                if (tokenOut == WETH && i == multicallBytesArray.length - 1) {
+                    tokenOut = ETH;
+                } else {
+                    revert("Unexpected");
+                }
+            }
             // refundETH() 
             else if (multicallBytesArray[i].toBytes4(0) == 0x12210e8a) {
                 // no need handling
