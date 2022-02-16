@@ -22,6 +22,7 @@ import "./base/AdamOwned.sol";
 import "hardhat/console.sol";
 
 import "./lib/ToString.sol";
+import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
 
 contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable, IAssetManager, ERC721HolderUpgradeable, AdamOwned {
@@ -29,6 +30,7 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     using Counters for Counters.Counter;
     using Strings for uint256;
     using Concat for string;
+    using BytesLib for bytes;
 
     Counters.Counter private _ERC20tokenIds;
     IStrategy[] public strategyList;
@@ -197,34 +199,27 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     function _authorizeUpgrade(address newImplementation) internal override {}
 
     // TODO: add onlyOwner
-    function execSwapTransaction(address to, bytes memory _data, uint256 value, address[] calldata portfolio) external {
+    function execSwapTransaction(address to, bytes memory _data, uint256 value, address[] calldata portfolio) external returns(bool) {
         
         (bool success, bytes memory results) = to.call{ value: value }(_data);
 
         require(success == true, "Failed");
-        
-        if(to == UNISWAP_ROUTER) {
-            // Uniswap Swap Router
-            (bytes[] memory decodedResults) = abi.decode(results, (bytes[]));
 
-            (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) = UniswapSwapper._decodeUniswapRouter(_data, decodedResults, value);
-            if(estimatedIn == true || estimatedOut == true) {
-                revert("Unexpected");
-            }
+        // approve(address,uint256) for ERC20
+        if(_data.toBytes4(0) == 0x095ea7b3) {
+            // no need decode
+            return true;
+        }
 
-            // TODO: handle multiple portfolio
-            _swap(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
+        (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) = UniswapSwapper.decodeUniswapData(to, _data, value, results);
 
-        } else if (to == WETH9) {
-            // WETH9
-            (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) = UniswapSwapper._decodeWETH9(_data, value);
-
-            // TODO: handle multiple portfolio
-            _swap(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
-
-        } else {
+        if(estimatedIn == true || estimatedOut == true) {
             revert("Unexpected");
         }
+        
+        _swap(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
+
+        return true;
 
     }
 
