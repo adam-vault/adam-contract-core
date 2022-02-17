@@ -11,7 +11,7 @@ async function main () {
     const [creator] = await hre.ethers.getSigners();
     const provider = await hre.ethers.getDefaultProvider('https://eth-kovan.alchemyapi.io/v2/ZILdPh7v4040WanO-SV3JFj6ic6SQieq');
    
-    const adam = await hre.ethers.getContractAt('Adam', '0x20013137e03d5a6172FC832ED5A6969C741DD713');
+    const adam = await hre.ethers.getContractAt('Adam', '0x6F2c52F10EFED95e7FF5E4d10C3f79d4d2387519');
 
     const linkToken = new hre.ethers.Contract('0xa36085F69e2889c224210F603D836748e7dC0088', [
         {
@@ -69,8 +69,12 @@ async function main () {
     tx = await adam.createStrategy(assetManager1.address, 'Test2', false);
     await tx.wait();
 
+    console.log("===strategy(Test2) created===");
+
     tx = await adam.createStrategy(assetManager1.address, 'Test3', false);
     await tx.wait();
+
+    console.log("===strategy(Test3) created===");
 
     const strategy2Addr = await adam.publicStrategies(1);
     const strategy2 = await ethers.getContractAt('Strategy', strategy2Addr);
@@ -88,7 +92,7 @@ async function main () {
     tx = await strategy3.deposit({ value: ethers.utils.parseEther('0.01') });
     await tx.wait();
 
-    console.log("===Balance of asset manager==", await provider.getBalance(assetManager1.address));
+    console.log("===Balance of asset manager==", (await provider.getBalance(assetManager1.address)) / (10 ** 18));
 
     console.log("====(Strategy 2)=====");
     const mgtFeeAddr2 = await strategy2.mtFeeAccount();
@@ -112,6 +116,7 @@ async function main () {
 
     console.log("====link token transferred=====");
     console.log("====(Strategy 3)=====");
+    nonceManager.incrementTransactionCount();
     const mgtFeeAddr3 = await strategy3.mtFeeAccount();
     const mgtFee3 = await ethers.getContractAt('ManagementFee', mgtFeeAddr3);
     
@@ -132,12 +137,15 @@ async function main () {
     await tx.wait();
 
     
-    console.log("Balance of managementFee2(ether): ", await assetManager1.balanceOf(mgtFeeAddr2, 1));
-    console.log("Balance of managementFee2(LINK): ", await assetManager1.balanceOf(mgtFeeAddr2, 2));
-    console.log("Balance of managementFee3(ether): ", await assetManager1.balanceOf(mgtFeeAddr3, 1));
-    console.log("Balance of managementFee3(LINK): ", await assetManager1.balanceOf(mgtFeeAddr3, 2));
-    console.log("Balance of asset manager(ether):", await provider.getBalance(assetManager1.address));
-    console.log("Balance of asset manager(LINK):", await linkToken.balanceOf(assetManager1.address));
+    console.log("Balance of managementFee2(ether): ", (await assetManager1.balanceOf(mgtFeeAddr2, 1)) / (10**18));
+    console.log("Balance of managementFee2(LINK): ", (await assetManager1.balanceOf(mgtFeeAddr2, 2)) / (10**18));
+    console.log("Balance of managementFee3(ether): ", (await assetManager1.balanceOf(mgtFeeAddr3, 1)) / (10**18));
+    console.log("Balance of managementFee3(LINK): ", (await assetManager1.balanceOf(mgtFeeAddr3, 2)) / (10**18));
+    console.log("Balance of asset manager(ether):", (await provider.getBalance(assetManager1.address))/  (10**18));
+    console.log("Balance of asset manager(LINK):", (await linkToken.balanceOf(assetManager1.address)) / (10**18));
+
+    console.log("Balance of executor:", (await provider.getBalance(creator.address)) / (10**18));
+    console.log("Estimated gas fee:", (await adam.estimateGas.redeemAllManagementFee()) / (10**9));
     
     console.log("====redemption start====");
     nonceManager.incrementTransactionCount();

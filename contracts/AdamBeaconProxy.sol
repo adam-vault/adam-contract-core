@@ -13,6 +13,7 @@ import "./interface/IStrategy.sol";
 import "./interface/IManageable.sol";
 import "./interface/IAdam.sol";
 import "./interface/ITreasury.sol";
+import "./interface/IManagementFee.sol";
 import "hardhat/console.sol";
 
 contract AdamBeaconProxy is IAdam, Initializable, UUPSUpgradeable {
@@ -95,5 +96,15 @@ contract AdamBeaconProxy is IAdam, Initializable, UUPSUpgradeable {
 
     function setTreasury(address _treasury) external override {
         treasury = _treasury;
+    }
+
+    function redeemAllManagementFee() external override {
+        //require(msg.sender == "Admin")
+
+        for (uint i = 0; i < countStrategies(); i ++) {
+            address mgtFeeAccount = IStrategy(_strategies[i]).mtFeeAccount();
+
+            IManagementFee(mgtFeeAccount).redemption();
+        }
     }
 }

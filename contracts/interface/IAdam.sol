@@ -6,4 +6,5 @@ interface IAdam {
     function assetManagerRegistry(address manager) external view returns (bool);
     function setTreasury(address _treasury) external;
     function treasury() external view returns (address);
+    function redeemAllManagementFee() external;
 }
