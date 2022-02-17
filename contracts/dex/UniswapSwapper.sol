@@ -27,6 +27,20 @@ library UniswapSwapper {
         }
     }
 
+    function decodeUniswapData(address to, bytes memory _data, uint256 amount, bytes memory result) public pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+        if(to == UNISWAP_ROUTER) {
+            // Uniswap Swap Router
+            (bytes[] memory decodedResults) = abi.decode(result, (bytes[]));
+            //TODO: find a better way to handle with/without results
+            (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, decodedResults, amount);
+        } else if (to == WETH) {
+            // WETH9
+            (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
+        } else {
+            revert("Unexpected");
+        }
+    }
+
     function _decodeWETH9(bytes memory _data, uint256 amount) public pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) {
 
         if(_data.toBytes4(0) == 0xd0e30db0) {
@@ -137,6 +151,14 @@ library UniswapSwapper {
                 } else {
                     amountIn += _amountInMaximum;
                     estimatedIn = true;
+                }
+            }
+            // unwrapWETH9(uint256,address)
+            else if (multicallBytesArray[i].toBytes4(0) == 0x49404b7c) {
+                if (tokenOut == WETH && i == multicallBytesArray.length - 1) {
+                    tokenOut = ETH;
+                } else {
+                    revert("Unexpected");
                 }
             }
             // refundETH() 
