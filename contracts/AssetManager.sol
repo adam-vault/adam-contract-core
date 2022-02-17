@@ -47,6 +47,7 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     address public constant WETH9 = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
 
     event SubscribeStrategy(address strategy, address portfolio, uint price);
+    event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
 
     function initialize(address _adam, address _owner, string memory _managerName) public override initializer {
         __ERC721Holder_init();
@@ -218,6 +219,7 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
         }
         
         _swap(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
+        emit SwapToken(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
 
         return true;
 
