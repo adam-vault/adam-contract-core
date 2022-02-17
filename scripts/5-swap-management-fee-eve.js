@@ -11,8 +11,8 @@ async function main () {
     const [creator] = await hre.ethers.getSigners();
     const provider = await hre.ethers.getDefaultProvider('https://eth-kovan.alchemyapi.io/v2/ZILdPh7v4040WanO-SV3JFj6ic6SQieq');
    
-    const adam = await hre.ethers.getContractAt('Adam', '0xf35ad9EdB66A2731510cD8a63a883ad4370abD08');
-    const treasury = await hre.ethers.getContractAt('Treasury', '0x712586733f78D8133485D60faBD8e027E1F2c836');
+    const adam = await hre.ethers.getContractAt('Adam', '0x6F2c52F10EFED95e7FF5E4d10C3f79d4d2387519');
+    const treasury = await hre.ethers.getContractAt('Treasury', '0xDcca05DE86F65f262448916b6ECe0F6eC7637788');
 
     const linkToken = new hre.ethers.Contract('0xa36085F69e2889c224210F603D836748e7dC0088', [
         {
@@ -84,7 +84,7 @@ async function main () {
     nonceManager.incrementTransactionCount();
     tx = await strategy1.deposit({ value: ethers.utils.parseEther('0.01') });
     await tx.wait();
-    console.log("===Balance of asset manager==", await provider.getBalance(assetManager1.address));
+    console.log("===Balance of asset manager==", (await provider.getBalance(assetManager1.address)) / (10 ** 18));
 
     const mgtFeeAddr1 = await strategy1.mtFeeAccount();
     const mgtFee1 = await ethers.getContractAt('ManagementFee', mgtFeeAddr1);
@@ -108,14 +108,14 @@ async function main () {
 
     console.log("====link token transferred=====");
     
-    console.log("Balance of managementFee(ether): ", await assetManager1.balanceOf(mgtFeeAddr1, 1));
-    console.log("Balance of managementFee(LINK): ", await assetManager1.balanceOf(mgtFeeAddr1, 2));
-    console.log("Balance of asset manager(ether):", await provider.getBalance(assetManager1.address));
-    console.log("Balance of asset manager(LINK):", await linkToken.balanceOf(assetManager1.address));
+    console.log("Balance of managementFee(ether): ", (await assetManager1.balanceOf(mgtFeeAddr1, 1)) / (10**18));
+    console.log("Balance of managementFee(LINK): ", (await assetManager1.balanceOf(mgtFeeAddr1, 2)) / (10**18));
+    console.log("Balance of asset manager(ether):", (await provider.getBalance(assetManager1.address)) / (10**18));
+    console.log("Balance of asset manager(LINK):", (await linkToken.balanceOf(assetManager1.address)) / (10**18));
 
-    console.log("Balance of executor:", await provider.getBalance(creator.address));
-    console.log("Estimated gas fee:", await mgtFee1.estimateGas.redemption());
-    console.log("Treasury:", await treasury.getEVEPrice());
+    console.log("Balance of executor:", (await provider.getBalance(creator.address)) / (10**18));
+    console.log("Estimated gas fee:", (await mgtFee1.estimateGas.redemption()) / (10**9));
+    console.log("Treasury:", (await treasury.getEVEPrice()) / (10**8));
 
     console.log("====redemption start====");
     nonceManager.incrementTransactionCount();
@@ -124,7 +124,7 @@ async function main () {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main2().catch((error) => {
+main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
