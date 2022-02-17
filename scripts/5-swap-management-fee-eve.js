@@ -11,8 +11,8 @@ async function main () {
     const [creator] = await hre.ethers.getSigners();
     const provider = await hre.ethers.getDefaultProvider('https://eth-kovan.alchemyapi.io/v2/ZILdPh7v4040WanO-SV3JFj6ic6SQieq');
    
-    const adam = await hre.ethers.getContractAt('Adam', '0x20013137e03d5a6172FC832ED5A6969C741DD713');
-    const treasury = await hre.ethers.getContractAt('Treasury', '0x326A59358Da352e1D9dcA9BecF1F38037A318f26');
+    const adam = await hre.ethers.getContractAt('Adam', '0xf35ad9EdB66A2731510cD8a63a883ad4370abD08');
+    const treasury = await hre.ethers.getContractAt('Treasury', '0x712586733f78D8133485D60faBD8e027E1F2c836');
 
     const linkToken = new hre.ethers.Contract('0xa36085F69e2889c224210F603D836748e7dC0088', [
         {
@@ -88,6 +88,7 @@ async function main () {
 
     const mgtFeeAddr1 = await strategy1.mtFeeAccount();
     const mgtFee1 = await ethers.getContractAt('ManagementFee', mgtFeeAddr1);
+    console.log("=======mgtFee1=======", mgtFeeAddr1);
     
     nonceManager.incrementTransactionCount();
     tx = await mgtFee1.setBeneficiary(creator.address);
@@ -111,7 +112,11 @@ async function main () {
     console.log("Balance of managementFee(LINK): ", await assetManager1.balanceOf(mgtFeeAddr1, 2));
     console.log("Balance of asset manager(ether):", await provider.getBalance(assetManager1.address));
     console.log("Balance of asset manager(LINK):", await linkToken.balanceOf(assetManager1.address));
-    
+
+    console.log("Balance of executor:", await provider.getBalance(creator.address));
+    console.log("Estimated gas fee:", await mgtFee1.estimateGas.redemption());
+    console.log("Treasury:", await treasury.getEVEPrice());
+
     console.log("====redemption start====");
     nonceManager.incrementTransactionCount();
     await mgtFee1.redemption();
@@ -119,7 +124,7 @@ async function main () {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
+main2().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

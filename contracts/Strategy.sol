@@ -25,7 +25,7 @@ contract Strategy is Initializable, UUPSUpgradeable, ERC721Upgradeable, IStrateg
     using Base64 for bytes;
 
     address[] public portfolioList;
-    address public mtFeeAccount;
+    address public override mtFeeAccount;
     address payable public assetManager;
     address public adam;
     Counters.Counter private _tokenIds;

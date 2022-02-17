@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "./interface/IStrategy.sol";
+import "./interface/IManagementFee.sol";
 
 /**
  * @title Owner
@@ -10,7 +11,7 @@ import "./interface/IStrategy.sol";
  */
 
 
-contract ManagementFee is ERC1155Holder {
+contract ManagementFee is ERC1155Holder, IManagementFee {
     address public owner;
     address public strategy;
     address public adam;
@@ -27,11 +28,11 @@ contract ManagementFee is ERC1155Holder {
         adam = _adam;
     }
 
-    function setBeneficiary(address _beneficiary) external isOwnerOrAdam {
+    function setBeneficiary(address _beneficiary) external override isOwnerOrAdam {
         beneficiary = _beneficiary;
     }
 
-    function redemption() external isOwnerOrAdam returns (bool) {
+    function redemption() external override isOwnerOrAdam returns (bool) {
         require(beneficiary != address(0x0), "No beneficiary account" );
         return IStrategy(strategy).redeemManagementFee(beneficiary);
     }

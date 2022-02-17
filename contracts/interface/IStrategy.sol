@@ -6,4 +6,5 @@ interface IStrategy {
     function deposit() external payable returns (address);
     function isSubscriptionValid(address target) external view returns (bool);
     function redeemManagementFee(address to) external returns (bool);
+    function mtFeeAccount() external view returns (address);
 }

@@ -14,8 +14,6 @@ import "./interface/ITreasury.sol";
 import "./interface/IManagementFee.sol";
 import "hardhat/console.sol";
 
-import "./Strategy.sol";
-
 contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address public strategy;
     address public assetManager;
@@ -95,11 +93,11 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         treasury = _treasury;
     }
 
-    function redeemAllManagementFee() public {
+    function redeemAllManagementFee() external override {
         //require(msg.sender == "Admin")
 
         for (uint i = 0; i < countStrategies(); i ++) {
-            address mgtFeeAccount = Strategy(_strategies[i]).mtFeeAccount();
+            address mgtFeeAccount = IStrategy(_strategies[i]).mtFeeAccount();
 
             IManagementFee(mgtFeeAccount).redemption();
         }
