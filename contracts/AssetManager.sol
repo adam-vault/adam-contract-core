@@ -46,6 +46,15 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     address public constant UNISWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
     address public constant WETH9 = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
 
+    struct SwappingStrategyDetails {
+        uint256 amountIn;
+        uint256 amountOut;
+        address[] portfolioList;
+        uint256 totalBalanceOfTokenIn;
+        uint256 amountInLeft;
+        uint256 amountOutLeft;
+    }
+
     event SubscribeStrategy(address strategy, address portfolio, uint price);
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
 
@@ -107,6 +116,7 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     function _swap(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount ) internal {
         _burnToken(_portfolio, _src, _srcAmount);
         _mintToken(_portfolio, _dst, _dstAmount, "");
+        emit SwapToken(_portfolio, _src, _dst, _srcAmount, _dstAmount);
     }
 
     function _ERC20tokenId(address contractAddress) public returns (uint256){
@@ -200,7 +210,7 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
     function _authorizeUpgrade(address newImplementation) internal override {}
 
     // TODO: add onlyOwner
-    function execSwapTransaction(address to, bytes memory _data, uint256 value, address[] calldata portfolio) external returns(bool) {
+    function execSwapTransaction(address to, bytes memory _data, uint256 value, address[] calldata execStrategies, uint8[] calldata ratio) external {
         
         (bool success, bytes memory results) = to.call{ value: value }(_data);
 
@@ -208,21 +218,71 @@ contract AssetManager is Initializable, UUPSUpgradeable, MultiToken, Manageable,
 
         // approve(address,uint256) for ERC20
         if(_data.toBytes4(0) == 0x095ea7b3) {
-            // no need decode
-            return true;
+            return;
         }
 
-        (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) = UniswapSwapper.decodeUniswapData(to, _data, value, results);
+        (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut,,) = UniswapSwapper.decodeUniswapData(to, _data, value, results);
 
-        if(estimatedIn == true || estimatedOut == true) {
-            revert("Unexpected");
+        _checkSwapInputValid(execStrategies, ratio);
+
+        for(uint i = 0; i < execStrategies.length; i++) {
+            //Use struc to handle variable number limitation
+            SwappingStrategyDetails memory strategyDetails;
+
+            // get strategy ratio
+            strategyDetails.amountIn = amountIn * ratio[i]/100;
+            strategyDetails.amountOut = amountOut * ratio[i]/100;
+            strategyDetails.amountInLeft = amountIn * ratio[i]/100;
+            strategyDetails.amountOutLeft = amountOut * ratio[i]/100;
+
+            // get portfolio list
+            strategyDetails.portfolioList = IStrategy(execStrategies[i]).getPortfolioList();
+            
+
+            // get total balances of portfolios in this strategy
+            for(uint j = 0; j < strategyDetails.portfolioList.length; j++) {
+                strategyDetails.totalBalanceOfTokenIn += balanceOf(strategyDetails.portfolioList[j], _ERC20tokenId(tokenIn));
+            }
+
+            for(uint j = 0; j < strategyDetails.portfolioList.length; j++) {
+
+                uint256 portfolioTokenInBalance = balanceOf(strategyDetails.portfolioList[j], _ERC20tokenId(tokenIn));
+
+                // handle remaining amount when cannot divide completely
+                if(j == strategyDetails.portfolioList.length - 1) {
+                    _swap(
+                        strategyDetails.portfolioList[j], 
+                        _ERC20tokenId(tokenIn), 
+                        _ERC20tokenId(tokenOut),
+                        strategyDetails.amountInLeft,
+                        strategyDetails.amountOutLeft
+                    );
+                    
+                } else {
+                    _swap(
+                        strategyDetails.portfolioList[j], 
+                        _ERC20tokenId(tokenIn), 
+                        _ERC20tokenId(tokenOut),
+                        strategyDetails.amountIn * portfolioTokenInBalance / strategyDetails.totalBalanceOfTokenIn,
+                        strategyDetails.amountOut * portfolioTokenInBalance / strategyDetails.totalBalanceOfTokenIn
+                    );
+
+                    strategyDetails.amountInLeft -= strategyDetails.amountIn * portfolioTokenInBalance / strategyDetails.totalBalanceOfTokenIn;
+                    strategyDetails.amountOutLeft -= strategyDetails.amountOut * portfolioTokenInBalance / strategyDetails.totalBalanceOfTokenIn;
+                }
+            }
         }
-        
-        _swap(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
-        emit SwapToken(portfolio[0], _ERC20tokenId(tokenIn), _ERC20tokenId(tokenOut), amountIn, amountOut);
 
-        return true;
+    }
 
+    function _checkSwapInputValid(address[] calldata execStrategies, uint8[] calldata ratio) private pure {
+        require(execStrategies.length == ratio.length, "Unexpected Input");
+
+        uint8 totalRatio;
+        for(uint i = 0; i< ratio.length; i++) {
+            totalRatio += ratio[i];
+        }
+        require(totalRatio == 100, "Unexpected Input");
     }
 
     function decodeSwapData(address to, bytes memory _data, uint256 value) public pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {

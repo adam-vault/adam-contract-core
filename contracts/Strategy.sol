@@ -109,4 +109,8 @@ contract Strategy is Initializable, UUPSUpgradeable, ERC721Upgradeable, IStrateg
     }
 
     function _authorizeUpgrade(address) internal override {}
+
+    function getPortfolioList() external view override returns (address[] memory) {
+        return portfolioList;
+    }
 }

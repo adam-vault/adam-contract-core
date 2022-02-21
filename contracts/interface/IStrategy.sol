@@ -7,4 +7,5 @@ interface IStrategy {
     function isSubscriptionValid(address target) external view returns (bool);
     function redeemManagementFee(address to) external returns (bool);
     function mtFeeAccount() external view returns (address);
+    function getPortfolioList() external returns (address[] memory);
 }
