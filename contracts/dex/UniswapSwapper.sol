@@ -93,9 +93,12 @@ library UniswapSwapper {
             } 
             // exactInput((bytes,address,uint256,uint256))
             else if (multicallBytesArray[i].toBytes4(0) == 0xb858183f) {
-                (bytes memory _path,,uint256 _amountIn,uint256 _amountOutMinimum) = abi.decode(multicallBytesArray[i].slice(4, multicallBytesArray[i].length - 4), (bytes, uint24, uint256, uint256));
-                (address _tokenIn,,address _tokenOut) = abi.decode(_path, (address, uint24, address));
-                tokenIn = _tokenIn;
+                (bytes memory _path,,uint256 _amountIn,uint256 _amountOutMinimum) = abi.decode(multicallBytesArray[i].slice(4 + 32, multicallBytesArray[i].length - (4 + 32)), (bytes, address, uint256, uint256));
+                address _tokenIn = _path.toAddress(0);
+                address _tokenOut = _path.toAddress(_path.length - 20);
+                if(i == 0) {
+                    tokenIn = _tokenIn;
+                }
                 tokenOut = _tokenOut;
                 amountIn += _amountIn;
                 if (_results.length > 0) {
@@ -108,9 +111,12 @@ library UniswapSwapper {
             }
             // exactOutput((bytes,address,uint256,uint256)) 
             else if (multicallBytesArray[i].toBytes4(0) == 0x09b81346) {
-                (bytes memory _path,, uint256 _amountOut, uint256 _amountInMaximum) = abi.decode(multicallBytesArray[i].slice(4, multicallBytesArray[i].length - 4), (bytes, uint24, uint256, uint256));
-                (address _tokenIn,,address _tokenOut) = abi.decode(_path, (address, uint24, address));
-                tokenIn = _tokenIn;
+                (bytes memory _path,, uint256 _amountOut, uint256 _amountInMaximum) = abi.decode(multicallBytesArray[i].slice(4 + 32, multicallBytesArray[i].length - (4 + 32)), (bytes, address, uint256, uint256));
+                address _tokenOut = _path.toAddress(0);
+                address _tokenIn = _path.toAddress(_path.length - 20);
+                if(i == 0) {
+                    tokenIn = _tokenIn;
+                }
                 tokenOut = _tokenOut;
                 amountOut += _amountOut;
                 if(_results.length > 0) {
@@ -173,5 +179,5 @@ library UniswapSwapper {
         if(tokenIn == WETH && amount >= amountIn) {
             tokenIn = ETH;
         }
-    }    
+    }
 }
