@@ -12,34 +12,32 @@ import "./interface/IMembership.sol";
 import "hardhat/console.sol";
 
 contract Adam is IAdam, Initializable, UUPSUpgradeable {
-    event CreateDao(address dao, string name, address creator);
-
     address public daoImplementation;
     address public membershipImplementation;
 
     address[] public daos;
     mapping(address => bool) public daoRegistry;
 
-    function initialize(address _daoImplementation, address _membershipImplementation) public initializer {
+    function initialize(address _daoImplementation, address _membershipImplementation) public override initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
     }
     function _authorizeUpgrade(address) internal override initializer {}
 
-    function totalDaos() public view returns (uint256) {
+    function totalDaos() public view override returns (uint256) {
         return daos.length;
     }
 
-    function createDao(string calldata _name) public returns (address) {
+    function createDao(string calldata _name, string calldata _symbol) public override returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
 
-        IMembership(address(_membership)).initialize(address(_dao), _name);
-        IDao(address(_dao)).initialize(address(this),  msg.sender, _name, address(_membership));
+        IMembership(address(_membership)).initialize(address(_dao), _name, _symbol);
+        IDao(address(_dao)).initialize(address(this),  msg.sender, _name, _symbol, address(_membership));
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
-        emit CreateDao(address(_dao), _name, msg.sender);
+        emit CreateDao(address(_dao), _name, _symbol, msg.sender);
         return address(_dao);
     }
 }

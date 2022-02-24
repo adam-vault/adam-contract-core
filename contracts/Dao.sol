@@ -26,73 +26,40 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
     Counters.Counter private _ERC20tokenIds;
 
-    mapping(address => uint) erc20ToTokenId;
-    mapping(uint => address) tokenIdToErc20;
     address public creator;
     address public adam;
     address public membership;
 
-    string public daoName;
-
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
 
-    function initialize(address _adam, address _creator, string memory _name, address _membership) public override initializer {
+    function initialize(
+        address _adam,
+        address _creator,
+        string memory _name,
+        string memory _symbol,
+        address _membership
+    ) public override initializer {
         __ERC721Holder_init();
-        __MultiToken_init(" (Adam)");
+        __MultiToken_init(_name, _symbol);
 
         adam = _adam;
         creator = _creator;
-        daoName = _name;
         membership = _membership;
     }
 
-    receive() public payable {
+    function deposit() external payable {
         require(msg.value > 0, "0 ether");
-        uint256 memberTokenId = IMembership(_membership).ownerToTokenId(_creator);
+        uint256 memberTokenId = IMembership(membership).ownerToTokenId(msg.sender);
         if (memberTokenId == 0) {
-            address member = IMembership(_membership).mint(_creator);
-            _mintToken(member, _ERC20tokenId(address(0)), msg.value, "");
-        } else {
-            address member = IMembership(_membership).tokenIdToMember(memberTokenId);
-            _mintToken(member, _ERC20tokenId(address(0)), msg.value, "");
+            (memberTokenId,) = IMembership(membership).createMember(msg.sender);
         }
+        address member = IMembership(membership).tokenIdToMember(memberTokenId);
+        _mintToken(member, _tokenId(address(0)), msg.value, "");
     }
 
-    function onERC721Received(
-        address _operator,
-        address _from,
-        uint256 _tokenId,
-        bytes memory data
-    ) public override returns (bytes4) {
-
-        uint256 memberTokenId = IMembership(_membership).ownerToTokenId(_from);
-        if (memberTokenId == 0) {
-            address member = IMembership(_membership).mint(_from);
-            _mintToken(member, _ERC721tokenId(address(msg.sender)), 1, "");
-        } else {
-            address member = IMembership(_membership).tokenIdToMember(memberTokenId);
-            _mintToken(member, _ERC721tokenId(address(msg.sender)), 1, "");
-        }
-
-        return this.onERC721Received.selector;
-    }
-
-    function name() public view returns (string memory) {
-        return daoName.concat(" Asset");
-    }
-    function symbol() public view returns (string memory) {
-        return daoName.concat(" A");
-    }
-
-    function _ERC20tokenId(address contractAddress) public returns (uint256){
-        if (!contractRegistered(contractAddress)) {
-            _createToken(contractAddress, IERC20Metadata(contractAddress).name(), IERC20Metadata(contractAddress).decimals());
-        }
-        return addressToId[contractAddress];
-    }
-    function _ERC721tokenId(address contractAddress) public returns (uint256){
-        if (!contractRegistered(contractAddress)) {
-            _createToken(contractAddress, IERC20Metadata(contractAddress).name(), 0);
+    function _tokenId(address contractAddress) internal returns (uint256){
+        if (addressToId[contractAddress] == 0) {
+            _createToken(contractAddress);
         }
         return addressToId[contractAddress];
     }

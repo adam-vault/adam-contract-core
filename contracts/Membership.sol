@@ -10,7 +10,9 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "./lib/Base64.sol";
 import "./lib/ToString.sol";
+import "./lib/Concat.sol";
 import "./interface/IMembership.sol";
+import "hardhat/console.sol";
 
 import "./Member.sol";
 
@@ -18,33 +20,33 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
     using Counters for Counters.Counter;
     using Strings for uint256;
     using ToString for address;
+    using Concat for string;
+
     using Base64 for bytes;
     address payable public dao;
 
     address[] public members;
     Counters.Counter private _tokenIds;
-    mapping(uint256 => Member) public tokenIdToMember;
+    mapping(uint256 => address) public override tokenIdToMember;
     mapping(address => uint256) public override ownerToTokenId;
 
-    event CreateMember(address portfolio, address owner);
-
-    function initialize(address _dao, string memory name) public override initializer {
-        __ERC721_init(string(abi.encodePacked(name, " Membership")), "MS");
+    function initialize(address _dao, string memory _name, string memory _symbol) public override initializer {
+        __ERC721_init(_name.concat(" Membership"), _symbol.concat("MS"));
         dao = payable(_dao);
     }
 
-    function mint(address to) public override returns (uint256) {
+    function createMember(address to) public override returns (uint256, address) {
         require(msg.sender == dao, "access denied");
 
         _tokenIds.increment();
         uint256 newId = _tokenIds.current();
-        tokenIdToMember[newId] = new Member(address(this));
-        ownerToTokenId[to] = newId;
-        members.push(address(tokenIdToMember[newId]));
+        Member member = new Member(address(this), newId);
+        tokenIdToMember[newId] = address(member);
+        members.push(address(member));
         _safeMint(to, newId, "");
-        emit CreateMember(address(tokenIdToMember[newId]), msg.sender);
+        emit CreateMember(tokenIdToMember[newId], msg.sender);
 
-        return ownerToTokenId[to];
+        return (ownerToTokenId[to], tokenIdToMember[newId]);
     }
 
     function _beforeTokenTransfer(
@@ -52,7 +54,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
         address to,
         uint256 tokenId
     ) internal override {
-        require(ownerToTokenId[to] == 0 || to == address(0), "owner can own 1 membership only");
+        require(ownerToTokenId[to] == 0, "owner can own 1 membership only");
         ownerToTokenId[from] = 0;
         ownerToTokenId[to] = tokenId;
     }
@@ -68,11 +70,13 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
     function tokenURI(uint256 tokenId) public view override(IMembership, ERC721Upgradeable) returns (string memory) {
 
         string memory metadata = string(abi.encodePacked(
-            "{\"name\": \"DaoMembership #",
+            "{\"name\": \"",
+            name(),
+            " #",
             tokenId.toString(),
             "\", \"description\": \"\", \"attributes\":",
             "[{\"key\":\"address\",\"value\":\"",
-            address(tokenIdToMember[tokenId]).toString(),
+            tokenIdToMember[tokenId].toString(),
             "\"}]",
             "}"
         ));
