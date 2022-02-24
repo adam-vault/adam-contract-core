@@ -5,49 +5,22 @@
 // Runtime Environment's members available in the global scope.
 const hre = require('hardhat');
 
-function delay(t, val) {
-  return new Promise(function(resolve) {
-      setTimeout(function() {
-          resolve(val);
-      }, t);
-  });
-}
-
 async function main () {
+  const Dao = await hre.ethers.getContractFactory('Dao');
+  const Membership = await hre.ethers.getContractFactory('Membership');
+  const Adam = await hre.ethers.getContractFactory('Adam');
 
-  const UniswapSwapper = await hre.ethers.getContractFactory("UniswapSwapper");
-  const uniswapSwapper = await UniswapSwapper.deploy();
-  await uniswapSwapper.deployed();
+  const dao = await Dao.deploy();
+  await dao.deployed();
+  const membership = await Membership.deploy();
+  await membership.deployed();
 
-  const libraries = {
-    UniswapSwapper: uniswapSwapper.address,
-  };
+  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address], { kind: 'uups' });
+  await adam.deployed();
 
-    const AssetManager = await hre.ethers.getContractFactory('AssetManager', { libraries });
-    const Strategy = await hre.ethers.getContractFactory('Strategy');
-    const Adam = await hre.ethers.getContractFactory('Adam');
-
-    const assetManager = await AssetManager.deploy();
-    await assetManager.deployed();
-    const strategy = await Strategy.deploy();
-    await strategy.deployed();
-
-    adam = await hre.upgrades.deployProxy(Adam, [assetManager.address, strategy.address], { kind: 'uups' });
-    await adam.deployed();
-
-    const PriceConverter = await hre.ethers.getContractFactory('PriceConverter');
-    const priceConverter = await PriceConverter.deploy();
-    await priceConverter.deployed();
-
-    const Treasury = await hre.ethers.getContractFactory('Treasury');
-    treasury = await hre.upgrades.deployProxy(Treasury, [adam.address, priceConverter.address]);
-    await treasury.deployed();
-
-    console.log('assetManager deployed to: ', assetManager.address);
-    console.log('strategy deployed to: ', strategy.address);
-    console.log('adam deployed to: ', adam.address);
-    console.log('price converter deployed to: ', priceConverter.address);
-    console.log('treasury deployed to: ', treasury.address);
+  console.log('dao deployed to: ', dao.address);
+  console.log('membership deployed to: ', membership.address);
+  console.log('adam deployed to: ', adam.address);
 }
 
 main().catch((error) => {

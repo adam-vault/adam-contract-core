@@ -4,14 +4,11 @@ const { createAdam } = require('../utils/createContract');
 
 describe('Deployment', function () {
   let creator;
-  let adam, strategyFactory, assetManagerFactory;
+  let adam;
 
   beforeEach(async function () {
     [creator] = await ethers.getSigners();
-    const result = await createAdam();
-    adam = result.adam;
-    strategyFactory = result.strategyFactory;
-    assetManagerFactory = result.assetManagerFactory;
+    adam = await createAdam();
   });
 
   describe('when initialize adam', function () {
@@ -21,14 +18,8 @@ describe('Deployment', function () {
     // it('has strategyFactory', async function () {
     //   expect(await adam.strategyFactory()).to.not.be.empty;
     // });
-    it('has no AssetManagers when deploy', async function () {
-      expect(await adam.countAssetManagers()).to.equal(0);
-    });
-    it('has no Strategies when deploy', async function () {
-      expect(await adam.countStrategies()).to.equal(0);
-    });
-    it('has no public Strategies when deploy', async function () {
-      expect(await adam.countPublicStrategies()).to.equal(0);
+    it('has no Daos when deploy', async function () {
+      expect(await adam.totalDaos()).to.equal(0);
     });
   });
   // describe('when adam uses assetManagerFactory', async function () {

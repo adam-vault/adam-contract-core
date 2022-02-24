@@ -3,33 +3,18 @@ const { ethers, upgrades } = require('hardhat');
 const createAdam = async () => {
   const [creator] = await ethers.getSigners();
 
-  const UniswapSwapper = await ethers.getContractFactory("UniswapSwapper", {
-    signer: creator,
-  });
-  const uniswapSwapper = await UniswapSwapper.deploy();
-  await uniswapSwapper.deployed();
-
-  const libraries = {
-    UniswapSwapper: uniswapSwapper.address,
-  };
-
-  const AssetManager = await ethers.getContractFactory('AssetManager', { libraries, signer: creator });
-  const Strategy = await ethers.getContractFactory('Strategy', { signer: creator });
+  const Dao = await ethers.getContractFactory('Dao', { signer: creator });
+  const Membership = await ethers.getContractFactory('Membership', { signer: creator });
   const Adam = await ethers.getContractFactory('Adam', { signer: creator });
 
-  const assetManager = await AssetManager.deploy();
-  const strategy = await Strategy.deploy();
-  await assetManager.deployed();
-  await strategy.deployed();
+  const dao = await Dao.deploy();
+  const membership = await Membership.deploy();
+  await dao.deployed();
+  await membership.deployed();
 
-  const adam = await upgrades.deployProxy(Adam, [assetManager.address, strategy.address], { kind: 'uups' });
+  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address], { kind: 'uups' });
   await adam.deployed();
-  return {
-    libraries,
-    assetManager,
-    strategy,
-    adam,
-  };
+  return adam;
 };
 
 module.exports = {
