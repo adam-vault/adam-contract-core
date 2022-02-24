@@ -3,8 +3,5 @@
 pragma solidity ^0.8.0;
 
 interface IAdam {
-    function assetManagerRegistry(address manager) external view returns (bool);
-    function setTreasury(address _treasury) external;
-    function treasury() external view returns (address);
-    function redeemAllManagementFee() external;
+    function initialize(address _daoImplementation) external;
 }
