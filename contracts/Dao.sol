@@ -47,14 +47,40 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         membership = _membership;
     }
 
-    function deposit() external payable {
+    function deposit() public payable {
         require(msg.value > 0, "0 ether");
-        uint256 memberTokenId = IMembership(membership).ownerToTokenId(msg.sender);
-        if (memberTokenId == 0) {
-            (memberTokenId,) = IMembership(membership).createMember(msg.sender);
-        }
-        address member = IMembership(membership).tokenIdToMember(memberTokenId);
+        address member = _member(msg.sender);
         _mintToken(member, _tokenId(address(0)), msg.value, "");
+    }
+
+    function redeem(uint256 _amount) public {
+        uint256 membershipId = IMembership(membership).ownerToTokenId(msg.sender);
+        require(membershipId != 0, "no membership");
+
+        address member = IMembership(membership).tokenIdToMember(membershipId);
+        require(_amount <= balanceOf(member, ethId), "request amount too big");
+
+        _burnToken(member, ethId, _amount);
+        payable(msg.sender).transfer(_amount);
+    }
+
+    function depositToken(address _token, uint256 _amount) public {
+        require(IERC20Metadata(_token).allowance(msg.sender, address(this)) >= _amount, "allowance not enough");
+        address member = _member(msg.sender);
+        IERC20Metadata(_token).transferFrom(msg.sender, address(this), _amount);
+        _mintToken(member, _tokenId(_token), _amount, "");
+    }
+
+    function redeemToken(address _token, uint256 _amount) public {
+        uint256 membershipId = IMembership(membership).ownerToTokenId(msg.sender);
+        require(membershipId != 0, "no membership");
+        require(addressToId[_token] != 0, "token not registered");
+
+        address member = IMembership(membership).tokenIdToMember(membershipId);
+        require(_amount <= balanceOf(member, addressToId[_token]), "request amount too big");
+
+        _burnToken(member, addressToId[_token], _amount);
+        IERC20Metadata(_token).transfer(msg.sender, _amount);
     }
 
     function _tokenId(address contractAddress) internal returns (uint256){
@@ -62,6 +88,14 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
             _createToken(contractAddress);
         }
         return addressToId[contractAddress];
+    }
+
+    function _member(address owner) internal returns (address) {
+        uint256 memberTokenId = IMembership(membership).ownerToTokenId(owner);
+        if (memberTokenId == 0) {
+            (memberTokenId,) = IMembership(membership).createMember(owner);
+        }
+        return IMembership(membership).tokenIdToMember(memberTokenId);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override {}
