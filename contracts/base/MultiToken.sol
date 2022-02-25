@@ -2,12 +2,14 @@
 
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "../lib/ToString.sol";
 import "../lib/Base64.sol";
+import "../lib/Concat.sol";
 
 contract MultiToken is ERC1155Upgradeable {
     // list strategy
@@ -16,61 +18,47 @@ contract MultiToken is ERC1155Upgradeable {
     using Strings for uint8;
     using ToString for address;
     using Base64 for bytes;
+    using Concat for string;
+
     struct Token {
         uint256 id;
-        string name;
         address contractAddress;
-        uint8 decimals;
         uint256 totalSupply;
         bool isExist;
     }
 
-    Counters.Counter public _tokenIds;
-    string public postfix;
-    address[] public mintedContracts;
+    Counters.Counter private _tokenIds;
+    mapping(uint256 => Token) private _tokenRegistry;
 
     mapping(address => uint256) public addressToId;
-    mapping(uint256 => Token) public tokenRegistry;
-    address public constant ethAddress = address(0x0);
     uint256 public ethId;
+    string public name;
+    string public symbol;
 
-    event CreateToken(uint256 id, string name, address contractAddress, uint8 decimal);
-    function __MultiToken_init(string memory _postfix) internal onlyInitializing {
+    event CreateToken(uint256 id, address contractAddress);
+    function __MultiToken_init(string memory _name, string memory _symbol) internal onlyInitializing {
         __ERC1155_init("");
-        postfix = _postfix;
         // default init ether as 0x0 address
-        ethId = _createToken(ethAddress, "ETH", 18);
+        name = _name;
+        symbol = _symbol;
+        ethId = _createToken(address(0));
+    }
+    
+    function lastTokenId() public view returns (uint256) {
+        return _tokenIds.current();
     }
 
-    function name(uint256 _id) public view returns (string memory) {
-        return tokenRegistry[_id].name;
-    }
-
-    function contractAddress(uint256 _id) public view returns (address) {
-        return tokenRegistry[_id].contractAddress;
-    }
-    function decimals(uint256 _id) public view returns (uint8) {
-        return tokenRegistry[_id].decimals;
-    }
-
-    function totalSupply(uint256 _id) public view returns (uint256) {
-        return tokenRegistry[_id].totalSupply;
-    }
-
-    function _createToken(address _contractAddress, string memory _name, uint8 _decimals) internal returns (uint256) {
+    function _createToken(address _contractAddress) internal returns (uint256) {
         _tokenIds.increment();
         uint256 id = _tokenIds.current();
-        mintedContracts.push(_contractAddress);
         addressToId[_contractAddress] = id;
-        tokenRegistry[id] = Token({
+        _tokenRegistry[id] = Token({
             id: id,
-            name: _name,
             contractAddress: _contractAddress,
-            decimals: _decimals,
             totalSupply: 0,
             isExist: true
         });
-        emit CreateToken(id, _name, _contractAddress, _decimals);
+        emit CreateToken(id, _contractAddress);
         return id;
     }
 
@@ -80,7 +68,7 @@ contract MultiToken is ERC1155Upgradeable {
         uint256 amount,
         bytes memory data
     ) internal {
-        tokenRegistry[id].totalSupply += amount;
+        _tokenRegistry[id].totalSupply += amount;
         return _mint(to, id, amount, data);
     }
     
@@ -90,23 +78,45 @@ contract MultiToken is ERC1155Upgradeable {
         uint256 id,
         uint256 amount
     ) internal {
-        tokenRegistry[id].totalSupply -= amount;
+        _tokenRegistry[id].totalSupply -= amount;
         return _burn(from, id, amount);
     }
     
 
+    function tokenName(uint256 _id) public view returns (string memory) {
+        if (_id == ethId) return "ETH";
+        return IERC20Metadata(_tokenRegistry[_id].contractAddress).name();
+    }
+
+    function tokenDecimals(uint256 _id) public view returns (uint8) {
+        if (_id == ethId) return 18;
+        try IERC20Metadata(_tokenRegistry[_id].contractAddress).decimals() returns (uint8 _decimals) {
+            return _decimals;
+        } catch {
+            return 0;
+        }
+    }
+    function tokenAddress(uint256 _id) public view returns (address) {
+        return _tokenRegistry[_id].contractAddress;
+    }
+
+    function tokenTotalSupply(uint256 _id) public view returns (uint256) {
+        return _tokenRegistry[_id].totalSupply;
+    }
+
     function uri(uint256 _id) public view override returns (string memory) {
+        string memory postfix = string(" (").concat(name).concat(")");
         string memory metadata = string(abi.encodePacked(
             "{\"name\": \"",
-            tokenRegistry[_id].name,
+            tokenName(_id),
             postfix,
             "\", \"decimals\": ",
-            tokenRegistry[_id].decimals.toString(),
+            tokenDecimals(_id).toString(),
             ", \"totalSupply\": ",
-            tokenRegistry[_id].totalSupply.toString(),
+            tokenTotalSupply(_id).toString(),
             ", \"description\": \"\", \"attributes\":",
             "[{\"key\":\"address\",\"value\":\"",
-            tokenRegistry[_id].contractAddress.toString(),
+            tokenAddress(_id).toString(),
             "\"}]",
             "}"
         ));

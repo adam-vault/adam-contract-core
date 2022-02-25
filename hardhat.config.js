@@ -17,6 +17,14 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
   }
 });
 
+task('deploy', 'Fast Deploy Contract', async (taskArgs, hre) => {
+  const Contract = await hre.ethers.getContractFactory(taskArgs);
+  const contract = await Contract.deploy();
+  await contract.deployed();
+
+  console.log(taskArgs + ' deployed to: ', contract.address);
+});
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -34,7 +42,7 @@ module.exports = {
     settings: {
       outputSelection: {
         "*": {
-            "*": ["storageLayout"],
+          "*": ["storageLayout"],
         },
       },
       optimizer: {
