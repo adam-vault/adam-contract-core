@@ -6,6 +6,8 @@ interface IMembership {
 
     function initialize(address _dao, string memory _name, string memory _symbol) external;
     function createMember(address to) external returns (uint256, address);
+    function members(uint256 index) external view returns (address);
+    function totalMembers() external view returns (uint256);
     function lastTokenId() external view returns (uint256);
     function totalSupply() external view returns (uint256);
     function ownerToTokenId(address) external view returns (uint256);

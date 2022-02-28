@@ -6,5 +6,6 @@ interface IAdam {
     event CreateDao(address dao, string name, string symbol, address creator);
     function initialize(address _daoImplementation, address _membershipImplementation) external;
     function totalDaos() external view returns (uint256);
+    function blankets(address blanket) external view returns (bool);
     function createDao(string calldata _name, string calldata _symbol) external returns (address);
 }
