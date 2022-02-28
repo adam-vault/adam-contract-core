@@ -25,7 +25,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
     using Base64 for bytes;
     address payable public dao;
 
-    address[] public members;
+    address[] private _members;
     Counters.Counter private _tokenIds;
     mapping(uint256 => address) public override tokenIdToMember;
     mapping(address => uint256) public override ownerToTokenId;
@@ -35,6 +35,12 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
         dao = payable(_dao);
     }
 
+    function members(uint256 index) external view override returns (address) {
+        return _members[index];
+    }
+    function totalMembers() external view override returns (uint256) {
+        return _members.length;
+    }
     function createMember(address to) public override returns (uint256, address) {
         require(msg.sender == dao, "access denied");
 
@@ -42,7 +48,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
         uint256 newId = _tokenIds.current();
         Member member = new Member(address(this), newId);
         tokenIdToMember[newId] = address(member);
-        members.push(address(member));
+        _members.push(address(member));
         _safeMint(to, newId, "");
         emit CreateMember(tokenIdToMember[newId], msg.sender);
 
@@ -64,7 +70,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
     }
 
     function totalSupply() public view override returns (uint256) {
-        return members.length;
+        return _members.length;
     }
 
     function tokenURI(uint256 tokenId) public view override(IMembership, ERC721Upgradeable) returns (string memory) {

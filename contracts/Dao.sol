@@ -7,8 +7,10 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IDao.sol";
+import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
 
 import "./base/MultiToken.sol";
@@ -28,10 +30,11 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
     address public creator;
     address public adam;
-    address public membership;
+    address public override membership;
+    mapping(address => bool) blankets;
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
-
+    event CreateBlanket(address blanket);
     function initialize(
         address _adam,
         address _creator,
@@ -45,6 +48,22 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         adam = _adam;
         creator = _creator;
         membership = _membership;
+    }
+
+    modifier vote(string memory category) {
+        // TODO: require(msg.sender == goverances[category], "access denied");
+        _;
+    }
+
+    function setName(string calldata _name) public override vote("CorporateAction") {
+        name = _name;
+    }
+
+    function createBlanket(address blanket) public {
+        require(IAdam(adam).blankets(blanket), "blanket not whitelist");
+        ERC1967Proxy _blanket = new ERC1967Proxy(blanket, "");
+        blankets[address(_blanket)] = true;
+        emit CreateBlanket(address(_blanket));
     }
 
     function deposit() public payable {

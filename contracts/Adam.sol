@@ -14,6 +14,7 @@ import "hardhat/console.sol";
 contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
+    mapping(address => bool) public override blankets;
 
     address[] public daos;
     mapping(address => bool) public daoRegistry;
@@ -26,6 +27,10 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
 
     function totalDaos() public view override returns (uint256) {
         return daos.length;
+    }
+
+    function whitelistBlanket(address blanket) public {
+        blankets[blanket] = true;
     }
 
     function createDao(string calldata _name, string calldata _symbol) public override returns (address) {
