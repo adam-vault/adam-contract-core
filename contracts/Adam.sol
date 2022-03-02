@@ -33,16 +33,16 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         blankets[blanket] = true;
     }
 
-    function createDao(string calldata _name, string calldata _symbol) public override returns (address) {
+    function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public override returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
 
         IMembership(address(_membership)).initialize(address(_dao), _name, _symbol);
-        IDao(address(_dao)).initialize(address(this),  msg.sender, _name, _symbol, address(_membership));
+        IDao(address(_dao)).initialize(address(this),  msg.sender, _name, _symbol, address(_membership), _locktime, _depositTokens);
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
-        emit CreateDao(address(_dao), _name, _symbol, msg.sender);
+        emit CreateDao(address(_dao), _name, _symbol, _description, msg.sender);
         return address(_dao);
     }
 }

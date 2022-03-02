@@ -31,16 +31,23 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
     address public creator;
     address public adam;
     address public override membership;
-    mapping(address => bool) blankets;
+    uint256 public locktime;
+    bool public allowAllTokens;
+    mapping(address => bool) public depositTokens;
+    mapping(address => bool) public blankets;
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
     event CreateBlanket(address blanket);
+    event All(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
+
     function initialize(
         address _adam,
         address _creator,
         string memory _name,
         string memory _symbol,
-        address _membership
+        address _membership,
+        uint256 _locktime,
+        address[] calldata _depositTokens
     ) public override initializer {
         __ERC721Holder_init();
         __MultiToken_init(_name, _symbol);
@@ -48,6 +55,12 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         adam = _adam;
         creator = _creator;
         membership = _membership;
+        locktime = _locktime;
+        uint256 i = 0;
+        allowAllTokens = _depositTokens.length == 0;
+        for(i = 0; i < _depositTokens.length; i++) {
+            depositTokens[_depositTokens[i]] = true;
+        }
     }
 
     modifier vote(string memory category) {
@@ -68,6 +81,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
     function deposit() public payable {
         require(msg.value > 0, "0 ether");
+        require(depositTokens[address(0)] || allowAllTokens, "not allow");
+
         address member = _member(msg.sender);
         _mintToken(member, _tokenId(address(0)), msg.value, "");
     }
@@ -84,6 +99,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
     }
 
     function depositToken(address _token, uint256 _amount) public {
+        require(depositTokens[_token] || allowAllTokens, "not allow");
         require(IERC20Metadata(_token).allowance(msg.sender, address(this)) >= _amount, "allowance not enough");
         address member = _member(msg.sender);
         IERC20Metadata(_token).transferFrom(msg.sender, address(this), _amount);
