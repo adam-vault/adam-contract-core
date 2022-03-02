@@ -175,8 +175,6 @@ describe('Create DAO', function () {
       erc20 = await A.deploy();
       await erc20.deployed();
       await erc20.mint(creator.address, ethers.utils.parseEther('123'));
-      await erc20.approve(dao.address, ethers.utils.parseEther('123'));
-      await dao.depositToken(erc20.address, ethers.utils.parseEther('123'));
 
       const tx1 = await adam.createDao('A Company', 'ACOM', 'Description', 10000000, [erc20.address]);
       const receipt = await tx1.wait();
@@ -185,6 +183,8 @@ describe('Create DAO', function () {
       dao = await ethers.getContractAt('Dao', daoAddr);
       const membershipAddr = await dao.membership();
       membership = await ethers.getContractAt('Membership', membershipAddr);
+      await erc20.approve(dao.address, ethers.utils.parseEther('123'));
+      await dao.depositToken(erc20.address, ethers.utils.parseEther('123'));
     });
 
     it('redeem and burn exact amount of token', async function () {
