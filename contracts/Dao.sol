@@ -18,6 +18,14 @@ import "./lib/Concat.sol";
 import "./lib/ToString.sol";
 import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
+import "hardhat/console.sol";
+
+
+struct DaoConfig {
+    uint256 locktime;
+    bool allowAllTokens;
+    mapping(address => bool) depositTokens;
+}
 
 contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUpgradeable {
     // list strategy
@@ -31,14 +39,13 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
     address public creator;
     address public adam;
     address public override membership;
-    uint256 public locktime;
-    bool public allowAllTokens;
-    mapping(address => bool) public depositTokens;
     mapping(address => bool) public blankets;
+    mapping(address => uint256) public firstDeposit;
+
+    DaoConfig public config;
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
     event CreateBlanket(address blanket);
-    event All(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
 
     function initialize(
         address _adam,
@@ -55,11 +62,11 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         adam = _adam;
         creator = _creator;
         membership = _membership;
-        locktime = _locktime;
+        config.locktime = _locktime;
         uint256 i = 0;
-        allowAllTokens = _depositTokens.length == 0;
+        config.allowAllTokens = _depositTokens.length == 0;
         for(i = 0; i < _depositTokens.length; i++) {
-            depositTokens[_depositTokens[i]] = true;
+            config.depositTokens[_depositTokens[i]] = true;
         }
     }
 
@@ -81,10 +88,14 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
     function deposit() public payable {
         require(msg.value > 0, "0 ether");
-        require(depositTokens[address(0)] || allowAllTokens, "not allow");
+        require(config.depositTokens[address(0)] || config.allowAllTokens, "not allow");
 
         address member = _member(msg.sender);
         _mintToken(member, _tokenId(address(0)), msg.value, "");
+
+        if (firstDeposit[member] == 0) {
+            firstDeposit[member] = block.timestamp;
+        }
     }
 
     function redeem(uint256 _amount) public {
@@ -92,6 +103,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         require(membershipId != 0, "no membership");
 
         address member = IMembership(membership).tokenIdToMember(membershipId);
+        require(firstDeposit[member] + config.locktime <= block.timestamp, "lockup time");
         require(_amount <= balanceOf(member, ethId), "request amount too big");
 
         _burnToken(member, ethId, _amount);
@@ -99,11 +111,15 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
     }
 
     function depositToken(address _token, uint256 _amount) public {
-        require(depositTokens[_token] || allowAllTokens, "not allow");
+        require(config.depositTokens[_token] || config.allowAllTokens, "not allow");
         require(IERC20Metadata(_token).allowance(msg.sender, address(this)) >= _amount, "allowance not enough");
         address member = _member(msg.sender);
         IERC20Metadata(_token).transferFrom(msg.sender, address(this), _amount);
         _mintToken(member, _tokenId(_token), _amount, "");
+
+        if (firstDeposit[member] == 0) {
+            firstDeposit[member] = block.timestamp;
+        }
     }
 
     function redeemToken(address _token, uint256 _amount) public {
@@ -112,6 +128,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         require(addressToId[_token] != 0, "token not registered");
 
         address member = IMembership(membership).tokenIdToMember(membershipId);
+        require(firstDeposit[member] + config.locktime <= block.timestamp, "lockup time");
         require(_amount <= balanceOf(member, addressToId[_token]), "request amount too big");
 
         _burnToken(member, addressToId[_token], _amount);

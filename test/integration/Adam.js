@@ -1,7 +1,8 @@
 const chai = require('chai');
-const { ethers } = require('hardhat');
+const hre = require('hardhat');
 const _ = require('lodash');
 const { smock } = require('@defi-wonderland/smock');
+const { ethers } = hre;
 const { expect } = chai;
 const { createAdam } = require('../utils/createContract');
 const decodeBase64 = require('../utils/decodeBase64');
@@ -147,7 +148,7 @@ describe('Create DAO', function () {
   describe('Redeem ETH from DAO', function () {
     let dao, membership;
     beforeEach(async function () {
-      const tx1 = await adam.createDao('A Company', 'ACOM', 'Description', 10000000, [ethers.constants.AddressZero]);
+      const tx1 = await adam.createDao('A Company', 'ACOM', 'Description', 1000, [ethers.constants.AddressZero]);
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
       const daoAddr = creationEventLog.args.dao;
@@ -159,12 +160,15 @@ describe('Create DAO', function () {
     });
 
     it('redeem and burn exact amount of eth', async function () {
+      await hre.ethers.provider.send('evm_increaseTime', [1000]);
       await dao.redeem(ethers.utils.parseEther('3'));
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
       const memberAddr = await membership.members(0);
-
       expect(await dao.balanceOf(memberAddr, dao.ethId())).to.equal(ethers.utils.parseEther('120'));
+    });
+    it('cannot redeem and burn exact amount of eth inside lockup period', async function () {
+      await expect(dao.redeem(ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
     });
   });
 
@@ -176,7 +180,7 @@ describe('Create DAO', function () {
       await erc20.deployed();
       await erc20.mint(creator.address, ethers.utils.parseEther('123'));
 
-      const tx1 = await adam.createDao('A Company', 'ACOM', 'Description', 10000000, [erc20.address]);
+      const tx1 = await adam.createDao('A Company', 'ACOM', 'Description', 1000, [erc20.address]);
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
       const daoAddr = creationEventLog.args.dao;
@@ -188,6 +192,7 @@ describe('Create DAO', function () {
     });
 
     it('redeem and burn exact amount of token', async function () {
+      await hre.ethers.provider.send('evm_increaseTime', [1000]);
       await dao.redeemToken(erc20.address, ethers.utils.parseEther('3'));
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
@@ -195,6 +200,9 @@ describe('Create DAO', function () {
 
       expect(await dao.balanceOf(memberAddr, 2)).to.equal(ethers.utils.parseEther('120'));
       expect(await erc20.balanceOf(creator.address)).to.equal(ethers.utils.parseEther('3'));
+    });
+    it('cannot redeem and burn exact amount of token inside lockup period', async function () {
+      await expect(dao.redeemToken(erc20.address, ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
     });
   });
 });
