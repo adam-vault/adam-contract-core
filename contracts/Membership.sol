@@ -30,6 +30,9 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
     mapping(uint256 => address) public override tokenIdToMember;
     mapping(address => uint256) public override ownerToTokenId;
 
+    event CreateMember(uint256 tokenId, address member, address owner);
+    event UpdateMember(uint256 tokenId, address member, address owner);
+
     function initialize(address _dao, string memory _name, string memory _symbol) public override initializer {
         __ERC721_init(_name.concat(" Membership"), _symbol.concat("MS"));
         dao = payable(_dao);
@@ -50,7 +53,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
         tokenIdToMember[newId] = address(member);
         _members.push(address(member));
         _safeMint(to, newId, "");
-        emit CreateMember(tokenIdToMember[newId], msg.sender);
+        emit CreateMember(newId, tokenIdToMember[newId], msg.sender);
 
         return (ownerToTokenId[to], tokenIdToMember[newId]);
     }
@@ -63,6 +66,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
         require(ownerToTokenId[to] == 0, "owner can own 1 membership only");
         ownerToTokenId[from] = 0;
         ownerToTokenId[to] = tokenId;
+        emit UpdateMember(tokenId, tokenIdToMember[tokenId], to);
     }
 
     function lastTokenId() public view override returns (uint256) {

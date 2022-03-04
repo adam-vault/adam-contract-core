@@ -46,6 +46,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
     event CreateBlanket(address blanket);
+    event Deposit(address token, uint256 amount);
+    event Redeem(address token, uint256 amount);
 
     function initialize(
         address _adam,
@@ -93,6 +95,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         address member = _member(msg.sender);
         _mintToken(member, _tokenId(address(0)), msg.value, "");
 
+        emit Deposit(address(0), msg.value);
+
         if (firstDeposit[member] == 0) {
             firstDeposit[member] = block.timestamp;
         }
@@ -108,6 +112,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
         _burnToken(member, ethId, _amount);
         payable(msg.sender).transfer(_amount);
+        emit Redeem(address(0), _amount);
     }
 
     function depositToken(address _token, uint256 _amount) public {
@@ -116,6 +121,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         address member = _member(msg.sender);
         IERC20Metadata(_token).transferFrom(msg.sender, address(this), _amount);
         _mintToken(member, _tokenId(_token), _amount, "");
+
+        emit Deposit(_token, _amount);
 
         if (firstDeposit[member] == 0) {
             firstDeposit[member] = block.timestamp;
@@ -133,6 +140,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
         _burnToken(member, addressToId[_token], _amount);
         IERC20Metadata(_token).transfer(msg.sender, _amount);
+
+        emit Redeem(_token, _amount);
     }
 
     function _tokenId(address contractAddress) internal returns (uint256){

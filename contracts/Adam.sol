@@ -15,9 +15,11 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
     mapping(address => bool) public override blankets;
-
     address[] public daos;
     mapping(address => bool) public daoRegistry;
+
+    event CreateDao(address dao, string name, string symbol, string description, address creator);
+    event WhitelistBlanket(address blanket);
 
     function initialize(address _daoImplementation, address _membershipImplementation) public override initializer {
         daoImplementation = _daoImplementation;
@@ -30,7 +32,9 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     }
 
     function whitelistBlanket(address blanket) public {
+        require(blankets[blanket] == false, "blanket already whitelisted");
         blankets[blanket] = true;
+        emit WhitelistBlanket(blanket);
     }
 
     function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public override returns (address) {

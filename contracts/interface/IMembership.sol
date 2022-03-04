@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.0;
 interface IMembership {
-    event CreateMember(address member, address owner);
 
     function initialize(address _dao, string memory _name, string memory _symbol) external;
     function createMember(address to) external returns (uint256, address);

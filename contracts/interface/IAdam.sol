@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 interface IAdam {
-    event CreateDao(address dao, string name, string symbol, string description, address creator);
     function initialize(address _daoImplementation, address _membershipImplementation) external;
     function totalDaos() external view returns (uint256);
     function blankets(address blanket) external view returns (bool);
