@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "./interface/IDao.sol";
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
 
@@ -27,7 +26,7 @@ struct DaoConfig {
     mapping(address => bool) depositTokens;
 }
 
-contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUpgradeable {
+contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradeable {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -38,7 +37,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
     address public creator;
     address public adam;
-    address public override membership;
+    address public membership;
     mapping(address => bool) public blankets;
     mapping(address => uint256) public firstDeposit;
 
@@ -57,7 +56,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         address _membership,
         uint256 _locktime,
         address[] calldata _depositTokens
-    ) public override initializer {
+    ) public initializer {
         __ERC721Holder_init();
         __MultiToken_init(_name, _symbol);
 
@@ -77,7 +76,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         _;
     }
 
-    function setName(string calldata _name) public override vote("CorporateAction") {
+    function setName(string calldata _name) public vote("CorporateAction") {
         name = _name;
     }
 

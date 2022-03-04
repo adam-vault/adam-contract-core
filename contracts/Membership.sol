@@ -11,12 +11,11 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./lib/Base64.sol";
 import "./lib/ToString.sol";
 import "./lib/Concat.sol";
-import "./interface/IMembership.sol";
 import "hardhat/console.sol";
 
 import "./Member.sol";
 
-contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembership {
+contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable {
     using Counters for Counters.Counter;
     using Strings for uint256;
     using ToString for address;
@@ -27,24 +26,24 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
 
     address[] private _members;
     Counters.Counter private _tokenIds;
-    mapping(uint256 => address) public override tokenIdToMember;
-    mapping(address => uint256) public override ownerToTokenId;
+    mapping(uint256 => address) public tokenIdToMember;
+    mapping(address => uint256) public ownerToTokenId;
 
     event CreateMember(uint256 tokenId, address member, address owner);
     event UpdateMember(uint256 tokenId, address member, address owner);
 
-    function initialize(address _dao, string memory _name, string memory _symbol) public override initializer {
+    function initialize(address _dao, string memory _name, string memory _symbol) public initializer {
         __ERC721_init(_name.concat(" Membership"), _symbol.concat("MS"));
         dao = payable(_dao);
     }
 
-    function members(uint256 index) external view override returns (address) {
+    function members(uint256 index) external view returns (address) {
         return _members[index];
     }
-    function totalMembers() external view override returns (uint256) {
+    function totalMembers() external view returns (uint256) {
         return _members.length;
     }
-    function createMember(address to) public override returns (uint256, address) {
+    function createMember(address to) public returns (uint256, address) {
         require(msg.sender == dao, "access denied");
 
         _tokenIds.increment();
@@ -69,15 +68,15 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable, IMembe
         emit UpdateMember(tokenId, tokenIdToMember[tokenId], to);
     }
 
-    function lastTokenId() public view override returns (uint256) {
+    function lastTokenId() public view returns (uint256) {
         return _tokenIds.current();
     }
 
-    function totalSupply() public view override returns (uint256) {
+    function totalSupply() public view returns (uint256) {
         return _members.length;
     }
 
-    function tokenURI(uint256 tokenId) public view override(IMembership, ERC721Upgradeable) returns (string memory) {
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
 
         string memory metadata = string(abi.encodePacked(
             "{\"name\": \"",
