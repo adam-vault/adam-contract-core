@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
+import "./interface/IBudgetApproval.sol";
 
 import "./base/MultiToken.sol";
 import "./lib/Concat.sol";
@@ -33,18 +34,20 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     using Concat for string;
     using BytesLib for bytes;
 
+    address constant public ETH_ADDRESS = address(0x0);
+
     Counters.Counter private _ERC20tokenIds;
 
     address public creator;
     address public adam;
     address public membership;
-    mapping(address => bool) public blankets;
+    mapping(address => bool) public budgetApprovals;
     mapping(address => uint256) public firstDeposit;
 
     DaoConfig public config;
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
-    event CreateBlanket(address blanket);
+    event CreateBudgetApproval(address budgetApproval);
     event Deposit(address token, uint256 amount);
     event Redeem(address token, uint256 amount);
 
@@ -80,11 +83,65 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         name = _name;
     }
 
-    function createBlanket(address blanket) public {
-        require(IAdam(adam).blankets(blanket), "blanket not whitelist");
-        ERC1967Proxy _blanket = new ERC1967Proxy(blanket, "");
-        blankets[address(_blanket)] = true;
-        emit CreateBlanket(address(_blanket));
+    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public {
+
+        require(_budgetApprovals.length == data.length, "input invalid");
+
+        for(uint i = 0; i < _budgetApprovals.length; i++) {
+            require(IAdam(adam).budgetApprovalRegistry(_budgetApprovals[i]), "budget approval not whitelist");
+            ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], "");
+            budgetApprovals[address(_budgetApproval)] = true;
+            emit CreateBudgetApproval(address(_budgetApproval));
+
+            // initialize(address,address,string,string,bool,address[],bool,address[],bool,uint256,uint8)
+            (bool success,) = address(_budgetApproval).call(data[i]);
+            require(success == true, "init failed");
+        }
+    }
+
+    function executeTransactionByBudgetApprovals (address budgetApproval, bytes calldata data) public {
+
+        if(data.toBytes4(0) != 0xa04a0908) {
+            // execute(address,bytes,uint256)
+            revert("unexpected function call");
+        }
+
+        (address _to, bytes memory _data, uint256 _value) = abi.decode(data.slice(4, data.length - 4), (address, bytes, uint256));
+
+        (bool isRequireToken, address requiredToken, uint256 requiredAmount) = IBudgetApproval(budgetApproval).getRequiredAmount(_to, _data, _value);
+        if(isRequireToken) {
+            _burnTokenForAllMembers(requiredToken, requiredAmount);
+            if(requiredToken == ETH_ADDRESS) {
+                // ETH
+                payable(budgetApproval).transfer(requiredAmount);
+            } else {
+                // ERC20
+                IERC20(requiredToken).transfer(budgetApproval, requiredAmount);
+            }
+        }
+
+        (bool success, bytes memory results) = budgetApproval.call(data);
+        require(success == true, "execution failed");
+
+        (bool haveTokenUsed, address tokenUsed, uint256 usedAmount, bool haveTokenGot, address tokenGot, uint256 gotAmount) = abi.decode(results, (bool,address,uint256,bool,address,uint256));
+
+        if(haveTokenUsed) {
+            if(tokenUsed != requiredToken) {
+                revert("unexpected token used");
+            }
+
+            if(usedAmount != requiredAmount) {
+                //TODO: when Unsiwap BA
+            }
+        }
+
+        if(haveTokenGot) {
+            //TODO: when Unsiwap BA
+        }
+    }
+
+    function getMintedContracts() external view override returns (address[] memory) {
+        return _mintedContracts;
     }
 
     function deposit() public payable {
@@ -126,6 +183,34 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         if (firstDeposit[member] == 0) {
             firstDeposit[member] = block.timestamp;
         }
+    }
+
+    function _burnTokenForAllMembers(address _token, uint256 _totalAmount) private {
+        address[] memory members = IMembership(membership).getAllMembers();
+        
+        uint256 totalBalance;
+        uint256 amountLeft = _totalAmount;
+        for(uint i = 0; i<members.length; i++) {
+            totalBalance += balanceOf(members[i], _tokenId(_token));
+        }
+
+        for(uint i = 0; i < members.length - 1; i++) {
+            uint256 memberBalance = balanceOf(members[i], _tokenId(_token));
+            _burnToken(
+                members[i],
+                _tokenId(_token),
+                _totalAmount * memberBalance / totalBalance
+            );
+
+            amountLeft -= _totalAmount * memberBalance / totalBalance;
+        }
+
+        _burnToken(
+            members[members.length - 1],
+            _tokenId(_token),
+            amountLeft
+        );
+        
     }
 
     function redeemToken(address _token, uint256 _amount) public {

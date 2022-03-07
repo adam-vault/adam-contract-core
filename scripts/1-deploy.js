@@ -5,7 +5,16 @@
 // Runtime Environment's members available in the global scope.
 const hre = require('hardhat');
 
+const deployBudgetApprovals = async () => {
+  const TransferERC20BudgetApproval = await hre.ethers.getContractFactory('TransferERC20BudgetApproval');
+  const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
+  await transferERC20BudgetApproval.deployed();
+
+  return [transferERC20BudgetApproval.address];
+};
+
 async function main () {
+  const budgetApprovalsAddress = await deployBudgetApprovals();
   const Dao = await hre.ethers.getContractFactory('Dao');
   const Membership = await hre.ethers.getContractFactory('Membership');
   const Adam = await hre.ethers.getContractFactory('Adam');
@@ -15,12 +24,13 @@ async function main () {
   const membership = await Membership.deploy();
   await membership.deployed();
 
-  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address], { kind: 'uups' });
+  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress], { kind: 'uups' });
   await adam.deployed();
 
   console.log('dao deployed to: ', dao.address);
   console.log('membership deployed to: ', membership.address);
   console.log('adam deployed to: ', adam.address);
+  console.log('budget approvals deployed to: ', budgetApprovalsAddress);
 }
 
 main().catch((error) => {
