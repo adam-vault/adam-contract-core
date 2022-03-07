@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "./interface/IDao.sol";
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
 
@@ -27,7 +26,7 @@ struct DaoConfig {
     mapping(address => bool) depositTokens;
 }
 
-contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUpgradeable {
+contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradeable {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -38,7 +37,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
     address public creator;
     address public adam;
-    address public override membership;
+    address public membership;
     mapping(address => bool) public blankets;
     mapping(address => uint256) public firstDeposit;
 
@@ -46,6 +45,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
     event CreateBlanket(address blanket);
+    event Deposit(address token, uint256 amount);
+    event Redeem(address token, uint256 amount);
 
     function initialize(
         address _adam,
@@ -55,7 +56,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         address _membership,
         uint256 _locktime,
         address[] calldata _depositTokens
-    ) public override initializer {
+    ) public initializer {
         __ERC721Holder_init();
         __MultiToken_init(_name, _symbol);
 
@@ -75,7 +76,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         _;
     }
 
-    function setName(string calldata _name) public override vote("CorporateAction") {
+    function setName(string calldata _name) public vote("CorporateAction") {
         name = _name;
     }
 
@@ -93,6 +94,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         address member = _member(msg.sender);
         _mintToken(member, _tokenId(address(0)), msg.value, "");
 
+        emit Deposit(address(0), msg.value);
+
         if (firstDeposit[member] == 0) {
             firstDeposit[member] = block.timestamp;
         }
@@ -108,6 +111,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
         _burnToken(member, ethId, _amount);
         payable(msg.sender).transfer(_amount);
+        emit Redeem(address(0), _amount);
     }
 
     function depositToken(address _token, uint256 _amount) public {
@@ -116,6 +120,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         address member = _member(msg.sender);
         IERC20Metadata(_token).transferFrom(msg.sender, address(this), _amount);
         _mintToken(member, _tokenId(_token), _amount, "");
+
+        emit Deposit(_token, _amount);
 
         if (firstDeposit[member] == 0) {
             firstDeposit[member] = block.timestamp;
@@ -133,6 +139,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
 
         _burnToken(member, addressToId[_token], _amount);
         IERC20Metadata(_token).transfer(msg.sender, _amount);
+
+        emit Redeem(_token, _amount);
     }
 
     function _tokenId(address contractAddress) internal returns (uint256){

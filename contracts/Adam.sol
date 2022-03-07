@@ -7,33 +7,36 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IDao.sol";
-import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
 import "hardhat/console.sol";
 
-contract Adam is IAdam, Initializable, UUPSUpgradeable {
+contract Adam is Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
-    mapping(address => bool) public override blankets;
-
+    mapping(address => bool) public blankets;
     address[] public daos;
     mapping(address => bool) public daoRegistry;
 
-    function initialize(address _daoImplementation, address _membershipImplementation) public override initializer {
+    event CreateDao(address dao, string name, string symbol, string description, address creator);
+    event WhitelistBlanket(address blanket);
+
+    function initialize(address _daoImplementation, address _membershipImplementation) public initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
     }
     function _authorizeUpgrade(address) internal override initializer {}
 
-    function totalDaos() public view override returns (uint256) {
+    function totalDaos() public view returns (uint256) {
         return daos.length;
     }
 
     function whitelistBlanket(address blanket) public {
+        require(blankets[blanket] == false, "blanket already whitelisted");
         blankets[blanket] = true;
+        emit WhitelistBlanket(blanket);
     }
 
-    function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public override returns (address) {
+    function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
 
