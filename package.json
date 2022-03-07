@@ -40,7 +40,9 @@
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@uniswap/v3-periphery": "^1.4.0",
     "abi-to-sol": "^0.5.2",
+    "glob": "^7.2.0",
     "hardhat-contract-sizer": "^2.4.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "minimatch": "^5.0.1"
   }
 }

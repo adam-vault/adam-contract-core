@@ -1,44 +1,47 @@
 const { generateSolidity } = require('abi-to-sol/dist/src');
 
 const fs = require('fs');
-const path = require('path');
+const glob = require('glob');
+const minimatch = require('minimatch');
 
-const genSol = function (path) {
-  const json = require(path);
-  if (!json.sourceName) return;
-  if (!json.sourceName.match(/contracts\/\w+\.sol/g)) return;
-  const { abi, contractName } = json;
-  const output = generateSolidity({
-    abi,
-    name: `I${contractName}`,
-    solidityVersion: '^0.8.0',
-    license: 'GPL-3.0',
+const getAllFiles = function ({
+  artifacts = './artifacts/contracts',
+  contracts = 'contracts/*.sol',
+  outputPath = './contracts/interface',
+  prefix = 'I',
+  solidityVersion,
+  license,
+}) {
+  glob(`${artifacts}/**/*.json`, function (err, files) {
+    if (err) return console.log(err);
+    files.forEach((path) => {
+      const json = require(path);
+      if (!json.sourceName) return;
+      if (!minimatch(json.sourceName, contracts)) return;
+      const { abi, contractName } = json;
+      const outputContractName = `${prefix}${contractName}`;
+      const output = generateSolidity({
+        abi,
+        name: outputContractName,
+        solidityVersion,
+        license,
+      });
+      fs.writeFile(
+        `${outputPath}/${outputContractName}.sol`,
+        output,
+        function (err) {
+          if (err) return console.log(err);
+          console.log(`${outputPath}/${outputContractName}.sol`);
+        },
+      );
+    });
   });
-  fs.writeFile(
-    './contracts/interface/' + `I${contractName}.sol`,
-    output,
-    function (err) {
-      if (err) return console.log(err);
-      console.log('./contracts/interface/' + `I${contractName}.sol`);
-    }
-  );
 };
 
-const getAllFiles = function (dirPath, arrayOfFiles) {
-  const files = fs.readdirSync(dirPath);
-
-  arrayOfFiles = arrayOfFiles || [];
-
-  files.forEach(function (file) {
-    if (fs.statSync(dirPath + '/' + file).isDirectory()) {
-      arrayOfFiles = getAllFiles(dirPath + '/' + file, arrayOfFiles);
-    } else {
-      arrayOfFiles.push(path.join(dirPath, '/', file));
-      genSol(path.join(__dirname, dirPath, '/', file));
-    }
-  });
-
-  return arrayOfFiles;
-};
-
-getAllFiles('./artifacts/contracts');
+getAllFiles({
+  artifacts: './artifacts/contracts',
+  contracts: 'contracts/*.sol',
+  outputPath: './contracts/interface',
+  solidityVersion: '^0.8.0',
+  license: 'GPL-3.0',
+});
