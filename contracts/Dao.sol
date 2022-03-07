@@ -89,13 +89,9 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
 
         for(uint i = 0; i < _budgetApprovals.length; i++) {
             require(IAdam(adam).budgetApprovalRegistry(_budgetApprovals[i]), "budget approval not whitelist");
-            ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], "");
+            ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
             budgetApprovals[address(_budgetApproval)] = true;
             emit CreateBudgetApproval(address(_budgetApproval));
-
-            // initialize(address,address,string,string,bool,address[],bool,address[],bool,uint256,uint8)
-            (bool success,) = address(_budgetApproval).call(data[i]);
-            require(success == true, "init failed");
         }
     }
 
