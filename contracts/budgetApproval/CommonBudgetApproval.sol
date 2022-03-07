@@ -20,16 +20,16 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
     string public transactionType;
 
     bool public allowAllAddresses;
-    mapping(address => bool) public allowedAddressesMapping;
+    mapping(address => bool) public addressesMapping;
 
     bool public allowAllTokens;
-    address[] public allowedTokens;
-    mapping(address => bool) public allowedTokensMapping;
+    address[] public tokens;
+    mapping(address => bool) public tokensMapping;
 
     bool public allowAnyAmount;
-    uint256 public totalAllowedAmount;
+    uint256 public totalAmount;
 
-    uint8 public allowedAmountPercentage;
+    uint8 public amountPercentage;
 
     modifier onlyDao {
       require(msg.sender == dao, "access denied");
@@ -42,12 +42,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         string memory _text, 
         string memory _transactionType,
         bool _allowAllAddresses,
-        address[] memory _allowedAddresses,
+        address[] memory _addresses,
         bool _allowAllTokens,
-        address[] memory _allowedTokens,
+        address[] memory _tokens,
         bool _allowAnyAmount,
-        uint256 _totalAllowedAmount,
-        uint8 _allowedAmountPercentage
+        uint256 _totalAmount,
+        uint8 _amountPercentage
         ) public initializer {
         dao = _dao;
         executor = _executor;
@@ -55,31 +55,31 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         transactionType = _transactionType;
 
         allowAllAddresses = _allowAllAddresses;
-        for(uint i = 0; i < _allowedAddresses.length; i++) {
-            allowedAddressesMapping[_allowedAddresses[i]] = true;
+        for(uint i = 0; i < _addresses.length; i++) {
+            addressesMapping[_addresses[i]] = true;
         }
 
         allowAllTokens = _allowAllTokens;
-        allowedTokens = _allowedTokens;
-        for(uint i = 0; i < _allowedTokens.length; i++) {
-            allowedTokensMapping[_allowedTokens[i]] = true;
+        tokens = _tokens;
+        for(uint i = 0; i < _tokens.length; i++) {
+            tokensMapping[_tokens[i]] = true;
         }
 
         allowAnyAmount = _allowAnyAmount;
-        totalAllowedAmount = _totalAllowedAmount;
-        allowedAmountPercentage = _allowedAmountPercentage;
+        totalAmount = _totalAmount;
+        amountPercentage = _amountPercentage;
     }
 
     function _checkAddressValid(address to) public view returns (bool) {
-        return allowAllAddresses || allowedAddressesMapping[to];
+        return allowAllAddresses || addressesMapping[to];
     }
 
     function _checkTokenValid(address token) public view returns (bool) {
-        return allowAllTokens || allowedTokensMapping[token];
+        return allowAllTokens || tokensMapping[token];
     }
 
     function _checkAmountValid(uint256 amount) public view returns (bool) {
-        return amount < totalAllowedAmount;
+        return amount < totalAmount;
     }
 
     function _checkAmountPercentageValid(uint256 amount) public view returns (bool) {
@@ -97,11 +97,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
                 
             }
         } else {
-            for(uint i = 0; i < allowedTokens.length; i++) {
-                if(allowedTokens[i] == ETH_ADDRESS) {
+            for(uint i = 0; i < tokens.length; i++) {
+                if(tokens[i] == ETH_ADDRESS) {
                     totalAmount += dao.balance;
                 } else {
-                    totalAmount += IERC20(allowedTokens[i]).balanceOf(dao);
+                    totalAmount += IERC20(tokens[i]).balanceOf(dao);
                 }
             }
         }
@@ -110,11 +110,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
             return false;
         }
 
-        return (amount * 100 / totalAmount) <= allowedAmountPercentage;
+        return (amount * 100 / totalAmount) <= amountPercentage;
     }
 
-    function _updateAllowedTotalAmount(uint256 usedAmount) internal {
-        totalAllowedAmount -= usedAmount;
+    function _updateTotalAmount(uint256 usedAmount) internal {
+        totalAmount -= usedAmount;
     }
 
     function _authorizeUpgrade(address) internal override initializer {}

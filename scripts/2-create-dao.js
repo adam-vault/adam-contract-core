@@ -2,12 +2,12 @@ const hre = require('hardhat');
 const _ = require('lodash');
 
 // rinkeby
-const adamAddress = '0x2669b524745B1D2dAF9235D890FCc3ca2c45C952';
-const transferERC20BudgetApprovalAddress = '0x1278E8DB886efD798F6563239A2ca7518489B36c';
+const adamAddress = '0x49b17d7f5d9D271a7fDd82bfBD27dD69BDf39f31';
+const transferERC20BudgetApprovalAddress = '0x47EC00159c98853dC35FaF4D08A1d3135c1aAe56';
 
 async function main () {
   const adam = await hre.ethers.getContractAt('Adam', adamAddress);
-  const tx = await adam.createDao('Dao', 'D');
+  const tx = await adam.createDao('Dao', 'D', 'Description', 10000000, [hre.ethers.constants.AddressZero]);
   const receipt = await tx.wait();
   const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
 
