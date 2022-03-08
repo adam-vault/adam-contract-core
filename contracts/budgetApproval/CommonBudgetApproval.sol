@@ -70,19 +70,19 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         amountPercentage = _amountPercentage;
     }
 
-    function _checkAddressValid(address to) public view returns (bool) {
+    function checkAddressValid(address to) public view returns (bool) {
         return allowAllAddresses || addressesMapping[to];
     }
 
-    function _checkTokenValid(address token) public view returns (bool) {
+    function checkTokenValid(address token) public view returns (bool) {
         return allowAllTokens || tokensMapping[token];
     }
 
-    function _checkAmountValid(uint256 amount) public view returns (bool) {
+    function checkAmountValid(uint256 amount) public view returns (bool) {
         return amount < totalAmount;
     }
 
-    function _checkAmountPercentageValid(uint256 amount) public view returns (bool) {
+    function checkAmountPercentageValid(uint256 amount) public view returns (bool) {
 
         uint256 _totalAmount;
 
@@ -119,6 +119,5 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
 
     function _authorizeUpgrade(address) internal override initializer {}
 
-    function decode(address, bytes memory, uint256) public pure virtual returns (address, address, uint256);
     function execute(address, bytes memory, uint256) public virtual;
 }
