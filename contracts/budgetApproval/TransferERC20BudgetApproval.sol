@@ -5,11 +5,20 @@ pragma solidity ^0.8.0;
 import "./CommonBudgetApproval.sol";
 import "../lib/BytesLib.sol";
 
+import "../interface/IDao.sol";
+
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     using BytesLib for bytes;
 
     function execute(address to, bytes memory data, uint256 value) public override returns (bool haveTokenUsed, address tokenUsed,uint256 usedAmount, bool haveTokenGot, address tokenGot, uint256 gotAmount) {
+
+        (bool isRequireToken, address requiredToken, uint256 requiredAmount) = getRequiredAmount(to, data, value);
+        
+        if(isRequireToken) {
+            IDao(msg.sender).withdrawByBudgetApproval(requiredToken, requiredAmount);
+        }
+
         (bool success,) = to.call{ value: value }(data);
         require(success == true, "execution failed");
 
@@ -44,18 +53,18 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return (to, recipient, amount);
     }
 
-    function getRequiredAmount(address to, bytes memory data, uint256 value) external pure override returns (bool haveTokenUsed, address tokenUsed, uint256 usedAmount) {
+    function getRequiredAmount(address to, bytes memory data, uint256 value) public pure returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
         (address _to, address _recipient, uint256 _amount) = decode(to, data, value);
 
         if(_amount > 0) {
-            haveTokenUsed = true;
-            usedAmount = _amount;
+            isRequireToken = true;
+            requiredAmount = _amount;
         }
 
         if(_to == _recipient) {
-            tokenUsed = ETH_ADDRESS;
+            requiredToken = ETH_ADDRESS;
         } else {
-            tokenUsed = _to;
+            requiredToken = _to;
         }
     }
 }

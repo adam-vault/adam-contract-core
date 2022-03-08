@@ -79,6 +79,11 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         _;
     }
 
+    modifier onlyBudgetApproval {
+        require(budgetApprovals[msg.sender] == true, "access denied");
+        _;
+    }
+
     function setName(string calldata _name) public vote("CorporateAction") {
         name = _name;
     }
@@ -102,38 +107,9 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
             revert("unexpected function call");
         }
 
-        (address _to, bytes memory _data, uint256 _value) = abi.decode(data.slice(4, data.length - 4), (address, bytes, uint256));
-
-        (bool isRequireToken, address requiredToken, uint256 requiredAmount) = IBudgetApproval(budgetApproval).getRequiredAmount(_to, _data, _value);
-        if(isRequireToken) {
-            _burnTokenForAllMembers(requiredToken, requiredAmount);
-            if(requiredToken == ETH_ADDRESS) {
-                // ETH
-                payable(budgetApproval).transfer(requiredAmount);
-            } else {
-                // ERC20
-                IERC20(requiredToken).transfer(budgetApproval, requiredAmount);
-            }
-        }
-
-        (bool success, bytes memory results) = budgetApproval.call(data);
+        (bool success,) = budgetApproval.call(data);
         require(success == true, "execution failed");
 
-        (bool haveTokenUsed, address tokenUsed, uint256 usedAmount, bool haveTokenGot, address tokenGot, uint256 gotAmount) = abi.decode(results, (bool,address,uint256,bool,address,uint256));
-
-        if(haveTokenUsed) {
-            if(tokenUsed != requiredToken) {
-                revert("unexpected token used");
-            }
-
-            if(usedAmount != requiredAmount) {
-                //TODO: when Unsiwap BA
-            }
-        }
-
-        if(haveTokenGot) {
-            //TODO: when Unsiwap BA
-        }
     }
 
     function getMintedContracts() external view override returns (address[] memory) {
@@ -181,19 +157,29 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         }
     }
 
+    function withdrawByBudgetApproval(address _token, uint256 _amount) external onlyBudgetApproval {
+        _burnTokenForAllMembers( _token, _amount);
+            if(_token == ETH_ADDRESS) {
+                // ETH
+                payable(msg.sender).transfer(_amount);
+            } else {
+                // ERC20
+                IERC20(_token).transfer(msg.sender, _amount);
+            }
+    }
+
     function _burnTokenForAllMembers(address _token, uint256 _totalAmount) private {
-        address[] memory members = IMembership(membership).getAllMembers();
-        
+         address[] memory _members = IMembership(membership).getAllMembers();
         uint256 totalBalance;
         uint256 amountLeft = _totalAmount;
-        for(uint i = 0; i<members.length; i++) {
-            totalBalance += balanceOf(members[i], _tokenId(_token));
+        for(uint i = 0; i<_members.length; i++) {
+            totalBalance += balanceOf(_members[i], _tokenId(_token));
         }
 
-        for(uint i = 0; i < members.length - 1; i++) {
-            uint256 memberBalance = balanceOf(members[i], _tokenId(_token));
+        for(uint i = 0; i < _members.length - 1; i++) {
+            uint256 memberBalance = balanceOf(_members[i], _tokenId(_token));
             _burnToken(
-                members[i],
+                _members[i],
                 _tokenId(_token),
                 _totalAmount * memberBalance / totalBalance
             );
@@ -202,7 +188,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         }
 
         _burnToken(
-            members[members.length - 1],
+            _members[_members.length - 1],
             _tokenId(_token),
             amountLeft
         );
