@@ -84,6 +84,10 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         _;
     }
 
+    function getTokenId(address _token) public view override returns (uint256) {
+        return addressToId[_token];
+    }
+
     function setName(string calldata _name) public vote("CorporateAction") {
         name = _name;
     }
@@ -157,42 +161,43 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         }
     }
 
-    function withdrawByBudgetApproval(address _token, uint256 _amount) external override onlyBudgetApproval {
-        _burnTokenForAllMembers( _token, _amount);
+    function withdrawByBudgetApproval(address _token, address[] memory _members, uint256[] memory _amounts, bool transferred) external override onlyBudgetApproval returns(uint256 totalAmount) {
+        require(_members.length == _amounts.length, "invalid input");
+
+        for(uint i = 0; i < _members.length; i++) {
+            _burnToken(_members[i], _tokenId(_token), _amounts[i]);
+            totalAmount += _amounts[i];
+        }
+
+        if(!transferred) {
             if(_token == ETH_ADDRESS) {
                 // ETH
-                payable(msg.sender).transfer(_amount);
+                payable(msg.sender).transfer(totalAmount);
             } else {
                 // ERC20
-                IERC20(_token).transfer(msg.sender, _amount);
+                IERC20(_token).transfer(msg.sender, totalAmount);
             }
+        }
     }
 
-    function _burnTokenForAllMembers(address _token, uint256 _totalAmount) private {
-         address[] memory _members = IMembership(membership).getAllMembers();
-        uint256 totalBalance;
-        uint256 amountLeft = _totalAmount;
-        for(uint i = 0; i<_members.length; i++) {
-            totalBalance += balanceOf(_members[i], _tokenId(_token));
+    function depositByBudgetApproval(address _token, address[] memory _members, uint256[] memory _amounts, bool transferred) external override onlyBudgetApproval returns(uint256 totalAmount) {
+        require(_members.length == _amounts.length, "invalid input");
+
+        for(uint i = 0; i < _members.length; i++) {
+            _mintToken(_members[i], _tokenId(_token), _amounts[i], "");
+            totalAmount += _amounts[i];
         }
 
-        for(uint i = 0; i < _members.length - 1; i++) {
-            uint256 memberBalance = balanceOf(_members[i], _tokenId(_token));
-            _burnToken(
-                _members[i],
-                _tokenId(_token),
-                _totalAmount * memberBalance / totalBalance
-            );
-
-            amountLeft -= _totalAmount * memberBalance / totalBalance;
+        if(!transferred) {
+            if(_token == ETH_ADDRESS) {
+                // ETH is not allowed to transfer by third party
+                revert("invalid");
+            } else {
+                // ERC20
+                require(IERC20(_token).allowance(msg.sender, address(this)) >= totalAmount,"not approved");
+                IERC20(_token).transferFrom(msg.sender, address(this), totalAmount);
+            }
         }
-
-        _burnToken(
-            _members[_members.length - 1],
-            _tokenId(_token),
-            amountLeft
-        );
-        
     }
 
     function redeemToken(address _token, uint256 _amount) public {

@@ -58,7 +58,6 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable {
     }
 
     function getAllMembers() external view override returns (address[] memory) {
-        require(msg.sender == dao, "access denied");
         return _members;
     }
 

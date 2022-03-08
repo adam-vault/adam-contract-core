@@ -5,9 +5,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 import "../interface/IBudgetApproval.sol";
 import "../interface/IDao.sol";
+import "../interface/IMembership.sol";
 
 abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudgetApproval {
 
@@ -115,6 +117,28 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
 
     function _updateTotalAmount(uint256 usedAmount) internal {
         totalAmount -= usedAmount;
+    }
+
+    function _getBurnAmountsOfAllMembers(address _token, uint256 _totalAmount) public view returns (address[] memory, uint256[] memory) {
+        address _membership = IDao(dao).membership();
+        address[] memory members = IMembership(_membership).getAllMembers();
+        uint256[] memory amounts = new uint[](members.length);
+        
+        uint256 totalBalance;
+        for(uint i = 0; i < members.length; i++) {
+            totalBalance += IERC1155(dao).balanceOf(members[i], IDao(dao).getTokenId(_token));
+        }
+
+        uint256 amountLeft = _totalAmount;
+        for(uint i = 0; i < members.length - 1; i++) {
+            uint256 memberBalance = IERC1155(dao).balanceOf(members[i], IDao(dao).getTokenId(_token));
+            amounts[i] = _totalAmount * memberBalance / totalBalance;
+            amountLeft -= _totalAmount * memberBalance / totalBalance;
+        }
+
+        amounts[members.length - 1] = amountLeft;
+
+        return (members, amounts);
     }
 
     function _authorizeUpgrade(address) internal override initializer {}

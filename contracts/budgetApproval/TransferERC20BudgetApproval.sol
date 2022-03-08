@@ -16,7 +16,9 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         (bool isRequireToken, address requiredToken, uint256 requiredAmount) = getRequiredAmount(to, data, value);
         
         if(isRequireToken) {
-            IDao(msg.sender).withdrawByBudgetApproval(requiredToken, requiredAmount);
+            (address[] memory members, uint256[] memory amounts) = _getBurnAmountsOfAllMembers(requiredToken, requiredAmount);
+            uint256 totalAmount = IDao(msg.sender).withdrawByBudgetApproval(requiredToken, members, amounts, false);
+            require(totalAmount == requiredAmount, "invalid");
         }
 
         (bool success,) = to.call{ value: value }(data);
@@ -29,13 +31,13 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     }
 
     function checkValid(address _to, address _recipient, uint256 _amount) public view returns(bool valid) {
-        return _checkAddressValid(_recipient) && 
-               _checkTokenValid(_to) && 
-               _checkAmountValid(_amount) && 
-               _checkAmountPercentageValid(_amount);
+        return checkAddressValid(_recipient) && 
+               checkTokenValid(_to) && 
+               checkAmountValid(_amount) && 
+               checkAmountPercentageValid(_amount);
     }
 
-    function decode(address to, bytes memory data, uint256 value) public pure override returns (address, address, uint256) {
+    function decode(address to, bytes memory data, uint256 value) public pure returns (address, address, uint256) {
 
         if(data.length == 0) {
             return (to, to, value);
