@@ -157,7 +157,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         }
     }
 
-    function withdrawByBudgetApproval(address _token, uint256 _amount) external onlyBudgetApproval {
+    function withdrawByBudgetApproval(address _token, uint256 _amount) external override onlyBudgetApproval {
         _burnTokenForAllMembers( _token, _amount);
             if(_token == ETH_ADDRESS) {
                 // ETH

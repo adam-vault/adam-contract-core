@@ -11,7 +11,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     using BytesLib for bytes;
 
-    function execute(address to, bytes memory data, uint256 value) public override returns (bool haveTokenUsed, address tokenUsed,uint256 usedAmount, bool haveTokenGot, address tokenGot, uint256 gotAmount) {
+    function execute(address to, bytes memory data, uint256 value) public override onlyDao {
 
         (bool isRequireToken, address requiredToken, uint256 requiredAmount) = getRequiredAmount(to, data, value);
         
@@ -26,9 +26,6 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         require(checkValid(_token, _recipient, _amount) == true, "transaction not valid");
 
         _updateTotalAmount(_amount);
-        haveTokenUsed = true;
-        tokenUsed = _token;
-        usedAmount = _amount;
     }
 
     function checkValid(address _to, address _recipient, uint256 _amount) public view returns(bool valid) {
@@ -53,7 +50,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return (to, recipient, amount);
     }
 
-    function getRequiredAmount(address to, bytes memory data, uint256 value) public pure returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
+    function getRequiredAmount(address to, bytes memory data, uint256 value) public pure override returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
         (address _to, address _recipient, uint256 _amount) = decode(to, data, value);
 
         if(_amount > 0) {
