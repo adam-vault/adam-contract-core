@@ -15,7 +15,7 @@ contract Adam is Initializable, UUPSUpgradeable {
     address public membershipImplementation;
 
     address[] public budgetApprovals;
-    mapping(address => bool) public override budgetApprovalRegistry;
+    mapping(address => bool) public budgetApprovalRegistry;
 
     address[] public daos;
     mapping(address => bool) public daoRegistry;
@@ -36,7 +36,7 @@ contract Adam is Initializable, UUPSUpgradeable {
 
     function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public {
         for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(budgetApprovals[_budgetApprovals[i]] == false, "budget approval already whitelisted");
+            require(budgetApprovalRegistry[_budgetApprovals[i]] == false, "budget approval already whitelisted");
             budgetApprovals.push(_budgetApprovals[i]);
             budgetApprovalRegistry[_budgetApprovals[i]] = true;
             emit WhitelistBudgetApproval(_budgetApprovals[i]);
