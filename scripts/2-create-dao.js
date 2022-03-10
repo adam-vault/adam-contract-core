@@ -32,7 +32,7 @@ async function main () {
       // allow all token
       false,
       // allowed token (use when above = false)
-      ['0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735'],
+      [hre.ethers.constants.AddressZero, DAIAddress],
       // allow any amount
       false,
       // allowed total amount

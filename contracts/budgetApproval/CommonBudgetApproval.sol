@@ -84,10 +84,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         return amount < totalAmount;
     }
 
-    function checkAmountPercentageValid(uint256 amount) public view returns (bool) {
+    function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
 
         uint256 _totalAmount;
         address[] memory ownedTokens;
+
+        if(executed) {
+            _totalAmount += amount;
+        }
 
         if(allowAllTokens == true) {
             ownedTokens =  IDao(dao).getMintedContracts();
@@ -139,4 +143,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
     function _authorizeUpgrade(address) internal override initializer {}
 
     function execute(address, bytes memory, uint256) public virtual;
+
+    receive() external payable {}
 }
