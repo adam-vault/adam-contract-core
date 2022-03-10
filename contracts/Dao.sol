@@ -161,7 +161,12 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         }
     }
 
-    function withdrawByBudgetApproval(address _token, address[] memory _members, uint256[] memory _amounts, bool transferred) external onlyBudgetApproval returns(uint256 totalAmount) {
+    function withdrawByBudgetApproval(
+        address _token, 
+        address[] memory _members, 
+        uint256[] memory _amounts, 
+        bool transferred
+    ) external onlyBudgetApproval returns (uint256 totalAmount) {
         require(_members.length == _amounts.length, "invalid input");
 
         for(uint i = 0; i < _members.length; i++) {
@@ -180,7 +185,12 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         }
     }
 
-    function depositByBudgetApproval(address _token, address[] memory _members, uint256[] memory _amounts, bool transferred) external onlyBudgetApproval returns(uint256 totalAmount) {
+    function depositByBudgetApproval(
+        address _token, 
+        address[] memory _members, 
+        uint256[] memory _amounts, 
+        bool transferred
+    ) external onlyBudgetApproval returns (uint256 totalAmount) {
         require(_members.length == _amounts.length, "invalid input");
 
         for(uint i = 0; i < _members.length; i++) {
