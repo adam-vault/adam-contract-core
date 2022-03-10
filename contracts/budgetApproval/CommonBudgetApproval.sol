@@ -87,24 +87,19 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
     function checkAmountPercentageValid(uint256 amount) public view returns (bool) {
 
         uint256 _totalAmount;
+        address[] memory ownedTokens;
 
         if(allowAllTokens == true) {
-            address[] memory mintedERC20 = IDao(dao).getMintedContracts();
-            for(uint i = 0; i < mintedERC20.length; i++) {
-                if(mintedERC20[i] == ETH_ADDRESS) {
-                    _totalAmount += dao.balance;
-                } else {
-                    _totalAmount += IERC20(mintedERC20[i]).balanceOf(dao);
-                }
-                
-            }
+            ownedTokens =  IDao(dao).getMintedContracts();
         } else {
-            for(uint i = 0; i < tokens.length; i++) {
-                if(tokens[i] == ETH_ADDRESS) {
-                    _totalAmount += dao.balance;
-                } else {
-                    _totalAmount += IERC20(tokens[i]).balanceOf(dao);
-                }
+            ownedTokens = tokens;
+        }
+
+        for(uint i = 0; i < ownedTokens.length; i++) {
+            if(ownedTokens[i] == ETH_ADDRESS) {
+                _totalAmount += dao.balance;
+            } else {
+                _totalAmount += IERC20(ownedTokens[i]).balanceOf(dao);
             }
         }
 
