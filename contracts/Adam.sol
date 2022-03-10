@@ -9,18 +9,25 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./interface/IDao.sol";
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
+import "./interface/IGovernFactory.sol";
 import "hardhat/console.sol";
 
 contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
+    address public governFactoryImplementation;
 
     address[] public daos;
     mapping(address => bool) public daoRegistry;
 
-    function initialize(address _daoImplementation, address _membershipImplementation) public override initializer {
+    function initialize(
+        address _daoImplementation,
+        address _membershipImplementation,
+        address _governFactoryImplementation
+    ) public override initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
+        governFactoryImplementation = _governFactoryImplementation;
     }
     function _authorizeUpgrade(address) internal override initializer {}
 
@@ -31,10 +38,13 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     function createDao(string calldata _name, string calldata _symbol) public override returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
+        ERC1967Proxy _governFactory = new ERC1967Proxy(governFactoryImplementation, "");
 
         IMembership(address(_membership)).initialize(address(_dao), _name, _symbol);
-        IDao(address(_dao)).initialize(address(this),  msg.sender, _name, _symbol, address(_membership));
-
+        IDao(address(_dao)).initialize(
+            address(this), msg.sender, _name, _symbol, address(_membership), address(_governFactory)
+        );
+        IGovernFactory(address(_governFactory)).initialize(address(_dao));
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
         emit CreateDao(address(_dao), _name, _symbol, msg.sender);

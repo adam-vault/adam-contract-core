@@ -7,14 +7,19 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
+import "./interface/IGovern.sol";
+import "./interface/IGovernFactory.sol";
+import "./interface/IAdam.sol";
 
 import "./base/MultiToken.sol";
 import "./lib/Concat.sol";
 import "./lib/ToString.sol";
 import "./lib/BytesLib.sol";
+import "./lib/SharedStruct.sol";
 import "./dex/UniswapSwapper.sol";
 
 contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUpgradeable {
@@ -29,6 +34,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
     address public creator;
     address public adam;
     address public membership;
+    address public governFactory;
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
 
@@ -37,7 +43,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         address _creator,
         string memory _name,
         string memory _symbol,
-        address _membership
+        address _membership,
+        address _governFactory
     ) public override initializer {
         __ERC721Holder_init();
         __MultiToken_init(_name, _symbol);
@@ -45,6 +52,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         adam = _adam;
         creator = _creator;
         membership = _membership;
+        governFactory = _governFactory;
     }
 
     function deposit() public payable {
@@ -98,6 +106,27 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, IDao, ERC721HolderUp
         return IMembership(membership).tokenIdToMember(memberTokenId);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override {}
+    function createCategory(
+        string calldata name,
+        uint duration,
+        uint quorum,
+        uint passThreshold,
+        uint[] calldata voteWeights,
+        address[] calldata voteTokens
+    ) public {
+        IGovernFactory(governFactory).createCategory(
+            name,
+            duration,
+            quorum,
+            passThreshold,
+            voteWeights,
+            voteTokens
+        );
+    }
 
+    function createGovern(string calldata categoryName) public {
+        IGovernFactory(governFactory).createGovern(categoryName);
+    }
+
+    function _authorizeUpgrade(address newImplementation) internal override {}
 }
