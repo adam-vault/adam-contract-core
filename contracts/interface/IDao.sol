@@ -44,6 +44,8 @@ interface IDao {
 
     function addressToId(address) external view returns (uint256);
 
+    function approveERC20(address _token, bytes memory _data) external;
+
     function balanceOf(address account, uint256 id)
         external
         view

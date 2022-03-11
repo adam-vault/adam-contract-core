@@ -16,7 +16,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
     address constant public ETH_ADDRESS = address(0x0);
 
     address public executor;
-    address public dao;
+    address payable public dao;
 
     string public text;
     string public transactionType;
@@ -43,28 +43,32 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         address _executor, 
         string memory _text, 
         string memory _transactionType,
-        bool _allowAllAddresses,
         address[] memory _addresses,
-        bool _allowAllTokens,
         address[] memory _tokens,
         bool _allowAnyAmount,
         uint256 _totalAmount,
         uint8 _amountPercentage
         ) public initializer {
-        dao = _dao;
+        dao = payable(_dao);
         executor = _executor;
         text = _text;
         transactionType = _transactionType;
 
-        allowAllAddresses = _allowAllAddresses;
-        for(uint i = 0; i < _addresses.length; i++) {
-            addressesMapping[_addresses[i]] = true;
+        if(_addresses.length > 0) {
+            for(uint i = 0; i < _addresses.length; i++) {
+                addressesMapping[_addresses[i]] = true;
+            }
+        } else {
+            allowAllAddresses = true;
         }
 
-        allowAllTokens = _allowAllTokens;
-        tokens = _tokens;
-        for(uint i = 0; i < _tokens.length; i++) {
-            tokensMapping[_tokens[i]] = true;
+        if(_tokens.length > 0) {
+            tokens = _tokens;
+            for(uint i = 0; i < _tokens.length; i++) {
+                tokensMapping[_tokens[i]] = true;
+            }
+        } else {
+            allowAllTokens = true;
         }
 
         allowAnyAmount = _allowAnyAmount;
@@ -81,7 +85,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
     }
 
     function checkAmountValid(uint256 amount) public view returns (bool) {
-        return amount < totalAmount;
+        return allowAnyAmount || amount < totalAmount;
     }
 
     function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
@@ -115,10 +119,27 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
     }
 
     function _updateTotalAmount(uint256 usedAmount) internal {
-        totalAmount -= usedAmount;
+        if(!allowAnyAmount) {
+            totalAmount -= usedAmount;
+        }
     }
 
-    function _getBurnAmountsOfAllMembers(address _token, uint256 _totalAmount) public view returns (address[] memory, uint256[] memory) {
+    function _getMintAmountOfMembers(uint256 _totalAmount, address[] memory members, uint256[] memory amountsForRatio, uint256 totalAmountForRatio) internal pure returns (address[] memory, uint256[] memory) {
+        require(members.length == amountsForRatio.length, "invalid input");
+        
+        uint256[] memory amounts = new uint[](members.length);
+        uint256 amountLeft = _totalAmount;
+        for(uint i = 0; i < members.length - 1; i++) {
+            amounts[i] = _totalAmount * amountsForRatio[i] / totalAmountForRatio;
+            amountLeft -= _totalAmount * amountsForRatio[i] / totalAmountForRatio;
+        }
+
+        amounts[members.length - 1] = amountLeft;
+
+        return (members, amounts);
+    }
+
+    function _getBurnAmountsOfAllMembers(address _token, uint256 _totalAmount) internal view returns (address[] memory, uint256[] memory) {
         address _membership = IDao(dao).membership();
         address[] memory members = IMembership(_membership).getAllMembers();
         uint256[] memory amounts = new uint[](members.length);
@@ -143,4 +164,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
     function _authorizeUpgrade(address) internal override initializer {}
 
     function execute(address, bytes memory, uint256) public virtual;
+
+    function getEncodedData(address _to, bytes memory _data, uint256 _amount) public pure returns (bytes memory) {
+        return abi.encodeWithSignature("execute(address,bytes,uint256)", _to, _data, _amount);
+    }
+
+    receive() external payable {}
 }

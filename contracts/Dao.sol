@@ -111,6 +111,12 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         }
     }
 
+    // for handling Uniswap Iframe
+    function approveERC20(address _token, bytes memory _data) external onlyBudgetApproval {
+        (bool approved,) = _token.call(_data);
+        require(approved == true, "approved ERC20 failed");
+    }
+
     function executeTransactionByBudgetApprovals (address budgetApproval, bytes calldata data) public {
 
         if(data.toBytes4(0) != 0xa04a0908) {

@@ -12,7 +12,7 @@ library UniswapSwapper {
     address public constant ETH_ADDRESS = address(0x0);
     address public constant WETH_ADDRESS = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
 
-    function decodeUniswapData(address to, bytes memory _data, uint256 amount) public pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+    function decodeUniswapData(address to, bytes memory _data, uint256 amount) internal pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         
         if(to == UNISWAP_ROUTER) {
             // Uniswap Swap Router
@@ -27,7 +27,7 @@ library UniswapSwapper {
         }
     }
 
-    function decodeUniswapData(address to, bytes memory _data, uint256 amount, bytes memory result) public pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+    function decodeUniswapData(address to, bytes memory _data, uint256 amount, bytes memory result) internal pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         if(to == UNISWAP_ROUTER) {
             // Uniswap Swap Router
             (bytes[] memory decodedResults) = abi.decode(result, (bytes[]));
@@ -41,7 +41,7 @@ library UniswapSwapper {
         }
     }
 
-    function _decodeWETH9(bytes memory _data, uint256 amount) public pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) {
+    function _decodeWETH9(bytes memory _data, uint256 amount) internal pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) {
 
         if(_data.toBytes4(0) == 0xd0e30db0) {
             // deposit()
@@ -54,7 +54,7 @@ library UniswapSwapper {
         revert("Unexpected");
     }
 
-    function _decodeUniswapRouter(bytes memory _data, bytes[] memory _results, uint256 amount) public pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+    function _decodeUniswapRouter(bytes memory _data, bytes[] memory _results, uint256 amount) internal pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
 
         // Uniswap multicall(uint256,bytes[])
         require(_data.toBytes4(0) == 0x5ae401dc, "Unexpected");
