@@ -13,16 +13,20 @@ import "hardhat/console.sol";
 contract Adam is Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
-    mapping(address => bool) public blankets;
+
+    address[] public budgetApprovals;
+    mapping(address => bool) public budgetApprovalRegistry;
+
     address[] public daos;
     mapping(address => bool) public daoRegistry;
 
     event CreateDao(address dao, string name, string symbol, string description, address creator);
-    event WhitelistBlanket(address blanket);
+    event WhitelistBudgetApproval(address budgetApproval);
 
-    function initialize(address _daoImplementation, address _membershipImplementation) public initializer {
+    function initialize(address _daoImplementation, address _membershipImplementation, address[] calldata _budgetApprovalImplementations) public initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
+        whitelistBudgetApprovals(_budgetApprovalImplementations);
     }
     function _authorizeUpgrade(address) internal override initializer {}
 
@@ -30,10 +34,13 @@ contract Adam is Initializable, UUPSUpgradeable {
         return daos.length;
     }
 
-    function whitelistBlanket(address blanket) public {
-        require(blankets[blanket] == false, "blanket already whitelisted");
-        blankets[blanket] = true;
-        emit WhitelistBlanket(blanket);
+    function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public {
+        for(uint i = 0; i < _budgetApprovals.length; i++) {
+            require(budgetApprovalRegistry[_budgetApprovals[i]] == false, "budget approval already whitelisted");
+            budgetApprovals.push(_budgetApprovals[i]);
+            budgetApprovalRegistry[_budgetApprovals[i]] = true;
+            emit WhitelistBudgetApproval(_budgetApprovals[i]);
+        }
     }
 
     function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public returns (address) {

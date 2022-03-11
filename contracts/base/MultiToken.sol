@@ -29,6 +29,7 @@ contract MultiToken is ERC1155Upgradeable {
 
     Counters.Counter private _tokenIds;
     mapping(uint256 => Token) private _tokenRegistry;
+    address[] internal _mintedContracts;
 
     mapping(address => uint256) public addressToId;
     uint256 public ethId;
@@ -58,6 +59,7 @@ contract MultiToken is ERC1155Upgradeable {
             totalSupply: 0,
             isExist: true
         });
+        _mintedContracts.push(_contractAddress);
         emit CreateToken(id, _contractAddress);
         return id;
     }

@@ -57,6 +57,10 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable {
         return (ownerToTokenId[to], tokenIdToMember[newId]);
     }
 
+    function getAllMembers() external view returns (address[] memory) {
+        return _members;
+    }
+
     function _beforeTokenTransfer(
         address from,
         address to,
