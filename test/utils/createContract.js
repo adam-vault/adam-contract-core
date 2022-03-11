@@ -13,16 +13,11 @@ const createAdam = async () => {
   const membership = await Membership.deploy();
   const governFactory = await GovernFactory.deploy();
   const govern = await Govern.deploy();
-  console.log("=====")
   await dao.deployed();
-  console.log("=====")
   await membership.deployed();
-  console.log("=====")
   await governFactory.deployed();
-  console.log("=====")
   await govern.deployed();
- console.log("=====", govern.address)
-  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, governFactory.address], { kind: 'uups' });
+  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, governFactory.address, govern.address], { kind: 'uups' });
   await adam.deployed();
   return adam;
 };
@@ -39,7 +34,30 @@ const createTokens = async () => {
     return { tokenA, tokenB };
 }
 
+const createGovern = async () => {
+    const [creator] = await ethers.getSigners();
+
+    const TokenA = await ethers.getContractFactory('TokenA');
+    tokenA = await TokenA.deploy();
+    await tokenA.deployed();
+
+    const Govern = await ethers.getContractFactory('Govern', { signer: creator });
+    const govern = await Govern.deploy(
+        tokenA.address,
+        '123',
+        1,
+        1,
+        1,
+        [1],
+        [tokenA.address]
+    );
+
+    await govern.deployed();
+    return govern;
+}
+
 module.exports = {
   createAdam,
   createTokens,
+  createGovern,
 };

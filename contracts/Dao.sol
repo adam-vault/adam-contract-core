@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
-import "./interface/IGovern.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IAdam.sol";
 

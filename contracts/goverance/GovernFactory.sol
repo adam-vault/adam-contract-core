@@ -2,13 +2,15 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "../lib/SharedStruct.sol";
-import "./Govern.sol";
 import "../interface/IGovernFactory.sol";
+import "../interface/IGovern.sol";
 
 contract GovernFactory is Initializable, UUPSUpgradeable, IGovernFactory {
     address dao;
+    address governImplementation;
     string[] public governCategories;
     mapping(string => SharedStruct.GovernCategory) public governCategoryMap;
     mapping(string => address) public governMap;
@@ -26,9 +28,11 @@ contract GovernFactory is Initializable, UUPSUpgradeable, IGovernFactory {
     event CreateGovern(string categoryName);
 
     function initialize(
-        address _dao
+        address _dao,
+        address _governImplementation
     ) public override initializer {
         dao = _dao;
+        governImplementation = _governImplementation;
     }
 
     function createCategory(
@@ -66,7 +70,9 @@ contract GovernFactory is Initializable, UUPSUpgradeable, IGovernFactory {
 
     function createGovern(string calldata categoryName) override external {
         SharedStruct.GovernCategory memory category = governCategoryMap[categoryName];
-        Govern _govern = new Govern(
+
+        ERC1967Proxy _govern = new ERC1967Proxy(governImplementation, "");
+        IGovern(address(_govern)).initialize(
             address(this),
             category.name,
             category.duration,

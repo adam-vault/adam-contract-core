@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
 interface IGovernFactory {
-    function initialize(address _dao) external;
+    function initialize(address _dao, address _gFF) external;
     function createCategory(
         string calldata name,
         uint duration,

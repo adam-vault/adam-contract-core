@@ -16,6 +16,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
     address public governFactoryImplementation;
+    address public governImplementation;
 
     address[] public daos;
     mapping(address => bool) public daoRegistry;
@@ -23,11 +24,13 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
     function initialize(
         address _daoImplementation,
         address _membershipImplementation,
-        address _governFactoryImplementation
+        address _governFactoryImplementation,
+        address _governImplementation
     ) public override initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
         governFactoryImplementation = _governFactoryImplementation;
+        governImplementation = _governImplementation;
     }
     function _authorizeUpgrade(address) internal override initializer {}
 
@@ -44,7 +47,7 @@ contract Adam is IAdam, Initializable, UUPSUpgradeable {
         IDao(address(_dao)).initialize(
             address(this), msg.sender, _name, _symbol, address(_membership), address(_governFactory)
         );
-        IGovernFactory(address(_governFactory)).initialize(address(_dao));
+        IGovernFactory(address(_governFactory)).initialize(address(_dao), governImplementation);
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
         emit CreateDao(address(_dao), _name, _symbol, msg.sender);

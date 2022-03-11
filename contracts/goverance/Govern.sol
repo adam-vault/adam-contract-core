@@ -1,23 +1,42 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2;
 
-import "@openzeppelin/contracts/governance/Governor.sol";
-import "@openzeppelin/contracts/governance/compatibility/GovernorCompatibilityBravo.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+import "@openzeppelin/contracts-upgradeable/governance/GovernorUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/governance/compatibility/GovernorCompatibilityBravoUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesQuorumFractionUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 import "../lib/SharedStruct.sol";
+import "../interface/IGovern.sol";
 
 contract Govern is
-    Governor, GovernorCompatibilityBravo, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl
+    Initializable, UUPSUpgradeable, IGovern,
+    GovernorUpgradeable, GovernorVotesUpgradeable, GovernorVotesQuorumFractionUpgradeable
 {
     address public dao;
     SharedStruct.GovernCategory public category;
-    address[] proposers;
-    address[] executors;
+    mapping(uint256 => ProposalVote) private _proposalVotes;
 
-    constructor(
+    enum VoteType {
+        Against,
+        For,
+        Abstain
+    }
+
+    struct ProposalVote {
+        uint256 againstVotes;
+        uint256 forVotes;
+        uint256 abstainVotes;
+        mapping(address => bool) hasVoted;
+    }
+
+    function initialize(
         address _dao,
         string memory name,
         uint duration,
@@ -25,11 +44,11 @@ contract Govern is
         uint passThreshold,
         uint[] memory voteWeights,
         address[] memory voteTokens
-    )   Governor("MyGovernor")
-        GovernorVotes(IVotes(voteTokens[0]))
-        GovernorVotesQuorumFraction(4)
-        GovernorTimelockControl(new TimelockController(0, proposers, executors))
-    {
+    ) public override initializer {
+        __Governor_init(name);
+        __GovernorVotes_init(IVotesUpgradeable(voteTokens[0]));
+        __GovernorVotesQuorumFraction_init(4);
+
         dao = _dao;
 
         category.name = name;
@@ -39,87 +58,61 @@ contract Govern is
         category.passThreshold = passThreshold;
         category.voteWeights = voteWeights;
         category.voteTokens = voteTokens;
-    }
+    } 
 
     function votingDelay() public pure override returns (uint256) {
-        return 6575; // 1 day
+        return 0; // 1 day
     }
 
-    function votingPeriod() public pure override returns (uint256) {
-        return 46027; // 1 week
+    function votingPeriod() public view override returns (uint256) {
+        return category.duration; // 1 week
     }
 
     function proposalThreshold() public pure override returns (uint256) {
         return 0;
     }
 
-    // The functions below are overrides required by Solidity.
-
-    function quorum(uint256 blockNumber)
-        public
-        view
-        override(IGovernor, GovernorVotesQuorumFraction)
-        returns (uint256)
-    {
-        return super.quorum(blockNumber);
+    function COUNTING_MODE() public pure override returns (string memory) {
+        return "support=bravo&quorum=bravo";
     }
 
-    function getVotes(address account, uint256 blockNumber)
-        public
-        view
-        override(IGovernor, GovernorVotes)
-        returns (uint256)
-    {
-        return super.getVotes(account, blockNumber);
+    function _countVote(
+        uint256 proposalId,
+        address account,
+        uint8 support,
+        uint256 weight
+    ) internal override {
+        ProposalVote storage proposalvote = _proposalVotes[proposalId];
+
+        require(!proposalvote.hasVoted[account], "GovernorVotingSimple: vote already cast");
+        proposalvote.hasVoted[account] = true;
+
+        if (support == uint8(VoteType.Against)) {
+            proposalvote.againstVotes += weight;
+        } else if (support == uint8(VoteType.For)) {
+            proposalvote.forVotes += weight;
+        } else if (support == uint8(VoteType.Abstain)) {
+            proposalvote.abstainVotes += weight;
+        } else {
+            revert("GovernorVotingSimple: invalid value for enum VoteType");
+        }
     }
 
-    function state(uint256 proposalId)
-        public
-        view
-        override(Governor, IGovernor, GovernorTimelockControl)
-        returns (ProposalState)
-    {
-        return super.state(proposalId);
+    function _quorumReached(uint256 proposalId) internal view override returns (bool) {
+        ProposalVote storage proposalvote = _proposalVotes[proposalId];
+
+        return quorum(proposalSnapshot(proposalId)) <= proposalvote.forVotes + proposalvote.abstainVotes;
     }
 
-    function propose(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, string memory description)
-        public
-        override(Governor, GovernorCompatibilityBravo, IGovernor)
-        returns (uint256)
-    {
-        return super.propose(targets, values, calldatas, description);
+    function _voteSucceeded(uint256 proposalId) internal view override returns (bool) {
+        ProposalVote storage proposalvote = _proposalVotes[proposalId];
+        return proposalvote.forVotes >= 10;
     }
 
-    function _execute(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-        internal
-        override(Governor, GovernorTimelockControl)
-    {
-        super._execute(proposalId, targets, values, calldatas, descriptionHash);
+    function hasVoted(uint256 proposalId, address account) public view override returns (bool) {
+        return _proposalVotes[proposalId].hasVoted[account];
     }
+     
 
-    function _cancel(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-        internal
-        override(Governor, GovernorTimelockControl)
-        returns (uint256)
-    {
-        return super._cancel(targets, values, calldatas, descriptionHash);
-    }
-
-    function _executor()
-        internal
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (address)
-    {
-        return super._executor();
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(Governor, IERC165, GovernorTimelockControl)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
+    function _authorizeUpgrade(address newImplementation) internal override initializer {}
 }
