@@ -61,8 +61,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         string memory _symbol,
         address _membership,
         uint256 _locktime,
-        address[] calldata _depositTokens,
-        address _governFactory
+        address[] calldata _depositTokens
     ) public initializer {
         __ERC721Holder_init();
         __MultiToken_init(_name, _symbol);
@@ -70,7 +69,6 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         adam = _adam;
         creator = _creator;
         membership = _membership;
-        governFactory = _governFactory;
         config.locktime = _locktime;
         uint256 i = 0;
         config.allowAllTokens = _depositTokens.length == 0;
@@ -87,6 +85,10 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     modifier onlyBudgetApproval {
         require(budgetApprovals[msg.sender] == true, "access denied");
         _;
+    }
+
+    function setGovernFactory(address _governFactory) external {
+        governFactory = _governFactory;
     }
 
     function getTokenId(address _token) public view returns (uint256) {

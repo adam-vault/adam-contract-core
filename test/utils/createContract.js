@@ -26,7 +26,8 @@ const createAdam = async () => {
   await membership.deployed();
   await governFactory.deployed();
   await govern.deployed();
-  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, budgetApprovals.Address, governFactory.address, govern.address], { kind: 'uups' });
+  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address, govern.address], { kind: 'uups' });
+
   await adam.deployed();
   return adam;
 };

@@ -21,7 +21,7 @@ describe('Testing Govern', function() {
         [creator, owner1, owner2, owner3] = await ethers.getSigners();
 
         adam = await createAdam();
-        await adam.createDao('Test', 'Test');
+        await adam.createDao('A Company', 'ACOM', 'Description', 10000000, [ethers.constants.AddressZero]);
         const daoAddr = await adam.daos(0);
         dao = await ethers.getContractAt('Dao', daoAddr);
         const governFactoryAddr = await dao.governFactory();
@@ -108,7 +108,7 @@ describe('Testing Govern', function() {
         )).to.be.revertedWith('Governor: proposal not successful');
     });
 
-    it.only('should be able to propose a proposal, vote and execute', async function() {
+    it('should be able to propose a proposal, vote and execute', async function() {
         await dao.createCategory(
             category.name,
             13, //make it end soon

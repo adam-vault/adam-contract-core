@@ -32,7 +32,7 @@ contract Adam is Initializable, UUPSUpgradeable {
         address[] calldata _budgetApprovalImplementations,
         address _governFactoryImplementation,
         address _governImplementation
-    ) public override initializer {
+    ) public initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
@@ -55,16 +55,20 @@ contract Adam is Initializable, UUPSUpgradeable {
         }
     }
 
+    function createGovernFactory(address _dao) internal returns (address) {
+        ERC1967Proxy _governFactory = new ERC1967Proxy(governFactoryImplementation, "");
+        IDao(_dao).setGovernFactory(address(_governFactory));
+
+        IGovernFactory(address(_governFactory)).initialize(_dao, governImplementation);
+    }
+
     function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
-        ERC1967Proxy _governFactory = new ERC1967Proxy(governFactoryImplementation, "");
 
         IMembership(address(_membership)).initialize(address(_dao), _name, _symbol);
-        IDao(address(_dao)).initialize(
-            address(this), msg.sender, _name, _symbol, address(_membership), _locktime, _depositTokens, address(_governFactory)
-        );
-        IGovernFactory(address(_governFactory)).initialize(address(_dao), governImplementation);
+        IDao(address(_dao)).initialize(address(this), msg.sender, _name, _symbol, address(_membership), _locktime, _depositTokens);
+        createGovernFactory(address(_dao));
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
