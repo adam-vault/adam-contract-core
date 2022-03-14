@@ -15,6 +15,8 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeabl
 import "../lib/SharedStruct.sol";
 import "../interface/IGovern.sol";
 
+import "hardhat/console.sol";
+
 contract Govern is
     Initializable, UUPSUpgradeable, IGovern,
     GovernorUpgradeable, GovernorVotesUpgradeable, GovernorVotesQuorumFractionUpgradeable
@@ -47,7 +49,7 @@ contract Govern is
     ) public override initializer {
         __Governor_init(name);
         __GovernorVotes_init(IVotesUpgradeable(voteTokens[0]));
-        __GovernorVotesQuorumFraction_init(4);
+        __GovernorVotesQuorumFraction_init((quorum / (10**2)));
 
         dao = _dao;
 
@@ -61,11 +63,11 @@ contract Govern is
     } 
 
     function votingDelay() public pure override returns (uint256) {
-        return 0; // 1 day
+        return 0;
     }
 
     function votingPeriod() public view override returns (uint256) {
-        return category.duration; // 1 week
+        return category.duration / 13;
     }
 
     function proposalThreshold() public pure override returns (uint256) {
@@ -106,13 +108,14 @@ contract Govern is
 
     function _voteSucceeded(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
-        return proposalvote.forVotes >= 10;
+        uint totalVotes = proposalvote.forVotes + proposalvote.abstainVotes + proposalvote.againstVotes;
+
+        return proposalvote.forVotes >= (totalVotes * category.passThreshold / (10**2));
     }
 
     function hasVoted(uint256 proposalId, address account) public view override returns (bool) {
         return _proposalVotes[proposalId].hasVoted[account];
     }
-     
 
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
 }

@@ -8,6 +8,10 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 contract TokenA is ERC20, ERC20Permit, ERC20Votes {
     constructor() ERC20('TokenA', 'A') ERC20Permit('TokenA') {}
 
+    function totalSupply() public view override returns (uint256) {
+        return 1;
+    }
+
     function _afterTokenTransfer(address from, address to, uint256 amount)
         internal
         override(ERC20, ERC20Votes)
@@ -20,6 +24,10 @@ contract TokenA is ERC20, ERC20Permit, ERC20Votes {
         override(ERC20, ERC20Votes)
     {
         super._mint(to, amount);
+    }
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
     }
 
     function _burn(address account, uint256 amount)
