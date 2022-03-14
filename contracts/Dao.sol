@@ -11,12 +11,14 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
+import "./interface/IGovernFactory.sol";
 import "./interface/IBudgetApproval.sol";
 
 import "./base/MultiToken.sol";
 import "./lib/Concat.sol";
 import "./lib/ToString.sol";
 import "./lib/BytesLib.sol";
+import "./lib/SharedStruct.sol";
 import "./dex/UniswapSwapper.sol";
 import "hardhat/console.sol";
 
@@ -41,6 +43,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     address public creator;
     address public adam;
     address public membership;
+    address public governFactory;
     mapping(address => bool) public budgetApprovals;
     mapping(address => uint256) public firstDeposit;
 
@@ -82,6 +85,10 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     modifier onlyBudgetApproval {
         require(budgetApprovals[msg.sender] == true, "access denied");
         _;
+    }
+
+    function setGovernFactory(address _governFactory) external {
+        governFactory = _governFactory;
     }
 
     function getTokenId(address _token) public view returns (uint256) {
@@ -240,8 +247,29 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         return IMembership(membership).tokenIdToMember(memberTokenId);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override {}
+    function createCategory(
+        string calldata name,
+        uint duration,
+        uint quorum,
+        uint passThreshold,
+        uint[] calldata voteWeights,
+        address[] calldata voteTokens
+    ) public {
+        IGovernFactory(governFactory).createCategory(
+            name,
+            duration,
+            quorum,
+            passThreshold,
+            voteWeights,
+            voteTokens
+        );
+    }
 
+    function createGovern(string calldata categoryName) public {
+        IGovernFactory(governFactory).createGovern(categoryName);
+    }
+
+    function _authorizeUpgrade(address newImplementation) internal override {}
     receive() external payable {}
 
 }

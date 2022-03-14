@@ -8,11 +8,14 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
+import "./interface/IGovernFactory.sol";
 import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
+    address public governFactoryImplementation;
+    address public governImplementation;
 
     address[] public budgetApprovals;
     mapping(address => bool) public budgetApprovalRegistry;
@@ -23,11 +26,20 @@ contract Adam is Initializable, UUPSUpgradeable {
     event CreateDao(address dao, string name, string symbol, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
 
-    function initialize(address _daoImplementation, address _membershipImplementation, address[] calldata _budgetApprovalImplementations) public initializer {
+    function initialize(
+        address _daoImplementation,
+        address _membershipImplementation,
+        address[] calldata _budgetApprovalImplementations,
+        address _governFactoryImplementation,
+        address _governImplementation
+    ) public initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
+        governFactoryImplementation = _governFactoryImplementation;
+        governImplementation = _governImplementation;
     }
+
     function _authorizeUpgrade(address) internal override initializer {}
 
     function totalDaos() public view returns (uint256) {
@@ -43,12 +55,20 @@ contract Adam is Initializable, UUPSUpgradeable {
         }
     }
 
+    function createGovernFactory(address _dao) internal returns (address) {
+        ERC1967Proxy _governFactory = new ERC1967Proxy(governFactoryImplementation, "");
+        IDao(_dao).setGovernFactory(address(_governFactory));
+
+        IGovernFactory(address(_governFactory)).initialize(_dao, governImplementation);
+    }
+
     function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
 
         IMembership(address(_membership)).initialize(address(_dao), _name, _symbol);
-        IDao(address(_dao)).initialize(address(this),  msg.sender, _name, _symbol, address(_membership), _locktime, _depositTokens);
+        IDao(address(_dao)).initialize(address(this), msg.sender, _name, _symbol, address(_membership), _locktime, _depositTokens);
+        createGovernFactory(address(_dao));
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;

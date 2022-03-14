@@ -35,7 +35,9 @@ interface IAdam {
     function initialize(
         address _daoImplementation,
         address _membershipImplementation,
-        address[] memory _budgetApprovalImplementations
+        address[] memory _budgetApprovalImplementations,
+        address _governFactoryImplementation,
+        address _governImplementation
     ) external;
 
     function membershipImplementation() external view returns (address);
