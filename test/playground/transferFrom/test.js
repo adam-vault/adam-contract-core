@@ -17,16 +17,4 @@ describe('test transferFrom', function () {
         b = await B.deploy();
         await b.deployed();
     });
-
-    describe('transfer after approve', function () {
-        it('should success', async function() {
-
-            await b.approve(a.address, 100000000);
-            await a.receiveToken(b.address, creator.address);
-
-            console.log("===Creator balance of B====", await b.balanceOf(creator.address));
-            console.log("===Token A balance of B====", await b.balanceOf(a.address));
-        });
-    });
-
 });
