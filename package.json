@@ -6,7 +6,8 @@
     "clean": "hardhat clean",
     "compile": "hardhat compile",
     "coverage": "hardhat coverage && COVERAGE=true yarn test",
-    "size": "hardhat size-contracts"
+    "size": "hardhat size-contracts",
+    "interface": "hardhat interface"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.4",
@@ -38,7 +39,10 @@
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@uniswap/v3-periphery": "^1.4.0",
+    "abi-to-sol": "^0.5.2",
+    "glob": "^7.2.0",
     "hardhat-contract-sizer": "^2.4.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "minimatch": "^5.0.1"
   }
 }

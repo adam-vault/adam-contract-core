@@ -9,8 +9,8 @@ library UniswapSwapper {
     using BytesLib for bytes;
 
     address public constant UNISWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
-    address public constant ETH = address(0x0);
-    address public constant WETH = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
+    address public constant ETH_ADDRESS = address(0x0);
+    address public constant WETH_ADDRESS = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
 
     function decodeUniswapData(address to, bytes memory _data, uint256 amount) public pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         
@@ -19,7 +19,7 @@ library UniswapSwapper {
             bytes[] memory emptyArray;
             //TODO: find a better way to handle with/without results
             (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, emptyArray, amount);
-        } else if (to == WETH) {
+        } else if (to == WETH_ADDRESS) {
             // WETH9
             (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
         } else {
@@ -33,7 +33,7 @@ library UniswapSwapper {
             (bytes[] memory decodedResults) = abi.decode(result, (bytes[]));
             //TODO: find a better way to handle with/without results
             (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, decodedResults, amount);
-        } else if (to == WETH) {
+        } else if (to == WETH_ADDRESS) {
             // WETH9
             (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
         } else {
@@ -45,10 +45,10 @@ library UniswapSwapper {
 
         if(_data.toBytes4(0) == 0xd0e30db0) {
             // deposit()
-            return (ETH, WETH, amount, amount);
+            return (ETH_ADDRESS, WETH_ADDRESS, amount, amount);
         } else if (_data.toBytes4(0) == 0x2e1a7d4d) {
             // withdraw(uint256)
-            return (WETH, ETH, amount, amount);
+            return (WETH_ADDRESS, ETH_ADDRESS, amount, amount);
         }
 
         revert("Unexpected");
@@ -161,8 +161,8 @@ library UniswapSwapper {
             }
             // unwrapWETH9(uint256,address)
             else if (multicallBytesArray[i].toBytes4(0) == 0x49404b7c) {
-                if (tokenOut == WETH && i == multicallBytesArray.length - 1) {
-                    tokenOut = ETH;
+                if (tokenOut == WETH_ADDRESS && i == multicallBytesArray.length - 1) {
+                    tokenOut = ETH_ADDRESS;
                 } else {
                     revert("Unexpected");
                 }
@@ -176,8 +176,8 @@ library UniswapSwapper {
         }
 
         // Uniswap treat ETH as WETH
-        if(tokenIn == WETH && amount >= amountIn) {
-            tokenIn = ETH;
+        if(tokenIn == WETH_ADDRESS && amount >= amountIn) {
+            tokenIn = ETH_ADDRESS;
         }
     }
 }
