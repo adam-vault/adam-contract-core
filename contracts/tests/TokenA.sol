@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 contract TokenA is ERC20, ERC20Permit, ERC20Votes {
     constructor() ERC20('TokenA', 'A') ERC20Permit('TokenA') {}
 
-    function totalSupply() public view override returns (uint256) {
+    function totalSupply() public pure override returns (uint256) {
         return 1;
     }
 
