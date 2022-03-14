@@ -75,7 +75,7 @@ contract Adam is Initializable, UUPSUpgradeable {
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
 
         IMembership(address(_membership)).initialize(address(_dao), _name, _symbol);
-        IDao(payable(address(_dao))).initialize(address(this), msg.sender, _name, _symbol, address(_membership), _locktime, _depositTokens);
+        IDao(address(_dao)).initialize(address(this), msg.sender, _name, _symbol, address(_membership), _locktime, _depositTokens);
         createGovernFactory(address(_dao));
 
         daos.push(address(_dao));

@@ -20,7 +20,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
     address constant public ETH_ADDRESS = address(0x0);
 
     address public executor;
-    address payable public dao;
+    address public dao;
 
     string public text;
     string public transactionType;
@@ -53,7 +53,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         uint256 _totalAmount,
         uint8 _amountPercentage
         ) public initializer {
-        dao = payable(_dao);
+        dao = _dao;
         executor = _executor;
         text = _text;
         transactionType = _transactionType;

@@ -202,7 +202,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         address[] memory _members, 
         uint256[] memory _amounts, 
         bool transferred
-    ) external onlyBudgetApproval returns (uint256 totalAmount) {
+    ) external payable onlyBudgetApproval returns (uint256 totalAmount) {
         require(_members.length == _amounts.length, "invalid input");
 
         for(uint i = 0; i < _members.length; i++) {
@@ -212,8 +212,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
 
         if(!transferred) {
             if(_token == ETH_ADDRESS) {
-                // ETH is not allowed to transfer by third party
-                revert("invalid");
+                require(msg.value == totalAmount, "amount invalid");
             } else {
                 // ERC20
                 require(IERC20(_token).allowance(msg.sender, address(this)) >= totalAmount,"not approved");

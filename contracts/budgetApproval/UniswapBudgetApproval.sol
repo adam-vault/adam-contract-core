@@ -78,9 +78,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
         if(amountIn < requiredAmount) {
             (, uint256[] memory unusedAmounts) = _getMintAmountOfMembers(requiredAmount - amountIn, members, amounts, totalAmount);
             if(tokenIn == UniswapSwapper.ETH_ADDRESS) {
-                // ETH need to transfer from BA directly
-                payable(msg.sender).transfer(requiredAmount - amountIn);
-                IDao(dao).depositByBudgetApproval(tokenIn, members, unusedAmounts, true);
+                // transfer ETH when call function
+                IDao(dao).depositByBudgetApproval{ value: requiredAmount - amountIn }(tokenIn, members, unusedAmounts, false);
             } else {
                 // ERC20 is transferred by dao
                 IERC20(tokenIn).approve(dao, requiredAmount - amountIn);

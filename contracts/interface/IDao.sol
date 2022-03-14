@@ -44,7 +44,11 @@ interface IDao {
 
     function addressToId(address) external view returns (uint256);
 
-    function approveERC20(address _token, address _to, uint256 _amount) external;
+    function approveERC20(
+        address _token,
+        address _to,
+        uint256 _amount
+    ) external;
 
     function balanceOf(address account, uint256 id)
         external
@@ -86,7 +90,7 @@ interface IDao {
         address[] memory _members,
         uint256[] memory _amounts,
         bool transferred
-    ) external returns (uint256 totalAmount);
+    ) external payable returns (uint256 totalAmount);
 
     function depositToken(address _token, uint256 _amount) external;
 
