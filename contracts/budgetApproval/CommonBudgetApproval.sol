@@ -143,6 +143,4 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
     function _authorizeUpgrade(address) internal override initializer {}
 
     function execute(address, bytes memory, uint256) public virtual;
-
-    receive() external payable {}
 }

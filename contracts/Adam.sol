@@ -42,6 +42,12 @@ contract Adam is Initializable, UUPSUpgradeable {
 
     function _authorizeUpgrade(address) internal override initializer {}
 
+    function setDaoImplementation(address _daoImplementation) public {
+        daoImplementation = _daoImplementation;
+    }
+    function setMembershipImplementation(address _membershipImplementation) public {
+        membershipImplementation = _membershipImplementation;
+    }
     function totalDaos() public view returns (uint256) {
         return daos.length;
     }
