@@ -50,7 +50,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     DaoConfig public config;
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
-    event CreateBudgetApproval(address budgetApproval);
+    event CreateBudgetApproval(address budgetApproval, bytes data);
     event Deposit(address member, address token, uint256 amount);
     event Redeem(address member, address token, uint256 amount);
 
@@ -107,14 +107,13 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
             require(IAdam(adam).budgetApprovalRegistry(_budgetApprovals[i]), "budget approval not whitelist");
             ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
             budgetApprovals[address(_budgetApproval)] = true;
-            emit CreateBudgetApproval(address(_budgetApproval));
+            emit CreateBudgetApproval(address(_budgetApproval), data[i]);
         }
     }
 
     // for handling Uniswap Iframe
-    function approveERC20(address _token, bytes memory _data) external onlyBudgetApproval {
-        (bool approved,) = _token.call(_data);
-        require(approved == true, "approved ERC20 failed");
+    function approveERC20(address _token, address _to, uint256 _amount) external onlyBudgetApproval {
+        IERC20(_token).approve(_to,_amount);
     }
 
     function executeTransactionByBudgetApprovals (address budgetApproval, bytes calldata data) public {

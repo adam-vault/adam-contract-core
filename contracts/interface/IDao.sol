@@ -10,7 +10,7 @@ interface IDao {
         bool approved
     );
     event BeaconUpgraded(address indexed beacon);
-    event CreateBudgetApproval(address budgetApproval);
+    event CreateBudgetApproval(address budgetApproval, bytes data);
     event CreateToken(uint256 id, address contractAddress);
     event Deposit(address member, address token, uint256 amount);
     event Redeem(address member, address token, uint256 amount);
@@ -44,7 +44,7 @@ interface IDao {
 
     function addressToId(address) external view returns (uint256);
 
-    function approveERC20(address _token, bytes memory _data) external;
+    function approveERC20(address _token, address _to, uint256 _amount) external;
 
     function balanceOf(address account, uint256 id)
         external

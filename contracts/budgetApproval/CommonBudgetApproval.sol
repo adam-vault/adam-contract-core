@@ -7,11 +7,15 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
+import "../lib/BytesLib.sol";
+
 import "../interface/IBudgetApproval.sol";
 import "../interface/IDao.sol";
 import "../interface/IMembership.sol";
 
 abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudgetApproval {
+
+    using BytesLib for bytes;
 
     address constant public ETH_ADDRESS = address(0x0);
 
@@ -165,8 +169,43 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
 
     function execute(address, bytes memory, uint256) public virtual;
 
-    function getEncodedData(address _to, bytes memory _data, uint256 _amount) public pure returns (bytes memory) {
+    function encodeTransactionData(address _to, bytes memory _data, uint256 _amount) public pure returns (bytes memory) {
         return abi.encodeWithSignature("execute(address,bytes,uint256)", _to, _data, _amount);
+    }
+
+    function encodeInitializeData(
+        address _dao, 
+        address _executor, 
+        string memory _text, 
+        string memory _transactionType,
+        address[] memory _addresses,
+        address[] memory _tokens,
+        bool _allowAnyAmount,
+        uint256 _totalAmount,
+        uint8 _amountPercentage
+    ) public pure returns (bytes memory data) {
+        return abi.encodeWithSignature(
+            "initialize(address,address,string,string,address[],address[],bool,uint256,uint8)",
+            _dao,
+            _executor, 
+            _text, 
+            _transactionType,
+            _addresses,
+            _tokens,
+            _allowAnyAmount,
+            _totalAmount,
+            _amountPercentage
+        );
+    }
+
+    function decodeInitializeData(bytes memory _data) public pure returns (address,address,string memory,string memory,address[] memory,address[] memory,bool,uint256,uint8) {
+
+        // initialize(address,address,string,string,address[],address[],bool,uint256,uint8)
+        if(_data.toBytes4(0) != 0x9dff0a37) {
+            revert("unexpected function");
+        }
+
+        return abi.decode(_data.slice(4, _data.length - 4), (address,address,string,string,address[],address[],bool,uint256,uint8));
     }
 
     receive() external payable {}

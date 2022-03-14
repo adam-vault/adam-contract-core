@@ -56,7 +56,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
             (bool approved,) = to.call(data);
             require(approved == true, "approved ERC20 failed");
 
-            IDao(dao).approveERC20(to, data);
+            IDao(dao).approveERC20(to, UniswapSwapper.UNISWAP_ROUTER, type(uint256).max);
             return;
         }
 
@@ -122,5 +122,43 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
             requiredToken = _tokenIn;
             requiredAmount = _amountIn;
         }
+    }
+
+    function encodeInitializeData(
+        address _dao, 
+        address _executor, 
+        string memory _text, 
+        string memory _transactionType,
+        address[] memory _addresses,
+        address[] memory _tokens,
+        bool _allowAnyAmount,
+        uint256 _totalAmount,
+        uint8 _amountPercentage,
+        // specific var
+        address[] memory _toTokens
+    ) public pure returns (bytes memory data) {
+        return abi.encodeWithSignature(
+            "initialize(address,address,string,string,address[],address[],bool,uint256,uint8, address[])",
+            _dao,
+            _executor, 
+            _text, 
+            _transactionType,
+            _addresses,
+            _tokens,
+            _allowAnyAmount,
+            _totalAmount,
+            _amountPercentage,
+            _toTokens
+        );
+    }
+
+    function decodeUniswapInitializeData(bytes memory _data) public pure returns (address,address,string memory,string memory,address[] memory,address[] memory,bool,uint256,uint8, address[] memory) {
+
+        // initialize(address,address,string,string,address[],address[],bool,uint256,uint8,address[])
+        if(_data.toBytes4(0) != 0xfaf32275) {
+            revert("unexpected function");
+        }
+
+        return abi.decode(_data.slice(4, _data.length - 4), (address,address,string,string,address[],address[],bool,uint256,uint8, address[]));
     }
 }
