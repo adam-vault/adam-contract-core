@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
-import "./interface/IGovernFactory.sol";
 import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable {
@@ -62,13 +61,16 @@ contract Adam is Initializable, UUPSUpgradeable {
     }
 
     function createGovernFactory(address _dao) internal returns (address) {
-        ERC1967Proxy _governFactory = new ERC1967Proxy(governFactoryImplementation, "");
+        bytes memory executePayload = abi.encodeWithSignature("initialize(address,address)", _dao, governImplementation);
+        ERC1967Proxy _governFactory = new ERC1967Proxy(governFactoryImplementation, executePayload);
         IDao(_dao).setGovernFactory(address(_governFactory));
-
-        IGovernFactory(address(_governFactory)).initialize(_dao, governImplementation);
+        return address(_governFactory);
     }
 
     function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public returns (address) {
+        // bytes memory daoExecutePayload = abi.encodeWithSignature("initialize(address,address)", _dao, governImplementation);
+        // bytes memory membershipExecutePayload = abi.encodeWithSignature("initialize(address,address)", _dao, governImplementation);
+
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
 
