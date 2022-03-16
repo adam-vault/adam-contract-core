@@ -247,7 +247,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         return IMembership(membership).tokenIdToMember(memberTokenId);
     }
 
-    function createCategory(
+    function createGovern(
         string calldata name,
         uint duration,
         uint quorum,
@@ -255,7 +255,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         uint[] calldata voteWeights,
         address[] calldata voteTokens
     ) public {
-        IGovernFactory(governFactory).createCategory(
+        IGovernFactory(governFactory).createGovern(
             name,
             duration,
             quorum,
@@ -263,10 +263,6 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
             voteWeights,
             voteTokens
         );
-    }
-
-    function createGovern(string calldata categoryName) public {
-        IGovernFactory(governFactory).createGovern(categoryName);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override {}

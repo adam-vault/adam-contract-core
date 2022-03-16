@@ -14,8 +14,6 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
     string[] public governCategories;
     mapping(string => SharedStruct.GovernCategory) public governCategoryMap;
     mapping(string => address) public governMap;
-    string[] public proposalTitles;
-    mapping(string => string) public proposalMap;
 
     event CreateCategory(
         string name,
@@ -35,7 +33,7 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
         governImplementation = _governImplementation;
     }
 
-    function createCategory(
+    function createGovern(
         string calldata name,
         uint duration,
         uint quorum,
@@ -66,25 +64,21 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
             voteWeights,
             voteTokens
         );
-    }
-
-    function createGovern(string calldata categoryName) external {
-        SharedStruct.GovernCategory memory category = governCategoryMap[categoryName];
 
         ERC1967Proxy _govern = new ERC1967Proxy(governImplementation, "");
         IGovern(payable(address(_govern))).initialize(
             address(this),
-            category.name,
-            category.duration,
-            category.quorum,
-            category.passThreshold,
-            category.voteWeights,
-            category.voteTokens
+            name,
+            duration,
+            quorum,
+            passThreshold,
+            voteWeights,
+            voteTokens
         );
 
-        governMap[category.name] = address(_govern);
+        governMap[name] = address(_govern);
 
-        emit CreateGovern(category.name, address(_govern));
+        emit CreateGovern(name, address(_govern));
     }
 
     function _authorizeUpgrade(address newImplementation) internal override initializer {}

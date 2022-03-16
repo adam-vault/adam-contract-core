@@ -6,10 +6,16 @@ import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 contract TokenA is ERC20, ERC20Permit, ERC20Votes {
+    uint256 total = 100000;
+
     constructor() ERC20('TokenA', 'A') ERC20Permit('TokenA') {}
 
-    function totalSupply() public pure override returns (uint256) {
-        return 1;
+    function setTotalSupply(uint256 _total) public {
+        total = _total;
+    }
+
+    function totalSupply() public view override returns (uint256) {
+        return total;
     }
 
     function _afterTokenTransfer(address from, address to, uint256 amount)

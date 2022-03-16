@@ -8,7 +8,7 @@ const deployBudgetApprovals = async (signer) => {
   return [transferERC20BudgetApproval.address];
 };
 
-const createAdam = async () => {
+const createAdam = async () => { 
   const [creator] = await ethers.getSigners();
 
   const budgetApprovalsAddress = await deployBudgetApprovals(creator);
