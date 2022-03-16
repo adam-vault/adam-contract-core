@@ -12,7 +12,7 @@ import "./lib/SharedStruct.sol";
 import "hardhat/console.sol";
 
 contract Govern is
-    Initializable, UUPSUpgradeable, IGovern, GovernorUpgradeable
+    Initializable, UUPSUpgradeable, GovernorUpgradeable
 {
     address public dao;
     SharedStruct.GovernCategory public category;
