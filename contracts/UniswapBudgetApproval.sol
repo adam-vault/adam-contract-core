@@ -67,7 +67,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
         (,address requiredToken, uint256 requiredAmount) = getRequiredAmount(to, data, value);
         
         // Withdraw required token
-        (address[] memory members, uint256[] memory amounts) = _getBurnAmountsOfAllMembers(requiredToken, requiredAmount);
+        (address[] memory members, uint256[] memory amounts) = _getAmountsOfAllMembersOnProRata(requiredToken, requiredAmount);
         uint256 totalAmount = IDao(dao).withdrawByBudgetApproval(requiredToken, members, amounts, false);
 
         (bool success, bytes memory results) = to.call{ value: value }(data);
@@ -80,7 +80,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
 
         // return unused amount (triggered when input is estimated)
         if(amountIn < requiredAmount) {
-            (, uint256[] memory unusedAmounts) = _getMintAmountOfMembers(requiredAmount - amountIn, members, amounts, totalAmount);
+            (, uint256[] memory unusedAmounts) = _getAmountOfMembersByRatio(requiredAmount - amountIn, members, amounts, totalAmount);
             if(tokenIn == UniswapSwapper.ETH_ADDRESS) {
                 // transfer ETH when call function
                 IDao(dao).depositByBudgetApproval{ value: requiredAmount - amountIn }(tokenIn, members, unusedAmounts, false);
@@ -92,7 +92,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
         }
 
         // deposit swapped token
-        (, uint256[] memory mintAmounts) = _getMintAmountOfMembers(amountOut, members, amounts, totalAmount);
+        (, uint256[] memory mintAmounts) = _getAmountOfMembersByRatio(amountOut, members, amounts, totalAmount);
         IDao(dao).depositByBudgetApproval(tokenOut, members, mintAmounts, true);
     }
 

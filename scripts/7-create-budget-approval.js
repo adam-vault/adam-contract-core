@@ -15,6 +15,8 @@ async function main () {
       daoAddress,
       // executor
       '0xBfAA947b65A4350f14895980D0c8f420576fC163',
+      // approvers
+      ['0x525BaB223a5F7D3E81699995DaA92fAe7329C5D9'],
       // text
       'Transfer ERC20',
       // transaction type
@@ -38,6 +40,8 @@ async function main () {
       daoAddress,
       // executor
       '0xBfAA947b65A4350f14895980D0c8f420576fC163',
+      // approvers
+      [],
       // text
       'Uniswap',
       // transaction type
