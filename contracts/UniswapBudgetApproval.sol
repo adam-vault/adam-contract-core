@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import "./CommonBudgetApproval.sol";
-import "../lib/BytesLib.sol";
-import "../dex/UniswapSwapper.sol";
+import "./base/CommonBudgetApproval.sol";
+import "./lib/BytesLib.sol";
+import "./dex/UniswapSwapper.sol";
 
-import "../interface/IDao.sol";
+import "./interface/IDao.sol";
 
 contract UniswapBudgetApproval is CommonBudgetApproval {
 
