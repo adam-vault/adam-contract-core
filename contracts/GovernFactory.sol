@@ -1,14 +1,14 @@
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "../lib/SharedStruct.sol";
-import "../interface/IGovernFactory.sol";
-import "../interface/IGovern.sol";
+import "./lib/SharedStruct.sol";
+import "./interface/IGovern.sol";
 
-contract GovernFactory is Initializable, UUPSUpgradeable, IGovernFactory {
+contract GovernFactory is Initializable, UUPSUpgradeable {
     address dao;
     address governImplementation;
     string[] public governCategories;
@@ -23,12 +23,12 @@ contract GovernFactory is Initializable, UUPSUpgradeable, IGovernFactory {
         uint[] voteWeights,
         address[] voteTokens
     );
-    event CreateGovern(string categoryName);
+    event CreateGovern(string categoryName, address govern);
 
     function initialize(
         address _dao,
         address _governImplementation
-    ) public override initializer {
+    ) public initializer {
         dao = _dao;
         governImplementation = _governImplementation;
     }
@@ -40,7 +40,7 @@ contract GovernFactory is Initializable, UUPSUpgradeable, IGovernFactory {
         uint passThreshold,
         uint[] calldata voteWeights,
         address[] calldata voteTokens
-    ) override external {
+    ) external {
         require(voteWeights.length == voteTokens.length, "Vote weights, vote tokens length mismatch");
 
         governCategoryMap[name] = SharedStruct.GovernCategory(
@@ -66,7 +66,7 @@ contract GovernFactory is Initializable, UUPSUpgradeable, IGovernFactory {
         );
 
         ERC1967Proxy _govern = new ERC1967Proxy(governImplementation, "");
-        IGovern(address(_govern)).initialize(
+        IGovern(payable(address(_govern))).initialize(
             address(this),
             name,
             duration,
@@ -78,7 +78,7 @@ contract GovernFactory is Initializable, UUPSUpgradeable, IGovernFactory {
 
         governMap[name] = address(_govern);
 
-        emit CreateGovern(name);
+        emit CreateGovern(name, address(_govern));
     }
 
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
