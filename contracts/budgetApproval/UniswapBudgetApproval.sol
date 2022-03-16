@@ -12,12 +12,15 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
 
     using BytesLib for bytes;
 
+    string public constant NAME = "Uniswap Budget Approval";
+
     bool public allowAllToTokens;
     mapping(address => bool) public toTokensMapping;
 
     function initialize(
         address _dao, 
         address _executor, 
+        address[] memory _approvers,
         string memory _text, 
         string memory _transactionType,
         address[] memory _addresses,
@@ -31,6 +34,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
         CommonBudgetApproval.initialize(
             _dao,
             _executor,
+            _approvers,
             _text,
             _transactionType,
             _addresses,
@@ -49,7 +53,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
         }
     }
 
-    function execute(address to, bytes memory data, uint256 value) public override onlyDao {
+    function execute(address to, bytes memory data, uint256 value) public override onlySelf {
 
         // approve(address,uint256) for ERC20
         if(data.toBytes4(0) == 0x095ea7b3) {
@@ -151,13 +155,13 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
         );
     }
 
-    function decodeUniswapInitializeData(bytes memory _data) public pure returns (address,address,string memory,string memory,address[] memory,address[] memory,bool,uint256,uint8, address[] memory) {
+    function decodeUniswapInitializeData(bytes memory _data) public pure returns (address,address,address[] memory,string memory,string memory,address[] memory,address[] memory,bool,uint256,uint8, address[] memory) {
 
-        // initialize(address,address,string,string,address[],address[],bool,uint256,uint8,address[])
-        if(_data.toBytes4(0) != 0xfaf32275) {
+        // initialize(address,address,address[],string,string,address[],address[],bool,uint256,uint8,address[])
+        if(_data.toBytes4(0) != 0xb5328b95) {
             revert("unexpected function");
         }
 
-        return abi.decode(_data.slice(4, _data.length - 4), (address,address,string,string,address[],address[],bool,uint256,uint8, address[]));
+        return abi.decode(_data.slice(4, _data.length - 4), (address,address,address[],string,string,address[],address[],bool,uint256,uint8, address[]));
     }
 }

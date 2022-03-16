@@ -11,11 +11,11 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     using BytesLib for bytes;
 
-    event ArrivedBA(uint256 count);
+    string public constant NAME = "Transfer ERC20 Budget Approval";
 
     // transfer ETH by sending data.length == 0
     // transfer ERC20 by using transfer(address,uint256)
-    function execute(address to, bytes memory data, uint256 value) public override onlyDao {
+    function execute(address to, bytes memory data, uint256 value) public override onlySelf {
 
         (bool isRequireToken, address requiredToken, uint256 requiredAmount) = getRequiredAmount(to, data, value);
     
