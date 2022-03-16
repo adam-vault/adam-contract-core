@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 
 interface IGovernFactory {
     function initialize(address _dao, address _gFF) external;
-    function createCategory(
+    function createGovern(
         string calldata name,
         uint duration,
         uint quorum,
@@ -10,6 +10,4 @@ interface IGovernFactory {
         uint[] calldata voteWeights,
         address[] calldata voteTokens
     ) external;
-
-    function createGovern(string calldata categoryName) external;
 }

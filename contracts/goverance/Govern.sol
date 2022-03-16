@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 import "../lib/SharedStruct.sol";
 import "../interface/IGovern.sol";
@@ -18,8 +19,7 @@ import "../interface/IGovern.sol";
 import "hardhat/console.sol";
 
 contract Govern is
-    Initializable, UUPSUpgradeable, IGovern,
-    GovernorUpgradeable, GovernorVotesUpgradeable, GovernorVotesQuorumFractionUpgradeable
+    Initializable, UUPSUpgradeable, IGovern, GovernorUpgradeable
 {
     address public dao;
     SharedStruct.GovernCategory public category;
@@ -48,8 +48,6 @@ contract Govern is
         address[] memory voteTokens
     ) public override initializer {
         __Governor_init(name);
-        __GovernorVotes_init(IVotesUpgradeable(voteTokens[0]));
-        __GovernorVotesQuorumFraction_init((quorum / (10**2)));
 
         dao = _dao;
 
@@ -60,7 +58,21 @@ contract Govern is
         category.passThreshold = passThreshold;
         category.voteWeights = voteWeights;
         category.voteTokens = voteTokens;
-    } 
+    }
+
+    function getProposalVote(uint8 support, uint proposalId) public view returns (uint256) {
+        ProposalVote storage proposalvote = _proposalVotes[proposalId];
+        
+        if (support == uint8(VoteType.Against)) {
+            return proposalvote.againstVotes;
+        } else if (support == uint8(VoteType.For)) {
+            return proposalvote.forVotes;
+        } else if (support == uint8(VoteType.Abstain)) {
+            return proposalvote.abstainVotes;
+        } else {
+            revert("Governor: invalid value for enum VoteType");
+        }
+    }
 
     function votingDelay() public pure override returns (uint256) {
         return 0;
@@ -96,7 +108,7 @@ contract Govern is
         } else if (support == uint8(VoteType.Abstain)) {
             proposalvote.abstainVotes += weight;
         } else {
-            revert("GovernorVotingSimple: invalid value for enum VoteType");
+            revert("Governor: invalid value for enum VoteType");
         }
     }
 
@@ -108,13 +120,43 @@ contract Govern is
 
     function _voteSucceeded(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
-        uint totalVotes = proposalvote.forVotes + proposalvote.abstainVotes + proposalvote.againstVotes;
+        uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
 
-        return proposalvote.forVotes >= (totalVotes * category.passThreshold / (10**2));
+        return proposalvote.forVotes >= (totalVotes * category.passThreshold / (100));
     }
 
     function hasVoted(uint256 proposalId, address account) public view override returns (bool) {
         return _proposalVotes[proposalId].hasVoted[account];
+    }
+
+    function getVotes(address account, uint256 blockNumber) public view override returns (uint256) {
+        uint256 totalVotes = 0;
+
+        for(uint i=0; i < category.voteTokens.length; i++) {
+            uint256 accountVotes = ERC20Votes(category.voteTokens[i]).getPastVotes(account, blockNumber);
+            totalVotes = totalVotes + accountVotes * (category.voteWeights[i] / 100);
+        }
+
+        return totalVotes;
+    }
+
+    function quorum(uint256 blockNumber) public view override returns (uint256) {
+        uint256 totalPastSupply = 0;
+
+        for(uint256 i=0; i<category.voteTokens.length; i++) {
+            totalPastSupply = totalPastSupply + ERC20Votes(category.voteTokens[i]).getPastTotalSupply(blockNumber);
+        } 
+
+        return (totalPastSupply * category.quorum / 100) / 100;
+    }
+
+
+    function quorumReached(uint256 proposalId) public view returns (bool) {
+        return _quorumReached(proposalId);
+    }
+
+    function voteSucceeded(uint256 proposalId) public view returns (bool) {
+        return _voteSucceeded(proposalId);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
