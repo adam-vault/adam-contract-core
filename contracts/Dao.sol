@@ -18,7 +18,6 @@ import "./base/MultiToken.sol";
 import "./lib/Concat.sol";
 import "./lib/ToString.sol";
 import "./lib/BytesLib.sol";
-import "./lib/SharedStruct.sol";
 import "./dex/UniswapSwapper.sol";
 import "hardhat/console.sol";
 

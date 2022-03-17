@@ -8,14 +8,17 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
-import "./lib/SharedStruct.sol";
 import "hardhat/console.sol";
 
 contract Govern is
     Initializable, UUPSUpgradeable, GovernorUpgradeable
 {
-    address public dao;
-    SharedStruct.GovernCategory public category;
+    address public owner;
+    uint public duration;
+    uint public quorumThreshold;
+    uint public passThreshold;
+    uint[] public voteWeights;
+    address[] public voteTokens;
     mapping(uint256 => ProposalVote) private _proposalVotes;
 
     enum VoteType {
@@ -31,29 +34,34 @@ contract Govern is
         mapping(address => bool) hasVoted;
     }
 
-    function initialize(
-        address _dao,
-        string memory name,
-        uint duration,
-        uint quorum,
-        uint passThreshold,
-        uint[] memory voteWeights,
-        address[] memory voteTokens
-    ) public initializer {
-        __Governor_init(name);
-
-        dao = _dao;
-
-        category.name = name;
-        //13.14s for 1 block
-        category.duration = duration;
-        category.quorum = quorum;
-        category.passThreshold = passThreshold;
-        category.voteWeights = voteWeights;
-        category.voteTokens = voteTokens;
+    modifier onlyOwner {
+        require(msg.sender == owner, "Access denied");
+        _;
     }
 
-    function getProposalVote(uint8 support, uint proposalId) public view returns (uint256) {
+    event AddVoteToken(address token, uint weight);
+
+    function initialize(
+        address _owner,
+        string memory _name,
+        uint _duration,
+        uint _quorum,
+        uint _passThreshold,
+        uint[] memory _voteWeights,
+        address[] memory _voteTokens
+    ) public initializer {
+        __Governor_init(_name);
+
+        owner = _owner;
+        //13.14s for 1 block
+        duration = _duration;
+        quorumThreshold = _quorum;
+        passThreshold = _passThreshold;
+        voteWeights = _voteWeights;
+        voteTokens = _voteTokens;
+    }
+
+    function getProposalVote(uint256 proposalId, uint8 support) public view returns (uint256) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
         
         if (support == uint8(VoteType.Against)) {
@@ -72,7 +80,7 @@ contract Govern is
     }
 
     function votingPeriod() public view override returns (uint256) {
-        return category.duration / 13;
+        return duration / 13;
     }
 
     function proposalThreshold() public pure override returns (uint256) {
@@ -115,7 +123,8 @@ contract Govern is
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
         uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
 
-        return proposalvote.forVotes >= (totalVotes * category.passThreshold / (100));
+        return proposalvote.forVotes > proposalvote.againstVotes &&
+            proposalvote.forVotes >= (totalVotes * passThreshold / 100);
     }
 
     function hasVoted(uint256 proposalId, address account) public view override returns (bool) {
@@ -125,9 +134,9 @@ contract Govern is
     function getVotes(address account, uint256 blockNumber) public view override returns (uint256) {
         uint256 totalVotes = 0;
 
-        for(uint i=0; i < category.voteTokens.length; i++) {
-            uint256 accountVotes = ERC20Votes(category.voteTokens[i]).getPastVotes(account, blockNumber);
-            totalVotes = totalVotes + accountVotes * (category.voteWeights[i] / 100);
+        for(uint i=0; i < voteTokens.length; i++) {
+            uint256 accountVotes = ERC20Votes(voteTokens[i]).getPastVotes(account, blockNumber);
+            totalVotes = totalVotes + accountVotes * voteWeights[i];
         }
 
         return totalVotes;
@@ -136,11 +145,11 @@ contract Govern is
     function quorum(uint256 blockNumber) public view override returns (uint256) {
         uint256 totalPastSupply = 0;
 
-        for(uint256 i=0; i<category.voteTokens.length; i++) {
-            totalPastSupply = totalPastSupply + ERC20Votes(category.voteTokens[i]).getPastTotalSupply(blockNumber);
+        for(uint256 i=0; i<voteTokens.length; i++) {
+            totalPastSupply = totalPastSupply + ERC20Votes(voteTokens[i]).getPastTotalSupply(blockNumber);
         } 
 
-        return (totalPastSupply * category.quorum / 100) / 100;
+        return totalPastSupply * (quorumThreshold / 100);
     }
 
 
@@ -150,6 +159,19 @@ contract Govern is
 
     function voteSucceeded(uint256 proposalId) public view returns (bool) {
         return _voteSucceeded(proposalId);
+    }
+
+    function addVoteToken(address token, uint weight) public onlyOwner {
+        for(uint256 i=0; i <voteTokens.length; i++) {
+            if (voteTokens[i] == token) {
+                revert("Token already in list");
+            }
+        }
+
+        voteTokens.push(token);
+        voteWeights.push(weight);
+
+        emit AddVoteToken(token, weight);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
