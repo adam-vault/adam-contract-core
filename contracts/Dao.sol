@@ -19,7 +19,6 @@ import "./lib/Concat.sol";
 import "./lib/ToString.sol";
 import "./lib/BytesLib.sol";
 import "./lib/SharedStruct.sol";
-import "./dex/UniswapSwapper.sol";
 import "hardhat/console.sol";
 
 
@@ -50,7 +49,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     DaoConfig public config;
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
-    event CreateBudgetApproval(address budgetApproval);
+    event CreateBudgetApproval(address budgetApproval, bytes data);
     event Deposit(address member, address token, uint256 amount);
     event Redeem(address member, address token, uint256 amount);
 
@@ -107,8 +106,13 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
             require(IAdam(adam).budgetApprovalRegistry(_budgetApprovals[i]), "budget approval not whitelist");
             ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
             budgetApprovals[address(_budgetApproval)] = true;
-            emit CreateBudgetApproval(address(_budgetApproval));
+            emit CreateBudgetApproval(address(_budgetApproval), data[i]);
         }
+    }
+
+    // for handling Uniswap Iframe
+    function approveERC20(address _token, address _to, uint256 _amount) external onlyBudgetApproval {
+        IERC20(_token).approve(_to,_amount);
     }
 
     function executeTransactionByBudgetApprovals (address budgetApproval, bytes calldata data) public {
@@ -197,7 +201,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         address[] memory _members, 
         uint256[] memory _amounts, 
         bool transferred
-    ) external onlyBudgetApproval returns (uint256 totalAmount) {
+    ) external payable onlyBudgetApproval returns (uint256 totalAmount) {
         require(_members.length == _amounts.length, "invalid input");
 
         for(uint i = 0; i < _members.length; i++) {
@@ -207,8 +211,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
 
         if(!transferred) {
             if(_token == ETH_ADDRESS) {
-                // ETH is not allowed to transfer by third party
-                revert("invalid");
+                require(msg.value == totalAmount, "amount invalid");
             } else {
                 // ERC20
                 require(IERC20(_token).allowance(msg.sender, address(this)) >= totalAmount,"not approved");

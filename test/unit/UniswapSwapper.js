@@ -2,7 +2,7 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
 describe('UniswapSwapper.sol', () => {
-  let UniswapSwaper;
+  let UniswapBudgetApproval;
   let contract;
   let decode;
 
@@ -13,9 +13,9 @@ describe('UniswapSwapper.sol', () => {
   const UniswapRouter = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
 
   beforeEach(async () => {
-    UniswapSwaper = await ethers.getContractFactory('UniswapSwapper');
-    contract = await UniswapSwaper.deploy();
-    decode = contract['decodeUniswapData(address,bytes,uint256)'];
+    UniswapBudgetApproval = await ethers.getContractFactory('UniswapBudgetApproval');
+    contract = await UniswapBudgetApproval.deploy();
+    decode = contract.decode;
   });
 
   it('decode transaction data', async () => {

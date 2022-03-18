@@ -10,7 +10,11 @@ const deployBudgetApprovals = async () => {
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
   await transferERC20BudgetApproval.deployed();
 
-  return [transferERC20BudgetApproval.address];
+  const UniswapBudgetApproval = await hre.ethers.getContractFactory('UniswapBudgetApproval');
+  const uniswapBudgetApproval = await UniswapBudgetApproval.deploy();
+  await uniswapBudgetApproval.deployed();
+
+  return [transferERC20BudgetApproval.address, uniswapBudgetApproval.address];
 };
 
 async function main () {
