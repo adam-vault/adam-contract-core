@@ -8,7 +8,7 @@ import "./dex/UniswapSwapper.sol";
 
 import "./interface/IDao.sol";
 
-contract UniswapBudgetApproval is CommonBudgetApproval {
+contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     using BytesLib for bytes;
 
@@ -81,7 +81,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
         // return unused amount (triggered when input is estimated)
         if(amountIn < requiredAmount) {
             (, uint256[] memory unusedAmounts) = _getAmountOfMembersByRatio(requiredAmount - amountIn, members, amounts, totalAmount);
-            if(tokenIn == UniswapSwapper.ETH_ADDRESS) {
+            if(tokenIn == ETH_ADDRESS) {
                 // transfer ETH when call function
                 IDao(dao).depositByBudgetApproval{ value: requiredAmount - amountIn }(tokenIn, members, unusedAmounts, false);
             } else {
@@ -107,17 +107,17 @@ contract UniswapBudgetApproval is CommonBudgetApproval {
         return allowAllToTokens || toTokensMapping[_token];
     }
 
-    function decodeWithResult(address to, bytes memory data, uint256 value, bytes memory _results) public pure returns (address, address, uint256, uint256) {
+    function decodeWithResult(address to, bytes memory data, uint256 value, bytes memory _results) public view returns (address, address, uint256, uint256) {
         (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) = UniswapSwapper.decodeUniswapData(to, data, value, _results);
         require(!estimatedIn && !estimatedOut, "unexpected result");
         return (tokenIn, tokenOut, amountIn, amountOut);
     }
 
-    function decode(address to, bytes memory data, uint256 value) public pure returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+    function decode(address to, bytes memory data, uint256 value) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         return UniswapSwapper.decodeUniswapData(to, data, value);
     }
 
-    function getRequiredAmount(address to, bytes memory data, uint256 value) public pure override returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
+    function getRequiredAmount(address to, bytes memory data, uint256 value) public view override returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
         (address _tokenIn,, uint256 _amountIn,,,) = decode(to, data, value);
 
         if(_amountIn > 0) {
