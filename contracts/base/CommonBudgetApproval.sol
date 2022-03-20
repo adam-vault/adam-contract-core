@@ -96,48 +96,48 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         _;
     }
 
+    struct InitializeParams {
+        address dao;
+        address executor;
+        address[] approvers;
+        string text;
+        string transactionType;
+        bool allowAllAddresses;
+        address[] addresses;
+        bool allowAllTokens;
+        address[] tokens;
+        bool allowAnyAmount;
+        uint256 totalAmount;
+        uint8 amountPercentage;
+    }
+
     function initialize(
-        address _dao, 
-        address _executor, 
-        address[] memory _approvers,
-        string memory _text, 
-        string memory _transactionType,
-        address[] memory _addresses,
-        address[] memory _tokens,
-        bool _allowAnyAmount,
-        uint256 _totalAmount,
-        uint8 _amountPercentage
+        InitializeParams calldata params
         ) public initializer {
-        dao = _dao;
-        executor = _executor;
-        text = _text;
-        transactionType = _transactionType;
+        dao = params.dao;
+        executor = params.executor;
+        text = params.text;
+        transactionType = params.transactionType;
 
-        approvers = _approvers;
-        for (uint i = 0; i < _approvers.length; i++) {
-            approversMapping[_approvers[i]] = true;
+        approvers = params.approvers;
+        for (uint i = 0; i < params.approvers.length; i++) {
+            approversMapping[params.approvers[i]] = true;
         }
 
-        if(_addresses.length > 0) {
-            for(uint i = 0; i < _addresses.length; i++) {
-                addressesMapping[_addresses[i]] = true;
-            }
-        } else {
-            allowAllAddresses = true;
+        allowAllAddresses = params.allowAllAddresses;
+        for(uint i = 0; i < params.addresses.length; i++) {
+            addressesMapping[params.addresses[i]] = true;
         }
 
-        if(_tokens.length > 0) {
-            tokens = _tokens;
-            for(uint i = 0; i < _tokens.length; i++) {
-                tokensMapping[_tokens[i]] = true;
-            }
-        } else {
-            allowAllTokens = true;
+        allowAllTokens = params.allowAllTokens;
+        tokens = params.tokens;
+        for(uint i = 0; i < params.tokens.length; i++) {
+            tokensMapping[params.tokens[i]] = true;
         }
 
-        allowAnyAmount = _allowAnyAmount;
-        totalAmount = _totalAmount;
-        amountPercentage = _amountPercentage;
+        allowAnyAmount = params.allowAnyAmount;
+        totalAmount = params.totalAmount;
+        amountPercentage = params.amountPercentage;
     }
 
     function executeTransaction(uint256 _transactionId) external onlyExecutor onlyApprovedTransaction(_transactionId) checkDeadline(_transactionId) {
@@ -286,41 +286,21 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         return abi.decode(_data.slice(4, _data.length - 4), (address, bytes, uint256));
     }
 
-    function encodeInitializeData(
-        address _dao, 
-        address _executor, 
-        address[] memory _approvers,
-        string memory _text, 
-        string memory _transactionType,
-        address[] memory _addresses,
-        address[] memory _tokens,
-        bool _allowAnyAmount,
-        uint256 _totalAmount,
-        uint8 _amountPercentage
-    ) public pure returns (bytes memory data) {
+    function encodeInitializeData(InitializeParams calldata params) public pure returns (bytes memory data) {
         return abi.encodeWithSignature(
-            "initialize(address,address,address[],string,string,address[],address[],bool,uint256,uint8)",
-            _dao,
-            _executor, 
-            _approvers,
-            _text, 
-            _transactionType,
-            _addresses,
-            _tokens,
-            _allowAnyAmount,
-            _totalAmount,
-            _amountPercentage
+            "initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8))",
+            params
         );
     }
 
-    function decodeInitializeData(bytes memory _data) public pure returns (address,address,address[] memory,string memory,string memory,address[] memory,address[] memory,bool,uint256,uint8) {
+    function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
 
-        // initialize(address,address,address[],string,string,address[],address[],bool,uint256,uint8)
-        if(_data.toBytes4(0) != 0xceac2994) {
+        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8))
+        if(_data.toBytes4(0) != 0x28746e66) {
             revert("unexpected function");
         }
 
-        return abi.decode(_data.slice(4, _data.length - 4), (address,address,address[],string,string,address[],address[],bool,uint256,uint8));
+        return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
     }
 
     receive() external payable {}
