@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
 import "./interface/IGovernFactory.sol";
-import "./interface/IBudgetApproval.sol";
+import "./interface/ICommonBudgetApproval.sol";
 
 import "./base/MultiToken.sol";
 import "./lib/Concat.sol";
@@ -104,16 +104,11 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         IERC20(_token).approve(_to,_amount);
     }
 
-    function executeTransactionByBudgetApprovals (address budgetApproval, bytes calldata data) public {
-
-        if(data.toBytes4(0) != 0xa04a0908) {
-            // execute(address,bytes,uint256)
-            revert("unexpected");
-        }
-
-        (bool success,) = budgetApproval.call(data);
-        require(success == true, "failed");
-
+    function createBudgetApprovalTransaction (address _budgetApproval, bytes calldata _data, uint256 _deadline) external {
+        require(budgetApprovals[_budgetApproval] == true, "budget approval invalid");
+        require(ICommonBudgetApproval(_budgetApproval).supportsInterface(_data.toBytes4(0)) == true, "not supported interface");
+    
+        ICommonBudgetApproval(_budgetApproval).createTransaction(_data, _deadline);
     }
 
     function getMintedContracts() external view returns (address[] memory) {

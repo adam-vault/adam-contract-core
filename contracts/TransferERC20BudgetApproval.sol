@@ -57,7 +57,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return (to, recipient, amount);
     }
 
-    function getRequiredAmount(address to, bytes memory data, uint256 value) public pure override returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
+    function getRequiredAmount(address to, bytes memory data, uint256 value) public pure returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
         (address _to,, uint256 _amount) = decode(to, data, value);
 
         if(_amount > 0) {

@@ -9,11 +9,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "../lib/BytesLib.sol";
 
-import "../interface/IBudgetApproval.sol";
 import "../interface/IDao.sol";
 import "../interface/IMembership.sol";
 
-abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudgetApproval {
+abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     using Counters for Counters.Counter;
     using BytesLib for bytes;
@@ -81,13 +80,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         _;
     }
 
-    modifier onlyPendingTransaction (uint256 _transactionId) {
-        require(transactions[_transactionId].status == Status.Pending, "action invalid");
-        _;
-    }
-
-    modifier onlyApprovedTransaction (uint256 _transactionId) {
-        require(transactions[_transactionId].status == Status.Approved, "action invalid");
+    modifier matchStatus (uint256 _transactionId, Status _status) {
+        require(transactions[_transactionId].status == _status, "status invalid");
         _;
     }
 
@@ -140,7 +134,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         amountPercentage = params.amountPercentage;
     }
 
-    function executeTransaction(uint256 _transactionId) external onlyExecutor onlyApprovedTransaction(_transactionId) checkDeadline(_transactionId) {
+    function executeTransaction(uint256 _transactionId) external onlyExecutor matchStatus(_transactionId, Status.Approved) checkDeadline(_transactionId) {
         (bool success,) = address(this).call(transactions[_transactionId].data);
         require(success == true, "execute failed");
     }
@@ -164,7 +158,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         return _transactionId;
     }
 
-    function approveTransaction(uint256 _transactionId) external onlyApprover onlyPendingTransaction(_transactionId) {
+    function approveTransaction(uint256 _transactionId) external onlyApprover matchStatus(_transactionId, Status.Pending) {
         transactions[_transactionId].approved[msg.sender] = true;
 
         if(checkAllApproved(_transactionId)) {
@@ -172,7 +166,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         }
     }
 
-    function rejectTransaction(uint256 _transactionId) external onlyApprover onlyPendingTransaction(_transactionId) {
+    function rejectTransaction(uint256 _transactionId) external onlyApprover matchStatus(_transactionId, Status.Pending) {
         transactions[_transactionId].status = Status.Rejected;
     }
 
@@ -301,6 +295,15 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         }
 
         return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
+    }
+
+    function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
+        // execute(address,bytes,uint256)
+        if(interfaceID == 0xa04a0908) {
+            return true;
+        }
+
+        return false;
     }
 
     receive() external payable {}

@@ -95,7 +95,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         return UniswapSwapper.decodeUniswapData(to, data, value);
     }
 
-    function getRequiredAmount(address to, bytes memory data, uint256 value) public view override returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
+    function getRequiredAmount(address to, bytes memory data, uint256 value) public view returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
         (address _tokenIn,, uint256 _amountIn,,,) = decode(to, data, value);
 
         if(_amountIn > 0) {
