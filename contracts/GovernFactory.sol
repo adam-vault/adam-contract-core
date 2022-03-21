@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IGovern.sol";
+import "hardhat/console.sol";
 
 contract GovernFactory is Initializable, UUPSUpgradeable {
     address public dao;

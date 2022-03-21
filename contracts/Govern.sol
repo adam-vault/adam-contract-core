@@ -55,8 +55,8 @@ contract Govern is
         owner = _owner;
         //13.14s for 1 block
         duration = _duration;
-        quorumThreshold = _quorum;
-        passThreshold = _passThreshold;
+        quorumThreshold = _quorum; //expecting 2 decimals (i.e. 1000 = 10%)
+        passThreshold = _passThreshold; //expecting 2 decimals (i.e. 1000 = 10%)
         voteWeights = _voteWeights;
         voteTokens = _voteTokens;
     }
@@ -163,9 +163,7 @@ contract Govern is
 
     function addVoteToken(address token, uint weight) public onlyOwner {
         for(uint256 i=0; i <voteTokens.length; i++) {
-            if (voteTokens[i] == token) {
-                revert("Token already in list");
-            }
+            require(voteTokens[i] != token, "Token already in list");
         }
 
         voteTokens.push(token);
