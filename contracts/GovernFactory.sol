@@ -5,25 +5,18 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "./lib/SharedStruct.sol";
 import "./interface/IGovern.sol";
+import "hardhat/console.sol";
 
 contract GovernFactory is Initializable, UUPSUpgradeable {
-    address dao;
-    address governImplementation;
-    string[] public governCategories;
-    mapping(string => SharedStruct.GovernCategory) public governCategoryMap;
+    address public dao;
+    address public governImplementation;
     mapping(string => address) public governMap;
 
-    event CreateCategory(
+    event CreateGovern(
         string name,
-        uint duration,
-        uint quorum,
-        uint passThreshold,
-        uint[] voteWeights,
-        address[] voteTokens
+        address govern
     );
-    event CreateGovern(string categoryName, address govern);
 
     function initialize(
         address _dao,
@@ -31,6 +24,11 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
     ) public initializer {
         dao = _dao;
         governImplementation = _governImplementation;
+    }
+
+    modifier onlyDao {
+        require(msg.sender == dao, "Access denied");
+        _;
     }
 
     function createGovern(
@@ -42,28 +40,6 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
         address[] calldata voteTokens
     ) external {
         require(voteWeights.length == voteTokens.length, "Vote weights, vote tokens length mismatch");
-
-        governCategoryMap[name] = SharedStruct.GovernCategory(
-            {
-                name: name,
-                duration: duration,
-                quorum: quorum,
-                passThreshold: passThreshold,
-                voteWeights: voteWeights,
-                voteTokens: voteTokens
-            }
-        );
-
-        governCategories.push(name);
-
-        emit CreateCategory(
-            name,
-            duration,
-            quorum,
-            passThreshold,
-            voteWeights,
-            voteTokens
-        );
 
         ERC1967Proxy _govern = new ERC1967Proxy(governImplementation, "");
         IGovern(payable(address(_govern))).initialize(
@@ -78,7 +54,15 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
 
         governMap[name] = address(_govern);
 
-        emit CreateGovern(name, address(_govern));
+        emit CreateGovern(
+            name,
+            address(_govern)
+        );
+    }
+
+    function addVoteToken(string memory name, address token, uint weight) external {
+        address govern = governMap[name];
+        IGovern(payable(govern)).addVoteToken(token, weight);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
