@@ -7,7 +7,7 @@
     "compile": "hardhat compile",
     "coverage": "hardhat coverage && COVERAGE=true yarn test",
     "size": "hardhat size-contracts",
-    "interface": "hardhat compile & hardhat interface"
+    "interface": "hardhat interface"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.4",
