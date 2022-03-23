@@ -1,17 +1,20 @@
 const hre = require('hardhat');
 const _ = require('lodash');
+const { faker } = require('@faker-js/faker');
 
 // rinkeby
-const adamAddress = '0xdacB1Faa1749976aCc37bAbD4aEb97d735B22F7d';
-const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
+const adamAddress = '0x41B0919976F6120BB1a89659Ba4eC7109A775F11';
 
 async function main () {
   const adam = await hre.ethers.getContractAt('Adam', adamAddress);
-  const tx = await adam.createDao('Dao', 'D', 'Description', 10000000, [hre.ethers.constants.AddressZero, DAIAddress]);
-  const receipt = await tx.wait();
-  const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-
-  console.log('dao created at:', creationEventLog.args.dao);
+  await [0, 100, 4, 500, 10000000].reduce(async (p, lockup) => {
+    await p;
+    const tx = await adam.createDao(faker.company.companyName(), faker.commerce.productDescription(), lockup, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
+    return tx.wait().then((receipt) => {
+      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+      console.log('dao created at:', creationEventLog.args.dao);
+    });
+  }, Promise.resolve());
 }
 
 // We recommend this pattern to be able to use async/await everywhere

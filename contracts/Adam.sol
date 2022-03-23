@@ -22,7 +22,7 @@ contract Adam is Initializable, UUPSUpgradeable {
     address[] public daos;
     mapping(address => bool) public daoRegistry;
 
-    event CreateDao(address dao, string name, string symbol, string description, address creator);
+    event CreateDao(address dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
 
     function initialize(
@@ -67,18 +67,25 @@ contract Adam is Initializable, UUPSUpgradeable {
         return address(_governFactory);
     }
 
-    function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime) public returns (address) {
+    function createDao(
+        string calldata _name, 
+        string calldata _description, 
+        uint256 _locktime,
+        uint256[3] calldata budgetApproval,
+        uint256[3] calldata revokeBudgetApproval,
+        uint256[3] calldata general
+    ) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
 
-        IMembership(address(_membership)).initialize(address(_dao), _name, _symbol);
+        IMembership(address(_membership)).initialize(address(_dao), _name);
         address govern = createGovernFactory(address(_dao));
-        IDao(address(_dao)).initialize(address(this), msg.sender, _name, _symbol, address(_membership), _locktime, govern);
-        // createGovernFactory(address(_dao));
+        IDao(address(_dao)).initialize(address(this), msg.sender, _name, address(_membership), _locktime, govern, budgetApproval, revokeBudgetApproval, general);
+        createGovernFactory(address(_dao));
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
-        emit CreateDao(address(_dao), _name, _symbol, _description, msg.sender);
+        emit CreateDao(address(_dao), _name, _description, msg.sender);
         return address(_dao);
     }
 }

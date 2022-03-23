@@ -18,8 +18,12 @@ describe('Create DAO', function () {
     adam = await createAdam();
   });
 
+  function createDao () {
+    return adam.createDao('A Company', 'Description', 10000000, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
+  }
+
   it('can create dao', async function () {
-    await expect(adam.createDao('A Company', 'ACOM', 'Description', 10000000))
+    await expect(createDao())
       .to.emit(adam, 'CreateDao');
 
     const daoAddr = await adam.daos(0);
@@ -29,7 +33,7 @@ describe('Create DAO', function () {
   });
 
   it('can upgrade dao', async function () {
-    await adam.createDao('A Company', 'ACOM', 'Description', 10000000);
+    await createDao();
 
     const MockDaoV2 = await ethers.getContractFactory('MockDaoV2');
     const mockDaoV2 = await MockDaoV2.deploy();
@@ -44,27 +48,10 @@ describe('Create DAO', function () {
     expect(await daoUpgraded.v2()).to.equal(true);
   });
 
-  it('can setName until publish', async function () {
-    await adam.createDao('A Company', 'ACOM', 'Description', 10000000);
-    const daoAddr = await adam.daos(0);
-    const dao = await ethers.getContractAt('Dao', daoAddr);
-
-    await dao.setName('B Company');
-    expect(await dao.name()).to.equal('B Company');
-  });
-
-  it('cannot setName after publish', async function () {
-    await adam.createDao('A Company', 'ACOM', 'Description', 10000000);
-    const daoAddr = await adam.daos(0);
-    const dao = await ethers.getContractAt('Dao', daoAddr);
-    await dao.setPublish(true);
-    await expect(dao.setName('B Company')).to.be.revertedWith('onlyCorporateAction');
-  });
-
   describe('Deposit ETH to DAO', function () {
     let dao, membership;
     beforeEach(async function () {
-      const tx1 = await adam.createDao('A Company', 'ACOM', 'Description', 10000000);
+      const tx1 = await createDao();
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
       const daoAddr = creationEventLog.args.dao;
@@ -165,7 +152,7 @@ describe('Create DAO', function () {
   describe('Redeem ETH from DAO', function () {
     let dao, membership;
     beforeEach(async function () {
-      const tx1 = await adam.createDao('A Company', 'ACOM', 'Description', 1000);
+      const tx1 = await adam.createDao('A Company', 'Description', 1000, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
       const daoAddr = creationEventLog.args.dao;
