@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "./lib/SharedStruct.sol";
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "hardhat/console.sol";
@@ -82,7 +81,7 @@ contract Adam is Initializable, UUPSUpgradeable {
         IMembership(address(_membership)).initialize(address(_dao), _name);
         address govern = createGovernFactory(address(_dao));
         IDao(address(_dao)).initialize(address(this), msg.sender, _name, address(_membership), _locktime, govern, budgetApproval, revokeBudgetApproval, general);
-        // createGovernFactory(address(_dao));
+        createGovernFactory(address(_dao));
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
