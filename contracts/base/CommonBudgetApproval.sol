@@ -33,6 +33,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bool isExist;
     }
 
+    event CreateTransaction(uint256 _id, bytes _data, uint256 _deadline);
+
     Counters.Counter private _transactionIds;
 
     mapping(uint256 => Transaction) public transactions;
@@ -155,6 +157,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         newTransaction.deadline = _deadline;
         newTransaction.isExist = true;
 
+        emit CreateTransaction(_transactionId, _data, _deadline);
+
         return _transactionId;
     }
 
@@ -168,6 +172,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function rejectTransaction(uint256 _transactionId) external onlyApprover matchStatus(_transactionId, Status.Pending) {
         transactions[_transactionId].status = Status.Rejected;
+    }
+
+    function lastTransactionId() public view returns (uint256) {
+        return _transactionIds.current();
     }
 
     function checkAllApproved(uint256 _transactionId) public view returns (bool) {
@@ -281,8 +289,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function encodeInitializeData(InitializeParams calldata params) public pure returns (bytes memory data) {
-        return abi.encodeWithSignature(
-            "initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8))",
+        return abi.encodeWithSelector(
+            this.initialize.selector,
             params
         );
     }
