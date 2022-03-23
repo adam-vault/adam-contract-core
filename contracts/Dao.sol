@@ -85,7 +85,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     modifier govern(string memory category) {
         require(
             (IMembership(membership).totalSupply() == 1 && IMembership(membership).ownerToTokenId(msg.sender) != 0)
-                || msg.sender == IGovernFactory(governFactory).governMap(category),
+                || msg.sender == IGovernFactory(governFactory).governMap(address(this), category),
             string("Dao: only").concat(category));
         _;
     }
