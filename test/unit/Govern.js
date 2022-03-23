@@ -9,8 +9,8 @@ describe('Testing Govern', function() {
     const category = {
         name: 'salary',
         duration: 6570, //1 day
-        quorum: 10, //10%
-        passThreshold: 10, //10%
+        quorum: 1000, //10%
+        passThreshold: 1000, //10%
         voteWights: [70, 30],
         voteTokens: [],
     }
@@ -150,7 +150,7 @@ describe('Testing Govern', function() {
         });
 
         context('For multiple tokens', function() {
-            it('should use two tokens for voting and should fail if weight higher vote against', async function() {
+            it('should use two tokens for voting and should success even weight higher vote against due to pass threshold', async function() {
                 console.log("===current block number==", await ethers.provider.getBlockNumber());
                 await tokenA.mint(creator.address, 1);
                 await tokenB.mint(creator.address, 1);
@@ -204,7 +204,7 @@ describe('Testing Govern', function() {
                 console.log("===getVote====", await govern.getVotes(owner2.address, 19));
                 console.log("===current block number==", await ethers.provider.getBlockNumber());
         
-                expect(await govern.state(proposalId)).to.eq(3); //Defeated
+                expect(await govern.state(proposalId)).to.eq(4); //Success
             });
 
             it('should use two tokens for voting and should success if weight higher vote for', async function() {
@@ -260,8 +260,124 @@ describe('Testing Govern', function() {
                 console.log("===getVote====", await govern.getVotes(owner1.address, 19));
                 console.log("===getVote====", await govern.getVotes(owner2.address, 19));
                 console.log("===current block number==", await ethers.provider.getBlockNumber());
-        
+
                 expect(await govern.state(proposalId)).to.eq(4); //Success
+            });
+        });
+    
+        context('For voting with membership ERC721Vote tokens', function() {
+            it('should success due to 10% pass threshold (1 against 1 for)', async function() {
+                const membershipAddr = await dao.membership();
+                const membership = await ethers.getContractAt('Membership', membershipAddr);
+
+                await dao.connect(owner1).deposit({ value: ethers.utils.parseEther("1") });
+                await membership.connect(owner1).delegate(owner1.address);
+    
+                await dao.connect(owner2).deposit({ value: ethers.utils.parseEther("2") });
+                await membership.connect(owner2).delegate(owner2.address);
+
+                expect(await membership.getVotes(owner1.address)).to.eq(1);
+                expect(await membership.getVotes(owner2.address)).to.eq(1);
+
+                await dao.createGovern(
+                    category.name,
+                    300,
+                    category.quorum,
+                    category.passThreshold,
+                    [1],
+                    [membershipAddr],
+                );
+
+                const governAddr = await governFactory.governMap('salary');
+                const govern = await ethers.getContractAt('Govern', governAddr);
+
+                const token = await ethers.getContractAt('ERC20', tokenA.address);
+                const transferCalldata = token.interface.encodeFunctionData(
+                    'transfer', [owner1.address, 1000]
+                );
+        
+                let tx = await govern.propose(
+                    [tokenA.address],
+                    [0],
+                    [transferCalldata],
+                    "Proposal #1: Transfer token",
+                );
+                const rc = await tx.wait();
+                const event = rc.events.find(event => event.event === 'ProposalCreated');
+                const [proposalId] = event.args;
+        
+                await govern.connect(owner1).castVote(proposalId, 0);
+                await govern.connect(owner2).castVote(proposalId, 1);
+                expect(await govern.hasVoted(proposalId, owner1.address)).to.eq(true);
+                expect(await govern.hasVoted(proposalId, owner2.address)).to.eq(true);
+                expect(await govern.state(proposalId)).to.eq(1); //Active
+    
+                await hre.network.provider.send("hardhat_mine", ["0x100"]); //mine 256 blocks
+
+                expect(await govern.getProposalVote(proposalId, 0)).to.eq(1);
+                expect(await govern.getProposalVote(proposalId, 1)).to.eq(1);
+
+                expect(await govern.quorumReached(proposalId)).to.eq(true);
+                expect(await govern.voteSucceeded(proposalId)).to.eq(true);
+                
+                expect(await govern.state(proposalId)).to.eq(4); //Success    
+            });
+
+            it('should failed due to 51% pass threshold (1 against 1 for)', async function() {
+                const membershipAddr = await dao.membership();
+                const membership = await ethers.getContractAt('Membership', membershipAddr);
+
+                await dao.connect(owner1).deposit({ value: ethers.utils.parseEther("1") });
+                await membership.connect(owner1).delegate(owner1.address);
+    
+                await dao.connect(owner2).deposit({ value: ethers.utils.parseEther("2") });
+                await membership.connect(owner2).delegate(owner2.address);
+
+                expect(await membership.getVotes(owner1.address)).to.eq(1);
+                expect(await membership.getVotes(owner2.address)).to.eq(1);
+
+                await dao.createGovern(
+                    category.name,
+                    300,
+                    category.quorum,
+                    5100,
+                    [1],
+                    [membershipAddr],
+                );
+
+                const governAddr = await governFactory.governMap('salary');
+                const govern = await ethers.getContractAt('Govern', governAddr);
+
+                const token = await ethers.getContractAt('ERC20', tokenA.address);
+                const transferCalldata = token.interface.encodeFunctionData(
+                    'transfer', [owner1.address, 1000]
+                );
+        
+                let tx = await govern.propose(
+                    [tokenA.address],
+                    [0],
+                    [transferCalldata],
+                    "Proposal #1: Transfer token",
+                );
+                const rc = await tx.wait();
+                const event = rc.events.find(event => event.event === 'ProposalCreated');
+                const [proposalId] = event.args;
+        
+                await govern.connect(owner1).castVote(proposalId, 0);
+                await govern.connect(owner2).castVote(proposalId, 1);
+                expect(await govern.hasVoted(proposalId, owner1.address)).to.eq(true);
+                expect(await govern.hasVoted(proposalId, owner2.address)).to.eq(true);
+                expect(await govern.state(proposalId)).to.eq(1); //Active
+    
+                await hre.network.provider.send("hardhat_mine", ["0x100"]); //mine 256 blocks
+
+                expect(await govern.getProposalVote(proposalId, 0)).to.eq(1);
+                expect(await govern.getProposalVote(proposalId, 1)).to.eq(1);
+
+                expect(await govern.quorumReached(proposalId)).to.eq(true);
+                expect(await govern.voteSucceeded(proposalId)).to.eq(false);
+                
+                expect(await govern.state(proposalId)).to.eq(3); //Defeated    
             });
         });
     });
@@ -296,5 +412,180 @@ describe('Testing Govern', function() {
 
             await expect(governFactory.addVoteToken(category.name, tokenB.address, 1)).to.be.revertedWith('Token already in list');
         });        
+    });
+
+    describe('Vote success func', function() {
+        context('pass threshold is a factor & weight is not a factor', function() {
+            it('should fail', async function() {
+                const token = await ethers.getContractAt('TokenA', tokenA.address);
+                const transferCalldata = token.interface.encodeFunctionData(
+                    'mint', [owner1.address, 1000]
+                );
+
+                await dao.createGovern(
+                    category.name,
+                    200,
+                    category.quorum,
+                    5000, // 50%
+                    [1, 1], // token A & B has same weight
+                    category.voteTokens,
+                );
+
+                await tokenA.mint(creator.address, 6);
+                await tokenB.mint(creator.address, 4);
+                
+                await tokenA.delegate(owner1.address);
+                await tokenB.delegate(owner2.address);
+
+                const governAddr = await governFactory.governMap('salary');
+                const govern = await ethers.getContractAt('Govern', governAddr);
+
+                tx = await govern.propose(
+                    [tokenA.address],
+                    [0],
+                    [transferCalldata],
+                    "Proposal #1: Transfer token",
+                );
+                const rc = await tx.wait();
+                const event = rc.events.find(event => event.event === 'ProposalCreated');
+                const [proposalId] = event.args;
+
+                await govern.connect(owner1).castVote(proposalId, 0); // Owner1 with 6 votes against
+                await govern.connect(owner2).castVote(proposalId, 1); // Owner2 with 4 votes for
+
+                await hre.network.provider.send("hardhat_mine", ["0x100"]); //mine 256 blocks
+
+                expect(await govern.voteSucceeded(proposalId)).to.eq(false); 
+            });
+
+            it('should success', async function() {
+                const token = await ethers.getContractAt('TokenA', tokenA.address);
+                const transferCalldata = token.interface.encodeFunctionData(
+                    'mint', [owner1.address, 1000]
+                );
+
+                await dao.createGovern(
+                    category.name,
+                    200,
+                    category.quorum,
+                    5000, // 50%
+                    [1, 1], // token A & B has same weight
+                    category.voteTokens,
+                );
+
+                await tokenA.mint(creator.address, 4);
+                await tokenB.mint(creator.address, 6);
+                
+                await tokenA.delegate(owner1.address);
+                await tokenB.delegate(owner2.address);
+
+                const governAddr = await governFactory.governMap('salary');
+                const govern = await ethers.getContractAt('Govern', governAddr);
+
+                tx = await govern.propose(
+                    [tokenA.address],
+                    [0],
+                    [transferCalldata],
+                    "Proposal #1: Transfer token",
+                );
+                const rc = await tx.wait();
+                const event = rc.events.find(event => event.event === 'ProposalCreated');
+                const [proposalId] = event.args;
+
+                await govern.connect(owner1).castVote(proposalId, 0); // Owner1 with 6 votes against
+                await govern.connect(owner2).castVote(proposalId, 1); // Owner2 with 4 votes for
+
+                await hre.network.provider.send("hardhat_mine", ["0x100"]); //mine 256 blocks
+
+                expect(await govern.voteSucceeded(proposalId)).to.eq(true); 
+            });
+        });
+        
+        context('weight & pass threshold are factors', function() {
+            it('should fail', async function() {
+                const token = await ethers.getContractAt('TokenA', tokenA.address);
+                const transferCalldata = token.interface.encodeFunctionData(
+                    'mint', [owner1.address, 1000]
+                );
+
+                await dao.createGovern(
+                    category.name,
+                    200,
+                    category.quorum,
+                    9000, // 90%
+                    [40, 60], // token A & B has same weight
+                    category.voteTokens,
+                );
+
+                await tokenA.mint(creator.address, 1);
+                await tokenB.mint(creator.address, 1);
+                
+                await tokenA.delegate(owner1.address);
+                await tokenB.delegate(owner2.address);
+
+                const governAddr = await governFactory.governMap('salary');
+                const govern = await ethers.getContractAt('Govern', governAddr);
+
+                tx = await govern.propose(
+                    [tokenA.address],
+                    [0],
+                    [transferCalldata],
+                    "Proposal #1: Transfer token",
+                );
+                const rc = await tx.wait();
+                const event = rc.events.find(event => event.event === 'ProposalCreated');
+                const [proposalId] = event.args;
+
+                await govern.connect(owner1).castVote(proposalId, 0); // 1 vote against with token A = 40
+                await govern.connect(owner2).castVote(proposalId, 1); // 1 vote for with token B = 60
+
+                await hre.network.provider.send("hardhat_mine", ["0x100"]); //mine 256 blocks
+
+                expect(await govern.voteSucceeded(proposalId)).to.eq(false); // passthreshold is 90%, require for vote to be 90
+            });
+
+            it('should success', async function() {
+                const token = await ethers.getContractAt('TokenA', tokenA.address);
+                const transferCalldata = token.interface.encodeFunctionData(
+                    'mint', [owner1.address, 1000]
+                );
+
+                await dao.createGovern(
+                    category.name,
+                    200,
+                    category.quorum,
+                    9000, // 90%
+                    [40, 60], // token A & B has same weight
+                    category.voteTokens,
+                );
+
+                await tokenA.mint(creator.address, 1);
+                await tokenB.mint(creator.address, 1);
+                
+                await tokenA.delegate(owner1.address);
+                await tokenB.delegate(owner2.address);
+
+
+                const governAddr = await governFactory.governMap('salary');
+                const govern = await ethers.getContractAt('Govern', governAddr);
+
+                tx = await govern.propose(
+                    [tokenA.address],
+                    [0],
+                    [transferCalldata],
+                    "Proposal #1: Transfer token",
+                );
+                const rc = await tx.wait();
+                const event = rc.events.find(event => event.event === 'ProposalCreated');
+                const [proposalId] = event.args;
+
+                // await govern.connect(owner1).castVote(proposalId, 0); // 1 vote against with token A = 40
+                await govern.connect(owner2).castVote(proposalId, 1); // 1 vote for with token B = 60
+
+                await hre.network.provider.send("hardhat_mine", ["0x100"]); //mine 256 blocks
+
+                expect(await govern.voteSucceeded(proposalId)).to.eq(true); // passthreshold is 90%, require for vote to be 54 (60*0.9)
+            });
+        });
     });
 });

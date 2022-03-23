@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
 
 import "hardhat/console.sol";
 
@@ -56,7 +56,7 @@ contract Govern is
         //13.14s for 1 block
         duration = _duration;
         quorumThreshold = _quorum; //expecting 2 decimals (i.e. 1000 = 10%)
-        passThreshold = _passThreshold; //expecting 2 decimals (i.e. 1000 = 10%)
+        passThreshold = _passThreshold; //expecting 2 decimals (i.e. 250 = 2.5%)
         voteWeights = _voteWeights;
         voteTokens = _voteTokens;
     }
@@ -115,16 +115,15 @@ contract Govern is
 
     function _quorumReached(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
+        uint countedVotes = proposalvote.forVotes + proposalvote.abstainVotes;
 
-        return quorum(proposalSnapshot(proposalId)) <= proposalvote.forVotes + proposalvote.abstainVotes;
+        return quorum(proposalSnapshot(proposalId)) <= countedVotes * 100;
     }
 
     function _voteSucceeded(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
         uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
-
-        return proposalvote.forVotes > proposalvote.againstVotes &&
-            proposalvote.forVotes >= (totalVotes * passThreshold / 100);
+        return (proposalvote.forVotes * 100) >= totalVotes * passThreshold / 100;
     }
 
     function hasVoted(uint256 proposalId, address account) public view override returns (bool) {
@@ -135,7 +134,8 @@ contract Govern is
         uint256 totalVotes = 0;
 
         for(uint i=0; i < voteTokens.length; i++) {
-            uint256 accountVotes = ERC20Votes(voteTokens[i]).getPastVotes(account, blockNumber);
+            uint accountVotes = VotesUpgradeable(voteTokens[i]).getPastVotes(account, blockNumber);
+
             totalVotes = totalVotes + accountVotes * voteWeights[i];
         }
 
@@ -146,7 +146,8 @@ contract Govern is
         uint256 totalPastSupply = 0;
 
         for(uint256 i=0; i<voteTokens.length; i++) {
-            totalPastSupply = totalPastSupply + ERC20Votes(voteTokens[i]).getPastTotalSupply(blockNumber);
+            uint accountSupply = VotesUpgradeable(voteTokens[i]).getPastTotalSupply(blockNumber);
+            totalPastSupply = totalPastSupply + accountSupply;
         } 
 
         return totalPastSupply * (quorumThreshold / 100);
