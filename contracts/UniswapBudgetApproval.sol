@@ -18,38 +18,16 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
     mapping(address => bool) public toTokensMapping;
 
     function initialize(
-        address _dao, 
-        address _executor, 
-        address[] memory _approvers,
-        string memory _text, 
-        string memory _transactionType,
-        address[] memory _addresses,
-        address[] memory _tokens,
-        bool _allowAnyAmount,
-        uint256 _totalAmount,
-        uint8 _amountPercentage,
-        // specific var
-        address[] memory _toTokens
+       InitializeParams calldata params,
+        // extra params
+        bool _allowAllTokens,
+        address[] calldata _toTokens
     ) public initializer {
-        CommonBudgetApproval.initialize(
-            _dao,
-            _executor,
-            _approvers,
-            _text,
-            _transactionType,
-            _addresses,
-            _tokens,
-            _allowAnyAmount,
-            _totalAmount,
-            _amountPercentage
-        );
+        CommonBudgetApproval.initialize(params);
 
-        if(_toTokens.length > 0) {
-            for(uint i = 0; i < _toTokens.length; i++) {
-                toTokensMapping[_toTokens[i]] = true;
-            }
-        } else {
-            allowAllToTokens = true;
+        allowAllToTokens = _allowAllTokens;
+        for(uint i = 0; i < _toTokens.length; i++) {
+            toTokensMapping[_toTokens[i]] = true;
         }
     }
 
@@ -117,7 +95,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         return UniswapSwapper.decodeUniswapData(to, data, value);
     }
 
-    function getRequiredAmount(address to, bytes memory data, uint256 value) public view override returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
+    function getRequiredAmount(address to, bytes memory data, uint256 value) public view returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
         (address _tokenIn,, uint256 _amountIn,,,) = decode(to, data, value);
 
         if(_amountIn > 0) {
@@ -127,41 +105,27 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         }
     }
 
-    function encodeInitializeData(
-        address _dao, 
-        address _executor, 
-        string memory _text, 
-        string memory _transactionType,
-        address[] memory _addresses,
-        address[] memory _tokens,
-        bool _allowAnyAmount,
-        uint256 _totalAmount,
-        uint8 _amountPercentage,
-        // specific var
-        address[] memory _toTokens
+    function encodeUniswapInitializeData(
+       InitializeParams calldata params,
+        // extra params
+        bool _allowAllTokens,
+        address[] calldata _toTokens
     ) public pure returns (bytes memory data) {
         return abi.encodeWithSignature(
-            "initialize(address,address,string,string,address[],address[],bool,uint256,uint8, address[])",
-            _dao,
-            _executor, 
-            _text, 
-            _transactionType,
-            _addresses,
-            _tokens,
-            _allowAnyAmount,
-            _totalAmount,
-            _amountPercentage,
+            "initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])",
+            params,
+            _allowAllTokens,
             _toTokens
         );
     }
 
-    function decodeUniswapInitializeData(bytes memory _data) public pure returns (address,address,address[] memory,string memory,string memory,address[] memory,address[] memory,bool,uint256,uint8, address[] memory) {
+    function decodeUniswapInitializeData(bytes memory _data) public pure returns (InitializeParams memory, bool, address[] memory) {
 
-        // initialize(address,address,address[],string,string,address[],address[],bool,uint256,uint8,address[])
-        if(_data.toBytes4(0) != 0xb5328b95) {
+        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])
+        if(_data.toBytes4(0) != 0xf3d74a99) {
             revert("unexpected function");
         }
 
-        return abi.decode(_data.slice(4, _data.length - 4), (address,address,address[],string,string,address[],address[],bool,uint256,uint8, address[]));
+        return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams,bool,address[]));
     }
 }

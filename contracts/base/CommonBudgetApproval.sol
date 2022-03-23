@@ -9,11 +9,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "../lib/BytesLib.sol";
 
-import "../interface/IBudgetApproval.sol";
 import "../interface/IDao.sol";
 import "../interface/IMembership.sol";
 
-abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudgetApproval {
+abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     using Counters for Counters.Counter;
     using BytesLib for bytes;
@@ -33,6 +32,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         mapping(address => bool) approved;
         bool isExist;
     }
+
+    event CreateTransaction(uint256 _id, bytes _data, uint256 _deadline);
 
     Counters.Counter private _transactionIds;
 
@@ -81,13 +82,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         _;
     }
 
-    modifier onlyPendingTransaction (uint256 _transactionId) {
-        require(transactions[_transactionId].status == Status.Pending, "action invalid");
-        _;
-    }
-
-    modifier onlyApprovedTransaction (uint256 _transactionId) {
-        require(transactions[_transactionId].status == Status.Approved, "action invalid");
+    modifier matchStatus (uint256 _transactionId, Status _status) {
+        require(transactions[_transactionId].status == _status, "status invalid");
         _;
     }
 
@@ -96,51 +92,51 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         _;
     }
 
-    function initialize(
-        address _dao, 
-        address _executor, 
-        address[] memory _approvers,
-        string memory _text, 
-        string memory _transactionType,
-        address[] memory _addresses,
-        address[] memory _tokens,
-        bool _allowAnyAmount,
-        uint256 _totalAmount,
-        uint8 _amountPercentage
-        ) public initializer {
-        dao = _dao;
-        executor = _executor;
-        text = _text;
-        transactionType = _transactionType;
-
-        approvers = _approvers;
-        for (uint i = 0; i < _approvers.length; i++) {
-            approversMapping[_approvers[i]] = true;
-        }
-
-        if(_addresses.length > 0) {
-            for(uint i = 0; i < _addresses.length; i++) {
-                addressesMapping[_addresses[i]] = true;
-            }
-        } else {
-            allowAllAddresses = true;
-        }
-
-        if(_tokens.length > 0) {
-            tokens = _tokens;
-            for(uint i = 0; i < _tokens.length; i++) {
-                tokensMapping[_tokens[i]] = true;
-            }
-        } else {
-            allowAllTokens = true;
-        }
-
-        allowAnyAmount = _allowAnyAmount;
-        totalAmount = _totalAmount;
-        amountPercentage = _amountPercentage;
+    struct InitializeParams {
+        address dao;
+        address executor;
+        address[] approvers;
+        string text;
+        string transactionType;
+        bool allowAllAddresses;
+        address[] addresses;
+        bool allowAllTokens;
+        address[] tokens;
+        bool allowAnyAmount;
+        uint256 totalAmount;
+        uint8 amountPercentage;
     }
 
-    function executeTransaction(uint256 _transactionId) external onlyExecutor onlyApprovedTransaction(_transactionId) checkDeadline(_transactionId) {
+    function initialize(
+        InitializeParams calldata params
+        ) public initializer {
+        dao = params.dao;
+        executor = params.executor;
+        text = params.text;
+        transactionType = params.transactionType;
+
+        approvers = params.approvers;
+        for (uint i = 0; i < params.approvers.length; i++) {
+            approversMapping[params.approvers[i]] = true;
+        }
+
+        allowAllAddresses = params.allowAllAddresses;
+        for(uint i = 0; i < params.addresses.length; i++) {
+            addressesMapping[params.addresses[i]] = true;
+        }
+
+        allowAllTokens = params.allowAllTokens;
+        tokens = params.tokens;
+        for(uint i = 0; i < params.tokens.length; i++) {
+            tokensMapping[params.tokens[i]] = true;
+        }
+
+        allowAnyAmount = params.allowAnyAmount;
+        totalAmount = params.totalAmount;
+        amountPercentage = params.amountPercentage;
+    }
+
+    function executeTransaction(uint256 _transactionId) external onlyExecutor matchStatus(_transactionId, Status.Approved) checkDeadline(_transactionId) {
         (bool success,) = address(this).call(transactions[_transactionId].data);
         require(success == true, "execute failed");
     }
@@ -161,10 +157,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         newTransaction.deadline = _deadline;
         newTransaction.isExist = true;
 
+        emit CreateTransaction(_transactionId, _data, _deadline);
+
         return _transactionId;
     }
 
-    function approveTransaction(uint256 _transactionId) external onlyApprover onlyPendingTransaction(_transactionId) {
+    function approveTransaction(uint256 _transactionId) external onlyApprover matchStatus(_transactionId, Status.Pending) {
         transactions[_transactionId].approved[msg.sender] = true;
 
         if(checkAllApproved(_transactionId)) {
@@ -172,8 +170,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         }
     }
 
-    function rejectTransaction(uint256 _transactionId) external onlyApprover onlyPendingTransaction(_transactionId) {
+    function rejectTransaction(uint256 _transactionId) external onlyApprover matchStatus(_transactionId, Status.Pending) {
         transactions[_transactionId].status = Status.Rejected;
+    }
+
+    function lastTransactionId() public view returns (uint256) {
+        return _transactionIds.current();
     }
 
     function checkAllApproved(uint256 _transactionId) public view returns (bool) {
@@ -286,41 +288,30 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         return abi.decode(_data.slice(4, _data.length - 4), (address, bytes, uint256));
     }
 
-    function encodeInitializeData(
-        address _dao, 
-        address _executor, 
-        address[] memory _approvers,
-        string memory _text, 
-        string memory _transactionType,
-        address[] memory _addresses,
-        address[] memory _tokens,
-        bool _allowAnyAmount,
-        uint256 _totalAmount,
-        uint8 _amountPercentage
-    ) public pure returns (bytes memory data) {
-        return abi.encodeWithSignature(
-            "initialize(address,address,address[],string,string,address[],address[],bool,uint256,uint8)",
-            _dao,
-            _executor, 
-            _approvers,
-            _text, 
-            _transactionType,
-            _addresses,
-            _tokens,
-            _allowAnyAmount,
-            _totalAmount,
-            _amountPercentage
+    function encodeInitializeData(InitializeParams calldata params) public pure returns (bytes memory data) {
+        return abi.encodeWithSelector(
+            this.initialize.selector,
+            params
         );
     }
 
-    function decodeInitializeData(bytes memory _data) public pure returns (address,address,address[] memory,string memory,string memory,address[] memory,address[] memory,bool,uint256,uint8) {
+    function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
 
-        // initialize(address,address,address[],string,string,address[],address[],bool,uint256,uint8)
-        if(_data.toBytes4(0) != 0xceac2994) {
+        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8))
+        if(_data.toBytes4(0) != 0x28746e66) {
             revert("unexpected function");
         }
 
-        return abi.decode(_data.slice(4, _data.length - 4), (address,address,address[],string,string,address[],address[],bool,uint256,uint8));
+        return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
+    }
+
+    function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
+        // execute(address,bytes,uint256)
+        if(interfaceID == 0xa04a0908) {
+            return true;
+        }
+
+        return false;
     }
 
     receive() external payable {}
