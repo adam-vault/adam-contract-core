@@ -29,10 +29,11 @@ async function main () {
   await dao.deployed();
   const membership = await Membership.deploy();
   await membership.deployed();
-  const governFactory = await GovernFactory.deploy();
-  await governFactory.deployed();
   const govern = await Govern.deploy();
   await govern.deployed();
+
+  const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
+  await governFactory.deployed();
 
   const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address, govern.address], { kind: 'uups' });
   await adam.deployed();

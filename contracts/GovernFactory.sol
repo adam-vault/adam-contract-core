@@ -9,29 +9,23 @@ import "./interface/IGovern.sol";
 import "hardhat/console.sol";
 
 contract GovernFactory is Initializable, UUPSUpgradeable {
-    address public dao;
     address public governImplementation;
-    mapping(string => address) public governMap;
+    mapping(address => mapping(string => address)) public governMap;
 
     event CreateGovern(
         string name,
-        address govern
+        address govern,
+        address dao
     );
 
     function initialize(
-        address _dao,
         address _governImplementation
     ) public initializer {
-        dao = _dao;
         governImplementation = _governImplementation;
     }
 
-    modifier onlyDao {
-        require(msg.sender == dao, "Access denied");
-        _;
-    }
-
     function createGovern(
+        address dao,
         string calldata name,
         uint duration,
         uint quorum,
@@ -52,16 +46,17 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
             voteTokens
         );
 
-        governMap[name] = address(_govern);
+        governMap[dao][name] = address(_govern);
 
         emit CreateGovern(
             name,
-            address(_govern)
+            address(_govern),
+            address(dao)
         );
     }
 
-    function addVoteToken(string memory name, address token, uint weight) external {
-        address govern = governMap[name];
+    function addVoteToken(address dao, string memory name, address token, uint weight) external {
+        address govern = governMap[dao][name];
         IGovern(payable(govern)).addVoteToken(token, weight);
     }
 

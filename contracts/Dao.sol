@@ -259,6 +259,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         address[] calldata voteTokens
     ) public {
         IGovernFactory(governFactory).createGovern(
+            address(this),
             name,
             duration,
             quorum,

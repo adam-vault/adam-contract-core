@@ -13,7 +13,7 @@ import "hardhat/console.sol";
 contract Adam is Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
-    address public governFactoryImplementation;
+    address public governFactory;
     address public governImplementation;
 
     address[] public budgetApprovals;
@@ -29,14 +29,12 @@ contract Adam is Initializable, UUPSUpgradeable {
         address _daoImplementation,
         address _membershipImplementation,
         address[] calldata _budgetApprovalImplementations,
-        address _governFactoryImplementation,
-        address _governImplementation
+        address _governFactory
     ) public initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
-        governFactoryImplementation = _governFactoryImplementation;
-        governImplementation = _governImplementation;
+        governFactory = _governFactory;
     }
 
     function _authorizeUpgrade(address) internal override initializer {}
@@ -60,13 +58,6 @@ contract Adam is Initializable, UUPSUpgradeable {
         }
     }
 
-    function createGovernFactory(address _dao) internal returns (address) {
-        bytes memory executePayload = abi.encodeWithSignature("initialize(address,address)", _dao, governImplementation);
-        ERC1967Proxy _governFactory = new ERC1967Proxy(governFactoryImplementation, executePayload);
-        IDao(_dao).setGovernFactory(address(_governFactory));
-        return address(_governFactory);
-    }
-
     function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public returns (address) {
         // bytes memory daoExecutePayload = abi.encodeWithSignature("initialize(address,address)", _dao, governImplementation);
         // bytes memory membershipExecutePayload = abi.encodeWithSignature("initialize(address,address)", _dao, governImplementation);
@@ -76,7 +67,7 @@ contract Adam is Initializable, UUPSUpgradeable {
 
         IMembership(address(_membership)).initialize(address(_dao), _name, _symbol);
         IDao(address(_dao)).initialize(address(this), msg.sender, _name, _symbol, address(_membership), _locktime, _depositTokens);
-        createGovernFactory(address(_dao));
+        IDao(address(_dao)).setGovernFactory(address(governFactory));
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;

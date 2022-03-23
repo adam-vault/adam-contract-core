@@ -17,7 +17,6 @@ describe('Testing Govern', function() {
 
     beforeEach(async function() {
         [creator, owner1, owner2, owner3] = await ethers.getSigners();
-
         adam = await createAdam();
         await adam.createDao('A Company', 'ACOM', 'Description', 10000000, [ethers.constants.AddressZero]);
         const daoAddr = await adam.daos(0);
@@ -39,7 +38,7 @@ describe('Testing Govern', function() {
                 category.voteTokens,
             )).to.emit(governFactory, 'CreateGovern');
 
-            expect(await governFactory.governMap('salary')).to.be.exist;
+            expect(await governFactory.governMap(dao.address, 'salary')).to.be.exist;
         });
     });
 
@@ -58,7 +57,7 @@ describe('Testing Govern', function() {
                     category.voteTokens,
                 );
         
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
         
                 const token = await ethers.getContractAt('ERC20', tokenA.address);
@@ -104,7 +103,7 @@ describe('Testing Govern', function() {
                     [tokenA.address],
                 );
         
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
         
                 const token = await ethers.getContractAt('TokenA', tokenA.address);
@@ -167,7 +166,7 @@ describe('Testing Govern', function() {
                     category.voteTokens,
                 );
         
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
         
                 const token = await ethers.getContractAt('TokenA', tokenA.address);
@@ -224,7 +223,7 @@ describe('Testing Govern', function() {
                     category.voteTokens,
                 );
         
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
         
                 const token = await ethers.getContractAt('TokenA', tokenA.address);
@@ -288,7 +287,7 @@ describe('Testing Govern', function() {
                     [membershipAddr],
                 );
 
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
 
                 const token = await ethers.getContractAt('ERC20', tokenA.address);
@@ -345,7 +344,7 @@ describe('Testing Govern', function() {
                     [membershipAddr],
                 );
 
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
 
                 const token = await ethers.getContractAt('ERC20', tokenA.address);
@@ -393,10 +392,10 @@ describe('Testing Govern', function() {
                 [tokenA.address],
             );
 
-            const governAddr = await governFactory.governMap(category.name);
+            const governAddr = await governFactory.governMap(dao.address, category.name);
             const govern = await ethers.getContractAt('Govern', governAddr);
 
-            await expect(governFactory.addVoteToken(category.name, tokenB.address, 1)).to.emit(govern, 'AddVoteToken');
+            await expect(governFactory.addVoteToken(dao.address, category.name, tokenB.address, 1)).to.emit(govern, 'AddVoteToken');
             expect(await govern.voteTokens(1)).to.eq(tokenB.address);
         });
 
@@ -410,7 +409,7 @@ describe('Testing Govern', function() {
                 [tokenA.address, tokenB.address],
             );
 
-            await expect(governFactory.addVoteToken(category.name, tokenB.address, 1)).to.be.revertedWith('Token already in list');
+            await expect(governFactory.addVoteToken(dao.address, category.name, tokenB.address, 1)).to.be.revertedWith('Token already in list');
         });        
     });
 
@@ -437,7 +436,7 @@ describe('Testing Govern', function() {
                 await tokenA.delegate(owner1.address);
                 await tokenB.delegate(owner2.address);
 
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
 
                 tx = await govern.propose(
@@ -479,7 +478,7 @@ describe('Testing Govern', function() {
                 await tokenA.delegate(owner1.address);
                 await tokenB.delegate(owner2.address);
 
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
 
                 tx = await govern.propose(
@@ -491,7 +490,7 @@ describe('Testing Govern', function() {
                 const rc = await tx.wait();
                 const event = rc.events.find(event => event.event === 'ProposalCreated');
                 const [proposalId] = event.args;
-
+                console.log("========", proposalId);
                 await govern.connect(owner1).castVote(proposalId, 0); // Owner1 with 6 votes against
                 await govern.connect(owner2).castVote(proposalId, 1); // Owner2 with 4 votes for
 
@@ -523,7 +522,7 @@ describe('Testing Govern', function() {
                 await tokenA.delegate(owner1.address);
                 await tokenB.delegate(owner2.address);
 
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
 
                 tx = await govern.propose(
@@ -566,7 +565,7 @@ describe('Testing Govern', function() {
                 await tokenB.delegate(owner2.address);
 
 
-                const governAddr = await governFactory.governMap('salary');
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
 
                 tx = await govern.propose(

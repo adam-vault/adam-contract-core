@@ -20,13 +20,13 @@ const createAdam = async () => {
 
   const dao = await Dao.deploy();
   const membership = await Membership.deploy();
-  const governFactory = await GovernFactory.deploy();
   const govern = await Govern.deploy();
   await dao.deployed();
   await membership.deployed();
-  await governFactory.deployed();
   await govern.deployed();
-  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address, govern.address], { kind: 'uups' });
+  const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
+  await governFactory.deployed();
+  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address], { kind: 'uups' });
 
   await adam.deployed();
   return adam;
