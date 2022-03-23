@@ -32,9 +32,9 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     event CreateMember(uint256 tokenId, address member, address owner);
     event UpdateMember(uint256 tokenId, address member, address owner);
 
-    function initialize(address _dao, string memory _name, string memory _symbol) public initializer
+    function initialize(address _dao, string memory _name) public initializer
     {
-        __ERC721_init(_name.concat(" Membership"), _symbol.concat("MS"));
+        __ERC721_init(_name.concat(" Membership"), "MS");
         dao = (_dao);
     }
 

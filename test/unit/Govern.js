@@ -6,6 +6,7 @@ describe('Testing Govern', function() {
     let adam, dao, governFactory;
     let creator, owner1, owner2, owner3;
     const provider = waffle.provider;
+    let tokenA, tokenB;
     const category = {
         name: 'salary',
         duration: 6570, //1 day
@@ -15,15 +16,21 @@ describe('Testing Govern', function() {
         voteTokens: [],
     }
 
+    function createDao () {
+        return adam.createDao('A Company', 'Description', 10000000, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
+      }
+
     beforeEach(async function() {
         [creator, owner1, owner2, owner3] = await ethers.getSigners();
         adam = await createAdam();
-        await adam.createDao('A Company', 'ACOM', 'Description', 10000000, [ethers.constants.AddressZero]);
+        await createDao();
         const daoAddr = await adam.daos(0);
         dao = await ethers.getContractAt('Dao', daoAddr);
         const governFactoryAddr = await dao.governFactory();
         governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
-        const { tokenA, tokenB } = await createTokens();
+        const res = await createTokens();
+        tokenA = res.tokenA;
+        tokenB = res.tokenB;
         category.voteTokens = [tokenA.address, tokenB.address];
     });
 
@@ -269,15 +276,6 @@ describe('Testing Govern', function() {
                 const membershipAddr = await dao.membership();
                 const membership = await ethers.getContractAt('Membership', membershipAddr);
 
-                await dao.connect(owner1).deposit({ value: ethers.utils.parseEther("1") });
-                await membership.connect(owner1).delegate(owner1.address);
-    
-                await dao.connect(owner2).deposit({ value: ethers.utils.parseEther("2") });
-                await membership.connect(owner2).delegate(owner2.address);
-
-                expect(await membership.getVotes(owner1.address)).to.eq(1);
-                expect(await membership.getVotes(owner2.address)).to.eq(1);
-
                 await dao.createGovern(
                     category.name,
                     300,
@@ -286,6 +284,15 @@ describe('Testing Govern', function() {
                     [1],
                     [membershipAddr],
                 );
+
+                await dao.connect(owner1).deposit({ value: ethers.utils.parseEther("1") });
+                await membership.connect(owner1).delegate(owner1.address);
+    
+                await dao.connect(owner2).deposit({ value: ethers.utils.parseEther("2") });
+                await membership.connect(owner2).delegate(owner2.address);
+
+                expect(await membership.getVotes(owner1.address)).to.eq(1);
+                expect(await membership.getVotes(owner2.address)).to.eq(1);
 
                 const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
@@ -326,15 +333,6 @@ describe('Testing Govern', function() {
                 const membershipAddr = await dao.membership();
                 const membership = await ethers.getContractAt('Membership', membershipAddr);
 
-                await dao.connect(owner1).deposit({ value: ethers.utils.parseEther("1") });
-                await membership.connect(owner1).delegate(owner1.address);
-    
-                await dao.connect(owner2).deposit({ value: ethers.utils.parseEther("2") });
-                await membership.connect(owner2).delegate(owner2.address);
-
-                expect(await membership.getVotes(owner1.address)).to.eq(1);
-                expect(await membership.getVotes(owner2.address)).to.eq(1);
-
                 await dao.createGovern(
                     category.name,
                     300,
@@ -343,6 +341,15 @@ describe('Testing Govern', function() {
                     [1],
                     [membershipAddr],
                 );
+                
+                await dao.connect(owner1).deposit({ value: ethers.utils.parseEther("1") });
+                await membership.connect(owner1).delegate(owner1.address);
+    
+                await dao.connect(owner2).deposit({ value: ethers.utils.parseEther("2") });
+                await membership.connect(owner2).delegate(owner2.address);
+
+                expect(await membership.getVotes(owner1.address)).to.eq(1);
+                expect(await membership.getVotes(owner2.address)).to.eq(1);
 
                 const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);

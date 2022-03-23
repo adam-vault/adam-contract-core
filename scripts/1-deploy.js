@@ -22,8 +22,8 @@ async function main () {
   const Dao = await hre.ethers.getContractFactory('Dao');
   const Membership = await hre.ethers.getContractFactory('Membership');
   const Adam = await hre.ethers.getContractFactory('Adam');
-  const GovernFactory = await ethers.getContractFactory('GovernFactory');
-  const Govern = await ethers.getContractFactory('Govern');
+  const GovernFactory = await hre.ethers.getContractFactory('GovernFactory');
+  const Govern = await hre.ethers.getContractFactory('Govern');
 
   const dao = await Dao.deploy();
   await dao.deployed();

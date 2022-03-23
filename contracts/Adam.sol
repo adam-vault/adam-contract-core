@@ -22,7 +22,7 @@ contract Adam is Initializable, UUPSUpgradeable {
     address[] public daos;
     mapping(address => bool) public daoRegistry;
 
-    event CreateDao(address dao, string name, string symbol, string description, address creator);
+    event CreateDao(address dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
 
     function initialize(
@@ -58,20 +58,26 @@ contract Adam is Initializable, UUPSUpgradeable {
         }
     }
 
-    function createDao(string calldata _name, string calldata _symbol, string calldata _description, uint256 _locktime, address[] calldata _depositTokens) public returns (address) {
-        // bytes memory daoExecutePayload = abi.encodeWithSignature("initialize(address,address)", _dao, governImplementation);
-        // bytes memory membershipExecutePayload = abi.encodeWithSignature("initialize(address,address)", _dao, governImplementation);
-
+    function createDao(
+        string calldata _name, 
+        string calldata _description, 
+        uint256 _locktime,
+        uint256[3] calldata budgetApproval,
+        uint256[3] calldata revokeBudgetApproval,
+        uint256[3] calldata general
+    ) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
 
-        IMembership(address(_membership)).initialize(address(_dao), _name, _symbol);
-        IDao(address(_dao)).initialize(address(this), msg.sender, _name, _symbol, address(_membership), _locktime, _depositTokens);
-        IDao(address(_dao)).setGovernFactory(address(governFactory));
+        IMembership(address(_membership)).initialize(address(_dao), _name);
+        address govern = createGovernFactory(address(_dao));
+        IDao(address(_dao)).initialize(address(this), msg.sender, _name, address(_membership), _locktime, govern, budgetApproval, revokeBudgetApproval, general);
+        IDao(address(_dao)).setGovernFactory(address(_governFactory));
+
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
-        emit CreateDao(address(_dao), _name, _symbol, _description, msg.sender);
+        emit CreateDao(address(_dao), _name, _description, msg.sender);
         return address(_dao);
     }
 }
