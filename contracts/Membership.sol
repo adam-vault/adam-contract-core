@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/draft-ERC721VotesUpgradeable.sol";
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -15,7 +15,7 @@ import "hardhat/console.sol";
 
 import "./Member.sol";
 
-contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable {
+contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     using Counters for Counters.Counter;
     using Strings for uint256;
     using ToString for address;
@@ -32,7 +32,8 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721Upgradeable {
     event CreateMember(uint256 tokenId, address member, address owner);
     event UpdateMember(uint256 tokenId, address member, address owner);
 
-    function initialize(address _dao, string memory _name, string memory _symbol) public initializer {
+    function initialize(address _dao, string memory _name, string memory _symbol) public initializer
+    {
         __ERC721_init(_name.concat(" Membership"), _symbol.concat("MS"));
         dao = (_dao);
     }
