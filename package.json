@@ -36,6 +36,7 @@
     "@chainlink/contracts": "^0.3.1",
     "@defi-wonderland/smock": "^2.0.7",
     "@ethersproject/experimental": "^5.5.0",
+    "@faker-js/faker": "^6.0.0",
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.4.2",
     "@uniswap/v3-periphery": "^1.4.0",
