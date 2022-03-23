@@ -40,7 +40,6 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     mapping(address => uint256) public firstDeposit;
 
     uint256 public locktime;
-    bool public publish;
     mapping(address => bool) public allowDepositTokens;
 
     event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
@@ -52,15 +51,17 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     function initialize(
         address _adam,
         address _creator,
-        string memory _name,
-        string memory _symbol,
+        string calldata _name,
         address _membership,
         uint256 _locktime,
-        // address[] calldata _allowDepositTokens,
-        address _governFactory
+        address _governFactory,
+        uint256[3] calldata budgetApproval,
+        uint256[3] calldata revokeBudgetApproval,
+        uint256[3] calldata general
+
     ) public initializer {
         __ERC721Holder_init();
-        __MultiToken_init(_name, _symbol);
+        __MultiToken_init(_name, "");
 
         adam = _adam;
         creator = _creator;
@@ -68,30 +69,30 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         locktime = _locktime;
         governFactory = _governFactory;
 
-        bytes memory executePayload1 = abi.encodeWithSelector(IGovernFactory.createGovern.selector,
-            "CorporateAction", 13, 3000, 5000, [1], [_membership]);
-        bytes memory executePayload2 = abi.encodeWithSelector(IGovernFactory.createGovern.selector,
-            "BudgetApproval", 13, 3000, 5000, [1], [_membership]);
-        governFactory.call(executePayload1);
-        governFactory.call(executePayload2);
+        address[] memory t = new address[](1);
+        t[0] = _membership;
+
+        uint256[] memory w = new uint256[](1);
+        w[0] = 1;
+
+        _createGovern("BudgetApproval", budgetApproval[0], budgetApproval[1], budgetApproval[2], w, t);
+        _createGovern("RevokeBudgetApproval", revokeBudgetApproval[0], revokeBudgetApproval[1], revokeBudgetApproval[2], w, t);
+        _createGovern("General", general[0], general[1], general[2], w, t);
+
+        _deposit(_creator, 0);
     }
 
     modifier govern(string memory category) {
-        require((!publish && msg.sender == creator) || msg.sender == IGovernFactory(governFactory).governMap(category), string("Dao: only").concat(category));
+        require(
+            (IMembership(membership).totalSupply() == 1 && IMembership(membership).ownerToTokenId(msg.sender) != 0)
+                || msg.sender == IGovernFactory(governFactory).governMap(category),
+            string("Dao: only").concat(category));
         _;
     }
 
     modifier onlyBudgetApproval {
         require(budgetApprovals[msg.sender] == true, "access denied");
         _;
-    }
-
-    function setName(string calldata _name) public govern("CorporateAction") {
-        name = _name;
-    }
-
-    function setPublish(bool _publish) public govern("CorporateAction") {
-        publish = _publish;
     }
 
     function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public govern("BudgetApproval") {
@@ -122,12 +123,14 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     }
 
     function deposit() public payable {
-        require(msg.value > 0, "0 ether");
+        _deposit(msg.sender, msg.value);
+    }
 
-        address member = _member(msg.sender);
-        _mintToken(member, _tokenId(address(0)), msg.value, "");
+    function _deposit(address owner, uint256 amount) public payable {
+        address member = _member(owner);
+        _mintToken(member, _tokenId(address(0)), amount, "");
 
-        emit Deposit(member, address(0), msg.value);
+        emit Deposit(member, address(0), amount);
 
         if (firstDeposit[member] == 0) {
             firstDeposit[member] = block.timestamp;
@@ -218,6 +221,24 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         uint[] calldata voteWeights,
         address[] calldata voteTokens
     ) public govern("Govern") {
+        _createGovern(
+            name,
+            duration,
+            quorum,
+            passThreshold,
+            voteWeights,
+            voteTokens
+        );
+    }
+
+    function _createGovern(
+        string memory name,
+        uint duration,
+        uint quorum,
+        uint passThreshold,
+        uint[] memory voteWeights,
+        address[] memory voteTokens
+    ) internal {
         IGovernFactory(governFactory).createGovern(
             name,
             duration,
