@@ -4,5 +4,5 @@ pragma solidity ^0.8.0;
 
 interface ICommonBudgetApproval {
     function supportsInterface(bytes4) external returns (bool);
-    function createTransaction(bytes memory, uint256) external returns (uint256);
+    function createTransaction(bytes memory, uint256, bool) external returns (uint256);
 }
