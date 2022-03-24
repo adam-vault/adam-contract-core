@@ -388,37 +388,37 @@ describe('Testing Govern', function() {
         });
     });
 
-    describe('Add vote token', function() {
-        it('should be able to add token', async function() {
-            await dao.createGovern(
-                category.name,
-                category.duration,
-                category.quorum,
-                category.passThreshold,
-                [1],
-                [tokenA.address],
-            );
+    // describe('Add vote token', function() {
+    //     it('should be able to add token', async function() {
+    //         await dao.createGovern(
+    //             category.name,
+    //             category.duration,
+    //             category.quorum,
+    //             category.passThreshold,
+    //             [1],
+    //             [tokenA.address],
+    //         );
 
-            const governAddr = await governFactory.governMap(dao.address, category.name);
-            const govern = await ethers.getContractAt('Govern', governAddr);
+    //         const governAddr = await governFactory.governMap(dao.address, category.name);
+    //         const govern = await ethers.getContractAt('Govern', governAddr);
 
-            await expect(governFactory.addVoteToken(category.name, tokenB.address, 1)).to.emit(govern, 'AddVoteToken');
-            expect(await govern.voteTokens(1)).to.eq(tokenB.address);
-        });
+    //         await expect(dao.addVoteToken(category.name, tokenB.address, 1)).to.emit(govern, 'AddVoteToken');
+    //         expect(await govern.voteTokens(1)).to.eq(tokenB.address);
+    //     });
 
-        it('should not be able to add token', async function() {
-            await dao.createGovern(
-                category.name,
-                category.duration,
-                category.quorum,
-                category.passThreshold,
-                [1, 1],
-                [tokenA.address, tokenB.address],
-            );
+    //     it('should not be able to add token', async function() {
+    //         await dao.createGovern(
+    //             category.name,
+    //             category.duration,
+    //             category.quorum,
+    //             category.passThreshold,
+    //             [1, 1],
+    //             [tokenA.address, tokenB.address],
+    //         );
 
-            await expect(governFactory.addVoteToken(category.name, tokenB.address, 1)).to.be.revertedWith('Token already in list');
-        });        
-    });
+    //         await expect(dao.addVoteToken(category.name, tokenB.address, 1)).to.be.revertedWith('Token already in list');
+    //     });        
+    // });
 
     describe('Vote success func', function() {
         context('pass threshold is a factor & weight is not a factor', function() {
