@@ -254,11 +254,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable, IBudge
         address[] memory members = IMembership(_membership).getAllMembers();
         uint256[] memory amounts = new uint[](members.length);
 
-        uint256 totalBalance = IDao(dao).tokenTotalSupply(IDao(dao).getTokenId(_token));
+        uint256 totalBalance = IDao(dao).tokenTotalSupply(IDao(dao).addressToId(_token));
 
         uint256 amountLeft = _totalAmount;
         for(uint i = 0; i < members.length - 1; i++) {
-            uint256 memberBalance = IDao(dao).balanceOf(members[i], IDao(dao).getTokenId(_token));
+            uint256 memberBalance = IDao(dao).balanceOf(members[i], IDao(dao).addressToId(_token));
             amounts[i] = _totalAmount * memberBalance / totalBalance;
             amountLeft -= _totalAmount * memberBalance / totalBalance;
         }

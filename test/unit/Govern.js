@@ -6,6 +6,7 @@ describe('Testing Govern', function() {
     let adam, dao, governFactory;
     let creator, owner1, owner2, owner3;
     const provider = waffle.provider;
+    let tokenA, tokenB;
     const category = {
         name: 'salary',
         duration: 6570, //1 day
@@ -19,12 +20,14 @@ describe('Testing Govern', function() {
         [creator, owner1, owner2, owner3] = await ethers.getSigners();
 
         adam = await createAdam();
-        await adam.createDao('A Company', 'ACOM', 'Description', 10000000, [ethers.constants.AddressZero]);
+        await adam.createDao('A Company', 'ACOM', 'Description', 10000000);
         const daoAddr = await adam.daos(0);
         dao = await ethers.getContractAt('Dao', daoAddr);
         const governFactoryAddr = await dao.governFactory();
         governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
-        const { tokenA, tokenB } = await createTokens();
+        const res = await createTokens();
+        tokenA = res.tokenA;
+        tokenB = res.tokenB;
         category.voteTokens = [tokenA.address, tokenB.address];
     });
 
