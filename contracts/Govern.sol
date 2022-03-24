@@ -7,12 +7,17 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/TimersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
 import "hardhat/console.sol";
 
 contract Govern is
     Initializable, UUPSUpgradeable, GovernorUpgradeable
 {
+    using SafeCastUpgradeable for uint256;
+    using TimersUpgradeable for TimersUpgradeable.BlockNumber;
+
     address public owner;
     uint public duration;
     uint public quorumThreshold;
@@ -172,6 +177,48 @@ contract Govern is
 
         emit AddVoteToken(token, weight);
     }
+
+    // function propose(
+    //     address[] memory targets,
+    //     uint256[] memory values,
+    //     bytes[] memory calldatas,
+    //     string memory description
+    // ) public override returns (uint256) {
+    //     require(
+    //         getVotes(msg.sender, block.number - 1) >= proposalThreshold(),
+    //         "GovernorCompatibilityBravo: proposer votes below proposal threshold"
+    //     );
+
+    //     uint256 proposalId = hashProposal(targets, values, calldatas, keccak256(bytes(description)));
+
+    //     if (targets.length > 0) {
+    //         require(targets.length == values.length, "Governor: invalid proposal length");
+    //         require(targets.length == calldatas.length, "Governor: invalid proposal length");
+    //     }
+
+    //     ProposalCore storage proposal = _proposals[proposalId];
+    //     require(proposal.voteStart.isUnset(), "Governor: proposal already exists");
+
+    //     uint64 snapshot = block.number.toUint64() + votingDelay().toUint64();
+    //     uint64 deadline = snapshot + votingPeriod().toUint64();
+
+    //     proposal.voteStart.setDeadline(snapshot);
+    //     proposal.voteEnd.setDeadline(deadline);
+
+    //     emit ProposalCreated(
+    //         proposalId,
+    //         _msgSender(),
+    //         targets,
+    //         values,
+    //         new string[](targets.length),
+    //         calldatas,
+    //         snapshot,
+    //         deadline,
+    //         description
+    //     );
+
+    //     return proposalId;
+    // }
 
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
 }

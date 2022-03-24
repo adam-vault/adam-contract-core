@@ -402,7 +402,7 @@ describe('Testing Govern', function() {
             const governAddr = await governFactory.governMap(dao.address, category.name);
             const govern = await ethers.getContractAt('Govern', governAddr);
 
-            await expect(governFactory.addVoteToken(dao.address, category.name, tokenB.address, 1)).to.emit(govern, 'AddVoteToken');
+            await expect(governFactory.addVoteToken(category.name, tokenB.address, 1)).to.emit(govern, 'AddVoteToken');
             expect(await govern.voteTokens(1)).to.eq(tokenB.address);
         });
 
@@ -416,7 +416,7 @@ describe('Testing Govern', function() {
                 [tokenA.address, tokenB.address],
             );
 
-            await expect(governFactory.addVoteToken(dao.address, category.name, tokenB.address, 1)).to.be.revertedWith('Token already in list');
+            await expect(governFactory.addVoteToken(category.name, tokenB.address, 1)).to.be.revertedWith('Token already in list');
         });        
     });
 
@@ -447,9 +447,9 @@ describe('Testing Govern', function() {
                 const govern = await ethers.getContractAt('Govern', governAddr);
 
                 tx = await govern.propose(
-                    [tokenA.address],
+                    [ethers.constants.AddressZero],
                     [0],
-                    [transferCalldata],
+                    [ethers.constants.AddressZero],
                     "Proposal #1: Transfer token",
                 );
                 const rc = await tx.wait();
