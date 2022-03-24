@@ -178,5 +178,18 @@ contract Govern is
         emit AddVoteToken(token, weight);
     }
 
+    function execute(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) public payable override returns (uint256) {
+        if (targets[0] == address(0)) {
+            revert("General proposal should not be executed");
+        }
+
+        super.execute(targets, values, calldatas, descriptionHash);
+    }
+
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
 }
