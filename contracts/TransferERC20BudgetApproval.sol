@@ -11,7 +11,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     using BytesLib for bytes;
 
-    string public constant NAME = "Transfer ERC20 Budget Approval";
+    string public constant override NAME = "Transfer ERC20 Budget Approval";
 
     // transfer ETH by sending data.length == 0
     // transfer ERC20 by using transfer(address,uint256)
@@ -29,7 +29,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         require(success == true, "execution failed");
 
         (address _token, address _recipient, uint256 _amount) = decode(to, data, value);
-        require(checkValid(_token, _recipient, _amount, true) == true, "transaction not valid");
+        require(checkValid(_token, _recipient, _amount, true) == true, "transaction not allowed");
         _updateTotalAmount(_amount);
     }
 

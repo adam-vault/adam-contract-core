@@ -34,6 +34,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     event CreateTransaction(uint256 _id, bytes _data, uint256 _deadline);
+    event ExecuteTransaction(uint256 _id, bytes _data);
 
     Counters.Counter private _transactionIds;
 
@@ -136,9 +137,13 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         amountPercentage = params.amountPercentage;
     }
 
+    function NAME() external virtual returns (string calldata);
+
     function executeTransaction(uint256 _transactionId) external onlyExecutor matchStatus(_transactionId, Status.Approved) checkDeadline(_transactionId) {
-        (bool success,) = address(this).call(transactions[_transactionId].data);
-        require(success == true, "execute failed");
+        (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
+        require(success == true, string(result));
+
+        emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
     }
 
     function createTransaction(bytes memory _data, uint256 _deadline) external onlyDao returns (uint256) {
