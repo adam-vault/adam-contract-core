@@ -73,11 +73,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
-    modifier onlyExecutor () {
-        require(msg.sender == executor, "access denied");
-        _;
-    }
-
     modifier onlySelf() {
         require(msg.sender == address(this), "access denied");
         _;
@@ -139,14 +134,16 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function NAME() external virtual returns (string calldata);
 
-    function executeTransaction(uint256 _transactionId) external onlyExecutor matchStatus(_transactionId, Status.Approved) checkDeadline(_transactionId) {
+    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkDeadline(_transactionId) {
+        require(msg.sender == executor || msg.sender == dao, "access denied");
+
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
         require(success == true, string(result));
 
         emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
     }
 
-    function createTransaction(bytes memory _data, uint256 _deadline) external onlyDao returns (uint256) {
+    function createTransaction(bytes memory _data, uint256 _deadline, bool _execute) external onlyDao returns (uint256) {
         _transactionIds.increment();
         uint256 _transactionId = _transactionIds.current();
 
@@ -163,6 +160,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         newTransaction.isExist = true;
 
         emit CreateTransaction(_transactionId, _data, _deadline);
+
+        if (_execute) {
+            executeTransaction(_transactionId);
+        }
 
         return _transactionId;
     }

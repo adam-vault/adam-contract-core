@@ -111,11 +111,11 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         IERC20(_token).approve(_to,_amount);
     }
 
-    function createBudgetApprovalTransaction (address _budgetApproval, bytes calldata _data, uint256 _deadline) external {
+    function createBudgetApprovalTransaction (address _budgetApproval, bytes calldata _data, uint256 _deadline, bool _execute) external {
         require(budgetApprovals[_budgetApproval] == true, "budget approval invalid");
         require(ICommonBudgetApproval(_budgetApproval).supportsInterface(_data.toBytes4(0)) == true, "not supported interface");
     
-        ICommonBudgetApproval(_budgetApproval).createTransaction(_data, _deadline);
+        ICommonBudgetApproval(_budgetApproval).createTransaction(_data, _deadline, _execute);
     }
 
     function getMintedContracts() external view returns (address[] memory) {
