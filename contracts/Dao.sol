@@ -21,7 +21,6 @@ import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
 import "hardhat/console.sol";
 
-
 contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradeable {
     // list strategy
     using Counters for Counters.Counter;
@@ -68,6 +67,13 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         membership = _membership;
         locktime = _locktime;
         governFactory = _governFactory;
+
+        bytes memory executePayload1 = abi.encodeWithSelector(IGovernFactory.createGovern.selector,
+            "CorporateAction", 13, 3000, 5000, [1], [_membership]);
+        bytes memory executePayload2 = abi.encodeWithSelector(IGovernFactory.createGovern.selector,
+            "BudgetApproval", 13, 3000, 5000, [1], [_membership]);
+        governFactory.call(executePayload1);
+        governFactory.call(executePayload2);
     }
 
     modifier govern(string memory category) {
