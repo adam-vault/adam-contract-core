@@ -7,12 +7,17 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/TimersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 
 import "hardhat/console.sol";
 
 contract Govern is
     Initializable, UUPSUpgradeable, GovernorUpgradeable
 {
+    using SafeCastUpgradeable for uint256;
+    using TimersUpgradeable for TimersUpgradeable.BlockNumber;
+
     address public owner;
     uint public duration;
     uint public quorumThreshold;
@@ -171,6 +176,19 @@ contract Govern is
         voteWeights.push(weight);
 
         emit AddVoteToken(token, weight);
+    }
+
+    function execute(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) public payable override returns (uint256) {
+        if (targets[0] == address(0)) {
+            revert("General proposal should not be executed");
+        }
+
+        super.execute(targets, values, calldatas, descriptionHash);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override initializer {}

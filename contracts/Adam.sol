@@ -13,7 +13,7 @@ import "hardhat/console.sol";
 contract Adam is Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
-    address public governFactoryImplementation;
+    address public governFactory;
     address public governImplementation;
 
     address[] public budgetApprovals;
@@ -29,14 +29,12 @@ contract Adam is Initializable, UUPSUpgradeable {
         address _daoImplementation,
         address _membershipImplementation,
         address[] calldata _budgetApprovalImplementations,
-        address _governFactoryImplementation,
-        address _governImplementation
+        address _governFactory
     ) public initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
-        governFactoryImplementation = _governFactoryImplementation;
-        governImplementation = _governImplementation;
+        governFactory = _governFactory;
     }
 
     function _authorizeUpgrade(address) internal override initializer {}
@@ -60,13 +58,6 @@ contract Adam is Initializable, UUPSUpgradeable {
         }
     }
 
-    function createGovernFactory(address _dao) internal returns (address) {
-        bytes memory executePayload = abi.encodeWithSignature("initialize(address,address)", _dao, governImplementation);
-        ERC1967Proxy _governFactory = new ERC1967Proxy(governFactoryImplementation, executePayload);
-        // IDao(_dao).setGovernFactory(address(_governFactory));
-        return address(_governFactory);
-    }
-
     function createDao(
         string calldata _name, 
         string calldata _description, 
@@ -79,9 +70,7 @@ contract Adam is Initializable, UUPSUpgradeable {
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
 
         IMembership(address(_membership)).initialize(address(_dao), _name);
-        address govern = createGovernFactory(address(_dao));
-        IDao(address(_dao)).initialize(address(this), msg.sender, _name, address(_membership), _locktime, govern, budgetApproval, revokeBudgetApproval, general);
-        createGovernFactory(address(_dao));
+        IDao(address(_dao)).initialize(address(this), msg.sender, _name, address(_membership), _locktime, governFactory, budgetApproval, revokeBudgetApproval, general);
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
