@@ -147,7 +147,7 @@ contract Govern is
         return totalVotes;
     }
 
-    function quorum(uint256 blockNumber) public view override returns (uint256) {
+    function totalSupply(uint256 blockNumber) public view returns (uint256) {
         uint256 totalPastSupply = 0;
 
         for(uint256 i=0; i<voteTokens.length; i++) {
@@ -155,7 +155,11 @@ contract Govern is
             totalPastSupply = totalPastSupply + accountSupply;
         } 
 
-        return totalPastSupply * (quorumThreshold / 100);
+        return totalPastSupply ;
+    }
+
+    function quorum(uint256 blockNumber) public view override returns (uint256) {
+        return totalSupply(blockNumber) * (quorumThreshold / 100);
     }
 
 

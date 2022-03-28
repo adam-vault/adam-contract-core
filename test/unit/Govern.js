@@ -49,6 +49,51 @@ describe('Testing Govern', function() {
         });
     });
 
+    describe('Create Proposal', function() {
+        context('For one toke only', function() {
+            it('create with correct parameters', async function() {
+                const mintAmount = 10_000;
+                await tokenA.mint(creator.address, mintAmount);
+                await tokenA.delegate(creator.address);
+        
+                await dao.createGovern(
+                    category.name,
+                    category.duration,
+                    category.quorum,
+                    category.passThreshold,
+                    category.voteWights,
+                    category.voteTokens,
+                );
+        
+                const governAddr = await governFactory.governMap(dao.address, 'salary');
+                const govern = await ethers.getContractAt('Govern', governAddr);
+        
+                const token = await ethers.getContractAt('ERC20', tokenA.address);
+                const transferCalldata = token.interface.encodeFunctionData(
+                    'transfer', [owner1.address, 1000],
+                );
+        
+                const tx = await govern.propose(
+                    [tokenA.address],
+                    [0],
+                    [transferCalldata],
+                    "Proposal #1: Transfer token",
+                );
+                const rc = await tx.wait();
+                const event = rc.events.find(event => event.event === 'ProposalCreated');
+                const blockNumber = await ethers.provider.getBlockNumber();
+
+                console.log("===current block number==", await ethers.provider.getBlockNumber());
+            
+                const [proposalId] = event.args;
+                await govern.castVote(proposalId, 0); // to ensure block in mined.
+
+                expect(await govern.totalSupply(blockNumber)).to.eq(mintAmount);
+                expect(await govern.quorum(blockNumber)).to.eq(mintAmount * (category.quorum / 100));
+            });
+        });
+    });
+
     describe('Voting and executing proposals', function() {
         context('For one toke only', function() {
             it('should be able to propose a proposal and vote', async function() {

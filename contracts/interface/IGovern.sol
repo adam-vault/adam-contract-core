@@ -120,6 +120,8 @@ interface IGovern {
 
     function proxiableUUID() external view returns (bytes32);
 
+    function totalSupply(uint256 blockNumber) external view returns (uint256);
+
     function quorum(uint256 blockNumber) external view returns (uint256);
 
     function quorumReached(uint256 proposalId) external view returns (bool);
