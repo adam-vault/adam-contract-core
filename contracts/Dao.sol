@@ -251,4 +251,5 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
 
     function _authorizeUpgrade(address newImplementation) internal override {}
 
+    receive() external payable {}
 }
