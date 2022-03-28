@@ -53,7 +53,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         tokenIdToMember[newId] = address(member);
         _members.push(address(member));
         _safeMint(to, newId, "");
-        emit CreateMember(newId, tokenIdToMember[newId], msg.sender);
+        emit CreateMember(newId, tokenIdToMember[newId], to);
 
         return (ownerToTokenId[to], tokenIdToMember[newId]);
     }
