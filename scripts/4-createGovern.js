@@ -1,7 +1,8 @@
 const hre = require('hardhat');
+const _ = require('lodash');
 
 // rinkeby
-const daoAddress = '0x1d917696b3116caf05ee27205c54e0782cd74f25';
+const daoAddress = '0xa9D36Fe3bDF720e0d1044282fa37386306BCbf96';
 
 async function main () {
   const dao = await hre.ethers.getContractAt('Dao', daoAddress);

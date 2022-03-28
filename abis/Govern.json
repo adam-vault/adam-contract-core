@@ -34,6 +34,7 @@
   "function relay(address,uint256,bytes)",
   "function state(uint256) view returns (uint8)",
   "function supportsInterface(bytes4) view returns (bool)",
+  "function totalPastSupply(uint256) view returns (uint256)",
   "function upgradeTo(address)",
   "function upgradeToAndCall(address,bytes) payable",
   "function version() view returns (string)",

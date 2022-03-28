@@ -148,14 +148,18 @@ contract Govern is
     }
 
     function quorum(uint256 blockNumber) public view override returns (uint256) {
-        uint256 totalPastSupply = 0;
+        return totalPastSupply(blockNumber) * (quorumThreshold / 100);
+    }
+
+    function totalPastSupply(uint256 blockNumber) public view returns (uint256) {
+        uint256 sum = 0;
 
         for(uint256 i=0; i<voteTokens.length; i++) {
             uint accountSupply = VotesUpgradeable(voteTokens[i]).getPastTotalSupply(blockNumber);
-            totalPastSupply = totalPastSupply + accountSupply;
+            sum = sum + accountSupply;
         } 
 
-        return totalPastSupply * (quorumThreshold / 100);
+        return sum;
     }
 
 

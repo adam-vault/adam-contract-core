@@ -14,36 +14,44 @@ const deployBudgetApprovals = async () => {
   const uniswapBudgetApproval = await UniswapBudgetApproval.deploy();
   await uniswapBudgetApproval.deployed();
 
+  console.log('budget approvals deployed to: ', [transferERC20BudgetApproval.address, uniswapBudgetApproval.address]);
   return [transferERC20BudgetApproval.address, uniswapBudgetApproval.address];
+};
+
+const deployGovernFactory = async () => {
+  const GovernFactory = await hre.ethers.getContractFactory('GovernFactory');
+  const Govern = await hre.ethers.getContractFactory('Govern');
+
+  const govern = await Govern.deploy();
+  await govern.deployed();
+
+  const governFactory = await hre.upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
+  await governFactory.deployed();
+
+  console.log('governFactory deployed to', governFactory.address);
+  console.log('govern deployed to', govern.address);
+  return governFactory.address;
 };
 
 async function main () {
   const budgetApprovalsAddress = await deployBudgetApprovals();
+  const governFactory = await deployGovernFactory();
+
   const Dao = await hre.ethers.getContractFactory('Dao');
   const Membership = await hre.ethers.getContractFactory('Membership');
   const Adam = await hre.ethers.getContractFactory('Adam');
-  const GovernFactory = await hre.ethers.getContractFactory('GovernFactory');
-  const Govern = await hre.ethers.getContractFactory('Govern');
 
   const dao = await Dao.deploy();
   await dao.deployed();
   const membership = await Membership.deploy();
   await membership.deployed();
-  const govern = await Govern.deploy();
-  await govern.deployed();
 
-  const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
-  await governFactory.deployed();
-
-  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address, govern.address], { kind: 'uups' });
+  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address], { kind: 'uups' });
   await adam.deployed();
 
   console.log('dao deployed to: ', dao.address);
   console.log('membership deployed to: ', membership.address);
   console.log('adam deployed to: ', adam.address);
-  console.log('budget approvals deployed to: ', budgetApprovalsAddress);
-  console.log('governFactory deployed to', governFactory.address);
-  console.log('govern deployed to', govern.address);
 }
 
 main().catch((error) => {

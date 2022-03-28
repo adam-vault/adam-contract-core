@@ -3,7 +3,7 @@ const _ = require('lodash');
 const { faker } = require('@faker-js/faker');
 
 // rinkeby
-const adamAddress = '0x1Fdc0824EB415a0eDA3cd17C57abFf045A9A954B';
+const adamAddress = '0x8C8B8500De0E4de7e8624631d60eE02B0F40d384';
 
 async function main () {
   const adam = await hre.ethers.getContractAt('Adam', adamAddress);
