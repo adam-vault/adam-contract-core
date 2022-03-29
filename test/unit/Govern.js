@@ -264,7 +264,7 @@ describe('Testing Govern', function() {
         });
     
         context('For voting with membership ERC721Vote tokens', function() {
-            it.only('should success due to 10% pass threshold (1 against 1 for)', async function() {
+            it('should success due to 10% pass threshold (1 against 1 for)', async function() {
                 const membershipAddr = await dao.membership();
                 const membership = await ethers.getContractAt('Membership', membershipAddr);
 
