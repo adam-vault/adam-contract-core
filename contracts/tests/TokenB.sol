@@ -23,6 +23,9 @@ contract TokenB is ERC20, ERC20Permit, ERC20Votes {
         override(ERC20, ERC20Votes)
     {
         super._afterTokenTransfer(from, to, amount);
+        if(from == address(0) && to != address(0) && delegates(to) == address(0)) {
+            _delegate(to, to);
+        }
     }
 
     function _mint(address to, uint256 amount)

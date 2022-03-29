@@ -53,7 +53,6 @@ describe('Testing Govern', function() {
         context('For one toke only', function() {
             it('should be able to propose a proposal and vote', async function() {
                 await tokenA.mint(creator.address, 1);
-                await tokenA.delegate(creator.address);
         
                 await dao.createGovern(
                     category.name,
@@ -99,7 +98,6 @@ describe('Testing Govern', function() {
         
             it('should be able to propose a proposal, vote and execute', async function() {
                 await tokenA.mint(creator.address, 1);
-                await tokenA.delegate(creator.address);
         
                 await dao.createGovern(
                     category.name,
@@ -158,12 +156,9 @@ describe('Testing Govern', function() {
         context('For multiple tokens', function() {
             it('should use two tokens for voting and should success even weight higher vote against due to pass threshold', async function() {
                 console.log("===current block number==", await ethers.provider.getBlockNumber());
-                await tokenA.mint(creator.address, 1);
-                await tokenB.mint(creator.address, 1);
-                
-                await tokenA.delegate(owner1.address);
-                await tokenB.delegate(owner2.address);
-        
+                await tokenA.mint(owner1.address, 1);
+                await tokenB.mint(owner2.address, 1);
+
                 await dao.createGovern(
                     category.name,
                     39, //make it end soon
@@ -215,11 +210,8 @@ describe('Testing Govern', function() {
 
             it('should use two tokens for voting and should success if weight higher vote for', async function() {
                 console.log("===current block number==", await ethers.provider.getBlockNumber());
-                await tokenA.mint(creator.address, 1);
-                await tokenB.mint(creator.address, 1);
-                
-                await tokenA.delegate(owner1.address);
-                await tokenB.delegate(owner2.address);
+                await tokenA.mint(owner1.address, 1);
+                await tokenB.mint(owner2.address, 1);
         
                 await dao.createGovern(
                     category.name,
@@ -286,10 +278,7 @@ describe('Testing Govern', function() {
                 );
 
                 await dao.connect(owner1).deposit({ value: ethers.utils.parseEther("1") });
-                await membership.connect(owner1).delegate(owner1.address);
-    
                 await dao.connect(owner2).deposit({ value: ethers.utils.parseEther("2") });
-                await membership.connect(owner2).delegate(owner2.address);
 
                 expect(await membership.getVotes(owner1.address)).to.eq(1);
                 expect(await membership.getVotes(owner2.address)).to.eq(1);
@@ -343,10 +332,8 @@ describe('Testing Govern', function() {
                 );
                 
                 await dao.connect(owner1).deposit({ value: ethers.utils.parseEther("1") });
-                await membership.connect(owner1).delegate(owner1.address);
     
                 await dao.connect(owner2).deposit({ value: ethers.utils.parseEther("2") });
-                await membership.connect(owner2).delegate(owner2.address);
 
                 expect(await membership.getVotes(owner1.address)).to.eq(1);
                 expect(await membership.getVotes(owner2.address)).to.eq(1);
@@ -388,38 +375,6 @@ describe('Testing Govern', function() {
         });
     });
 
-    // describe('Add vote token', function() {
-    //     it('should be able to add token', async function() {
-    //         await dao.createGovern(
-    //             category.name,
-    //             category.duration,
-    //             category.quorum,
-    //             category.passThreshold,
-    //             [1],
-    //             [tokenA.address],
-    //         );
-
-    //         const governAddr = await governFactory.governMap(dao.address, category.name);
-    //         const govern = await ethers.getContractAt('Govern', governAddr);
-
-    //         await expect(dao.addVoteToken(category.name, tokenB.address, 1)).to.emit(govern, 'AddVoteToken');
-    //         expect(await govern.voteTokens(1)).to.eq(tokenB.address);
-    //     });
-
-    //     it('should not be able to add token', async function() {
-    //         await dao.createGovern(
-    //             category.name,
-    //             category.duration,
-    //             category.quorum,
-    //             category.passThreshold,
-    //             [1, 1],
-    //             [tokenA.address, tokenB.address],
-    //         );
-
-    //         await expect(dao.addVoteToken(category.name, tokenB.address, 1)).to.be.revertedWith('Token already in list');
-    //     });        
-    // });
-
     describe('Vote success func', function() {
         context('pass threshold is a factor & weight is not a factor', function() {
             it('should fail', async function() {
@@ -437,12 +392,9 @@ describe('Testing Govern', function() {
                     category.voteTokens,
                 );
 
-                await tokenA.mint(creator.address, 6);
-                await tokenB.mint(creator.address, 4);
+                await tokenA.mint(owner1.address, 6);
+                await tokenB.mint(owner2.address, 4);
                 
-                await tokenA.delegate(owner1.address);
-                await tokenB.delegate(owner2.address);
-
                 const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
 
@@ -479,11 +431,9 @@ describe('Testing Govern', function() {
                     category.voteTokens,
                 );
 
-                await tokenA.mint(creator.address, 4);
-                await tokenB.mint(creator.address, 6);
+                await tokenA.mint(owner1.address, 4);
+                await tokenB.mint(owner2.address, 6);
                 
-                await tokenA.delegate(owner1.address);
-                await tokenB.delegate(owner2.address);
 
                 const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
@@ -523,11 +473,8 @@ describe('Testing Govern', function() {
                     category.voteTokens,
                 );
 
-                await tokenA.mint(creator.address, 1);
-                await tokenB.mint(creator.address, 1);
-                
-                await tokenA.delegate(owner1.address);
-                await tokenB.delegate(owner2.address);
+                await tokenA.mint(owner1.address, 1);
+                await tokenB.mint(owner2.address, 1);
 
                 const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
@@ -567,10 +514,6 @@ describe('Testing Govern', function() {
 
                 await tokenA.mint(creator.address, 1);
                 await tokenB.mint(creator.address, 1);
-                
-                await tokenA.delegate(owner1.address);
-                await tokenB.delegate(owner2.address);
-
 
                 const governAddr = await governFactory.governMap(dao.address, 'salary');
                 const govern = await ethers.getContractAt('Govern', governAddr);
@@ -594,4 +537,64 @@ describe('Testing Govern', function() {
             });
         });
     });
+
+
+    describe('Delegate vote test', function() {
+        it('should delegate vote during mint', async function() {
+            await tokenA.mint(creator.address, 100);
+
+            expect(await tokenA.getVotes(creator.address)).to.eq(100);
+        });
+
+        it('could not override delegated votes through mint', async function() {
+            await tokenA.mint(creator.address, 100);
+            await tokenA.delegate(owner1.address);
+
+            expect(await tokenA.getVotes(owner1.address)).to.eq(100);
+
+            await tokenA.mint(creator.address, 100);
+            expect(await tokenA.getVotes(creator.address)).to.eq(0);
+        });
+
+        it('should accumulate delegated votes', async function() {
+            await tokenA.mint(creator.address, 50);
+
+            await tokenA.connect(owner1).mint(owner1.address, 100);
+            await tokenA.connect(owner1).delegate(creator.address);
+
+            expect(await tokenA.getVotes(creator.address)).to.eq(150);
+        });
+    });
+
+    // describe('Add vote token', function() {
+    //     it('should be able to add token', async function() {
+    //         await dao.createGovern(
+    //             category.name,
+    //             category.duration,
+    //             category.quorum,
+    //             category.passThreshold,
+    //             [1],
+    //             [tokenA.address],
+    //         );
+
+    //         const governAddr = await governFactory.governMap(dao.address, category.name);
+    //         const govern = await ethers.getContractAt('Govern', governAddr);
+
+    //         await expect(dao.addVoteToken(category.name, tokenB.address, 1)).to.emit(govern, 'AddVoteToken');
+    //         expect(await govern.voteTokens(1)).to.eq(tokenB.address);
+    //     });
+
+    //     it('should not be able to add token', async function() {
+    //         await dao.createGovern(
+    //             category.name,
+    //             category.duration,
+    //             category.quorum,
+    //             category.passThreshold,
+    //             [1, 1],
+    //             [tokenA.address, tokenB.address],
+    //         );
+
+    //         await expect(dao.addVoteToken(category.name, tokenB.address, 1)).to.be.revertedWith('Token already in list');
+    //     });        
+    // });
 });
