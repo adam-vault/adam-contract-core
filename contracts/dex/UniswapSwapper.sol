@@ -115,7 +115,7 @@ contract UniswapSwapper {
                 tokenIn = _tokenIn;
                 tokenOut = _tokenOut;
                 uint256 returnValue = abi.decode(decodedResults[i], (uint256));
-                if(_estimatedIn == true) {
+                if(_estimatedIn) {
                     amountIn += returnValue;
                     amountOut += _amountOut;
                 } else {

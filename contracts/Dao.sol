@@ -91,7 +91,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     }
 
     modifier onlyBudgetApproval {
-        require(budgetApprovals[msg.sender] == true, "access denied");
+        require(budgetApprovals[msg.sender], "access denied");
         _;
     }
 
@@ -112,8 +112,8 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     }
 
     function createBudgetApprovalTransaction (address _budgetApproval, bytes calldata _data, uint256 _deadline, bool _execute) external {
-        require(budgetApprovals[_budgetApproval] == true, "budget approval invalid");
-        require(ICommonBudgetApproval(_budgetApproval).supportsInterface(_data.toBytes4(0)) == true, "not supported interface");
+        require(budgetApprovals[_budgetApproval], "budget approval invalid");
+        require(ICommonBudgetApproval(_budgetApproval).supportsInterface(_data.toBytes4(0)), "not supported interface");
     
         ICommonBudgetApproval(_budgetApproval).createTransaction(_data, _deadline, _execute);
     }

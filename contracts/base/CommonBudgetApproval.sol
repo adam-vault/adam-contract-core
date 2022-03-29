@@ -71,7 +71,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     modifier onlyApprover () {
-        require(approversMapping[msg.sender] == true, "access denied");
+        require(approversMapping[msg.sender], "access denied");
         _;
     }
 
@@ -142,7 +142,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         require(msg.sender == executor || msg.sender == dao, "access denied");
 
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
-        require(success == true, string(result));
+        require(success, string(result));
 
         emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
     }
@@ -219,7 +219,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             _totalAmount += amount;
         }
 
-        if(allowAllTokens == true) {
+        if(allowAllTokens) {
             ownedTokens =  IDao(dao).getMintedContracts();
         } else {
             ownedTokens = tokens;

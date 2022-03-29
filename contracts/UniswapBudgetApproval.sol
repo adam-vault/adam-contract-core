@@ -39,7 +39,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         // approve(address,uint256) for ERC20
         if(data.toBytes4(0) == 0x095ea7b3) {
             (bool approved,) = to.call(data);
-            require(approved == true, "approved ERC20 failed");
+            require(approved, "approved ERC20 failed");
 
             IDao(dao).approveERC20(to, UNISWAP_ROUTER, type(uint256).max);
             return;
@@ -52,10 +52,10 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         uint256 totalAmount = IDao(dao).withdrawByBudgetApproval(requiredToken, members, amounts, false);
 
         (bool success, bytes memory results) = to.call{ value: value }(data);
-        require(success == true, "execution failed");
+        require(success, "execution failed");
 
         (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) = decodeWithResult(to, data, value, results);
-        require(checkValid(tokenIn, tokenOut, amountIn, true) == true, "transaction not valid");
+        require(checkValid(tokenIn, tokenOut, amountIn, true), "transaction not valid");
 
         _updateTotalAmount(amountIn);
 

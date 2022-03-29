@@ -1,5 +1,7 @@
 [
   "event AdminChanged(address,address)",
+  "event AllowAddress(address)",
+  "event AllowToken(address)",
   "event BeaconUpgraded(address indexed)",
   "event CreateTransaction(uint256,bytes,uint256)",
   "event ExecuteTransaction(uint256,bytes)",
