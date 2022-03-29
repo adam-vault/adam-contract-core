@@ -46,7 +46,7 @@ async function main () {
   const membership = await Membership.deploy();
   await membership.deployed();
 
-  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address], { kind: 'uups' });
+  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory], { kind: 'uups' });
   await adam.deployed();
 
   console.log('dao deployed to: ', dao.address);
