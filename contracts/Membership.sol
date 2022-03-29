@@ -73,6 +73,19 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         emit UpdateMember(tokenId, tokenIdToMember[tokenId], to);
     }
 
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override {
+        super._afterTokenTransfer(from, to, tokenId);
+        // check if it is mint and delegatee is not yet delegated
+
+        if (from == address(0) && to != address(0) && delegates(to) == address(0)) {
+            _delegate(to, to);
+        }
+    }
+
     function lastTokenId() public view returns (uint256) {
         return _tokenIds.current();
     }
