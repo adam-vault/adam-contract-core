@@ -12,6 +12,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     using BytesLib for bytes;
 
+    event AllowToToken(address _token);
+
     string public constant override NAME = "Uniswap Budget Approval";
 
     bool public allowAllToTokens;
@@ -28,6 +30,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         allowAllToTokens = _allowAllTokens;
         for(uint i = 0; i < _toTokens.length; i++) {
             toTokensMapping[_toTokens[i]] = true;
+            emit AllowToToken(_toTokens[i]);
         }
     }
 

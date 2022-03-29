@@ -35,6 +35,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     event CreateTransaction(uint256 _id, bytes _data, uint256 _deadline);
     event ExecuteTransaction(uint256 _id, bytes _data);
+    event AllowAddress(address _target);
+    event AllowToken(address _token);
 
     Counters.Counter private _transactionIds;
 
@@ -119,12 +121,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         allowAllAddresses = params.allowAllAddresses;
         for(uint i = 0; i < params.addresses.length; i++) {
             addressesMapping[params.addresses[i]] = true;
+            emit AllowAddress(params.addresses[i]);
         }
 
         allowAllTokens = params.allowAllTokens;
         tokens = params.tokens;
         for(uint i = 0; i < params.tokens.length; i++) {
             tokensMapping[params.tokens[i]] = true;
+            emit AllowToken(params.tokens[i]);
         }
 
         allowAnyAmount = params.allowAnyAmount;
