@@ -29,12 +29,8 @@ contract UniswapSwapper {
         if(to == UNISWAP_ROUTER) {
             // Uniswap Swap Router
             (bytes[] memory byteResults) = abi.decode(swapResult, (bytes[]));
-            uint256[] memory decodedResults;
-            for(uint i = 0; i < byteResults.length; i++) {
-                decodedResults[i] = abi.decode(byteResults[i], (uint256));
-            }
 
-            (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, amount, decodedResults);
+            (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, amount, byteResults);
         } else if (to == WETH_TOKEN_ADDRESS) {
             // WETH9
             (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
@@ -94,7 +90,7 @@ contract UniswapSwapper {
         }
     }
 
-    function _decodeUniswapRouter(bytes memory _data, uint256 amount, uint256[] memory decodedResults) internal view returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+    function _decodeUniswapRouter(bytes memory _data, uint256 amount, bytes[] memory decodedResults) internal view returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
 
         // Uniswap multicall(uint256,bytes[])
         require(_data.toBytes4(0) == 0x5ae401dc, "Unexpected");
@@ -115,15 +111,16 @@ contract UniswapSwapper {
                 // no need handling
             } else {
                 (, bytes memory callResult) = address(this).staticcall(multicallBytesArray[i]);
-                (address _tokenIn, address _tokenOut, uint256 _amountIn, uint256 _amountOut, bool _estimatedIn, bool _estimatedOut) = abi.decode(callResult, (address, address, uint256, uint256, bool, bool));
+                (address _tokenIn, address _tokenOut, uint256 _amountIn, uint256 _amountOut, bool _estimatedIn,) = abi.decode(callResult, (address, address, uint256, uint256, bool, bool));
                 tokenIn = _tokenIn;
                 tokenOut = _tokenOut;
-                if(_estimatedIn == true) {
-                    amountIn += decodedResults[i];
+                uint256 returnValue = abi.decode(decodedResults[i], (uint256));
+                if(_estimatedIn) {
+                    amountIn += returnValue;
                     amountOut += _amountOut;
                 } else {
                     amountIn += _amountIn;
-                    amountOut += decodedResults[i];
+                    amountOut += returnValue;
                 }
             }
         }

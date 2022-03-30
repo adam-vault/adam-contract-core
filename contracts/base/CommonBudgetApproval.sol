@@ -35,6 +35,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     event CreateTransaction(uint256 _id, bytes _data, uint256 _deadline);
     event ExecuteTransaction(uint256 _id, bytes _data);
+    event AllowAddress(address _target);
+    event AllowToken(address _token);
+    event AllowAmount(uint256 _amount);
 
     Counters.Counter private _transactionIds;
 
@@ -69,7 +72,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     modifier onlyApprover () {
-        require(approversMapping[msg.sender] == true, "access denied");
+        require(approversMapping[msg.sender], "access denied");
         _;
     }
 
@@ -119,16 +122,19 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         allowAllAddresses = params.allowAllAddresses;
         for(uint i = 0; i < params.addresses.length; i++) {
             addressesMapping[params.addresses[i]] = true;
+            emit AllowAddress(params.addresses[i]);
         }
 
         allowAllTokens = params.allowAllTokens;
         tokens = params.tokens;
         for(uint i = 0; i < params.tokens.length; i++) {
             tokensMapping[params.tokens[i]] = true;
+            emit AllowToken(params.tokens[i]);
         }
 
         allowAnyAmount = params.allowAnyAmount;
         totalAmount = params.totalAmount;
+        emit AllowAmount(totalAmount);
         amountPercentage = params.amountPercentage;
     }
 
@@ -138,7 +144,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         require(msg.sender == executor || msg.sender == dao, "access denied");
 
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
-        require(success == true, string(result));
+        require(success, string(result));
 
         emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
     }
@@ -215,7 +221,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             _totalAmount += amount;
         }
 
-        if(allowAllTokens == true) {
+        if(allowAllTokens) {
             ownedTokens =  IDao(dao).getMintedContracts();
         } else {
             ownedTokens = tokens;
@@ -239,6 +245,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function _updateTotalAmount(uint256 usedAmount) internal {
         if(!allowAnyAmount) {
             totalAmount -= usedAmount;
+            emit AllowAmount(totalAmount);
         }
     }
 

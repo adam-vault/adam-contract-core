@@ -26,10 +26,10 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         }
 
         (bool success,) = to.call{ value: value }(data);
-        require(success == true, "execution failed");
+        require(success, "execution failed");
 
         (address _token, address _recipient, uint256 _amount) = decode(to, data, value);
-        require(checkValid(_token, _recipient, _amount, true) == true, "transaction not allowed");
+        require(checkValid(_token, _recipient, _amount, true), "transaction not allowed");
         _updateTotalAmount(_amount);
     }
 
