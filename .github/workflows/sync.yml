@@ -1,9 +1,17 @@
-eddy17c17c/ADAM-wallet/poc-thegraph@feature/sync-abis:
-    - source: abis
-    dest: abis
-    - name: Run GitHub File Sync
-    uses: BetaHuhn/repo-file-sync-action@v1
-    with:
-      GH_PAT: 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
-      REVIEWERS: |
-        eddy17c17c
+name: Sync Files
+on:
+  push:
+    branches:
+      - sync-file-over-pj
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@sync-file-over-pj
+      - name: Run GitHub File Sync
+        uses: BetaHuhn/repo-file-sync-action@v1
+        with:
+          GH_PAT: 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
+          REVIEWERS: eddy17c17c

@@ -1,0 +1,3 @@
+ADAM-wallet/poc-thegraph@feature/sync-abis:
+  - source: abis
+    dest: abis
