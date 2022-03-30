@@ -9,10 +9,10 @@ async function main () {
   const adam = await hre.ethers.getContractAt('Adam', adamAddress);
   await [0, 100, 4, 500, 10000000].reduce(async (p, lockup) => {
     await p;
-    const tx = await adam.createDao(faker.company.companyName(), faker.commerce.productDescription(), lockup, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
+    const tx = await adam.createDao(faker.company.companyName(), faker.commerce.productDescription(), lockup, [300, 3000, 5000], [300, 3000, 5000], [300, 3000, 5000]);
     return tx.wait().then((receipt) => {
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-      console.log('dao created at:', creationEventLog.args.dao);
+      console.log(`dao (lockup: ${lockup}) created at:`, creationEventLog.args.dao);
     });
   }, Promise.resolve());
 }
