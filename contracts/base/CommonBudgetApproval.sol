@@ -37,6 +37,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     event ExecuteTransaction(uint256 _id, bytes _data);
     event AllowAddress(address _target);
     event AllowToken(address _token);
+    event AllowAmount(uint256 _amount);
 
     Counters.Counter private _transactionIds;
 
@@ -133,6 +134,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
         allowAnyAmount = params.allowAnyAmount;
         totalAmount = params.totalAmount;
+        emit AllowAmount(totalAmount);
         amountPercentage = params.amountPercentage;
     }
 
@@ -243,6 +245,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function _updateTotalAmount(uint256 usedAmount) internal {
         if(!allowAnyAmount) {
             totalAmount -= usedAmount;
+            emit AllowAmount(totalAmount);
         }
     }
 
