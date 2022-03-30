@@ -42,7 +42,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     uint256 public locktime;
     mapping(address => bool) public allowDepositTokens;
 
-    event SwapToken(address _portfolio, uint256 _src, uint256 _dst, uint256 _srcAmount, uint256 _dstAmount);
+    event SwapToken(address portfolio, uint256 src, uint256 dst, uint256 srcAmount, uint256 dstAmount);
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event Deposit(address member, address token, uint256 amount);
     event Redeem(address member, address token, uint256 amount);

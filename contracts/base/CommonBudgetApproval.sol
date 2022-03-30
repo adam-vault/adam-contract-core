@@ -33,11 +33,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bool isExist;
     }
 
-    event CreateTransaction(uint256 _id, bytes _data, uint256 _deadline);
-    event ExecuteTransaction(uint256 _id, bytes _data);
-    event AllowAddress(address _target);
-    event AllowToken(address _token);
-    event AllowAmount(uint256 _amount);
+    event CreateTransaction(uint256 id, bytes data, uint256 deadline);
+    event ExecuteTransaction(uint256 id, bytes data);
+    event AllowAddress(address target);
+    event AllowToken(address token);
+    event AllowAmount(uint256 amount);
 
     Counters.Counter private _transactionIds;
 

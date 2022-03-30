@@ -12,7 +12,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     using BytesLib for bytes;
 
-    event AllowToToken(address _token);
+    event AllowToToken(address token);
 
     string public constant override NAME = "Uniswap Budget Approval";
 
