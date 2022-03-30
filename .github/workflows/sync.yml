@@ -2,7 +2,7 @@ name: Sync Files
 on:
   push:
     branches:
-      - sync-file-over-pj
+      - feature/sync-file-over-pj
   workflow_dispatch:
 jobs:
   sync:
