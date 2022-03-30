@@ -1,0 +1,3 @@
+ADAM-wallet/poc-thegraph:
+  - source: abis
+    dest: abis
