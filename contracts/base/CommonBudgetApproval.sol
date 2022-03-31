@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "../lib/BytesLib.sol";
+import "../lib/RevertMsg.sol";
 
 import "../interface/IDao.sol";
 import "../interface/IMembership.sol";
@@ -144,7 +145,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         require(msg.sender == executor || msg.sender == dao, "access denied");
 
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
-        require(success, string(result));
+        require(success, RevertMsg.ToString(result));
 
         emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
     }
