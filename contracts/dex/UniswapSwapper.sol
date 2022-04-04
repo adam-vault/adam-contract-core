@@ -2,15 +2,24 @@
 
 pragma solidity ^0.8.0;
 
-import "../lib/BytesLib.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract UniswapSwapper {
+import "../lib/BytesLib.sol";
+import "../interface/IConstant.sol";
+
+contract UniswapSwapper is Initializable {
 
     using BytesLib for bytes;
 
-    address public constant UNISWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;
-    address public constant ETH_TOKEN_ADDRESS = address(0x0);
-    address public constant WETH_TOKEN_ADDRESS = 0xc778417E063141139Fce010982780140Aa0cD5Ab;
+    address public UNISWAP_ROUTER;
+    address public ETH_TOKEN_ADDRESS;
+    address public WETH_TOKEN_ADDRESS;
+
+    function setParams(address _constantState) internal initializer {
+        UNISWAP_ROUTER = IConstant(_constantState).UNISWAP_ROUTER();
+        ETH_TOKEN_ADDRESS = IConstant(_constantState).ETH_ADDRESS();
+        WETH_TOKEN_ADDRESS = IConstant(_constantState).WETH_ADDRESS();
+    }
 
     function decodeUniswapData(address to, bytes memory _data, uint256 amount) internal view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         
@@ -39,7 +48,7 @@ contract UniswapSwapper {
         }
     }
 
-    function _decodeWETH9(bytes memory _data, uint256 amount) internal pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) {
+    function _decodeWETH9(bytes memory _data, uint256 amount) internal view returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) {
 
         if(_data.toBytes4(0) == 0xd0e30db0) {
             // deposit()
@@ -129,6 +138,9 @@ contract UniswapSwapper {
         if(tokenIn == WETH_TOKEN_ADDRESS && amount >= amountIn) {
             tokenIn = ETH_TOKEN_ADDRESS;
         }
+
+        estimatedIn = false;
+        estimatedOut = false;
     }
 
     struct ExactOutputSingleParams {
@@ -194,7 +206,7 @@ contract UniswapSwapper {
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
-        address to
+        address //to
     ) public pure returns (address, address, uint256, uint256, bool, bool) {
         address tokenIn = path[0];
         address tokenOut = path[path.length - 1];
@@ -206,7 +218,7 @@ contract UniswapSwapper {
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
-        address to
+        address //to
     ) public pure returns (address, address, uint256, uint256, bool, bool) {
         address tokenIn = path[0];
         address tokenOut = path[path.length - 1];

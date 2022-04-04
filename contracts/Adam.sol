@@ -15,6 +15,7 @@ contract Adam is Initializable, UUPSUpgradeable {
     address public membershipImplementation;
     address public governFactory;
     address public governImplementation;
+    address public constantState;
 
     address[] public budgetApprovals;
     mapping(address => bool) public budgetApprovalRegistry;
@@ -29,12 +30,14 @@ contract Adam is Initializable, UUPSUpgradeable {
         address _daoImplementation,
         address _membershipImplementation,
         address[] calldata _budgetApprovalImplementations,
-        address _governFactory
+        address _governFactory,
+        address _constantState
     ) public initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
+        constantState = _constantState;
     }
 
     function _authorizeUpgrade(address) internal override initializer {}

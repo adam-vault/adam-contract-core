@@ -7,6 +7,7 @@ import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
 
 import "./interface/IDao.sol";
+import "./interface/IAdam.sol";
 
 contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
@@ -32,6 +33,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
             toTokensMapping[_toTokens[i]] = true;
             emit AllowToToken(_toTokens[i]);
         }
+
+        UniswapSwapper.setParams(IAdam(IDao(dao).adam()).constantState());
     }
 
     function execute(address to, bytes memory data, uint256 value) public override onlySelf {
