@@ -210,7 +210,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function checkAmountValid(uint256 amount) public view returns (bool) {
-        return allowAnyAmount || amount < totalAmount;
+        return allowAnyAmount || amount <= totalAmount;
     }
 
     function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
