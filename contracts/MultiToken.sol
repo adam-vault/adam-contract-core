@@ -41,7 +41,7 @@ contract MultiToken is ERC1155Upgradeable {
         require(msg.sender == owner, "not owner");
         _;
     }
-    function initialize(address _owner) public onlyInitializing {
+    function initialize(address _owner) public initializer {
         __ERC1155_init("");
         owner = _owner;
         // default init ether as 0x0 address

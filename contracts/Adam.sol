@@ -81,7 +81,8 @@ contract Adam is Initializable, UUPSUpgradeable {
         IMultiToken(address(_multiToken)).initialize(address(_dao));
 
         IDao(payable(address(_dao))).initialize(
-            msg.sender, _name,
+            msg.sender,
+            _name,
             address(_membership),
             address(_multiToken),
             _locktime,

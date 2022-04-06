@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
@@ -15,7 +17,6 @@ import "./interface/IMultiToken.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/ICommonBudgetApproval.sol";
 
-import "./base/MultiToken.sol";
 import "./lib/Concat.sol";
 import "./lib/ToString.sol";
 import "./lib/BytesLib.sol";
@@ -209,15 +210,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         return IMultiToken(multiToken).addressToId(contractAddress);
     }
 
-    function tokenId(address contractAddress) public view returns (uint256){
-        return IMultiToken(multiToken).addressToId(contractAddress);
-    }
-    function tokenTotalSupply(uint256 tokenId) public view returns (uint256) {
-        return IMultiToken(multiToken).tokenTotalSupply(tokenId);
-    }
-    function balanceOf(address member, uint256 token) public view returns (uint256) {
-        return IMultiToken(multiToken).balanceOf(member, token);
-    }
 
     function _member(address owner) internal returns (address) {
         uint256 memberTokenId = IMembership(membership).ownerToTokenId(owner);

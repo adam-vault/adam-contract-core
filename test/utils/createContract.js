@@ -31,16 +31,20 @@ const createAdam = async () => {
   const Adam = await ethers.getContractFactory('Adam', { signer: creator });
   const GovernFactory = await ethers.getContractFactory('GovernFactory', { signer: creator });
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
+  const MultiToken = await ethers.getContractFactory('MultiToken', { signer: creator });
 
   const dao = await Dao.deploy();
   const membership = await Membership.deploy();
+  const multiToken = await MultiToken.deploy();
   const govern = await Govern.deploy();
   await dao.deployed();
   await membership.deployed();
   await govern.deployed();
+  await multiToken.deployed();
+
   const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
-  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address, constantState], { kind: 'uups' });
+  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, multiToken.address, budgetApprovalsAddress, governFactory.address, constantState], { kind: 'uups' });
 
   await adam.deployed();
   return adam;

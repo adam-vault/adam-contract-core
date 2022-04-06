@@ -48,13 +48,15 @@ describe('Create DAO', function () {
   });
 
   describe('Deposit ETH to DAO', function () {
-    let dao, membership;
+    let dao, membership, multiToken;
     beforeEach(async function () {
       const tx1 = await createDao();
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
       const daoAddr = creationEventLog.args.dao;
       dao = await ethers.getContractAt('Dao', daoAddr);
+      multiToken = await ethers.getContractAt('MultiToken', await dao.multiToken());
+
       const membershipAddr = await dao.membership();
       membership = await ethers.getContractAt('Membership', membershipAddr);
     });
@@ -87,7 +89,7 @@ describe('Create DAO', function () {
       const memberAddr = await membership.members(0);
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
-      expect(await dao.balanceOf(memberAddr, dao.ethId())).to.equal(ethers.utils.parseEther('0.000369'));
+      expect(await dao.balanceOf(memberAddr, multiToken.ethId())).to.equal(ethers.utils.parseEther('0.000369'));
       expect(await ethers.provider.getBalance(dao.address)).to.equal(ethers.utils.parseEther('0.000369'));
     });
   });
@@ -149,13 +151,14 @@ describe('Create DAO', function () {
   // });
 
   describe('Redeem ETH from DAO', function () {
-    let dao, membership;
+    let dao, membership, multiToken;
     beforeEach(async function () {
       const tx1 = await adam.createDao('A Company', 'Description', 1000, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
       const daoAddr = creationEventLog.args.dao;
       dao = await ethers.getContractAt('Dao', daoAddr);
+      multiToken = await ethers.getContractAt('MultiToken', await dao.multiToken());
 
       const membershipAddr = await dao.membership();
       membership = await ethers.getContractAt('Membership', membershipAddr);
@@ -168,7 +171,7 @@ describe('Create DAO', function () {
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
       const memberAddr = await membership.members(0);
-      expect(await dao.balanceOf(memberAddr, dao.ethId())).to.equal(ethers.utils.parseEther('120'));
+      expect(await dao.balanceOf(memberAddr, multiToken.ethId())).to.equal(ethers.utils.parseEther('120'));
     });
     it('cannot redeem and burn exact amount of eth inside lockup period', async function () {
       await expect(dao.redeem(ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
