@@ -47,7 +47,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     address constant public ETH_ADDRESS = address(0x0);
 
     address public executor;
-    address public dao;
+    address payable public dao;
 
     address[] public approvers;
     mapping(address => bool) public approversMapping;
@@ -110,7 +110,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function initialize(
         InitializeParams calldata params
         ) public initializer {
-        dao = params.dao;
+        dao = payable(params.dao);
         executor = params.executor;
         text = params.text;
         transactionType = params.transactionType;
@@ -270,11 +270,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         address[] memory members = IMembership(_membership).getAllMembers();
         uint256[] memory amounts = new uint[](members.length);
 
-        uint256 totalBalance = IDao(dao).tokenTotalSupply(IDao(dao).addressToId(_token));
+        uint256 totalBalance = IDao(dao).tokenTotalSupply(IDao(dao).tokenId(_token));
 
         uint256 amountLeft = _totalAmount;
         for(uint i = 0; i < members.length - 1; i++) {
-            uint256 memberBalance = IDao(dao).balanceOf(members[i], IDao(dao).addressToId(_token));
+            uint256 memberBalance = IDao(dao).balanceOf(members[i], IDao(dao).tokenId(_token));
             amounts[i] = _totalAmount * memberBalance / totalBalance;
             amountLeft -= _totalAmount * memberBalance / totalBalance;
         }

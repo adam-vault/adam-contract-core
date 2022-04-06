@@ -8,7 +8,7 @@ const minimatch = require('minimatch');
 const globPromise = util.promisify(glob);
 const writeFile = util.promisify(fs.writeFile);
 
-async function generateInterface ({
+async function exportABI ({
   artifacts = './artifacts/contracts',
   contracts = 'contracts/*.sol',
   outputPath = './contracts/interface',
@@ -42,7 +42,7 @@ async function generateInterface ({
   }));
 };
 task('export', 'Generate abi for contracts', async function (args, hre) {
-  return generateInterface({
+  return exportABI({
     artifacts: './artifacts/contracts',
     contracts: 'contracts/*.sol',
     outputPath: './abis',

@@ -28,7 +28,7 @@ async function generateInterface ({
     const { abi, contractName } = require(filepath);
     const name = `${prefix}${contractName}`;
     const output = generateSolidity({ abi, name, solidityVersion, license });
-    console.log('Generated interface:', name, output);
+    console.log('Generated interface:', `${name}.sol`);
     await writeFile(path.join(__dirname, '..', outputPath, '/', `${name}.sol`), output);
     return path.join(__dirname, '..', outputPath, '/', `${name}.sol`);
   }));
