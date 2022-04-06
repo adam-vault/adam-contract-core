@@ -1,5 +1,14 @@
 const { ethers, upgrades } = require('hardhat');
 
+const deployConstantState = async (signer, network = 'rinkeby') => {
+  if (network === 'rinkeby') {
+    const RinkebyConstant = await ethers.getContractFactory('RinkebyConstant', { signer });
+    const rinkebyConstant = await RinkebyConstant.deploy();
+    await rinkebyConstant.deployed();
+    return rinkebyConstant.address;
+  }
+};
+
 const deployBudgetApprovals = async (signer) => {
   const TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer });
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
@@ -12,9 +21,10 @@ const deployBudgetApprovals = async (signer) => {
   return [transferERC20BudgetApproval.address, uniswapBudgetApproval.address];
 };
 
-const createAdam = async () => { 
+const createAdam = async () => {
   const [creator] = await ethers.getSigners();
 
+  const constantState = await deployConstantState(creator);
   const budgetApprovalsAddress = await deployBudgetApprovals(creator);
   const Dao = await ethers.getContractFactory('Dao', { signer: creator });
   const Membership = await ethers.getContractFactory('Membership', { signer: creator });
@@ -30,7 +40,7 @@ const createAdam = async () => {
   await govern.deployed();
   const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
-  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address], { kind: 'uups' });
+  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory.address, constantState], { kind: 'uups' });
 
   await adam.deployed();
   return adam;
