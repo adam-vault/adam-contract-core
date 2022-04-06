@@ -6,7 +6,6 @@ const { ethers } = hre;
 const { expect } = chai;
 const { createAdam } = require('../utils/createContract');
 const decodeBase64 = require('../utils/decodeBase64');
-const { before } = require('lodash');
 chai.use(smock.matchers);
 
 describe('Create DAO', function () {
