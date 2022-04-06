@@ -11,6 +11,8 @@ import "../lib/BytesLib.sol";
 import "../lib/RevertMsg.sol";
 
 import "../interface/IDao.sol";
+import "../interface/IMultiToken.sol";
+
 import "../interface/IMembership.sol";
 
 abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
@@ -47,7 +49,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     address constant public ETH_ADDRESS = address(0x0);
 
     address public executor;
-    address public dao;
+    address payable public dao;
 
     address[] public approvers;
     mapping(address => bool) public approversMapping;
@@ -110,7 +112,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function initialize(
         InitializeParams calldata params
         ) public initializer {
-        dao = params.dao;
+        dao = payable(params.dao);
         executor = params.executor;
         text = params.text;
         transactionType = params.transactionType;
@@ -223,7 +225,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         }
 
         if(allowAllTokens) {
-            ownedTokens =  IDao(dao).getMintedContracts();
+            ownedTokens =  IMultiToken(IDao(dao).multiToken()).mintedContracts();
         } else {
             ownedTokens = tokens;
         }
@@ -267,14 +269,17 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function _getAmountsOfAllMembersOnProRata(address _token, uint256 _totalAmount) internal view returns (address[] memory, uint256[] memory) {
         address _membership = IDao(dao).membership();
+        address mt = IDao(dao).multiToken();
+        uint256 tokenId = IMultiToken(mt).addressToId(_token);
         address[] memory members = IMembership(_membership).getAllMembers();
         uint256[] memory amounts = new uint[](members.length);
 
-        uint256 totalBalance = IDao(dao).tokenTotalSupply(IDao(dao).addressToId(_token));
+        uint256 totalBalance = IMultiToken(mt).tokenTotalSupply(tokenId);
 
         uint256 amountLeft = _totalAmount;
+        
         for(uint i = 0; i < members.length - 1; i++) {
-            uint256 memberBalance = IDao(dao).balanceOf(members[i], IDao(dao).addressToId(_token));
+            uint256 memberBalance = IMultiToken(mt).balanceOf(members[i], tokenId);
             amounts[i] = _totalAmount * memberBalance / totalBalance;
             amountLeft -= _totalAmount * memberBalance / totalBalance;
         }

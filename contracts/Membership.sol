@@ -22,7 +22,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     using Concat for string;
 
     using Base64 for bytes;
-    address public dao;
+    address payable public dao;
 
     address[] private _members;
     Counters.Counter private _tokenIds;
@@ -35,7 +35,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     function initialize(address _dao, string memory _name) public initializer
     {
         __ERC721_init(_name.concat(" Membership"), "MS");
-        dao = (_dao);
+        dao = payable(_dao);
     }
 
     function members(uint256 index) external view returns (address) {

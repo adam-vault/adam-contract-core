@@ -7,7 +7,7 @@ require('solidity-coverage');
 require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer');
 require('./tasks/interface');
-require('hardhat-abi-exporter');
+require('./tasks/export');
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -39,15 +39,6 @@ task('deploy', 'Fast Deploy Contract', async (taskArgs, hre) => {
  */
 module.exports = {
   defaultNetwork: "hardhat",
-  abiExporter: {
-    path: './abis',
-    runOnCompile: true,
-    clear: false,
-    flat: true,
-    only: [':Adam$', ':Govern$', ':Membership$', ':Dao$', ':TransferERC20BudgetApproval$', ':UniswapBudgetApproval$'],
-    spacing: 2,
-    pretty: true,
-  },
   solidity: {
     version: '0.8.4',
     settings: {

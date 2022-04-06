@@ -8,11 +8,13 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
+import "./interface/IMultiToken.sol";
 import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
+    address public multiTokenImplementation;
     address public governFactory;
     address public governImplementation;
     address public constantState;
@@ -29,12 +31,14 @@ contract Adam is Initializable, UUPSUpgradeable {
     function initialize(
         address _daoImplementation,
         address _membershipImplementation,
+        address _multiTokenImplementation,
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
         address _constantState
     ) public initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
+        multiTokenImplementation = _multiTokenImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
         constantState = _constantState;
@@ -71,9 +75,21 @@ contract Adam is Initializable, UUPSUpgradeable {
     ) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
+        ERC1967Proxy _multiToken = new ERC1967Proxy(multiTokenImplementation, "");
 
         IMembership(address(_membership)).initialize(address(_dao), _name);
-        IDao(address(_dao)).initialize(address(this), msg.sender, _name, address(_membership), _locktime, governFactory, budgetApproval, revokeBudgetApproval, general);
+        IMultiToken(address(_multiToken)).initialize(address(_dao));
+
+        IDao(payable(address(_dao))).initialize(
+            msg.sender,
+            _name,
+            address(_membership),
+            address(_multiToken),
+            _locktime,
+            governFactory,
+            budgetApproval,
+            revokeBudgetApproval,
+            general);
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;

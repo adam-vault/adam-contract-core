@@ -21,7 +21,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     
         if(isRequireToken) {
             (address[] memory members, uint256[] memory amounts) = _getAmountsOfAllMembersOnProRata(requiredToken, requiredAmount);
-            uint256 totalAmount = IDao(dao).withdrawByBudgetApproval(requiredToken, members, amounts, false);
+            uint256 totalAmount = IDao(payable(dao)).withdrawByBudgetApproval(requiredToken, members, amounts, false);
             require(totalAmount == requiredAmount, "invalid");
         }
 

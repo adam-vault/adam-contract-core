@@ -8,20 +8,22 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
+import "./interface/IMultiToken.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/ICommonBudgetApproval.sol";
 
-import "./base/MultiToken.sol";
 import "./lib/Concat.sol";
 import "./lib/ToString.sol";
 import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
 import "hardhat/console.sol";
 
-contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradeable {
+contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -35,7 +37,9 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     address public creator;
     address public adam;
     address public membership;
+    address public multiToken;
     address public governFactory;
+    string public name;
     mapping(address => bool) public budgetApprovals;
     mapping(address => uint256) public firstDeposit;
 
@@ -49,10 +53,10 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     event AllowDepositToken(address[] token);
 
     function initialize(
-        address _adam,
         address _creator,
         string calldata _name,
         address _membership,
+        address _multiToken,
         uint256 _locktime,
         address _governFactory,
         uint256[3] calldata budgetApproval,
@@ -61,11 +65,12 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
 
     ) public initializer {
         __ERC721Holder_init();
-        __MultiToken_init(_name, "");
 
-        adam = _adam;
+        adam = msg.sender;
         creator = _creator;
         membership = _membership;
+        multiToken = _multiToken;
+        name = _name;
         locktime = _locktime;
         governFactory = _governFactory;
 
@@ -119,7 +124,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     }
 
     function getMintedContracts() external view returns (address[] memory) {
-        return _mintedContracts;
+        return IMultiToken(multiToken).mintedContracts();
     }
 
     function deposit() public payable {
@@ -128,7 +133,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
 
     function _deposit(address owner, uint256 amount) public payable {
         address member = _member(owner);
-        _mintToken(member, _tokenId(address(0)), amount, "");
+        IMultiToken(multiToken).mintToken(member, _tokenId(address(0)), amount, "");
 
         emit Deposit(member, address(0), amount);
 
@@ -143,9 +148,9 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
 
         address member = IMembership(membership).tokenIdToMember(membershipId);
         require(firstDeposit[member] + locktime <= block.timestamp, "lockup time");
-        require(_amount <= balanceOf(member, ethId), "too big");
+        require(_amount <= IMultiToken(multiToken).balanceOf(member, IMultiToken(multiToken).ethId()), "too big");
 
-        _burnToken(member, ethId, _amount);
+        IMultiToken(multiToken).burnToken(member, IMultiToken(multiToken).ethId(), _amount);
         payable(msg.sender).transfer(_amount);
         emit Redeem(member, address(0), _amount);
     }
@@ -159,7 +164,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         require(_members.length == _amounts.length, "invalid input");
 
         for(uint i = 0; i < _members.length; i++) {
-            _burnToken(_members[i], _tokenId(_token), _amounts[i]);
+            IMultiToken(multiToken).burnToken(_members[i], _tokenId(_token), _amounts[i]);
             totalAmount += _amounts[i];
         }
 
@@ -183,7 +188,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         require(_members.length == _amounts.length, "invalid input");
 
         for(uint i = 0; i < _members.length; i++) {
-            _mintToken(_members[i], _tokenId(_token), _amounts[i], "");
+            IMultiToken(multiToken).mintToken(_members[i], _tokenId(_token), _amounts[i], "");
             totalAmount += _amounts[i];
         }
 
@@ -199,11 +204,12 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     }
 
     function _tokenId(address contractAddress) internal returns (uint256){
-        if (addressToId[contractAddress] == 0) {
-            _createToken(contractAddress);
+        if (IMultiToken(multiToken).addressToId(contractAddress) == 0) {
+            IMultiToken(multiToken).createToken(contractAddress);
         }
-        return addressToId[contractAddress];
+        return IMultiToken(multiToken).addressToId(contractAddress);
     }
+
 
     function _member(address owner) internal returns (address) {
         uint256 memberTokenId = IMembership(membership).ownerToTokenId(owner);
@@ -214,7 +220,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     }
 
     function createGovern(
-        string calldata name,
+        string calldata _name,
         uint duration,
         uint quorum,
         uint passThreshold,
@@ -222,7 +228,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         address[] calldata voteTokens
     ) public govern("Govern") {
         _createGovern(
-            name,
+            _name,
             duration,
             quorum,
             passThreshold,
@@ -232,7 +238,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
     }
 
     function _createGovern(
-        string memory name,
+        string memory _name,
         uint duration,
         uint quorum,
         uint passThreshold,
@@ -240,7 +246,7 @@ contract Dao is Initializable, UUPSUpgradeable, MultiToken, ERC721HolderUpgradea
         address[] memory voteTokens
     ) internal {
         IGovernFactory(governFactory).createGovern(
-            name,
+            _name,
             duration,
             quorum,
             passThreshold,
