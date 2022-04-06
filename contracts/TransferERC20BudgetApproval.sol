@@ -13,6 +13,15 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     string public constant override NAME = "Transfer ERC20 Budget Approval";
 
+    function execute(address[] memory to, bytes[] memory data, uint256[] memory value) public {
+        require(data.length == to.length, "invalid input");
+        require(data.length == value.length, "invalid input");
+
+        for(uint i = 0; i < data.length; i++) {
+            execute(to[i], data[i], value[i]);
+        }
+    }
+
     // transfer ETH by sending data.length == 0
     // transfer ERC20 by using transfer(address,uint256)
     function execute(address to, bytes memory data, uint256 value) public override onlySelf {
@@ -65,5 +74,23 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
             requiredToken = _to;
             requiredAmount = _amount;
         }
+    }
+
+    function encodeTransactionData(address[] calldata _to, bytes[] calldata _data, uint256[] calldata _amount) public pure returns (bytes memory) {
+        return abi.encodeWithSignature("execute(address[],bytes[],uint256[])", _to, _data, _amount);
+    }
+
+    function supportsInterface(bytes4 interfaceID) external pure override returns (bool) {
+        // execute(address,bytes,uint256)
+        if(interfaceID == 0xa04a0908) {
+            return true;
+        }
+
+        // execute(address[],bytes[],uint256[])
+        if(interfaceID == 0x947fe812) {
+            return true;
+        }
+
+        return false;
     }
 }
