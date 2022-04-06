@@ -1,9 +1,11 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
+const _ = require('lodash');
+
+const { createAdam } = require('../utils/createContract');
+
 
 describe('UniswapSwapper.sol', () => {
-  let UniswapBudgetApproval;
-  let contract;
   let decode;
 
   const ETHAddress = '0x0000000000000000000000000000000000000000';
@@ -12,9 +14,51 @@ describe('UniswapSwapper.sol', () => {
   const UNIAddress = '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984';
   const UniswapRouter = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
 
-  beforeEach(async () => {
-    UniswapBudgetApproval = await ethers.getContractFactory('UniswapBudgetApproval');
-    contract = await UniswapBudgetApproval.deploy();
+  before(async () => {
+    const adam = await createAdam();
+    await adam.createDao('A Company', 'Description', 10000000, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
+    const daoAddr = await adam.daos(0);
+    const dao = await ethers.getContractAt('Dao', daoAddr);
+    const uniswapBAImplementationAddr = await adam.budgetApprovals(1);
+    const uniswapBAImplementation = await ethers.getContractAt('UniswapBudgetApproval', uniswapBAImplementationAddr);
+    const initData = await uniswapBAImplementation.callStatic['encodeUniswapInitializeData((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])'](
+      [
+        // dao address
+        dao.address,
+        // executor
+        ethers.constants.AddressZero,
+        // approvers
+        [],
+        // text
+        'Uniswap',
+        // transaction type
+        'Swap',
+        // allow all addresses,
+        true,
+        // allowed addresses (use when above = false)
+        [],
+        // alow all tokens,
+        true,
+        // allowed token (use when above = false)
+        [],
+        // allow any amount
+        true,
+        // allowed total amount
+        ethers.utils.parseEther('0'),
+        // allowed amount percentage
+        '100',
+      ],
+      true,
+      [],
+    );
+    const tx = await dao.createBudgetApprovals(
+      [uniswapBAImplementationAddr], [initData],
+    );
+    const receipt = await tx.wait();
+    const creationEventLog = _.find(receipt.events, { event: 'CreateBudgetApproval' });
+    const budgetApprovalAddress = creationEventLog.args.budgetApproval;
+
+    const contract = await ethers.getContractAt('UniswapBudgetApproval', budgetApprovalAddress);
     decode = contract.decode;
   });
 

@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "../lib/BytesLib.sol";
+import "../lib/RevertMsg.sol";
 
 import "../interface/IDao.sol";
 import "../interface/IMembership.sol";
@@ -33,11 +34,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bool isExist;
     }
 
-    event CreateTransaction(uint256 _id, bytes _data, uint256 _deadline);
-    event ExecuteTransaction(uint256 _id, bytes _data);
-    event AllowAddress(address _target);
-    event AllowToken(address _token);
-    event AllowAmount(uint256 _amount);
+    event CreateTransaction(uint256 id, bytes data, uint256 deadline);
+    event ExecuteTransaction(uint256 id, bytes data);
+    event AllowAddress(address target);
+    event AllowToken(address token);
+    event AllowAmount(uint256 amount);
 
     Counters.Counter private _transactionIds;
 
@@ -144,7 +145,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         require(msg.sender == executor || msg.sender == dao, "access denied");
 
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
-        require(success, string(result));
+        require(success, RevertMsg.ToString(result));
 
         emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
     }
@@ -209,7 +210,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function checkAmountValid(uint256 amount) public view returns (bool) {
-        return allowAnyAmount || amount < totalAmount;
+        return allowAnyAmount || amount <= totalAmount;
     }
 
     function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {

@@ -5,6 +5,15 @@
 // Runtime Environment's members available in the global scope.
 const hre = require('hardhat');
 
+const deployConstantState = async (network = 'rinkeby') => {
+  if (network === 'rinkeby') {
+    const RinkebyConstant = await hre.ethers.getContractFactory('RinkebyConstant');
+    const rinkebyConstant = await RinkebyConstant.deploy();
+    await rinkebyConstant.deployed();
+    return rinkebyConstant.address;
+  }
+};
+
 const deployBudgetApprovals = async () => {
   const TransferERC20BudgetApproval = await hre.ethers.getContractFactory('TransferERC20BudgetApproval');
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
@@ -34,6 +43,7 @@ const deployGovernFactory = async () => {
 };
 
 async function main () {
+  const constantState = await deployConstantState();
   const budgetApprovalsAddress = await deployBudgetApprovals();
   const governFactory = await deployGovernFactory();
 
@@ -46,7 +56,7 @@ async function main () {
   const membership = await Membership.deploy();
   await membership.deployed();
 
-  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory], { kind: 'uups' });
+  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory, constantState], { kind: 'uups' });
   await adam.deployed();
 
   console.log('dao deployed to: ', dao.address);
