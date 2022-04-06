@@ -89,7 +89,7 @@ describe('Create DAO', function () {
       const memberAddr = await membership.members(0);
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
-      expect(await dao.balanceOf(memberAddr, multiToken.ethId())).to.equal(ethers.utils.parseEther('0.000369'));
+      expect(await multiToken.balanceOf(memberAddr, multiToken.ethId())).to.equal(ethers.utils.parseEther('0.000369'));
       expect(await ethers.provider.getBalance(dao.address)).to.equal(ethers.utils.parseEther('0.000369'));
     });
   });
@@ -171,7 +171,7 @@ describe('Create DAO', function () {
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
       const memberAddr = await membership.members(0);
-      expect(await dao.balanceOf(memberAddr, multiToken.ethId())).to.equal(ethers.utils.parseEther('120'));
+      expect(await multiToken.balanceOf(memberAddr, multiToken.ethId())).to.equal(ethers.utils.parseEther('120'));
     });
     it('cannot redeem and burn exact amount of eth inside lockup period', async function () {
       await expect(dao.redeem(ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
