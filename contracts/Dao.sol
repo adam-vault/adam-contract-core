@@ -16,6 +16,8 @@ import "./interface/IMembership.sol";
 import "./interface/IMultiToken.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/ICommonBudgetApproval.sol";
+import "./interface/IMemberToken.sol";
+import "./interface/IDao.sol";
 
 import "./lib/Concat.sol";
 import "./lib/ToString.sol";
@@ -34,11 +36,13 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
 
     Counters.Counter private _ERC20tokenIds;
 
+    address public memberToken;
     address public creator;
     address public adam;
     address public membership;
     address public multiToken;
     address public governFactory;
+    address public memberTokenImplementation;
     string public name;
     mapping(address => bool) public budgetApprovals;
     mapping(address => uint256) public firstDeposit;
@@ -51,53 +55,67 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
     event Deposit(address member, address token, uint256 amount);
     event Redeem(address member, address token, uint256 amount);
     event AllowDepositToken(address[] token);
+    event CreateMemberToken(address creator, address token);
 
     function initialize(
-        address _creator,
-        string calldata _name,
-        address _membership,
-        address _multiToken,
-        uint256 _locktime,
-        address _governFactory,
-        uint256[3] calldata budgetApproval,
-        uint256[3] calldata revokeBudgetApproval,
-        uint256[3] calldata general
-
+        IDao.InitializeParams calldata params
     ) public initializer {
         __ERC721Holder_init();
 
         adam = msg.sender;
-        creator = _creator;
-        membership = _membership;
-        multiToken = _multiToken;
-        name = _name;
-        locktime = _locktime;
-        governFactory = _governFactory;
+        creator = params._creator;
+        membership = params._membership;
+        multiToken = params._multiToken;
+        name = params._name;
+        locktime = params._locktime;
+        governFactory = params._governFactory;
+        memberTokenImplementation = params._memberTokenImplementation;
 
         address[] memory t = new address[](1);
-        t[0] = _membership;
+        t[0] = params._membership;
 
         uint256[] memory w = new uint256[](1);
         w[0] = 1;
 
-        _createGovern("BudgetApproval", budgetApproval[0], budgetApproval[1], budgetApproval[2], w, t);
-        _createGovern("RevokeBudgetApproval", revokeBudgetApproval[0], revokeBudgetApproval[1], revokeBudgetApproval[2], w, t);
-        _createGovern("General", general[0], general[1], general[2], w, t);
+        _createGovern("BudgetApproval", params.budgetApproval[0], params.budgetApproval[1], params.budgetApproval[2], w, t);
+        _createGovern("RevokeBudgetApproval", params.revokeBudgetApproval[0], params.revokeBudgetApproval[1], params.revokeBudgetApproval[2], w, t);
+        _createGovern("General", params.general[0], params.general[1], params.general[2], w, t);
+        
+        // TODO: confirm govern naming and setting
+        _createGovern("DaoSetting", params.general[0], params.general[1], params.general[2], w, t);
 
-        _deposit(_creator, 0);
+        _deposit(params._creator, 0);
+
+        if (params.isCreateToken) {
+            createMemberToken(params.tokenInfo);
+        }
     }
 
     modifier govern(string memory category) {
+        console.logUint(IMembership(membership).totalSupply());
+        console.logUint(IMembership(membership).ownerToTokenId(msg.sender));
         require(
             (IMembership(membership).totalSupply() == 1 && IMembership(membership).ownerToTokenId(msg.sender) != 0)
                 || msg.sender == IGovernFactory(governFactory).governMap(address(this), category),
-            string("Dao: only").concat(category));
+            string("Dao: only ").concat(category));
         _;
     }
 
     modifier onlyBudgetApproval {
         require(budgetApprovals[msg.sender], "access denied");
         _;
+    }
+
+    function createMemberToken(string[] calldata tokenInfo) public govern("DaoSetting") {
+        require(memberToken == address(0), "Member token already initialized");
+        require(tokenInfo.length == 2, "Insufficient info to create member token");
+
+        ERC1967Proxy _memberToken = new ERC1967Proxy(memberTokenImplementation, "");
+        IMemberToken(address(_memberToken)).initialize(tokenInfo[0], tokenInfo[1]);
+
+        memberToken = address(_memberToken);
+
+        emit CreateMemberToken(msg.sender, memberToken);
     }
 
     function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public govern("BudgetApproval") {

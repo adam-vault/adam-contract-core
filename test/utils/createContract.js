@@ -32,19 +32,23 @@ const createAdam = async () => {
   const GovernFactory = await ethers.getContractFactory('GovernFactory', { signer: creator });
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
   const MultiToken = await ethers.getContractFactory('MultiToken', { signer: creator });
+  const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
+  
 
   const dao = await Dao.deploy();
   const membership = await Membership.deploy();
   const multiToken = await MultiToken.deploy();
   const govern = await Govern.deploy();
+  const memberToken = await MemberToken.deploy();
   await dao.deployed();
   await membership.deployed();
   await govern.deployed();
   await multiToken.deployed();
+  await memberToken.deployed();
 
   const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
-  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, multiToken.address, budgetApprovalsAddress, governFactory.address, constantState], { kind: 'uups' });
+  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, multiToken.address, memberToken.address, budgetApprovalsAddress, governFactory.address, constantState], { kind: 'uups' });
 
   await adam.deployed();
   return adam;
@@ -52,11 +56,11 @@ const createAdam = async () => {
 
 const createTokens = async () => {
     const TokenA = await ethers.getContractFactory('TokenA');
-    tokenA = await TokenA.deploy();
+    const tokenA = await TokenA.deploy();
     await tokenA.deployed();
 
     const TokenB = await ethers.getContractFactory('TokenB');
-    tokenB = await TokenB.deploy();
+    const tokenB = await TokenB.deploy();
     await tokenB.deployed();
 
     return { tokenA, tokenB };
