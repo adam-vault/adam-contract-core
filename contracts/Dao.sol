@@ -47,7 +47,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
     mapping(address => bool) public allowDepositTokens;
 
     uint256 public minDepositAmount;
-    uint256 public minMemberTokenToJoin;
 
     event SwapToken(address portfolio, uint256 src, uint256 dst, uint256 srcAmount, uint256 dstAmount);
     event CreateBudgetApproval(address budgetApproval, bytes data);
@@ -57,7 +56,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
 
     struct DaoConfig {
         uint256 minDepositAmount;
-        uint256 minMemberTokenToJoin;
     }
 
     function initialize(
@@ -85,7 +83,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         governFactory = _governFactory;
 
         minDepositAmount = _config.minDepositAmount;
-        minMemberTokenToJoin = _config.minMemberTokenToJoin;
 
         address[] memory t = new address[](1);
         t[0] = _membership;
@@ -220,7 +217,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
 
     function updateConfig(DaoConfig calldata _config) public govern("UpdateConfig") {
         minDepositAmount = _config.minDepositAmount;
-        minMemberTokenToJoin = _config.minMemberTokenToJoin;
     }
 
     function _tokenId(address contractAddress) internal returns (uint256){
