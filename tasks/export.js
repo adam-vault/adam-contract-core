@@ -23,7 +23,8 @@ async function exportABI ({
   return Promise.all(matchedFiles.map(async (filepath) => {
     const { abi, contractName } = require(filepath);
 
-
+    const iface = new ethers.utils.Interface(abi);
+    const formattedAbi = iface.format(ethers.utils.FormatTypes.full);
     // const abis = abi.map((func) => {
     //   if (func.type === 'event') {
     //     const inputs = (func.inputs || []).map(i => (i.indexed ? [i.type, 'indexed', i.name] : [i.type, i.name]).join(','));
@@ -38,7 +39,7 @@ async function exportABI ({
     //     return `${func.type} ${func.name}(${inputs}) ${isPayable ? 'payable ' : ''}${isView ? 'view ' : ''}${returns}`;
     //   }
     // });
-    await writeFile(path.join(__dirname, '..', outputPath, '/', `${contractName}.json`), JSON.stringify(abi, null, 2));
+    await writeFile(path.join(__dirname, '..', outputPath, '/', `${contractName}.json`), JSON.stringify(formattedAbi, null, 2));
   }));
 };
 task('export', 'Generate abi for contracts', async function (args, hre) {
