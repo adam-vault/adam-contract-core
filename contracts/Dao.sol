@@ -34,6 +34,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
 
     Counters.Counter private _ERC20tokenIds;
 
+    address public memberToken;
     address public creator;
     address public adam;
     address public membership;
@@ -46,11 +47,19 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
     uint256 public locktime;
     mapping(address => bool) public allowDepositTokens;
 
+    uint256 public minDepositAmount;
+    uint256 public minMemberTokenToJoin;
+
     event SwapToken(address portfolio, uint256 src, uint256 dst, uint256 srcAmount, uint256 dstAmount);
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event Deposit(address member, address token, uint256 amount);
     event Redeem(address member, address token, uint256 amount);
     event AllowDepositToken(address[] token);
+
+    struct DaoConfig {
+        uint256 minDepositAmount;
+        uint256 minMemberTokenToJoin;
+    }
 
     function initialize(
         address _creator,
@@ -61,7 +70,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         address _governFactory,
         uint256[3] calldata budgetApproval,
         uint256[3] calldata revokeBudgetApproval,
-        uint256[3] calldata general
+        uint256[3] calldata general,
+        uint256[3] calldata updateConfigGovernParams,
+        DaoConfig calldata _config
 
     ) public initializer {
         __ERC721Holder_init();
@@ -74,6 +85,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         locktime = _locktime;
         governFactory = _governFactory;
 
+        minDepositAmount = _config.minDepositAmount;
+        minMemberTokenToJoin = _config.minMemberTokenToJoin;
+
         address[] memory t = new address[](1);
         t[0] = _membership;
 
@@ -83,6 +97,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         _createGovern("BudgetApproval", budgetApproval[0], budgetApproval[1], budgetApproval[2], w, t);
         _createGovern("RevokeBudgetApproval", revokeBudgetApproval[0], revokeBudgetApproval[1], revokeBudgetApproval[2], w, t);
         _createGovern("General", general[0], general[1], general[2], w, t);
+        _createGovern("UpdateConfig", updateConfigGovernParams[0], updateConfigGovernParams[1], updateConfigGovernParams[2], w, t);
 
         _deposit(_creator, 0);
     }
@@ -128,10 +143,14 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
     }
 
     function deposit() public payable {
+        require(msg.value >= minDepositAmount, "deposit amount not enough");
+        if(memberToken != address(0x0)) {
+            require(IERC20(memberToken).balanceOf(msg.sender) >= minMemberTokenToJoin, "member token not enough");
+        }
         _deposit(msg.sender, msg.value);
     }
 
-    function _deposit(address owner, uint256 amount) public payable {
+    function _deposit(address owner, uint256 amount) private {
         address member = _member(owner);
         IMultiToken(multiToken).mintToken(member, _tokenId(address(0)), amount, "");
 
@@ -201,6 +220,11 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
                 IERC20(_token).transferFrom(msg.sender, address(this), totalAmount);
             }
         }
+    }
+
+    function updateConfig(DaoConfig calldata _config) public govern("UpdateConfig") {
+        minDepositAmount = _config.minDepositAmount;
+        minMemberTokenToJoin = _config.minMemberTokenToJoin;
     }
 
     function _tokenId(address contractAddress) internal returns (uint256){
