@@ -12,7 +12,7 @@ async function exportABI ({
   artifacts = './artifacts/contracts',
   contracts = 'contracts/*.sol',
   outputPath = './contracts/interface',
-}) {
+}, hre) {
   const files = await globPromise(path.join(__dirname, '..', artifacts, '/', '**/*.json'));
 
   const matchedFiles = files.filter((filepath) => {
@@ -23,22 +23,9 @@ async function exportABI ({
   return Promise.all(matchedFiles.map(async (filepath) => {
     const { abi, contractName } = require(filepath);
 
-    const iface = new ethers.utils.Interface(abi);
-    const formattedAbi = iface.format(ethers.utils.FormatTypes.full);
-    // const abis = abi.map((func) => {
-    //   if (func.type === 'event') {
-    //     const inputs = (func.inputs || []).map(i => (i.indexed ? [i.type, 'indexed', i.name] : [i.type, i.name]).join(','));
-    //     return `${func.type} ${func.name}(${inputs})`;
-    //   } else {
-    //     const inputs = (func.inputs || []).map(i => (i.indexed ? [i.type, 'indexed', i.name] : [i.type, i.name]).join(','));
-    //     const isView = func.stateMutability === 'view';
-    //     const isPayable = func.stateMutability === 'payable';
-    //     const returns = (func.outputs || []).length
-    //       ? 'returns (' + func.outputs.map(o => `${o.type}${o.name ? ` ${o.name}` : ''}`).join(',') + ')'
-    //       : '';
-    //     return `${func.type} ${func.name}(${inputs}) ${isPayable ? 'payable ' : ''}${isView ? 'view ' : ''}${returns}`;
-    //   }
-    // });
+    const iface = new hre.ethers.utils.Interface(abi);
+    const formattedAbi = iface.format(hre.ethers.utils.FormatTypes.full);
+
     await writeFile(path.join(__dirname, '..', outputPath, '/', `${contractName}.json`), JSON.stringify(formattedAbi, null, 2));
   }));
 };
@@ -47,5 +34,5 @@ task('export', 'Generate abi for contracts', async function (args, hre) {
     artifacts: './artifacts/contracts',
     contracts: 'contracts/*.sol',
     outputPath: './abis',
-  });
+  }, hre);
 });
