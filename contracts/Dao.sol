@@ -34,7 +34,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
 
     Counters.Counter private _ERC20tokenIds;
 
-    address public memberToken;
     address public creator;
     address public adam;
     address public membership;
@@ -144,9 +143,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
 
     function deposit() public payable {
         require(msg.value >= minDepositAmount, "deposit amount not enough");
-        if(memberToken != address(0x0)) {
-            require(IERC20(memberToken).balanceOf(msg.sender) >= minMemberTokenToJoin, "member token not enough");
-        }
         _deposit(msg.sender, msg.value);
     }
 
