@@ -17,7 +17,19 @@ describe('Testing Govern', function() {
     }
 
     function createDao () {
-        return adam.createDao('A Company', 'Description', 10000000, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
+        return adam.createDao(
+            [
+                'A Company',  //_name
+                'Description', //_description
+                10000000, //_locktime
+                false, //isCreateToken
+                [13, 3000, 5000], //budgetApproval
+                [13, 3000, 5000], //revokeBudgetApproval
+                [13, 3000, 5000], //general
+                [], //tokenInfo
+                0,
+            ]
+        );
       }
 
     beforeEach(async function() {

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
+import "./interface/IAdam.sol";
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "./interface/IMultiToken.sol";
@@ -17,6 +18,7 @@ contract Adam is Initializable, UUPSUpgradeable {
     address public multiTokenImplementation;
     address public governFactory;
     address public governImplementation;
+    address public memberTokenImplementation;
     address public constantState;
 
     address[] public budgetApprovals;
@@ -32,6 +34,7 @@ contract Adam is Initializable, UUPSUpgradeable {
         address _daoImplementation,
         address _membershipImplementation,
         address _multiTokenImplementation,
+        address _memberTokenImplementation,
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
         address _constantState
@@ -39,6 +42,7 @@ contract Adam is Initializable, UUPSUpgradeable {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
         multiTokenImplementation = _multiTokenImplementation;
+        memberTokenImplementation = _memberTokenImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
         constantState = _constantState;
@@ -65,35 +69,35 @@ contract Adam is Initializable, UUPSUpgradeable {
         }
     }
 
-    function createDao(
-        string calldata _name, 
-        string calldata _description, 
-        uint256 _locktime,
-        uint256[3] calldata budgetApproval,
-        uint256[3] calldata revokeBudgetApproval,
-        uint256[3] calldata general
-    ) public returns (address) {
+    function createDao(IAdam.CreateDaoParams calldata params) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _multiToken = new ERC1967Proxy(multiTokenImplementation, "");
-
-        IMembership(address(_membership)).initialize(address(_dao), _name);
+        IMembership(address(_membership)).initialize(address(_dao), params._name);
         IMultiToken(address(_multiToken)).initialize(address(_dao));
 
         IDao(payable(address(_dao))).initialize(
-            msg.sender,
-            _name,
-            address(_membership),
-            address(_multiToken),
-            _locktime,
-            governFactory,
-            budgetApproval,
-            revokeBudgetApproval,
-            general);
+            IDao.InitializeParams(
+                msg.sender,
+                address(_membership),
+                address(_multiToken),
+                address(governFactory),
+                address(memberTokenImplementation),
+                params._name,
+                params._description,
+                params._locktime,
+                params.isCreateToken,
+                params.budgetApproval,
+                params.revokeBudgetApproval,
+                params.general,
+                params.tokenInfo,
+                params.tokenAmount
+            )
+        );
 
         daos.push(address(_dao));
         daoRegistry[address(_dao)] = true;
-        emit CreateDao(address(_dao), _name, _description, msg.sender);
+        emit CreateDao(address(_dao), params._name, params._description, msg.sender);
         return address(_dao);
     }
 }

@@ -16,7 +16,19 @@ describe('UniswapSwapper.sol', () => {
 
   before(async () => {
     const adam = await createAdam();
-    await adam.createDao('A Company', 'Description', 10000000, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
+    await adam.createDao(
+        [
+            'A Company',  //_name
+            'Description', //_description
+            10000000, //_locktime
+            false, //isCreateToken
+            [13, 3000, 5000], //budgetApproval
+            [13, 3000, 5000], //revokeBudgetApproval
+            [13, 3000, 5000], //general
+            [], //tokenInfo
+            0,
+        ]
+    );
     const daoAddr = await adam.daos(0);
     const dao = await ethers.getContractAt('Dao', daoAddr);
     const uniswapBAImplementationAddr = await adam.budgetApprovals(1);
