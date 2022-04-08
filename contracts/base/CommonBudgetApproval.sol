@@ -324,7 +324,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
     }
 
-    function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
+    function supportsInterface(bytes4 interfaceID) external pure virtual returns (bool) {
         // execute(address,bytes,uint256)
         if(interfaceID == 0xa04a0908) {
             return true;
