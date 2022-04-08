@@ -14,9 +14,10 @@ async function main () {
         faker.commerce.productDescription(),
         lockup,
         true,
-        [300, 3000, 5000],
-        [300, 3000, 5000],
-        [300, 3000, 5000],
+        [300, 3000, 5000, 0],
+        [300, 3000, 5000, 0],
+        [300, 3000, 5000, 0],
+        [300, 3000, 5000, 1],
         ["${faker.company.companyName()}Token", "MT"],
         100
     ]);
@@ -33,14 +34,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-[
-            'A Company',  //_name
-            'Description', //_description
-            10000000, //_locktime
-            isCreateToken, //isCreateToken
-            [13, 3000, 5000], //budgetApproval
-            [13, 3000, 5000], //revokeBudgetApproval
-            [13, 3000, 5000], //general
-            tokenInfo, //tokenInfo
-            100,
-        ]

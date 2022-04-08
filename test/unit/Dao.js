@@ -5,24 +5,21 @@ const { createAdam, createTokens } = require("../utils/createContract.js");
 describe('Testing Dao', function() {
     let adam, dao;
 
-    async function createDao(isCreateToken, tokenInfo) {
-        return adam.createDao([
-            'A Company',  //_name
-            'Description', //_description
-            10000000, //_locktime
-            isCreateToken, //isCreateToken
-            [13, 3000, 5000], //budgetApproval
-            [13, 3000, 5000], //revokeBudgetApproval
-            [13, 3000, 5000], //general
-            tokenInfo, //tokenInfo
-            100,
-        ]);
-    }
-
     describe('when do not create member token at dao creation', function() {
         beforeEach(async function() {
             adam = await createAdam();
-            await createDao(false, []);
+            await adam.createDao([
+                'A Company',  //_name
+                'Description', //_description
+                10000000, //_locktime
+                false, //isCreateToken
+                [13, 3000, 5000, 0], //budgetApproval
+                [13, 3000, 5000, 0], //revokeBudgetApproval
+                [13, 3000, 5000, 0], //general
+                [13, 3000, 5000, 0], //daoSetting
+                [], //tokenInfo
+                0,
+            ]);
             const daoAddr = await adam.daos(0);
             dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         });
@@ -54,7 +51,19 @@ describe('Testing Dao', function() {
     describe('when create member token at dao creation', function() {
         beforeEach(async function() {
             adam = await createAdam();
-            await createDao(true, ['name', 'symbol']);
+            await adam.createDao([
+                'A Company',  //_name
+                'Description', //_description
+                10000000, //_locktime
+                true, //isCreateToken
+                [13, 3000, 5000, 0], //budgetApproval
+                [13, 3000, 5000, 0], //revokeBudgetApproval
+                [13, 3000, 5000, 0], //general
+                [13, 3000, 5000, 1], //daoSetting
+                ['name', 'symbol'], //tokenInfo
+                100,
+            ]);
+
             const daoAddr = await adam.daos(0);
             dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         });

@@ -21,9 +21,10 @@ describe('Testing TransferERC20BudgetApproval', function () {
             'Description', //_description
             10000000, //_locktime
             false, //isCreateToken
-            [13, 3000, 5000], //budgetApproval
-            [13, 3000, 5000], //revokeBudgetApproval
-            [13, 3000, 5000], //general
+            [13, 3000, 5000, 0], //budgetApproval
+            [13, 3000, 5000, 0], //revokeBudgetApproval
+            [13, 3000, 5000, 0], //general,
+            [13, 3000, 5000, 0], //daoSetting
             [], //tokenInfo
             0,
         ]
