@@ -4,7 +4,6 @@ const _ = require('lodash');
 
 const { createAdam } = require('../utils/createContract');
 
-
 describe('UniswapSwapper.sol', () => {
   let decode;
 
@@ -17,18 +16,18 @@ describe('UniswapSwapper.sol', () => {
   before(async () => {
     const adam = await createAdam();
     await adam.createDao(
-        [
-            'A Company',  //_name
-            'Description', //_description
-            10000000, //_locktime
-            false, //isCreateToken
-            [13, 3000, 5000, 0], //budgetApproval
-            [13, 3000, 5000, 0], //revokeBudgetApproval
-            [13, 3000, 5000, 0], //general,
-            [13, 3000, 5000, 0], //daoSetting
-            [], //tokenInfo
-            0,
-        ]
+      [
+        'A Company', // _name
+        'Description', // _description
+        10000000, // _locktime
+        false, // isCreateToken
+        [13, 3000, 5000, 0], // budgetApproval
+        [13, 3000, 5000, 0], // revokeBudgetApproval
+        [13, 3000, 5000, 0], // general,
+        [13, 3000, 5000, 0], // daoSetting
+        [], // tokenInfo
+        0,
+      ],
     );
     const daoAddr = await adam.daos(0);
     const dao = await ethers.getContractAt('Dao', daoAddr);

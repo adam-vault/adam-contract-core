@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgra
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
@@ -25,7 +26,7 @@ import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
 import "hardhat/console.sol";
 
-contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
+contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155Holder {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -115,9 +116,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
     function _createMemberToken(string[] calldata tokenInfo, uint tokenAmount) internal {
         require(memberToken == address(0), "Member token already initialized");
         require(tokenInfo.length == 2, "Insufficient info to create member token");
+
         ERC1967Proxy _memberToken = new ERC1967Proxy(memberTokenImplementation, "");
         memberToken = address(_memberToken);
-        IMemberToken(address(memberToken)).initialize(address(this), tokenInfo[0], tokenInfo[1]);
+        IMemberToken(memberToken).initialize(address(this), tokenInfo[0], tokenInfo[1]);
+        IMultiToken(multiToken).mintToken(address(this), _tokenId(memberToken), tokenAmount, "");
+
         _mintMemberToken(tokenAmount);
 
         emit CreateMemberToken(msg.sender, memberToken);

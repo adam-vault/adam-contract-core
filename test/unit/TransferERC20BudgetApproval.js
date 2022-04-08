@@ -16,18 +16,18 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
     adam = await createAdam();
     await adam.createDao(
-        [
-            'A Company',  //_name
-            'Description', //_description
-            10000000, //_locktime
-            false, //isCreateToken
-            [13, 3000, 5000, 0], //budgetApproval
-            [13, 3000, 5000, 0], //revokeBudgetApproval
-            [13, 3000, 5000, 0], //general,
-            [13, 3000, 5000, 0], //daoSetting
-            [], //tokenInfo
-            0,
-        ]
+      [
+        'A Company', // _name
+        'Description', // _description
+        10000000, // _locktime
+        false, // isCreateToken
+        [13, 3000, 5000, 0], // budgetApproval
+        [13, 3000, 5000, 0], // revokeBudgetApproval
+        [13, 3000, 5000, 0], // general,
+        [13, 3000, 5000, 0], // daoSetting
+        [], // tokenInfo
+        0,
+      ],
     );
     const daoAddr = await adam.daos(0);
     dao = await ethers.getContractAt('Dao', daoAddr);
