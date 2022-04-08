@@ -3,6 +3,12 @@
 pragma solidity ^0.8.0;
 
 interface IDao {
+
+    struct DaoSetting {
+        uint256 minDepositAmount;
+        uint256 minMemberTokenToJoin;
+    }
+
     struct InitializeParams {
         address _creator;
         address _membership;
@@ -19,6 +25,7 @@ interface IDao {
         uint256[4] daoSetting;
         string[] tokenInfo;
         uint256 tokenAmount;
+        DaoSetting daoSetting;
     }
 
     event AdminChanged(address previousAdmin, address newAdmin);

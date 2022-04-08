@@ -29,6 +29,8 @@ describe('Testing Govern', function () {
         [13, 3000, 5000, 1], // daoSetting
         ['name', 'symbol'], // tokenInfo
         1,
+        0, // minDepositAmount
+        0, // minMemberTokenToJoin
       ],
     );
   }

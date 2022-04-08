@@ -54,6 +54,11 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         (address[] memory members, uint256[] memory amounts) = _getAmountsOfAllMembersOnProRata(requiredToken, requiredAmount);
         uint256 totalAmount = IDao(dao).withdrawByBudgetApproval(requiredToken, members, amounts, false);
 
+        // approve token
+        if(to == UNISWAP_ROUTER && requiredToken != ETH_TOKEN_ADDRESS) {
+            IERC20(requiredToken).approve(UNISWAP_ROUTER, requiredAmount);
+        }
+
         (bool success, bytes memory results) = to.call{ value: value }(data);
         require(success, "execution failed");
 

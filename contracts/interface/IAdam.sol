@@ -14,6 +14,8 @@ interface IAdam {
         uint256[4] daoSetting;
         string[] tokenInfo;
         uint256 tokenAmount;
+        uint256 minDepositAmount;
+        uint256 minMemberTokenToJoin;
     }
 
     event AdminChanged(address previousAdmin, address newAdmin);

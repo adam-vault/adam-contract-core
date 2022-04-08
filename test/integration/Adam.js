@@ -30,6 +30,8 @@ describe('Create DAO', function () {
             [13, 3000, 5000, 0], //daoSetting
             [], //tokenInfo
             0,
+            0, // minDepositAmount
+            0, // minMemberTokenToJoin
         ]
     );
   }
@@ -178,6 +180,8 @@ describe('Create DAO', function () {
             [13, 3000, 5000, 0], //daoSetting
             [], //tokenInfo
             0,
+            0, // minDepositAmount
+            0, // minMemberTokenToJoin
         ]
       );
       const receipt = await tx1.wait();

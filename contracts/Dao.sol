@@ -49,6 +49,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     mapping(address => uint256) public firstDeposit;
 
     uint256 public locktime;
+    uint256 public minDepositAmount;
+    uint256 public minMemberTokenToJoin;
     mapping(address => bool) public allowDepositTokens;
 
     enum VoteType {
@@ -77,6 +79,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         locktime = params._locktime;
         governFactory = params._governFactory;
         memberTokenImplementation = params._memberTokenImplementation;
+        minDepositAmount = params.daoSetting.minDepositAmount;
+        minMemberTokenToJoin = params.daoSetting.minMemberTokenToJoin;
 
         if (params.isCreateToken) {
             // tokenInfo: [name, symbol]
@@ -174,7 +178,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _deposit(msg.sender, msg.value);
     }
 
-    function _deposit(address owner, uint256 amount) public payable {
+    function _deposit(address owner, uint256 amount) private {
         address member = _member(owner);
         IMultiToken(multiToken).mintToken(member, _tokenId(address(0)), amount, "");
 
@@ -182,6 +186,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
         if (firstDeposit[member] == 0) {
             firstDeposit[member] = block.timestamp;
+
+            require(amount >= minDepositAmount, "deposit amount not enough");
+
+            if(memberToken != address(0x0)) {
+                require(IERC20(memberToken).balanceOf(owner) >= minMemberTokenToJoin, "member token not enough");
+            }
         }
     }
 
@@ -244,6 +254,11 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
                 IERC20(_token).transferFrom(msg.sender, address(this), totalAmount);
             }
         }
+    }
+
+    function updateDaoSetting(IDao.DaoSetting calldata _setting) public govern("DaoSetting") {
+        minDepositAmount = _setting.minDepositAmount;
+        minMemberTokenToJoin = _setting.minMemberTokenToJoin;
     }
 
     function _tokenId(address contractAddress) internal returns (uint256){
