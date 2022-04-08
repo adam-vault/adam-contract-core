@@ -19,19 +19,19 @@ describe('Create DAO', function () {
 
   function createDao () {
     return adam.createDao(
-        [
-            'A Company',  //_name
-            'Description', //_description
-            10000000, //_locktime
-            false, //isCreateToken
-            [13, 3000, 5000], //budgetApproval
-            [13, 3000, 5000], //revokeBudgetApproval
-            [13, 3000, 5000], //general
-            [], //tokenInfo
-            0,
-            0, // minDepositAmount
-            0, // minMemberTokenToJoin
-        ]
+      [
+        'A Company', // _name
+        'Description', // _description
+        10000000, // _locktime
+        false, // isCreateToken
+        [13, 3000, 5000], // budgetApproval
+        [13, 3000, 5000], // revokeBudgetApproval
+        [13, 3000, 5000], // general
+        [], // tokenInfo
+        0,
+        0, // minDepositAmount
+        0, // minMemberTokenToJoin
+      ],
     );
   }
 
@@ -169,18 +169,18 @@ describe('Create DAO', function () {
     beforeEach(async function () {
       const tx1 = await adam.createDao(
         [
-            'A Company',  //_name
-            'Description', //_description
-            1000, //_locktime
-            false, //isCreateToken
-            [13, 3000, 5000], //budgetApproval
-            [13, 3000, 5000], //revokeBudgetApproval
-            [13, 3000, 5000], //general
-            [], //tokenInfo
-            0,
-            0, // minDepositAmount
-            0, // minMemberTokenToJoin
-        ]
+          'A Company', // _name
+          'Description', // _description
+          1000, // _locktime
+          false, // isCreateToken
+          [13, 3000, 5000], // budgetApproval
+          [13, 3000, 5000], // revokeBudgetApproval
+          [13, 3000, 5000], // general
+          [], // tokenInfo
+          0,
+          0, // minDepositAmount
+          0, // minMemberTokenToJoin
+        ],
       );
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });

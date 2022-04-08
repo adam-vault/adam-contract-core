@@ -10,17 +10,17 @@ async function main () {
   await [0, 100, 4, 500, 10000000].reduce(async (p, lockup) => {
     await p;
     const tx = await adam.createDao([
-        faker.company.companyName(),
-        faker.commerce.productDescription(),
-        lockup,
-        true,
-        [300, 3000, 5000],
-        [300, 3000, 5000],
-        [300, 3000, 5000],
-        ["${faker.company.companyName()}Token", "MT"],
-        100,
-        0,
-        0,
+      faker.company.companyName(),
+      faker.commerce.productDescription(),
+      lockup,
+      true,
+      [300, 3000, 5000],
+      [300, 3000, 5000],
+      [300, 3000, 5000],
+      ['${faker.company.companyName()}Token', 'MT'],
+      100,
+      0,
+      0,
     ]);
     return tx.wait().then((receipt) => {
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
@@ -36,13 +36,13 @@ main().catch((error) => {
   process.exitCode = 1;
 });
 [
-            'A Company',  //_name
-            'Description', //_description
-            10000000, //_locktime
-            isCreateToken, //isCreateToken
-            [13, 3000, 5000], //budgetApproval
-            [13, 3000, 5000], //revokeBudgetApproval
-            [13, 3000, 5000], //general
-            tokenInfo, //tokenInfo
-            100,
-        ]
+  'A Company', // _name
+  'Description', // _description
+  10000000, // _locktime
+  isCreateToken, // isCreateToken
+  [13, 3000, 5000], // budgetApproval
+  [13, 3000, 5000], // revokeBudgetApproval
+  [13, 3000, 5000], // general
+  tokenInfo, // tokenInfo
+  100,
+];
