@@ -18,7 +18,9 @@ async function main () {
         [300, 3000, 5000],
         [300, 3000, 5000],
         ["${faker.company.companyName()}Token", "MT"],
-        100
+        100,
+        0,
+        0,
     ]);
     return tx.wait().then((receipt) => {
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });

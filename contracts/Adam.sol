@@ -91,7 +91,11 @@ contract Adam is Initializable, UUPSUpgradeable {
                 params.revokeBudgetApproval,
                 params.general,
                 params.tokenInfo,
-                params.tokenAmount
+                params.tokenAmount,
+                IDao.DaoSetting(
+                    params.minDepositAmount,
+                    params.minMemberTokenToJoin
+                )
             )
         );
 

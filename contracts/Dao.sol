@@ -50,6 +50,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
     uint256 public locktime;
     mapping(address => bool) public allowDepositTokens;
 
+    uint256 public minDepositAmount;
+    uint256 public minMemberTokenToJoin;
+
     event SwapToken(address portfolio, uint256 src, uint256 dst, uint256 srcAmount, uint256 dstAmount);
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event Deposit(address member, address token, uint256 amount);
@@ -70,6 +73,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         locktime = params._locktime;
         governFactory = params._governFactory;
         memberTokenImplementation = params._memberTokenImplementation;
+
+        minDepositAmount = params.daoSetting.minDepositAmount;
+        minMemberTokenToJoin = params.daoSetting.minMemberTokenToJoin;
 
         address[] memory t = new address[](1);
         t[0] = params._membership;
@@ -167,7 +173,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         _deposit(msg.sender, msg.value);
     }
 
-    function _deposit(address owner, uint256 amount) public payable {
+    function _deposit(address owner, uint256 amount) private {
         address member = _member(owner);
         IMultiToken(multiToken).mintToken(member, _tokenId(address(0)), amount, "");
 
@@ -175,6 +181,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
 
         if (firstDeposit[member] == 0) {
             firstDeposit[member] = block.timestamp;
+
+            require(amount >= minDepositAmount, "deposit amount not enough");
+
+            if(memberToken != address(0x0)) {
+                require(IERC20(memberToken).balanceOf(owner) >= minMemberTokenToJoin, "member token not enough");
+            }
         }
     }
 
@@ -237,6 +249,11 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
                 IERC20(_token).transferFrom(msg.sender, address(this), totalAmount);
             }
         }
+    }
+
+    function updateDaoSetting(IDao.DaoSetting calldata _setting) public govern("DaoSetting") {
+        minDepositAmount = _setting.minDepositAmount;
+        minMemberTokenToJoin = _setting.minMemberTokenToJoin;
     }
 
     function _tokenId(address contractAddress) internal returns (uint256){

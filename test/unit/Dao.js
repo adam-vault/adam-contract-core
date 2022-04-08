@@ -16,6 +16,8 @@ describe('Testing Dao', function() {
             [13, 3000, 5000], //general
             tokenInfo, //tokenInfo
             100,
+            0, // minDepositAmount
+            0, // minMemberTokenToJoin
         ]);
     }
 

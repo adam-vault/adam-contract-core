@@ -28,6 +28,8 @@ describe('Testing Govern', function() {
                 [13, 3000, 5000], //general
                 [], //tokenInfo
                 0,
+                0, // minDepositAmount
+                0, // minMemberTokenToJoin
             ]
         );
       }
