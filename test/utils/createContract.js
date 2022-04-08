@@ -33,7 +33,6 @@ const createAdam = async () => {
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
   const MultiToken = await ethers.getContractFactory('MultiToken', { signer: creator });
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
-  
 
   const dao = await Dao.deploy();
   const membership = await Membership.deploy();
@@ -55,38 +54,38 @@ const createAdam = async () => {
 };
 
 const createTokens = async () => {
-    const TokenA = await ethers.getContractFactory('TokenA');
-    const tokenA = await TokenA.deploy();
-    await tokenA.deployed();
+  const TokenA = await ethers.getContractFactory('TokenA');
+  const tokenA = await TokenA.deploy();
+  await tokenA.deployed();
 
-    const TokenB = await ethers.getContractFactory('TokenB');
-    const tokenB = await TokenB.deploy();
-    await tokenB.deployed();
+  const TokenB = await ethers.getContractFactory('TokenB');
+  const tokenB = await TokenB.deploy();
+  await tokenB.deployed();
 
-    return { tokenA, tokenB };
-}
+  return { tokenA, tokenB };
+};
 
 const createGovern = async () => {
-    const [creator] = await ethers.getSigners();
+  const [creator] = await ethers.getSigners();
 
-    const TokenA = await ethers.getContractFactory('TokenA');
-    tokenA = await TokenA.deploy();
-    await tokenA.deployed();
+  const TokenA = await ethers.getContractFactory('TokenA');
+  tokenA = await TokenA.deploy();
+  await tokenA.deployed();
 
-    const Govern = await ethers.getContractFactory('Govern', { signer: creator });
-    const govern = await Govern.deploy(
-        tokenA.address,
-        '123',
-        1,
-        1,
-        1,
-        [1],
-        [tokenA.address]
-    );
+  const Govern = await ethers.getContractFactory('Govern', { signer: creator });
+  const govern = await Govern.deploy(
+    tokenA.address,
+    '123',
+    1,
+    1,
+    1,
+    [1],
+    [tokenA.address],
+  );
 
-    await govern.deployed();
-    return govern;
-}
+  await govern.deployed();
+  return govern;
+};
 
 module.exports = {
   createAdam,
