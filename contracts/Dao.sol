@@ -87,13 +87,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         _deposit(params._creator, 0);
 
         if (params.isCreateToken) {
-            createMemberToken(params.tokenInfo);
+            // tokenInfo: [name, symbol]
+            _createMemberToken(params.tokenInfo, params.tokenAmount);
         }
     }
 
     modifier govern(string memory category) {
-        console.logUint(IMembership(membership).totalSupply());
-        console.logUint(IMembership(membership).ownerToTokenId(msg.sender));
         require(
             (IMembership(membership).totalSupply() == 1 && IMembership(membership).ownerToTokenId(msg.sender) != 0)
                 || msg.sender == IGovernFactory(governFactory).governMap(address(this), category),
@@ -106,16 +105,35 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         _;
     }
 
-    function createMemberToken(string[] calldata tokenInfo) public govern("DaoSetting") {
+    function createMemberToken(string[] calldata tokenInfo, uint tokenAmount) public govern("DaoSetting") {
+        _createMemberToken(tokenInfo, tokenAmount);
+    }
+
+    function _createMemberToken(string[] calldata tokenInfo, uint tokenAmount) internal {
         require(memberToken == address(0), "Member token already initialized");
         require(tokenInfo.length == 2, "Insufficient info to create member token");
-
         ERC1967Proxy _memberToken = new ERC1967Proxy(memberTokenImplementation, "");
-        IMemberToken(address(_memberToken)).initialize(tokenInfo[0], tokenInfo[1]);
-
         memberToken = address(_memberToken);
+        IMemberToken(address(memberToken)).initialize(address(this), tokenInfo[0], tokenInfo[1]);
+        _mintMemberToken(tokenAmount);
 
         emit CreateMemberToken(msg.sender, memberToken);
+    }
+
+    function mintMemberToken(uint amount) public govern("BudgetApproval") {
+        _mintMemberToken(amount);
+    }
+
+    function _mintMemberToken(uint amount) internal {
+        IMemberToken(address(memberToken)).mint(address(this), amount);
+    }
+
+    function transferMemberToken(address to, uint amount) public govern("BudgetApproval") {
+        _transferMemberToken(to, amount);
+    }
+
+    function _transferMemberToken(address to, uint amount) internal {
+        IMemberToken(address(memberToken)).transfer(to, amount);
     }
 
     function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public govern("BudgetApproval") {

@@ -26,7 +26,7 @@ const createAdam = async () => {
 
   const constantState = await deployConstantState(creator);
   const budgetApprovalsAddress = await deployBudgetApprovals(creator);
-  const Dao = await ethers.getContractFactory('Dao', { signer: creator });
+  const Dao = await ethers.getContractFactory('MockDaoV2', { signer: creator });
   const Membership = await ethers.getContractFactory('Membership', { signer: creator });
   const Adam = await ethers.getContractFactory('Adam', { signer: creator });
   const GovernFactory = await ethers.getContractFactory('GovernFactory', { signer: creator });

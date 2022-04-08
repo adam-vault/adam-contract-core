@@ -90,7 +90,8 @@ contract Adam is Initializable, UUPSUpgradeable {
                 params.budgetApproval,
                 params.revokeBudgetApproval,
                 params.general,
-                params.tokenInfo
+                params.tokenInfo,
+                params.tokenAmount
             )
         );
 

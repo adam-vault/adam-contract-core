@@ -18,7 +18,19 @@ describe('Create DAO', function () {
   });
 
   function createDao () {
-    return adam.createDao('A Company', 'Description', 10000000, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
+    return adam.createDao(
+        [
+            'A Company',  //_name
+            'Description', //_description
+            10000000, //_locktime
+            false, //isCreateToken
+            [13, 3000, 5000], //budgetApproval
+            [13, 3000, 5000], //revokeBudgetApproval
+            [13, 3000, 5000], //general
+            [], //tokenInfo
+            0,
+        ]
+    );
   }
 
   it('can create dao', async function () {
@@ -153,7 +165,19 @@ describe('Create DAO', function () {
   describe('Redeem ETH from DAO', function () {
     let dao, membership, multiToken;
     beforeEach(async function () {
-      const tx1 = await adam.createDao('A Company', 'Description', 1000, [13, 3000, 5000], [13, 3000, 5000], [13, 3000, 5000]);
+      const tx1 = await adam.createDao(
+        [
+            'A Company',  //_name
+            'Description', //_description
+            1000, //_locktime
+            false, //isCreateToken
+            [13, 3000, 5000], //budgetApproval
+            [13, 3000, 5000], //revokeBudgetApproval
+            [13, 3000, 5000], //general
+            [], //tokenInfo
+            0,
+        ]
+      );
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
       const daoAddr = creationEventLog.args.dao;
