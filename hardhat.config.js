@@ -32,19 +32,19 @@ task('deploy', 'Fast Deploy Contract', async (taskArgs, hre) => {
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
- * 
+ *
  * Why need storageLayout
  * `smoddit` requires access to the internal storage layout of your smart contracts.
  * The Solidity compiler exposes this via the `storageLayout` flag, which you need to enable at your hardhat config.
  */
 module.exports = {
-  defaultNetwork: "hardhat",
+  defaultNetwork: 'hardhat',
   solidity: {
     version: '0.8.4',
     settings: {
       outputSelection: {
-        "*": {
-          "*": ["storageLayout"],
+        '*': {
+          '*': ['storageLayout'],
         },
       },
       optimizer: {

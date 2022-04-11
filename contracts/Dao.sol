@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgra
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
@@ -25,7 +26,7 @@ import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
 import "hardhat/console.sol";
 
-contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
+contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155Holder {
     // list strategy
     using Counters for Counters.Counter;
     using Strings for uint256;
@@ -48,10 +49,15 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
     mapping(address => uint256) public firstDeposit;
 
     uint256 public locktime;
-    mapping(address => bool) public allowDepositTokens;
-
     uint256 public minDepositAmount;
     uint256 public minMemberTokenToJoin;
+    mapping(address => bool) public allowDepositTokens;
+
+    enum VoteType {
+        Membership,
+        MemberToken,
+        Other
+    }
 
     event SwapToken(address portfolio, uint256 src, uint256 dst, uint256 srcAmount, uint256 dstAmount);
     event CreateBudgetApproval(address budgetApproval, bytes data);
@@ -73,34 +79,32 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         locktime = params._locktime;
         governFactory = params._governFactory;
         memberTokenImplementation = params._memberTokenImplementation;
-
         minDepositAmount = params.daoSetting.minDepositAmount;
         minMemberTokenToJoin = params.daoSetting.minMemberTokenToJoin;
-
-        address[] memory t = new address[](1);
-        t[0] = params._membership;
-
-        uint256[] memory w = new uint256[](1);
-        w[0] = 1;
-
-        _createGovern("BudgetApproval", params.budgetApproval[0], params.budgetApproval[1], params.budgetApproval[2], w, t);
-        _createGovern("RevokeBudgetApproval", params.revokeBudgetApproval[0], params.revokeBudgetApproval[1], params.revokeBudgetApproval[2], w, t);
-        _createGovern("General", params.general[0], params.general[1], params.general[2], w, t);
-        
-        // TODO: confirm govern naming and setting
-        _createGovern("DaoSetting", params.general[0], params.general[1], params.general[2], w, t);
-
-        _deposit(params._creator, 0);
 
         if (params.isCreateToken) {
             // tokenInfo: [name, symbol]
             _createMemberToken(params.tokenInfo, params.tokenAmount);
         }
+
+        uint256[] memory w = new uint256[](1);
+        w[0] = 1;
+        // CAUTION: if later on support create govern with multi token, also need to add VoteType
+        _createGovern("BudgetApproval", params.budgetApproval[0], params.budgetApproval[1], params.budgetApproval[2], w, params.budgetApproval[3]);
+        _createGovern("RevokeBudgetApproval", params.revokeBudgetApproval[0], params.revokeBudgetApproval[1], params.revokeBudgetApproval[2], w, params.revokeBudgetApproval[3]);
+        _createGovern("General", params.general[0], params.general[1], params.general[2], w, params.revokeBudgetApproval[3]);
+        
+        // TODO: confirm govern naming and setting
+        _createGovern("DaoSetting", params.daoSettingApproval[0], params.daoSettingApproval[1], params.daoSettingApproval[2], w, params.daoSettingApproval[3]);
+
+        _deposit(params._creator, 0);
     }
 
     modifier govern(string memory category) {
         require(
             (IMembership(membership).totalSupply() == 1 && IMembership(membership).ownerToTokenId(msg.sender) != 0)
+                // for create member token, dao become one of the member
+                || (IMembership(membership).totalSupply() == 2 && IMembership(membership).ownerToTokenId(msg.sender) != 0 && address(memberToken) != address(0))
                 || msg.sender == IGovernFactory(governFactory).governMap(address(this), category),
             string("Dao: only ").concat(category));
         _;
@@ -118,9 +122,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
     function _createMemberToken(string[] calldata tokenInfo, uint tokenAmount) internal {
         require(memberToken == address(0), "Member token already initialized");
         require(tokenInfo.length == 2, "Insufficient info to create member token");
+
         ERC1967Proxy _memberToken = new ERC1967Proxy(memberTokenImplementation, "");
         memberToken = address(_memberToken);
-        IMemberToken(address(memberToken)).initialize(address(this), tokenInfo[0], tokenInfo[1]);
+        IMemberToken(memberToken).initialize(address(this), tokenInfo[0], tokenInfo[1]);
+        IMultiToken(multiToken).mintToken(_member(address(this)), _tokenId(memberToken), tokenAmount, "");
+
         _mintMemberToken(tokenAmount);
 
         emit CreateMemberToken(msg.sender, memberToken);
@@ -278,7 +285,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         uint quorum,
         uint passThreshold,
         uint[] calldata voteWeights,
-        address[] calldata voteTokens
+        uint voteToken
     ) public govern("Govern") {
         _createGovern(
             _name,
@@ -286,8 +293,36 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
             quorum,
             passThreshold,
             voteWeights,
-            voteTokens
+            voteToken
         );
+    }
+
+    function getVoteTypeValues(VoteType voteType) internal view returns (address[] memory) {
+        if (VoteType.Membership == voteType) {
+            if (address(membership) == address(0)) {
+                revert("Membership not yet initialized");
+            }
+
+            address[] memory values = new address[](1);
+            values[0] = address(membership);
+            return values;
+        }
+
+        if (VoteType.MemberToken == voteType) {
+            if (address(memberToken) == address(0)) {
+                revert("MemberToken not yet initialized");
+            }
+
+            address[] memory values = new address[](1);
+            values[0] = address(memberToken);
+            return values;
+        }
+
+        if (VoteType.Other == voteType) {
+            // TODO: Other tokens e.g. outside ERC721 Votes
+        }
+
+        revert("Unsupported Token type");
     }
 
     function _createGovern(
@@ -296,15 +331,16 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable {
         uint quorum,
         uint passThreshold,
         uint[] memory voteWeights,
-        address[] memory voteTokens
+        uint voteToken
     ) internal {
+        address[] memory _voteTokens = getVoteTypeValues(VoteType(voteToken));
         IGovernFactory(governFactory).createGovern(
             _name,
             duration,
             quorum,
             passThreshold,
             voteWeights,
-            voteTokens
+            _voteTokens
         );
     }
 

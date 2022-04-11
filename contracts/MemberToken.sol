@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+import "hardhat/console.sol";
 
 contract MemberToken is ERC20VotesUpgradeable {
     address public owner;

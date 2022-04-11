@@ -11,4 +11,12 @@ contract MockDaoV2 is Dao {
     function exposedCreateMemberToken(string[] calldata tokenInfo, uint amount) public {
         _createMemberToken(tokenInfo, amount);
     }
+
+    function exposedMintMemberToken(uint amount) public {
+        _mintMemberToken(amount);
+    }
+
+    function exposedTransferMemberToken(address to, uint amount) public {
+        _transferMemberToken(to, amount);
+    }
 }
