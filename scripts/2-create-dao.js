@@ -10,18 +10,18 @@ async function main () {
   await [0, 100, 4, 500, 10000000].reduce(async (p, lockup) => {
     await p;
     const tx = await adam.createDao([
-        faker.company.companyName(),
-        faker.commerce.productDescription(),
-        lockup,
-        true,
-        [300, 3000, 5000, 0],
-        [300, 3000, 5000, 0],
-        [300, 3000, 5000, 0],
-        [300, 3000, 5000, 1],
-        ["${faker.company.companyName()}Token", "MT"],
-        100,
-        0,
-        0,
+      faker.company.companyName(),
+      faker.commerce.productDescription(),
+      lockup,
+      true,
+      [300, 3000, 5000, 0],
+      [300, 3000, 5000, 0],
+      [300, 3000, 5000, 0],
+      [300, 3000, 5000, 1],
+      ['${faker.company.companyName()}Token', 'MT'],
+      100,
+      0,
+      0,
     ]);
     return tx.wait().then((receipt) => {
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });

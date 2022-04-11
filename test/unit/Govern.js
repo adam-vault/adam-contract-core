@@ -50,7 +50,7 @@ describe('Testing Govern', function () {
   describe('GovernFactory', function () {
     it('should create a govern & emit CreateGovern event', async function () {
       await expect(dao.createGovern(
-        category.name,
+        'salary',
         category.duration,
         category.quorum,
         category.passThreshold,
@@ -153,17 +153,29 @@ describe('Testing Govern', function () {
 
     context('For voting with membership ERC721Vote tokens', function () {
       it('should success due to 10% pass threshold (1 against 1 for)', async function () {
+        await adam.createDao(
+          [
+            'B Company', // _name
+            'Description', // _description
+            10000000, // _locktime
+            true, // isCreateToken
+            [300, 1000, 1000, 0], // budgetApproval
+            [13, 3000, 5000, 0], // revokeBudgetApproval
+            [13, 3000, 5000, 0], // general,
+            [13, 3000, 5000, 1], // daoSetting
+            ['name', 'symbol'], // tokenInfo
+            1,
+            0, // minDepositAmount
+            0, // minMemberTokenToJoin
+          ],
+        );
+
+        const daoAddr = await adam.daos(1);
+        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        const governFactoryAddr = await dao.governFactory();
+        governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
         const membershipAddr = await dao.membership();
         const membership = await ethers.getContractAt('Membership', membershipAddr);
-
-        await dao.createGovern(
-          category.name,
-          300,
-          category.quorum,
-          category.passThreshold,
-          [1],
-          0,
-        );
 
         await dao.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
         await dao.connect(owner2).deposit({ value: ethers.utils.parseEther('2') });
@@ -207,17 +219,30 @@ describe('Testing Govern', function () {
       });
 
       it('should failed due to 51% pass threshold (1 against 1 for)', async function () {
+        await adam.createDao(
+          [
+            'B Company', // _name
+            'Description', // _description
+            10000000, // _locktime
+            true, // isCreateToken
+            [300, 1000, 5100, 0], // budgetApproval
+            [13, 3000, 5000, 0], // revokeBudgetApproval
+            [13, 3000, 5000, 0], // general,
+            [13, 3000, 5000, 1], // daoSetting
+            ['name', 'symbol'], // tokenInfo
+            1,
+            0, // minDepositAmount
+            0, // minMemberTokenToJoin
+          ],
+        );
+
+        const daoAddr = await adam.daos(1);
+        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        const governFactoryAddr = await dao.governFactory();
+        governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
+
         const membershipAddr = await dao.membership();
         const membership = await ethers.getContractAt('Membership', membershipAddr);
-
-        await dao.createGovern(
-          category.name,
-          300,
-          category.quorum,
-          5100,
-          [1],
-          0,
-        );
 
         await dao.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
 
@@ -331,7 +356,7 @@ describe('Voting and executing budget approval', function () {
   });
 
   context('Execute BudgetApproval to transfer memberToken', function () {
-    it.only('should transfer memberToken from Dao to owner2', async function () {
+    it('should transfer memberToken from Dao to owner2', async function () {
       const memberTokenAddr = await dao.memberToken();
       const memberToken = await ethers.getContractAt('MemberToken', memberTokenAddr);
       const governAddr = await governFactory.governMap(dao.address, 'BudgetApproval');
