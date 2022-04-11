@@ -14,7 +14,6 @@ import "../interface/IDao.sol";
 import "../interface/IMultiToken.sol";
 
 import "../interface/IMembership.sol";
-import "hardhat/console.sol";
 
 abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
@@ -276,6 +275,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         uint256[] memory amounts = new uint[](members.length);
 
         uint256 totalBalance = IMultiToken(mt).tokenTotalSupply(tokenId);
+
         uint256 amountLeft = _totalAmount;
         
         for(uint i = 0; i < members.length - 1; i++) {

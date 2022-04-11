@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./lib/ToString.sol";
 import "./lib/Base64.sol";
 import "./lib/Concat.sol";
-import "hardhat/console.sol";
 
 contract MultiToken is ERC1155Upgradeable {
     // list strategy
@@ -93,7 +92,6 @@ contract MultiToken is ERC1155Upgradeable {
         uint256 amount
     ) public onlyOwner {
         _tokenRegistry[id].totalSupply -= amount;
-
         return _burn(from, id, amount);
     }
     
