@@ -90,7 +90,7 @@ contract Adam is Initializable, UUPSUpgradeable {
                 params.budgetApproval,
                 params.revokeBudgetApproval,
                 params.general,
-                params.daoSetting,
+                params.daoSettingApproval,
                 params.tokenInfo,
                 params.tokenAmount,
                 IDao.DaoSetting(

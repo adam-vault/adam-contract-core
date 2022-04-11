@@ -95,7 +95,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _createGovern("General", params.general[0], params.general[1], params.general[2], w, params.revokeBudgetApproval[3]);
         
         // TODO: confirm govern naming and setting
-        _createGovern("DaoSetting", params.daoSetting[0], params.daoSetting[1], params.daoSetting[2], w, params.daoSetting[3]);
+        _createGovern("DaoSetting", params.daoSettingApproval[0], params.daoSettingApproval[1], params.daoSettingApproval[2], w, params.daoSettingApproval[3]);
 
         _deposit(params._creator, 0);
     }
@@ -103,6 +103,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     modifier govern(string memory category) {
         require(
             (IMembership(membership).totalSupply() == 1 && IMembership(membership).ownerToTokenId(msg.sender) != 0)
+                // for create member token, dao become one of the member
+                || IMembership(membership).totalSupply() == 2 && IMembership(membership).ownerToTokenId(msg.sender) != 0 && address(memberToken) != address(0)
                 || msg.sender == IGovernFactory(governFactory).governMap(address(this), category),
             string("Dao: only ").concat(category));
         _;
@@ -124,7 +126,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         ERC1967Proxy _memberToken = new ERC1967Proxy(memberTokenImplementation, "");
         memberToken = address(_memberToken);
         IMemberToken(memberToken).initialize(address(this), tokenInfo[0], tokenInfo[1]);
-        IMultiToken(multiToken).mintToken(address(this), _tokenId(memberToken), tokenAmount, "");
+        IMultiToken(multiToken).mintToken(_member(address(this)), _tokenId(memberToken), tokenAmount, "");
 
         _mintMemberToken(tokenAmount);
 
@@ -159,7 +161,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     // for handling Uniswap Iframe
-    function approveERC20(address _token, address _to, uint256 _amount) public onlyBudgetApproval {
+    function approveERC20(address _token, address _to, uint256 _amount) public {
         IERC20(_token).approve(_to,_amount);
     }
 
@@ -217,6 +219,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         require(_members.length == _amounts.length, "invalid input");
 
         for(uint i = 0; i < _members.length; i++) {
+            console.logUint(_amounts[i]);
             IMultiToken(multiToken).burnToken(_members[i], _tokenId(_token), _amounts[i]);
             totalAmount += _amounts[i];
         }
@@ -227,6 +230,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
                 payable(msg.sender).transfer(totalAmount);
             } else {
                 // ERC20
+                console.log("====withdraw=====");
                 IERC20(_token).transfer(msg.sender, totalAmount);
             }
         }
