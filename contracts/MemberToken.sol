@@ -29,11 +29,4 @@ contract MemberToken is ERC20VotesUpgradeable {
     {
         _mint(account, amount);
     }
-
-    function transfer(address to, uint256 amount) public override returns (bool)
-    {
-        console.log("======transfer===");
-        console.logAddress(msg.sender);
-        _transfer(msg.sender, to, amount);
-    }
 }

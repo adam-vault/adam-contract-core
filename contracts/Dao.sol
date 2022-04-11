@@ -219,7 +219,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         require(_members.length == _amounts.length, "invalid input");
 
         for(uint i = 0; i < _members.length; i++) {
-            console.logUint(_amounts[i]);
             IMultiToken(multiToken).burnToken(_members[i], _tokenId(_token), _amounts[i]);
             totalAmount += _amounts[i];
         }
@@ -230,7 +229,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
                 payable(msg.sender).transfer(totalAmount);
             } else {
                 // ERC20
-                console.log("====withdraw=====");
                 IERC20(_token).transfer(msg.sender, totalAmount);
             }
         }

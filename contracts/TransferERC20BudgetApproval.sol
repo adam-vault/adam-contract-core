@@ -6,7 +6,6 @@ import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
 
 import "./interface/IDao.sol";
-import "hardhat/console.sol";
 
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
@@ -26,25 +25,20 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     // transfer ETH by sending data.length == 0
     // transfer ERC20 by using transfer(address,uint256)
     function execute(address to, bytes memory data, uint256 value) public override onlySelf {
+
         (bool isRequireToken, address requiredToken, uint256 requiredAmount) = getRequiredAmount(to, data, value);
-        console.log("====1==");
+    
         if(isRequireToken) {
-            console.log("===2===");
             (address[] memory members, uint256[] memory amounts) = _getAmountsOfAllMembersOnProRata(requiredToken, requiredAmount);
-            console.log("==3====");
             uint256 totalAmount = IDao(payable(dao)).withdrawByBudgetApproval(requiredToken, members, amounts, false);
-            console.log("==4====");
             require(totalAmount == requiredAmount, "invalid");
         }
-        console.log("===5===");
-        console.logBytes(data);
-        console.logUint(IERC20(requiredToken).balanceOf(address(this)));
+
         (bool success,) = to.call{ value: value }(data);
         require(success, "execution failed");
-        console.log("===6===");
+
         (address _token, address _recipient, uint256 _amount) = decode(to, data, value);
         require(checkValid(_token, _recipient, _amount, true), "transaction not allowed");
-        console.log("===7===");
         _updateTotalAmount(_amount);
     }
 
