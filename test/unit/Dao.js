@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { createAdam, createTokens } = require('../utils/createContract.js');
+const { createAdam } = require('../utils/createContract.js');
 
 describe('Testing Dao', function () {
   let adam, dao;
@@ -27,13 +27,6 @@ describe('Testing Dao', function () {
     });
 
     describe('when do not create member token at dao creation', function () {
-      beforeEach(async function () {
-        adam = await createAdam();
-        await createDao(false, []);
-        const daoAddr = await adam.daos(0);
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
-      });
-
       it('should be able to call create member token', async function () {
         expect(await dao.memberToken()).to.eq(ethers.constants.AddressZero);
         await dao.exposedCreateMemberToken(['name', 'symbol'], 100);

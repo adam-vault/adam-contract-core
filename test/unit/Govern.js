@@ -125,9 +125,6 @@ describe('Testing Govern', function () {
         const event = rc.events.find(event => event.event === 'ProposalCreated');
         const [proposalId] = event.args;
 
-        // await hre.network.provider.send("hardhat_mine", ["0x2"]);
-        // expect(await govern.state(proposalId)).to.eq(1); //Active
-
         await govern.castVote(proposalId, 1);
         const hasVoted = await govern.hasVoted(proposalId, creator.address);
         expect(hasVoted).to.eq(true);
@@ -392,7 +389,6 @@ describe('Voting and executing budget approval', function () {
 
       expect(await govern.state(proposalId)).to.eq(4); // Success
       expect(await memberToken.balanceOf(owner2.address)).to.eq(0);
-      await dao.approveERC20(memberTokenAddr, transferBudgetApproval.address, 100);
 
       await govern.execute(
         [dao.address],

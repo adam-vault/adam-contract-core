@@ -161,7 +161,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     // for handling Uniswap Iframe
-    function approveERC20(address _token, address _to, uint256 _amount) public {
+    function approveERC20(address _token, address _to, uint256 _amount) public onlyBudgetApproval {
         IERC20(_token).approve(_to,_amount);
     }
 
