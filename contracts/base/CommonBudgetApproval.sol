@@ -27,12 +27,18 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         Completed
     }
 
+    enum VoteStatus {
+        Pending,
+        Approved,
+        Rejected
+    }
+
     struct Transaction {
         uint256 id;
         bytes data;
         Status status;
         uint256 deadline;
-        mapping(address => bool) approved;
+        mapping(address => VoteStatus) voteStatus;
         bool isExist;
     }
 
@@ -53,6 +59,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     address[] public approvers;
     mapping(address => bool) public approversMapping;
+    uint256 minApproval;
 
     string public text;
     string public transactionType;
@@ -68,6 +75,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     uint256 public totalAmount;
 
     uint8 public amountPercentage;
+
+    uint256 startTime;
+    uint256 endTime;
 
     modifier onlyDao {
         require(msg.sender == dao, "access denied");
@@ -89,8 +99,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
-    modifier checkDeadline(uint256 _transactionId) {
+    modifier checkTime(uint256 _transactionId) {
         require(block.timestamp <= transactions[_transactionId].deadline, "transaction expired");
+        require(block.timestamp >= startTime, "budget approval not yet started");
+        if(endTime != 0) {
+            require(block.timestamp < endTime, "budget approval ended");
+        }
         _;
     }
 
@@ -98,6 +112,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         address dao;
         address executor;
         address[] approvers;
+        uint256 minApproval;
         string text;
         string transactionType;
         bool allowAllAddresses;
@@ -107,6 +122,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bool allowAnyAmount;
         uint256 totalAmount;
         uint8 amountPercentage;
+        uint256 startTime;
+        uint256 endTime;
     }
 
     function initialize(
@@ -121,6 +138,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         for (uint i = 0; i < params.approvers.length; i++) {
             approversMapping[params.approvers[i]] = true;
         }
+
+        minApproval = params.minApproval;
+        require(minApproval <= approvers.length, "minApproval invalid");
 
         allowAllAddresses = params.allowAllAddresses;
         for(uint i = 0; i < params.addresses.length; i++) {
@@ -139,11 +159,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         totalAmount = params.totalAmount;
         emit AllowAmount(totalAmount);
         amountPercentage = params.amountPercentage;
+
+        startTime = params.startTime;
+        endTime = params.endTime;
     }
 
     function NAME() external virtual returns (string calldata);
 
-    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkDeadline(_transactionId) {
+    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkTime(_transactionId) {
         require(msg.sender == executor || msg.sender == dao, "access denied");
 
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
@@ -178,29 +201,35 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function approveTransaction(uint256 _transactionId) external onlyApprover matchStatus(_transactionId, Status.Pending) {
-        transactions[_transactionId].approved[msg.sender] = true;
+        transactions[_transactionId].voteStatus[msg.sender] = VoteStatus.Approved;
 
-        if(checkAllApproved(_transactionId)) {
+        (uint256 approvedCount,) = checkVoteStatusCount(_transactionId);
+        if(approvedCount >= minApproval) {
             transactions[_transactionId].status = Status.Approved;
         }
     }
 
     function rejectTransaction(uint256 _transactionId) external onlyApprover matchStatus(_transactionId, Status.Pending) {
-        transactions[_transactionId].status = Status.Rejected;
+        transactions[_transactionId].voteStatus[msg.sender] = VoteStatus.Rejected;
+
+        (,uint256 rejectedCount) = checkVoteStatusCount(_transactionId);
+        if(rejectedCount > approvers.length - minApproval) {
+            transactions[_transactionId].status = Status.Rejected;
+        }
     }
 
     function lastTransactionId() public view returns (uint256) {
         return _transactionIds.current();
     }
 
-    function checkAllApproved(uint256 _transactionId) public view returns (bool) {
+    function checkVoteStatusCount(uint256 _transactionId) public view returns (uint256 approved, uint256 rejected) {
         for(uint i = 0; i < approvers.length; i++) {
-            if(transactions[_transactionId].approved[approvers[i]] == false) {
-                return false;
+            if(transactions[_transactionId].voteStatus[approvers[i]] == VoteStatus.Approved) {
+                approved++;
+            } else if (transactions[_transactionId].voteStatus[approvers[i]] == VoteStatus.Rejected) {
+                rejected++;
             }
         }
-
-        return true;
     }
 
     function checkAddressValid(address to) public view returns (bool) {
