@@ -1,7 +1,7 @@
 const hre = require('hardhat');
 
 // rinkeby
-const daoAddress = '0xccE5775cc9B22522dDa3F10CcA8efAAc2fE7A903';
+const daoAddress = '0x4ff9F9A3beB4F9147E683D5a315592f7c46f19b9';
 
 async function main () {
   const [creator] = await ethers.getSigners();

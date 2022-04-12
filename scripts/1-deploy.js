@@ -50,13 +50,21 @@ async function main () {
   const Dao = await hre.ethers.getContractFactory('Dao');
   const Membership = await hre.ethers.getContractFactory('Membership');
   const Adam = await hre.ethers.getContractFactory('Adam');
+  const MultiToken = await hre.ethers.getContractFactory('MultiToken');
+  const MemberToken = await hre.ethers.getContractFactory('MemberToken');
 
   const dao = await Dao.deploy();
   await dao.deployed();
   const membership = await Membership.deploy();
   await membership.deployed();
+  const multiToken = await MultiToken.deploy();
+  await multiToken.deployed();
+  const memberToken = await MemberToken.deploy();
+  await memberToken.deployed();
 
-  const adam = await hre.upgrades.deployProxy(Adam, [dao.address, membership.address, budgetApprovalsAddress, governFactory, constantState], { kind: 'uups' });
+  const adam = await hre.upgrades.deployProxy(Adam, [
+      dao.address, membership.address, multiToken.address, memberToken.address, budgetApprovalsAddress, governFactory, constantState,
+    ], { kind: 'uups' });
   await adam.deployed();
 
   console.log('dao deployed to: ', dao.address);
