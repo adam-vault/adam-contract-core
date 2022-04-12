@@ -22,7 +22,8 @@ describe('Testing Govern', function () {
         'A Company', // _name
         'Description', // _description
         10000000, // _locktime
-        true, // isCreateToken
+        1, // MemberTokenType
+        '0x0000000000000000000000000000000000000000', // memberToken
         [13, 3000, 5000, 0], // budgetApproval
         [13, 3000, 5000, 0], // revokeBudgetApproval
         [13, 3000, 5000, 0], // general,
@@ -155,7 +156,8 @@ describe('Testing Govern', function () {
             'B Company', // _name
             'Description', // _description
             10000000, // _locktime
-            true, // isCreateToken
+            1, // MemberTokenType
+            '0x0000000000000000000000000000000000000000', // memberToken
             [300, 1000, 1000, 0], // budgetApproval
             [13, 3000, 5000, 0], // revokeBudgetApproval
             [13, 3000, 5000, 0], // general,
@@ -221,7 +223,8 @@ describe('Testing Govern', function () {
             'B Company', // _name
             'Description', // _description
             10000000, // _locktime
-            true, // isCreateToken
+            1, // MemberTokenType
+            '0x0000000000000000000000000000000000000000', // memberToken
             [300, 1000, 5100, 0], // budgetApproval
             [13, 3000, 5000, 0], // revokeBudgetApproval
             [13, 3000, 5000, 0], // general,
@@ -335,7 +338,8 @@ describe('Voting and executing budget approval', function () {
         'A Company', // _name
         'Description', // _description
         10000000, // _locktime
-        true, // isCreateToken
+        1, // MemberTokenType
+        '0x0000000000000000000000000000000000000000', // memberToken
         [13, 3000, 5000, 0], // budgetApproval
         [13, 3000, 5000, 0], // revokeBudgetApproval
         [13, 3000, 5000, 0], // general,
