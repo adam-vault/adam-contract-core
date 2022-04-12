@@ -37,6 +37,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     Counters.Counter private _ERC20tokenIds;
 
+    enum MemberTokenTypeOption {
+        NotInUsed,
+        InternalErc20Token,
+        ExternalErc721Token
+    }
+
     address public memberToken;
     address public creator;
     address public adam;
@@ -58,6 +64,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         MemberToken,
         Other
     }
+    uint8 public memberTokenType;
 
     event SwapToken(address portfolio, uint256 src, uint256 dst, uint256 srcAmount, uint256 dstAmount);
     event CreateBudgetApproval(address budgetApproval, bytes data);
@@ -81,11 +88,17 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         memberTokenImplementation = params._memberTokenImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
         minMemberTokenToJoin = params.daoSetting.minMemberTokenToJoin;
-
-        if (params.isCreateToken) {
+        memberTokenType = params.memberTokenType;
+        
+        if (memberTokenType == uint8(MemberTokenTypeOption.InternalErc20Token)) {
             // tokenInfo: [name, symbol]
             _createMemberToken(params.tokenInfo, params.tokenAmount);
+        }else if(memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
+            memberToken = params.memberToken;
         }
+        
+        address[] memory t = new address[](1);
+        t[0] = params._membership;
 
         uint256[] memory w = new uint256[](1);
         w[0] = 1;
@@ -191,8 +204,10 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
             require(amount >= minDepositAmount, "deposit amount not enough");
 
-            if(memberToken != address(0x0)) {
+            if(memberTokenType == uint8(MemberTokenTypeOption.InternalErc20Token)) {
                 require(IERC20(memberToken).balanceOf(owner) >= minMemberTokenToJoin, "member token not enough");
+            }else if (memberTokenType == uint8(MemberTokenTypeOption.InternalErc20Token)) {
+                require(IERC721(memberToken).balanceOf(owner) >= minMemberTokenToJoin, "member token not enough");
             }
         }
     }
