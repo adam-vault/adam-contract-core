@@ -97,7 +97,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         // TODO: confirm govern naming and setting
         _createGovern("DaoSetting", params.daoSettingApproval[0], params.daoSettingApproval[1], params.daoSettingApproval[2], w, params.daoSettingApproval[3]);
 
-        _deposit(params._creator, 0);
+        _member(params._creator);
+
+        if (params.isCreateToken) {
+            // tokenInfo: [name, symbol]
+            _createMemberToken(params.tokenInfo, params.tokenAmount);
+        }
     }
 
     modifier govern(string memory category) {
