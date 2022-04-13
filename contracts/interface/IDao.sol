@@ -12,7 +12,8 @@ interface IDao {
         string _name;
         string _description;
         uint256 _locktime;
-        bool isCreateToken;
+        uint8 memberTokenType;
+        address memberToken;
         uint256[4] budgetApproval;
         uint256[4] revokeBudgetApproval;
         uint256[4] general;

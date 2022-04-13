@@ -1,9 +1,9 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { createAdam } = require('../utils/createContract.js');
+const { createAdam, createTokens } = require('../utils/createContract.js');
 
 describe('Testing Dao', function () {
-  let adam, dao;
+  let adam, dao, tokenC721;
   let creator;
 
   describe('when do not create member token at dao creation', function () {
@@ -14,7 +14,8 @@ describe('Testing Dao', function () {
         'A Company', // _name
         'Description', // _description
         10000000, // _locktime
-        false, // isCreateToken
+        0, // MemberTokenType
+        '0x0000000000000000000000000000000000000000', // memberToken
         [13, 3000, 5000, 0], // budgetApproval
         [13, 3000, 5000, 0], // revokeBudgetApproval
         [13, 3000, 5000, 0], // general
@@ -52,14 +53,55 @@ describe('Testing Dao', function () {
       });
     });
 
-    describe('when create member token at dao creation', function () {
+    describe('when import 721 member token at dao creation', function () {
+      beforeEach(async function () {
+        adam = await createAdam();
+        tokenC721 = (await createTokens()).tokenC721;
+        await adam.createDao([
+          'A Company', // _name
+          'Description', // _description
+          10000000, // _locktime
+          2, // MemberTokenType
+          tokenC721.address, // memberToken
+          [13, 3000, 5000, 0], // budgetApproval
+          [13, 3000, 5000, 0], // revokeBudgetApproval
+          [13, 3000, 5000, 0], // general
+          [13, 3000, 5000, 1], // daoSetting
+          ['name', 'symbol'], // tokenInfo
+          100,
+          0, // minDepositAmount
+          1, // minMemberTokenToJoin
+        ]);
+
+        const daoAddr = await adam.daos(0);
+        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+      });
+
+      it('should not be able to call create member token', async function () {
+        await expect(dao.exposedCreateMemberToken(['name1', 'symbol1'], 100)).to.revertedWith('Member token already initialized');
+      });
+
+      it('should not able to deposit when not enough minMemberTokenToJoin', async function () {
+        await expect(dao.deposit({ value: 1 })).to.revertedWith('member token not enough');
+      });
+
+      it('should be able to deposit when enough minMemberTokenToJoin', async function () {
+        console.log(creator.address);
+        await tokenC721.mint(creator.address);
+        await dao.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
+      });
+    });
+
+    describe('when create ERC20 member token at dao creation', function () {
       beforeEach(async function () {
         adam = await createAdam();
         await adam.createDao([
           'A Company', // _name
           'Description', // _description
           10000000, // _locktime
-          true, // isCreateToken
+          1, // MemberTokenType
+          '0x0000000000000000000000000000000000000000', // memberToken
           [13, 3000, 5000, 0], // budgetApproval
           [13, 3000, 5000, 0], // revokeBudgetApproval
           [13, 3000, 5000, 0], // general
@@ -104,7 +146,8 @@ describe('Testing Dao', function () {
           'A Company', // _name
           'Description', // _description
           10000000, // _locktime
-          true, // isCreateToken
+          1, // MemberTokenType
+          '0x0000000000000000000000000000000000000000', // memberToken
           [13, 3000, 5000, 0], // budgetApproval
           [13, 3000, 5000, 0], // revokeBudgetApproval
           [13, 3000, 5000, 0], // general

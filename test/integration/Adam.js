@@ -23,7 +23,8 @@ describe('Create DAO', function () {
         'A Company', // _name
         'Description', // _description
         10000000, // _locktime
-        false, // isCreateToken
+        0, // MemberTokenType
+        '0x0000000000000000000000000000000000000000', // memberToken
         [13, 3000, 5000, 0], // budgetApproval
         [13, 3000, 5000, 0], // revokeBudgetApproval
         [13, 3000, 5000, 0], // general
@@ -173,7 +174,8 @@ describe('Create DAO', function () {
           'A Company', // _name
           'Description', // _description
           1000, // _locktime
-          false, // isCreateToken
+          0, // MemberTokenType
+          '0x0000000000000000000000000000000000000000', // memberToken
           [13, 3000, 5000, 0], // budgetApproval
           [13, 3000, 5000, 0], // revokeBudgetApproval
           [13, 3000, 5000, 0], // general
