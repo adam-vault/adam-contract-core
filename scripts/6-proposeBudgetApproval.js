@@ -2,10 +2,10 @@ const hre = require('hardhat');
 const { faker } = require('@faker-js/faker');
 
 // rinkeby
-const governAddress = '0xF7c586684dCF816D21431b74FBcf13fE12B029D1';
-const daoAddress = '0x4ff9F9A3beB4F9147E683D5a315592f7c46f19b9';
-const transferERC20BudgetApprovalAddress = '0xe41339886E09aA5fb7789643dBefb3d9b43fe442';
-const uniswapBudetApprovalAddress = '0xc71fd538CbF621F6d39a53A509E8196f8D2b5BeA';
+const governAddress = '0xcF9665bc143d50A17133ba6F48a3F602BB1cdea8';
+const daoAddress = '0x38B190D5779dC03209132842f070EfD137AA07E4';
+const transferERC20BudgetApprovalAddress = '0xFdD508bd57746FB40dB506211B0105fEb6ebf89c';
+const uniswapBudetApprovalAddress = '0xeB84829a76ff7452be11f11E49ECD142F41eA0E1';
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 
 async function main () {
