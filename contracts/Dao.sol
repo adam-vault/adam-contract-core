@@ -206,7 +206,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
             if(memberTokenType == uint8(MemberTokenTypeOption.InternalErc20Token)) {
                 require(IERC20(memberToken).balanceOf(owner) >= minMemberTokenToJoin, "member token not enough");
-            }else if (memberTokenType == uint8(MemberTokenTypeOption.InternalErc20Token)) {
+            }else if (memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
                 require(IERC721(memberToken).balanceOf(owner) >= minMemberTokenToJoin, "member token not enough");
             }
         }

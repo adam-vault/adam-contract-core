@@ -62,14 +62,18 @@ const createTokens = async () => {
   const tokenB = await TokenB.deploy();
   await tokenB.deployed();
 
-  return { tokenA, tokenB };
+  const TokenC721 = await ethers.getContractFactory('TokenC721');
+  const tokenC721 = await TokenC721.deploy();
+  await tokenC721.deployed();
+
+  return { tokenA, tokenB, tokenC721 };
 };
 
 const createGovern = async () => {
   const [creator] = await ethers.getSigners();
 
   const TokenA = await ethers.getContractFactory('TokenA');
-  tokenA = await TokenA.deploy();
+  const tokenA = await TokenA.deploy();
   await tokenA.deployed();
 
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
