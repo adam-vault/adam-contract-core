@@ -118,25 +118,6 @@ describe('Testing Dao', function () {
         await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('Not ERC 721 standard');
       });
 
-      it('should not able to create DAO with importing EOA address', async function () {
-        const initParaWithIncorrectAddress = [
-          'A Company', // _name
-          'Description', // _description
-          10000000, // _locktime
-          2, // MemberTokenType
-          '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A', // memberToken
-          [13, 3000, 5000, 0], // budgetApproval
-          [13, 3000, 5000, 0], // revokeBudgetApproval
-          [13, 3000, 5000, 0], // general
-          [13, 3000, 5000, 1], // daoSetting
-          ['name', 'symbol'], // tokenInfo
-          100,
-          0, // minDepositAmount
-          1, // minMemberTokenToJoin
-        ];
-        await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('');
-      });
-
       it('should not able to create DAO with importing zero address', async function () {
         const initParaWithIncorrectAddress = [
           'A Company', // _name
