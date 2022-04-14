@@ -1,10 +1,10 @@
-name: pull-request-actions
+name: PR to Main
 on:
   pull_request:
     branches:    
       - main
 jobs:
-  testing:
+  - test:
     runs-on: ubuntu-latest
     steps:
         uses: actions/checkout@v3.0.0
@@ -13,7 +13,7 @@ jobs:
           node-version: 16
       - run: npm install
       - run: npm run test
-  analyze:
+  - analyze:
     runs-on: ubuntu-latest
     permissions:
       contents: read
