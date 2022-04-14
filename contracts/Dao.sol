@@ -94,6 +94,14 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             // tokenInfo: [name, symbol]
             _createMemberToken(params.tokenInfo, params.tokenAmount);
         }else if(memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
+
+            try IERC721(params.memberToken).supportsInterface(0x80ac58cd) returns (bool result) {
+                if(!result){ 
+                    revert("Not ERC 721 standard");
+                }
+            } catch {
+                revert("Not ERC 721 standard");
+            }
             memberToken = params.memberToken;
         }
 
@@ -177,8 +185,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function createBudgetApprovalTransaction (address _budgetApproval, bytes calldata _data, uint256 _deadline, bool _execute) external {
         require(budgetApprovals[_budgetApproval], "budget approval invalid");
-        require(ICommonBudgetApproval(_budgetApproval).supportsInterface(_data.toBytes4(0)), "not supported interface");
-    
         ICommonBudgetApproval(_budgetApproval).createTransaction(_data, _deadline, _execute);
     }
 

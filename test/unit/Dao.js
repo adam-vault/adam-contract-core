@@ -3,7 +3,7 @@ const { ethers } = require('hardhat');
 const { createAdam, createTokens } = require('../utils/createContract.js');
 
 describe('Testing Dao', function () {
-  let adam, dao, tokenC721;
+  let adam, dao, tokenC721, tokenA;
   let creator;
 
   describe('when do not create member token at dao creation', function () {
@@ -90,6 +90,70 @@ describe('Testing Dao', function () {
         await tokenC721.mint(creator.address);
         await dao.deposit({ value: 1 });
         expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
+      });
+    });
+
+    describe('when import Not 721 member token at dao creation', function () {
+      beforeEach(async function () {
+        adam = await createAdam();
+        tokenA = (await createTokens()).tokenA;
+      });
+
+      it('should not able to create DAO with importing ERC 20 address', async function () {
+        const initParaWithIncorrectAddress = [
+          'A Company', // _name
+          'Description', // _description
+          10000000, // _locktime
+          2, // MemberTokenType
+          tokenA.address, // memberToken
+          [13, 3000, 5000, 0], // budgetApproval
+          [13, 3000, 5000, 0], // revokeBudgetApproval
+          [13, 3000, 5000, 0], // general
+          [13, 3000, 5000, 1], // daoSetting
+          ['name', 'symbol'], // tokenInfo
+          100,
+          0, // minDepositAmount
+          1, // minMemberTokenToJoin
+        ];
+        await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('Not ERC 721 standard');
+      });
+
+      it('should not able to create DAO with importing EOA address', async function () {
+        const initParaWithIncorrectAddress = [
+          'A Company', // _name
+          'Description', // _description
+          10000000, // _locktime
+          2, // MemberTokenType
+          '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A', // memberToken
+          [13, 3000, 5000, 0], // budgetApproval
+          [13, 3000, 5000, 0], // revokeBudgetApproval
+          [13, 3000, 5000, 0], // general
+          [13, 3000, 5000, 1], // daoSetting
+          ['name', 'symbol'], // tokenInfo
+          100,
+          0, // minDepositAmount
+          1, // minMemberTokenToJoin
+        ];
+        await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('');
+      });
+
+      it('should not able to create DAO with importing zero address', async function () {
+        const initParaWithIncorrectAddress = [
+          'A Company', // _name
+          'Description', // _description
+          10000000, // _locktime
+          2, // MemberTokenType
+          ethers.constants.AddressZero, // memberToken
+          [13, 3000, 5000, 0], // budgetApproval
+          [13, 3000, 5000, 0], // revokeBudgetApproval
+          [13, 3000, 5000, 0], // general
+          [13, 3000, 5000, 1], // daoSetting
+          ['name', 'symbol'], // tokenInfo
+          100,
+          0, // minDepositAmount
+          1, // minMemberTokenToJoin
+        ];
+        await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('');
       });
     });
 
