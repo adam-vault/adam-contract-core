@@ -4,7 +4,7 @@ on:
     branches:    
       - main
 jobs:
-  - test:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.0
@@ -13,7 +13,7 @@ jobs:
           node-version: 16
       - run: npm install
       - run: npm run test
-  - analyze:
+  analyze:
     runs-on: ubuntu-latest
     permissions:
       contents: read
