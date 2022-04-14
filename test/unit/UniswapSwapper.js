@@ -94,15 +94,14 @@ describe('UniswapSwapper.sol', () => {
       });
 
       it('WETH => ETH', async () => {
-        const msgValue = ethers.utils.parseEther('0.1');
-        const data = '0x2e1a7d4d';
+        const data = '0x2e1a7d4d000000000000000000000000000000000000000000000000016345785d8a0000';
 
-        const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await decode(WETHAddress, data, msgValue);
+        const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await decode(WETHAddress, data, 0);
 
         expect(tokenIn).to.equal(WETHAddress);
         expect(tokenOut).to.equal(ETHAddress);
-        expect(amountIn).to.equal(msgValue);
-        expect(amountOut).to.equal(msgValue);
+        expect(amountIn).to.equal(ethers.utils.parseEther('0.1'));
+        expect(amountOut).to.equal(ethers.utils.parseEther('0.1'));
         expect(estimatedIn).to.equal(false);
         expect(estimatedOut).to.equal(false);
       });

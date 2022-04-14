@@ -55,7 +55,8 @@ contract UniswapSwapper is Initializable {
             return (ETH_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS, amount, amount);
         } else if (_data.toBytes4(0) == 0x2e1a7d4d) {
             // withdraw(uint256)
-            return (WETH_TOKEN_ADDRESS, ETH_TOKEN_ADDRESS, amount, amount);
+            uint256 _amount = abi.decode(_data.slice(4, _data.length - 4), (uint256));
+            return (WETH_TOKEN_ADDRESS, ETH_TOKEN_ADDRESS, _amount, _amount);
         }
 
         revert("Unexpected");

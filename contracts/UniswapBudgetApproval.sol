@@ -85,8 +85,14 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         if(to == UNISWAP_ROUTER) {
             IDao(dao).depositByBudgetApproval(tokenOut, members, mintAmounts, true);
         } else {
-            IERC20(tokenOut).approve(dao, amountOut);
-            IDao(dao).depositByBudgetApproval(tokenOut, members, mintAmounts, false);
+            if(tokenOut == ETH_ADDRESS) {
+                // transfer ETH when call function
+                IDao(dao).depositByBudgetApproval{ value: amountOut }(tokenOut, members, mintAmounts, false);
+            } else {
+                // ERC20 is transferred by dao
+                IERC20(tokenOut).approve(dao, amountOut);
+                IDao(dao).depositByBudgetApproval(tokenOut, members, mintAmounts, false);
+            }
         }
         
     }
