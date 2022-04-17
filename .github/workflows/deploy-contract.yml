@@ -1,0 +1,18 @@
+name: Deploy Contracts
+on:
+  push:
+    tags:    
+      - *\-v[12].[0-9]+.[0-9]+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3.0.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+      - run: npm install
+      - run: npm run compile # Compile
+      - run: npx hardhat run scripts/0-generate-abi.js # Generate APIs
+      - run: npx hardhat run scripts/1-deploy.js --network ${{secrets.CONTRACT_DEPLOY_NETWORK}} # Deploy contracts
