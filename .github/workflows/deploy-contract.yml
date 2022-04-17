@@ -3,6 +3,10 @@ on:
   push:
     tags:    
       - '*\-v[0-9].[0-9]+.[0-9]+'
+env:
+  CONTRACT_DEPLOY_NETWORK: ${{ secrets.CONTRACT_DEPLOY_NETWORK }}
+  KOVAN_URL: ${{ secrets.KOVAN_URL }}
+  RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
 jobs:
   deploy-contracts:
     runs-on: ubuntu-latest

@@ -1,8 +1,0 @@
-name: Echo ENV
-on:
-  push
-jobs:
-  test-env:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ${{ secrets.CONTRACT_DEPLOY_NETWORK }}
