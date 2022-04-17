@@ -1,0 +1,6 @@
+{
+    "exclude_informational": true,
+    "exclude_low": true,
+    "filter_paths": "/share/contracts",
+    "solc_remaps": "@openzeppelin/=/share/node_modules/@openzeppelin/ hardhat/=/share/node_modules/hardhat/"
+}
