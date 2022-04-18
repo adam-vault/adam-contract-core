@@ -2,9 +2,9 @@ const hre = require('hardhat');
 const _ = require('lodash');
 
 // rinkeby
-const daoAddress = '0x38B190D5779dC03209132842f070EfD137AA07E4';
-const transferERC20BudgetApprovalAddress = '0xFdD508bd57746FB40dB506211B0105fEb6ebf89c';
-const uniswapBudetApprovalAddress = '0xeB84829a76ff7452be11f11E49ECD142F41eA0E1';
+const daoAddress = '0x6Ad78b9a145f85F92A30C7AdF5E64faC108F9587';
+const transferERC20BudgetApprovalAddress = '0xDFB01bED87A63E0de4a4eAbc49d68a9bfc2Fb5fa';
+const uniswapBudetApprovalAddress = '0xdEb7A0A4E98Ff2F40FA9E419f21fc171E8A602D8';
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 
 async function main () {
