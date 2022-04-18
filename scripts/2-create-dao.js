@@ -4,7 +4,7 @@ const { faker } = require('@faker-js/faker');
 const { ethers } = require('ethers');
 
 // rinkeby
-const adamAddress = '0x5bC3E2D946F44DeBB5a5B232868c6F4E109DaFba';
+const adamAddress = '0xe66781e2db80A69B809A4f12fa7767b007735d02';
 const testingDataSet = [
   { lockup: 0, memberTokenType: 0, memberToken: ethers.constants.AddressZero },
   { lockup: 100, memberTokenType: 0, memberToken: ethers.constants.AddressZero },
