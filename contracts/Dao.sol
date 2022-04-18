@@ -94,6 +94,14 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             // tokenInfo: [name, symbol]
             _createMemberToken(params.tokenInfo, params.tokenAmount);
         }else if(memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
+
+            try IERC721(params.memberToken).supportsInterface(0x80ac58cd) returns (bool result) {
+                if(!result){ 
+                    revert("Not ERC 721 standard");
+                }
+            } catch {
+                revert("Not ERC 721 standard");
+            }
             memberToken = params.memberToken;
         }
 
