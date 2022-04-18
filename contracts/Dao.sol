@@ -107,7 +107,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         // TODO: confirm govern naming and setting
         _createGovern("DaoSetting", params.daoSettingApproval[0], params.daoSettingApproval[1], params.daoSettingApproval[2], w, params.daoSettingApproval[3]);
 
-        _member(params._creator);
+        address member = _member(params._creator);
+        firstDeposit[member] = block.timestamp;        //todo: should not used first deposit to check min deposit  
     }
 
     modifier govern(string memory category) {
@@ -195,7 +196,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         IMultiToken(multiToken).mintToken(member, _tokenId(address(0)), amount, "");
 
         emit Deposit(member, address(0), amount);
-
+        console.log(firstDeposit[member] );
         if (firstDeposit[member] == 0) {
             firstDeposit[member] = block.timestamp;
 

@@ -81,12 +81,12 @@ describe('Testing Dao', function () {
         await expect(dao.exposedCreateMemberToken(['name1', 'symbol1'], 100)).to.revertedWith('Member token already initialized');
       });
 
-      it('should not able to deposit when not enough minMemberTokenToJoin', async function () {
-        await expect(dao.deposit({ value: 1 })).to.revertedWith('member token not enough');
+      it('should not able to deposit when not enough minMemberTokenToJoin', async function () { // todo: need to create another test case for non DAO creator
+        await dao.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
       });
 
       it('should be able to deposit when enough minMemberTokenToJoin', async function () {
-        console.log(creator.address);
         await tokenC721.mint(creator.address);
         await dao.deposit({ value: 1 });
         expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
@@ -127,8 +127,9 @@ describe('Testing Dao', function () {
         expect(await memberToken.balanceOf(dao.address)).to.eq(100);
       });
 
-      it('should not able to deposit when not enough minMemberTokenToJoin', async function () {
-        await expect(dao.deposit({ value: 1 })).to.revertedWith('member token not enough');
+      it('should not able to deposit when not enough minMemberTokenToJoin', async function () { // todo: need to create another test case for non DAO creator
+        await dao.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
       });
 
       it('should be able to deposit when enough minMemberTokenToJoin', async function () {
@@ -162,8 +163,9 @@ describe('Testing Dao', function () {
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
       });
 
-      it('should not be able to deposit when not enough', async function () {
-        await expect(dao.deposit({ value: 10 })).to.revertedWith('deposit amount not enough');
+      it('should not be able to deposit when not enough', async function () { // todo: need to create another test case for non DAO creator
+        await dao.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
       });
 
       it('should be able to deposit when enough', async function () {
