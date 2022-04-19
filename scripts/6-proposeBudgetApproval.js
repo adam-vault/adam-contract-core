@@ -21,6 +21,8 @@ async function main () {
       '0xBfAA947b65A4350f14895980D0c8f420576fC163',
       // approvers
       ['0x525BaB223a5F7D3E81699995DaA92fAe7329C5D9'],
+      // minApproval
+      1,
       // text
       'Transfer ERC20',
       // transaction type
@@ -39,10 +41,14 @@ async function main () {
       hre.ethers.utils.parseEther('1000'),
       // allowed amount percentage
       '10',
+      // start time
+      0,
+      // end time
+      0,
     ]]);
 
   const uniswapBudgetApproval = await hre.ethers.getContractAt('UniswapBudgetApproval', uniswapBudetApprovalAddress);
-  const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])',
+  const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize((address,address,address[],uint256,string,string,bool,address[],bool,address[],bool,uint256,uint8,uint256,uint256),bool,address[])',
     [
       // common params
       [
@@ -52,6 +58,8 @@ async function main () {
         '0xBfAA947b65A4350f14895980D0c8f420576fC163',
         // approvers
         [],
+        // minApproval
+        0,
         // text
         'Uniswap',
         // transaction type
@@ -70,6 +78,10 @@ async function main () {
         hre.ethers.utils.parseEther('0'),
         // allowed amount percentage
         '100',
+        // start time
+        0,
+        // end time
+        0,
       ],
       // extra params
       // allow all to tokens,

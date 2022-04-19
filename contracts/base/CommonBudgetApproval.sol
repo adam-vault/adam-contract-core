@@ -345,8 +345,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
 
-        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8))
-        if(_data.toBytes4(0) != 0x28746e66) {
+        // initialize((address,address,address[],uint256,string,string,bool,address[],bool,address[],bool,uint256,uint8,uint256,uint256))
+        if(_data.toBytes4(0) != 0x251e7528) {
             revert("unexpected function");
         }
 
