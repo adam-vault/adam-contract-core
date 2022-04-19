@@ -71,10 +71,6 @@ contract MultiToken is ERC1155Upgradeable {
         return id;
     }
 
-    function mintedContracts() public view returns (address[] memory) {
-        return _mintedContracts;
-    }
-
     function mintToken(
         address to,
         uint256 id,

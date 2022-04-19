@@ -191,10 +191,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         ICommonBudgetApproval(_budgetApproval).createTransaction(_data, _deadline, _execute);
     }
 
-    function getMintedContracts() external view returns (address[] memory) {
-        return IMultiToken(multiToken).mintedContracts();
-    }
-
     function deposit() public payable {
         _deposit(msg.sender, msg.value);
     }

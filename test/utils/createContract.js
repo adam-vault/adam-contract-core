@@ -1,12 +1,19 @@
 const { ethers, upgrades } = require('hardhat');
 
 const deployConstantState = async (signer, network = 'rinkeby') => {
+  let ConstantContract;
+
   if (network === 'rinkeby') {
-    const RinkebyConstant = await ethers.getContractFactory('RinkebyConstant', { signer });
-    const rinkebyConstant = await RinkebyConstant.deploy();
-    await rinkebyConstant.deployed();
-    return rinkebyConstant.address;
+    ConstantContract = await ethers.getContractFactory('RinkebyConstant', { signer });
   }
+
+  if (network === 'test') {
+    ConstantContract = await ethers.getContractFactory('MockConstant', { signer });
+  }
+
+  const constantContract = await ConstantContract.deploy();
+  await constantContract.deployed();
+  return constantContract.address;
 };
 
 const deployBudgetApprovals = async (signer) => {
@@ -21,10 +28,10 @@ const deployBudgetApprovals = async (signer) => {
   return [transferERC20BudgetApproval.address, uniswapBudgetApproval.address];
 };
 
-const createAdam = async () => {
+const createAdam = async ({ network } = {}) => {
   const [creator] = await ethers.getSigners();
 
-  const constantState = await deployConstantState(creator);
+  const constantState = await deployConstantState(creator, network);
   const budgetApprovalsAddress = await deployBudgetApprovals(creator);
   const Dao = await ethers.getContractFactory('MockDaoV2', { signer: creator });
   const Membership = await ethers.getContractFactory('Membership', { signer: creator });
@@ -66,7 +73,11 @@ const createTokens = async () => {
   const tokenC721 = await TokenC721.deploy();
   await tokenC721.deployed();
 
-  return { tokenA, tokenB, tokenC721 };
+  const MockWETH9 = await ethers.getContractFactory('MockWETH9');
+  const mockWETH9 = await MockWETH9.deploy();
+  await mockWETH9.deployed();
+
+  return { tokenA, tokenB, tokenC721, mockWETH9 };
 };
 
 const createGovern = async () => {

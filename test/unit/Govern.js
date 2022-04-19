@@ -303,6 +303,8 @@ describe('Voting and executing budget approval', function () {
         creator.address,
         // approvers
         [],
+        // minApproval
+        0,
         // text
         'Transfer ERC20',
         // transaction type
@@ -311,16 +313,18 @@ describe('Voting and executing budget approval', function () {
         true,
         // allowed addresses (use when above = false)
         ['0xBfAA947b65A4350f14895980D0c8f420576fC163'],
-        // alow all tokens,
-        false,
-        // allowed token (use when above = false)
+        // allowed token
         [tokenAddr],
         // allow any amount
         false,
         // allowed total amount
         hre.ethers.utils.parseEther('100'),
         // allowed amount percentage
-        '100',
+        '10000',
+        // start time
+        Math.round(Date.now() / 1000) - 86400,
+        // end time
+        Math.round(Date.now() / 1000) + 86400,
       ]]);
 
     const tx = await dao.createBudgetApprovals([approvalAddr], [dataERC20]);

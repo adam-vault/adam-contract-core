@@ -19,4 +19,9 @@ contract MockDaoV2 is Dao {
     function exposedTransferMemberToken(address to, uint amount) public {
         _transferMemberToken(to, amount);
     }
+
+    function exposedMintToken(address owner, address token, uint256 amount) public {
+        address member = _member(owner);
+        IMultiToken(multiToken).mintToken(member, _tokenId(token), amount, "");
+    }
 }

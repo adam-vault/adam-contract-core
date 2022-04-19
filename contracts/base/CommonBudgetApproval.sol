@@ -59,7 +59,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     address[] public approvers;
     mapping(address => bool) public approversMapping;
-    uint256 minApproval;
+    uint256 public minApproval;
 
     string public text;
     string public transactionType;
@@ -67,14 +67,13 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
 
-    bool public allowAllTokens;
     address[] public tokens;
     mapping(address => bool) public tokensMapping;
 
     bool public allowAnyAmount;
     uint256 public totalAmount;
 
-    uint8 public amountPercentage;
+    uint256 public amountPercentage;
 
     uint256 startTime;
     uint256 endTime;
@@ -117,11 +116,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         string transactionType;
         bool allowAllAddresses;
         address[] addresses;
-        bool allowAllTokens;
         address[] tokens;
         bool allowAnyAmount;
         uint256 totalAmount;
-        uint8 amountPercentage;
+        uint256 amountPercentage;
         uint256 startTime;
         uint256 endTime;
     }
@@ -148,7 +146,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             emit AllowAddress(params.addresses[i]);
         }
 
-        allowAllTokens = params.allowAllTokens;
         tokens = params.tokens;
         for(uint i = 0; i < params.tokens.length; i++) {
             tokensMapping[params.tokens[i]] = true;
@@ -158,7 +155,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         allowAnyAmount = params.allowAnyAmount;
         totalAmount = params.totalAmount;
         emit AllowAmount(totalAmount);
+
         amountPercentage = params.amountPercentage;
+        require(amountPercentage <= 10000, "amountPercentage invalid");
+
 
         startTime = params.startTime;
         endTime = params.endTime;
@@ -183,7 +183,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         Transaction storage newTransaction = transactions[_transactionId];
         newTransaction.id = _transactionId;
         newTransaction.data = _data;
-        if(approvers.length == 0) {
+        if(minApproval == 0) {
             newTransaction.status = Status.Approved;
         } else {
             newTransaction.status = Status.Pending;
@@ -237,7 +237,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function checkTokenValid(address token) public view returns (bool) {
-        return allowAllTokens || tokensMapping[token];
+        return tokensMapping[token];
     }
 
     function checkAmountValid(uint256 amount) public view returns (bool) {
@@ -247,23 +247,16 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
 
         uint256 _totalAmount;
-        address[] memory ownedTokens;
 
         if(executed) {
             _totalAmount += amount;
         }
 
-        if(allowAllTokens) {
-            ownedTokens =  IMultiToken(IDao(dao).multiToken()).mintedContracts();
-        } else {
-            ownedTokens = tokens;
-        }
-
-        for(uint i = 0; i < ownedTokens.length; i++) {
-            if(ownedTokens[i] == ETH_ADDRESS) {
+        for(uint i = 0; i < tokens.length; i++) {
+            if(tokens[i] == ETH_ADDRESS) {
                 _totalAmount += dao.balance;
             } else {
-                _totalAmount += IERC20(ownedTokens[i]).balanceOf(dao);
+                _totalAmount += IERC20(tokens[i]).balanceOf(dao);
             }
         }
 
@@ -271,7 +264,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             return false;
         }
 
-        return (amount * 100 / _totalAmount) <= amountPercentage;
+        return (amount * 10000 / _totalAmount) <= amountPercentage;
     }
 
     function _updateTotalAmount(uint256 usedAmount) internal {
@@ -345,8 +338,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
 
-        // initialize((address,address,address[],uint256,string,string,bool,address[],bool,address[],bool,uint256,uint8,uint256,uint256))
-        if(_data.toBytes4(0) != 0x251e7528) {
+        // initialize((address,address,address[],uint256,string,string,bool,address[],address[],bool,uint256,uint256,uint256,uint256))
+        if(_data.toBytes4(0) != 0x5692db24) {
             revert("unexpected function");
         }
 
