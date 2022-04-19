@@ -69,8 +69,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     uint8 public amountPercentage;
 
-    uint256 startTime;
-    uint256 endTime;
+    uint256 public startTime;
+    uint256 public endTime;
 
     modifier onlyDao {
         require(msg.sender == dao, "access denied");
