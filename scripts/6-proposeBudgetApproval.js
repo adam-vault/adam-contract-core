@@ -39,6 +39,8 @@ async function main () {
       hre.ethers.utils.parseEther('1000'),
       // allowed amount percentage
       '10',
+      Math.round(Date.now() / 1000) - 86400, // startTime
+      Math.round(Date.now() / 1000) + 86400, // endTime
     ]]);
 
   const uniswapBudgetApproval = await hre.ethers.getContractAt('UniswapBudgetApproval', uniswapBudetApprovalAddress);
@@ -70,6 +72,8 @@ async function main () {
         hre.ethers.utils.parseEther('0'),
         // allowed amount percentage
         '100',
+        Math.round(Date.now() / 1000) - 86400, // startTime
+        Math.round(Date.now() / 1000) + 86400, // endTime
       ],
       // extra params
       // allow all to tokens,

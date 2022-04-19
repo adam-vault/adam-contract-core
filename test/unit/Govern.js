@@ -321,6 +321,8 @@ describe('Voting and executing budget approval', function () {
         hre.ethers.utils.parseEther('100'),
         // allowed amount percentage
         '100',
+        0,
+        0,
       ]]);
 
     const tx = await dao.createBudgetApprovals([approvalAddr], [dataERC20]);

@@ -69,6 +69,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     uint8 public amountPercentage;
 
+    uint256 startTime;
+    uint256 endTime;
+
     modifier onlyDao {
         require(msg.sender == dao, "access denied");
         _;
@@ -89,8 +92,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
-    modifier checkDeadline(uint256 _transactionId) {
+    modifier checkTime(uint256 _transactionId) {
         require(block.timestamp <= transactions[_transactionId].deadline, "transaction expired");
+        require(block.timestamp >= startTime, "budget approval not yet started");
+        if(endTime != 0) {
+            require(block.timestamp < endTime, "budget approval ended");
+        }
         _;
     }
 
@@ -107,6 +114,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bool allowAnyAmount;
         uint256 totalAmount;
         uint8 amountPercentage;
+        uint256 startTime;
+        uint256 endTime;
     }
 
     function initialize(
@@ -139,11 +148,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         totalAmount = params.totalAmount;
         emit AllowAmount(totalAmount);
         amountPercentage = params.amountPercentage;
+
+        startTime = params.startTime;
+        endTime = params.endTime;
     }
 
     function NAME() external virtual returns (string calldata);
 
-    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkDeadline(_transactionId) {
+    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkTime(_transactionId) {
         require(msg.sender == executor || msg.sender == dao, "access denied");
 
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
@@ -316,8 +328,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
 
-        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8))
-        if(_data.toBytes4(0) != 0x28746e66) {
+        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8,uint256,uint256))
+        if(_data.toBytes4(0) != 0x100e49e8) {
             revert("unexpected function");
         }
 
