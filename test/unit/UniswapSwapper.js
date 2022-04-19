@@ -36,7 +36,7 @@ describe('UniswapSwapper.sol', () => {
     const dao = await ethers.getContractAt('Dao', daoAddr);
     const uniswapBAImplementationAddr = await adam.budgetApprovals(1);
     const uniswapBAImplementation = await ethers.getContractAt('UniswapBudgetApproval', uniswapBAImplementationAddr);
-    const initData = await uniswapBAImplementation.callStatic['encodeUniswapInitializeData((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])'](
+    const initData = await uniswapBAImplementation.callStatic.encodeUniswapInitializeData(
       [
         // dao address
         dao.address,
@@ -62,6 +62,8 @@ describe('UniswapSwapper.sol', () => {
         ethers.utils.parseEther('0'),
         // allowed amount percentage
         '100',
+        Math.round(Date.now() / 1000) - 86400, // startTime
+        Math.round(Date.now() / 1000) + 86400, // endTime
       ],
       true,
       [],

@@ -135,7 +135,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         address[] calldata _toTokens
     ) public pure returns (bytes memory data) {
         return abi.encodeWithSignature(
-            "initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])",
+            "initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8,uint256,uint256),bool,address[])",
             params,
             _allowAllTokens,
             _toTokens
@@ -144,8 +144,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     function decodeUniswapInitializeData(bytes memory _data) public pure returns (InitializeParams memory, bool, address[] memory) {
 
-        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])
-        if(_data.toBytes4(0) != 0xf3d74a99) {
+        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8,uint256,uint256),bool,address[])
+        if(_data.toBytes4(0) != 0x2b3fa0af) {
             revert("unexpected function");
         }
 

@@ -66,6 +66,8 @@ describe('Testing TransferERC20BudgetApproval', function () {
           ethers.utils.parseEther('100'),
           // allowed amount percentage
           '10',
+          Math.round(Date.now() / 1000) - 86400, // startTime
+          Math.round(Date.now() / 1000) + 86400, // endTime
         ],
       );
 
