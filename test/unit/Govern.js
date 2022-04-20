@@ -311,9 +311,7 @@ describe('Voting and executing budget approval', function () {
         true,
         // allowed addresses (use when above = false)
         ['0xBfAA947b65A4350f14895980D0c8f420576fC163'],
-        // alow all tokens,
-        false,
-        // allowed token (use when above = false)
+        // allowed token
         [tokenAddr],
         // allow any amount
         false,
@@ -322,6 +320,8 @@ describe('Voting and executing budget approval', function () {
         // allowed amount percentage
         '100',
         0,
+        0,
+        true,
         0,
       ]]);
 

@@ -56,9 +56,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
           false,
           // allowed addresses (use when above = false)
           [receiver.address],
-          // alow all tokens,
-          false,
-          // allowed token (use when above = false)
+          // allowed token
           [ethers.constants.AddressZero, tokenA.address],
           // allow any amount
           false,
@@ -68,6 +66,8 @@ describe('Testing TransferERC20BudgetApproval', function () {
           '10',
           Math.round(Date.now() / 1000) - 86400, // startTime
           Math.round(Date.now() / 1000) + 86400, // endTime
+          false, // allow unlimited usage
+          10, // usage count
         ],
       );
 
@@ -90,7 +90,6 @@ describe('Testing TransferERC20BudgetApproval', function () {
       expect(await budgetApproval.callStatic.allowAllAddresses()).to.eq(false);
       expect(await budgetApproval.callStatic.addressesMapping(receiver.address)).to.eq(true);
 
-      expect(await budgetApproval.callStatic.allowAllTokens()).to.eq(false);
       expect(await budgetApproval.callStatic.tokens(0)).to.eq(ethers.constants.AddressZero);
       expect(await budgetApproval.callStatic.tokens(1)).to.eq(tokenA.address);
       expect(await budgetApproval.callStatic.tokensMapping(ethers.constants.AddressZero)).to.eq(true);
