@@ -35,10 +35,12 @@ async function main () {
       '10',
       Math.round(Date.now() / 1000) - 86400, // startTime
       Math.round(Date.now() / 1000) + 86400, // endTime
+      true, // allow unlimited usage count
+      0, // usage count
     ]]);
 
   const uniswapBudgetApproval = await hre.ethers.getContractAt('UniswapBudgetApproval', uniswapBudetApprovalAddress);
-  const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8,uint256,uint256),bool,address[])',
+  const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize((address,address,address[],string,string,bool,address[],address[],bool,uint256,uint8,uint256,uint256,bool,uint256),bool,address[])',
     [
       // common params
       [
@@ -66,6 +68,8 @@ async function main () {
         '100',
         Math.round(Date.now() / 1000) - 86400, // startTime
         Math.round(Date.now() / 1000) + 86400, // endTime
+        true, // allow unlimited usage count
+        0, // usage count
       ],
       // extra params
       // allow all to tokens,
