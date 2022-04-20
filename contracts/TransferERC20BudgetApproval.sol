@@ -47,7 +47,8 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return checkAddressValid(_recipient) && 
                checkTokenValid(_token) && 
                checkAmountValid(_amount) && 
-               checkAmountPercentageValid(_amount, executed);
+               checkAmountPercentageValid(_amount, executed) &&
+               checkUsageCountValid();
     }
 
     // return (address token, address recipient, uint256 amount)

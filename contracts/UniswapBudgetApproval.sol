@@ -102,7 +102,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         return checkTokenValid(_tokenIn) && 
                checkAmountValid(_amount) && 
                checkAmountPercentageValid(_amount, executed) &&
-               checkToTokenValid(_tokenOut);
+               checkToTokenValid(_tokenOut) &&
+               checkUsageCountValid();
     }
 
     function checkToTokenValid(address _token) public view returns (bool) {
