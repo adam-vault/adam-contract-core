@@ -14,7 +14,6 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
-import "./interface/IMultiToken.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/ICommonBudgetApproval.sol";
 import "./interface/IMemberToken.sol";
@@ -28,14 +27,11 @@ import "hardhat/console.sol";
 
 contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155Holder {
     // list strategy
-    using Counters for Counters.Counter;
     using Strings for uint256;
     using Concat for string;
     using BytesLib for bytes;
 
     address constant public ETH_ADDRESS = address(0x0);
-
-    Counters.Counter private _ERC20tokenIds;
 
     enum MemberTokenTypeOption {
         NotInUsed,
@@ -47,7 +43,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public creator;
     address public adam;
     address public membership;
-    address public multiToken;
+    address public liquidPool;
     address public governFactory;
     address public memberTokenImplementation;
     string public name;
@@ -81,7 +77,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         adam = msg.sender;
         creator = params._creator;
         membership = params._membership;
-        multiToken = params._multiToken;
+        liquidPool = params._liquidPool;
         name = params._name;
         locktime = params._locktime;
         governFactory = params._governFactory;
@@ -89,12 +85,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         minDepositAmount = params.daoSetting.minDepositAmount;
         minMemberTokenToJoin = params.daoSetting.minMemberTokenToJoin;
         memberTokenType = params.memberTokenType;
-        
-        if (memberTokenType == uint8(MemberTokenTypeOption.InternalErc20Token)) {
-            // tokenInfo: [name, symbol]
-            _createMemberToken(params.tokenInfo, params.tokenAmount);
-        }else if(memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
+        memberToken = params.memberToken;
 
+        if(memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
             try IERC721(params.memberToken).supportsInterface(0x80ac58cd) returns (bool result) {
                 if(!result){ 
                     revert("Not ERC 721 standard");
@@ -102,7 +95,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             } catch {
                 revert("Not ERC 721 standard");
             }
-            memberToken = params.memberToken;
         }
 
         uint256[] memory w = new uint256[](1);
@@ -115,8 +107,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         // TODO: confirm govern naming and setting
         _createGovern("DaoSetting", params.daoSettingApproval[0], params.daoSettingApproval[1], params.daoSettingApproval[2], w, params.daoSettingApproval[3]);
 
-        address member = _member(params._creator);
-        firstDeposit[member] = block.timestamp;        //todo: should not used first deposit to check min deposit  
+        // ILiquidPool(liquidPool).deposit();
+        // address member = _member(params._creator);
+        firstDeposit[creator] = block.timestamp;        //todo: should not used first deposit to check min deposit  
     }
 
     modifier govern(string memory category) {
@@ -134,22 +127,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _;
     }
 
-    function createMemberToken(string[] calldata tokenInfo, uint tokenAmount) public govern("DaoSetting") {
-        _createMemberToken(tokenInfo, tokenAmount);
-    }
-
-    function _createMemberToken(string[] calldata tokenInfo, uint tokenAmount) internal {
-        require(memberToken == address(0), "Member token already initialized");
-        require(tokenInfo.length == 2, "Insufficient info to create member token");
-
-        ERC1967Proxy _memberToken = new ERC1967Proxy(memberTokenImplementation, "");
-        memberToken = address(_memberToken);
-        IMemberToken(memberToken).initialize(address(this), tokenInfo[0], tokenInfo[1]);
-        IMultiToken(multiToken).mintToken(_member(address(this)), _tokenId(memberToken), tokenAmount, "");
-
-        _mintMemberToken(tokenAmount);
-
-        emit CreateMemberToken(msg.sender, memberToken);
+    function setFirstDeposit(address owner) public {
+        require(msg.sender == liquidPool, "only LP");
+        firstDeposit[owner] = block.timestamp;
     }
 
     function mintMemberToken(uint amount) public govern("BudgetApproval") {
@@ -191,44 +171,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         ICommonBudgetApproval(_budgetApproval).createTransaction(_data, _deadline, _execute);
     }
 
-    function getMintedContracts() external view returns (address[] memory) {
-        return IMultiToken(multiToken).mintedContracts();
-    }
-
-    function deposit() public payable {
-        _deposit(msg.sender, msg.value);
-    }
-
-    function _deposit(address owner, uint256 amount) private {
-        address member = _member(owner);
-        IMultiToken(multiToken).mintToken(member, _tokenId(address(0)), amount, "");
-
-        emit Deposit(member, address(0), amount);
-        console.log(firstDeposit[member] );
-        if (firstDeposit[member] == 0) {
-            firstDeposit[member] = block.timestamp;
-
-            require(amount >= minDepositAmount, "deposit amount not enough");
-
-            if(memberTokenType == uint8(MemberTokenTypeOption.InternalErc20Token)) {
-                require(IERC20(memberToken).balanceOf(owner) >= minMemberTokenToJoin, "member token not enough");
-            }else if (memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
-                require(IERC721(memberToken).balanceOf(owner) >= minMemberTokenToJoin, "member token not enough");
-            }
-        }
-    }
-
-    function redeem(uint256 _amount) public {
-        uint256 membershipId = IMembership(membership).ownerToTokenId(msg.sender);
-        require(membershipId != 0, "no membership");
-
-        address member = IMembership(membership).tokenIdToMember(membershipId);
-        require(firstDeposit[member] + locktime <= block.timestamp, "lockup time");
-        require(_amount <= IMultiToken(multiToken).balanceOf(member, IMultiToken(multiToken).ethId()), "too big");
-
-        IMultiToken(multiToken).burnToken(member, IMultiToken(multiToken).ethId(), _amount);
-        payable(msg.sender).transfer(_amount);
-        emit Redeem(member, address(0), _amount);
+    function getMintedContracts() external view returns (address[1] memory) {
+        // TODO remove this
+        return [memberToken];
     }
 
     function withdrawByBudgetApproval(
@@ -237,22 +182,22 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         uint256[] memory _amounts, 
         bool transferred
     ) external onlyBudgetApproval returns (uint256 totalAmount) {
-        require(_members.length == _amounts.length, "invalid input");
+        // require(_members.length == _amounts.length, "invalid input");
 
-        for(uint i = 0; i < _members.length; i++) {
-            IMultiToken(multiToken).burnToken(_members[i], _tokenId(_token), _amounts[i]);
-            totalAmount += _amounts[i];
-        }
+        // for(uint i = 0; i < _members.length; i++) {
+        //     IMultiToken(multiToken).burnToken(_members[i], _tokenId(_token), _amounts[i]);
+        //     totalAmount += _amounts[i];
+        // }
 
-        if(!transferred) {
-            if(_token == ETH_ADDRESS) {
-                // ETH
-                payable(msg.sender).transfer(totalAmount);
-            } else {
-                // ERC20
-                IERC20(_token).transfer(msg.sender, totalAmount);
-            }
-        }
+        // if(!transferred) {
+        //     if(_token == ETH_ADDRESS) {
+        //         // ETH
+        //         payable(msg.sender).transfer(totalAmount);
+        //     } else {
+        //         // ERC20
+        //         IERC20(_token).transfer(msg.sender, totalAmount);
+        //     }
+        // }
     }
 
     function depositByBudgetApproval(
@@ -261,43 +206,27 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         uint256[] memory _amounts, 
         bool transferred
     ) external payable onlyBudgetApproval returns (uint256 totalAmount) {
-        require(_members.length == _amounts.length, "invalid input");
+        // require(_members.length == _amounts.length, "invalid input");
 
-        for(uint i = 0; i < _members.length; i++) {
-            IMultiToken(multiToken).mintToken(_members[i], _tokenId(_token), _amounts[i], "");
-            totalAmount += _amounts[i];
-        }
+        // for(uint i = 0; i < _members.length; i++) {
+        //     IMultiToken(multiToken).mintToken(_members[i], _tokenId(_token), _amounts[i], "");
+        //     totalAmount += _amounts[i];
+        // }
 
-        if(!transferred) {
-            if(_token == ETH_ADDRESS) {
-                require(msg.value == totalAmount, "amount invalid");
-            } else {
-                // ERC20
-                require(IERC20(_token).allowance(msg.sender, address(this)) >= totalAmount,"not approved");
-                IERC20(_token).transferFrom(msg.sender, address(this), totalAmount);
-            }
-        }
+        // if(!transferred) {
+        //     if(_token == ETH_ADDRESS) {
+        //         require(msg.value == totalAmount, "amount invalid");
+        //     } else {
+        //         // ERC20
+        //         require(IERC20(_token).allowance(msg.sender, address(this)) >= totalAmount,"not approved");
+        //         IERC20(_token).transferFrom(msg.sender, address(this), totalAmount);
+        //     }
+        // }
     }
 
     function updateDaoSetting(IDao.DaoSetting calldata _setting) public govern("DaoSetting") {
         minDepositAmount = _setting.minDepositAmount;
         minMemberTokenToJoin = _setting.minMemberTokenToJoin;
-    }
-
-    function _tokenId(address contractAddress) internal returns (uint256){
-        if (IMultiToken(multiToken).addressToId(contractAddress) == 0) {
-            IMultiToken(multiToken).createToken(contractAddress);
-        }
-        return IMultiToken(multiToken).addressToId(contractAddress);
-    }
-
-
-    function _member(address owner) internal returns (address) {
-        uint256 memberTokenId = IMembership(membership).ownerToTokenId(owner);
-        if (memberTokenId == 0) {
-            (memberTokenId,) = IMembership(membership).createMember(owner);
-        }
-        return IMembership(membership).tokenIdToMember(memberTokenId);
     }
 
     function createGovern(
