@@ -14,21 +14,19 @@ async function main () {
       // dao address
       daoAddress,
       // executor
-      '0xBfAA947b65A4350f14895980D0c8f420576fC163',
+      '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
       // approvers
-      ['0x525BaB223a5F7D3E81699995DaA92fAe7329C5D9'],
+      [],
       // text
       'Transfer ERC20',
       // transaction type
-      'Outflow',
+      'outflow',
       // allow all addresses,
       false,
       // allowed addresses (use when above = false)
-      ['0xBfAA947b65A4350f14895980D0c8f420576fC163'],
-      // alow all tokens,
-      false,
+      ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
       // allowed token (use when above = false)
-      [DAIAddress],
+      [hre.ethers.constants.AddressZero, DAIAddress],
       // allow any amount
       false,
       // allowed total amount
@@ -47,21 +45,19 @@ async function main () {
       // dao address
         daoAddress,
         // executor
-        '0xBfAA947b65A4350f14895980D0c8f420576fC163',
+        '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
         // approvers
         [],
         // text
         'Uniswap',
         // transaction type
-        'Swap',
+        'swap',
         // allow all addresses,
         false,
         // allowed addresses (use when above = false)
         ['0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45'],
-        // alow all tokens,
-        true,
         // allowed token (use when above = false)
-        [],
+        [hre.ethers.constants.AddressZero],
         // allow any amount
         true,
         // allowed total amount
