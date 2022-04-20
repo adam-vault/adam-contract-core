@@ -292,7 +292,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function _getAmountsOfAllMembersOnProRata(address _token, uint256 _totalAmount) internal view returns (address[] memory, uint256[] memory) {
         address _membership = IDao(dao).membership();
-        address mt = IDao(dao).multiToken();
+        address mt = dao; // TODO remove
         uint256 tokenId = IMultiToken(mt).addressToId(_token);
         address[] memory members = IMembership(_membership).getAllMembers();
         uint256[] memory amounts = new uint[](members.length);

@@ -9,13 +9,14 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./interface/IAdam.sol";
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
-import "./interface/IMultiToken.sol";
+import "./interface/ILiquidPool.sol";
 import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable {
+    address public feedRegistry;
     address public daoImplementation;
     address public membershipImplementation;
-    address public multiTokenImplementation;
+    address public liquidPoolImplementation;
     address public governFactory;
     address public governImplementation;
     address public memberTokenImplementation;
@@ -33,19 +34,21 @@ contract Adam is Initializable, UUPSUpgradeable {
     function initialize(
         address _daoImplementation,
         address _membershipImplementation,
-        address _multiTokenImplementation,
+        address _liquidPoolImplementation,
         address _memberTokenImplementation,
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
-        address _constantState
+        address _constantState,
+        address _feedRegistry
     ) public initializer {
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
-        multiTokenImplementation = _multiTokenImplementation;
+        liquidPoolImplementation = _liquidPoolImplementation;
         memberTokenImplementation = _memberTokenImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
         constantState = _constantState;
+        feedRegistry = _feedRegistry;
     }
 
     function _authorizeUpgrade(address) internal override initializer {}
@@ -72,15 +75,16 @@ contract Adam is Initializable, UUPSUpgradeable {
     function createDao(IAdam.CreateDaoParams calldata params) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
-        ERC1967Proxy _multiToken = new ERC1967Proxy(multiTokenImplementation, "");
+        ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
         IMembership(address(_membership)).initialize(address(_dao), params._name);
-        IMultiToken(address(_multiToken)).initialize(address(_dao));
+        // TODO
+        ILiquidPool(payable(address(_liquidPool))).initialize(address(_dao), feedRegistry);
 
         IDao(payable(address(_dao))).initialize(
             IDao.InitializeParams(
                 msg.sender,
                 address(_membership),
-                address(_multiToken),
+                address(_liquidPool),
                 address(governFactory),
                 address(memberTokenImplementation),
                 params._name,
