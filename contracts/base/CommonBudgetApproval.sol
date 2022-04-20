@@ -41,6 +41,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     event AllowAddress(address target);
     event AllowToken(address token);
     event AllowAmount(uint256 amount);
+    event UsageCount(uint256 count);
 
     Counters.Counter private _transactionIds;
 
@@ -71,6 +72,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     uint256 public startTime;
     uint256 public endTime;
+
+    bool public allowUnlimitedUsageCount;
+    uint256 public usageCount;
 
     modifier onlyDao {
         require(msg.sender == dao, "access denied");
@@ -116,6 +120,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         uint8 amountPercentage;
         uint256 startTime;
         uint256 endTime;
+        bool allowUnlimitedUsageCount;
+        uint256 usageCount;
     }
 
     function initialize(
@@ -151,6 +157,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
         startTime = params.startTime;
         endTime = params.endTime;
+
+        allowUnlimitedUsageCount = params.allowUnlimitedUsageCount;
+        usageCount = params.maxUsageCount;
+        emit UsageCount(usageCount);
     }
 
     function NAME() external virtual returns (string calldata);
@@ -263,6 +273,18 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             emit AllowAmount(totalAmount);
         }
     }
+
+    function checkUsageCountValid() public view returns (bool) {
+        return allowUnlimitedUsageCount || usageCount > 0;
+    }
+
+    function _updateUsageCount() internal {
+        if(!allowUnlimitedUsageCount) {
+            usageCount--;
+            emit UsageCount(usageCount);
+        }
+    }
+
 
     function _getAmountOfMembersByRatio(uint256 _totalAmount, address[] memory members, uint256[] memory amountsForRatio, uint256 totalAmountForRatio) internal pure returns (address[] memory, uint256[] memory) {
         require(members.length == amountsForRatio.length, "invalid input");

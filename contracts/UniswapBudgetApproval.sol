@@ -66,6 +66,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         require(checkValid(tokenIn, tokenOut, amountIn, true), "transaction not valid");
 
         _updateTotalAmount(amountIn);
+        _updateUsageCount();
 
         // return unused amount (triggered when input is estimated)
         if(amountIn < requiredAmount) {
