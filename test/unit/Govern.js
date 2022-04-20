@@ -4,7 +4,7 @@ const _ = require('lodash');
 const { createTokens, createAdam } = require('../utils/createContract');
 
 describe('Testing Govern', function () {
-  let adam, dao, governFactory;
+  let adam, dao, governFactory, lp;
   let creator, owner1, owner2;
   let tokenA;
   const category = {
@@ -32,6 +32,7 @@ describe('Testing Govern', function () {
         1,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
+        [],
       ],
     );
   }
@@ -42,6 +43,7 @@ describe('Testing Govern', function () {
     await createDao();
     const daoAddr = await adam.daos(0);
     dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     const governFactoryAddr = await dao.governFactory();
     governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
     const res = await createTokens();
@@ -166,18 +168,23 @@ describe('Testing Govern', function () {
             1,
             0, // minDepositAmount
             0, // minMemberTokenToJoin
+            [],
           ],
         );
 
         const daoAddr = await adam.daos(1);
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+
         const governFactoryAddr = await dao.governFactory();
         governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
         const membershipAddr = await dao.membership();
         const membership = await ethers.getContractAt('Membership', membershipAddr);
 
-        await dao.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
-        await dao.connect(owner2).deposit({ value: ethers.utils.parseEther('2') });
+        await (lp.connect(owner1)).deposit({ value: ethers.utils.parseEther('1') });
+        await (lp.connect(owner2)).deposit({ value: ethers.utils.parseEther('2') });
+        console.log(owner1.address);
+        expect(await membership.balanceOf(owner1.address)).to.eq(1);
 
         expect(await membership.getVotes(owner1.address)).to.eq(1);
         expect(await membership.getVotes(owner2.address)).to.eq(1);
@@ -233,20 +240,22 @@ describe('Testing Govern', function () {
             1,
             0, // minDepositAmount
             0, // minMemberTokenToJoin
+            [],
           ],
         );
 
         const daoAddr = await adam.daos(1);
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
         const governFactoryAddr = await dao.governFactory();
         governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
 
         const membershipAddr = await dao.membership();
         const membership = await ethers.getContractAt('Membership', membershipAddr);
 
-        await dao.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
+        await lp.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
 
-        await dao.connect(owner2).deposit({ value: ethers.utils.parseEther('2') });
+        await lp.connect(owner2).deposit({ value: ethers.utils.parseEther('2') });
 
         expect(await membership.getVotes(owner1.address)).to.eq(1);
         expect(await membership.getVotes(owner2.address)).to.eq(1);
@@ -291,7 +300,7 @@ describe('Testing Govern', function () {
 
 describe('Voting and executing budget approval', function () {
   let creator, owner1, owner2;
-  let adam, dao, governFactory;
+  let adam, dao, governFactory, lp;
 
   async function createTransferERC20BudgetApproval (approvalAddr, tokenAddr) {
     const transferERC20BudgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', approvalAddr);
@@ -350,10 +359,12 @@ describe('Voting and executing budget approval', function () {
         100, // mint MT to dao
         0, // minDepositAmount
         0, // minMemberTokenToJoin
+        [],
       ],
     );
     const daoAddr = await adam.daos(0);
     dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     const governFactoryAddr = await dao.governFactory();
     governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
   });
@@ -379,7 +390,7 @@ describe('Voting and executing budget approval', function () {
         ],
       );
 
-      await dao.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
+      await lp.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
 
       const tx = await govern.propose(
         [dao.address],

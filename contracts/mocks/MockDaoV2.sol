@@ -7,8 +7,9 @@ contract MockDaoV2 is Dao {
     function v2() public pure returns (bool) {
         return true;
     }
-
-
+    function exposedCreateMemberToken(string[] calldata tokenInfo, uint amount) public {
+        _createMemberToken(tokenInfo, amount);
+    }
     function exposedMintMemberToken(uint amount) public {
         _mintMemberToken(amount);
     }

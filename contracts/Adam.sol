@@ -78,7 +78,7 @@ contract Adam is Initializable, UUPSUpgradeable {
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
         IMembership(address(_membership)).initialize(address(_dao), params._name);
         // TODO
-        ILiquidPool(payable(address(_liquidPool))).initialize(address(_dao), feedRegistry);
+        ILiquidPool(payable(address(_liquidPool))).initialize(address(_dao), feedRegistry, params.depositTokens);
 
         IDao(payable(address(_dao))).initialize(
             IDao.InitializeParams(
@@ -101,7 +101,8 @@ contract Adam is Initializable, UUPSUpgradeable {
                 IDao.DaoSetting(
                     params.minDepositAmount,
                     params.minMemberTokenToJoin
-                )
+                ),
+                params.depositTokens
             )
         );
 

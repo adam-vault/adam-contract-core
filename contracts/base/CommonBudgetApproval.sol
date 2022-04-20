@@ -237,7 +237,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         }
 
         if(allowAllTokens) {
-            ownedTokens =  IDao(dao).getMintedContracts();
+            // ownedTokens =  IDao(dao).getMintedContracts();
         } else {
             ownedTokens = tokens;
         }
@@ -283,7 +283,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         address _membership = IDao(dao).membership();
         address mt = dao; // TODO remove
         uint256 tokenId = IMultiToken(mt).addressToId(_token);
-        address[] memory members = IMembership(_membership).getAllMembers();
+        address[] memory members; // = IMembership(_membership).getAllMembers();
         uint256[] memory amounts = new uint[](members.length);
 
         uint256 totalBalance = IMultiToken(mt).tokenTotalSupply(tokenId);
