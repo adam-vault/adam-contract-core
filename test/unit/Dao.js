@@ -3,7 +3,7 @@ const { ethers } = require('hardhat');
 const { createAdam, createTokens } = require('../utils/createContract.js');
 
 describe('Testing Dao', function () {
-  let adam, dao, tokenC721, tokenA;
+  let adam, dao, tokenC721, tokenA, lp;
   let creator;
 
   describe('when do not create member token at dao creation', function () {
@@ -24,9 +24,11 @@ describe('Testing Dao', function () {
         0,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
+        [],
       ]);
       const daoAddr = await adam.daos(0);
       dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+      lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     });
 
     describe('when do not create member token at dao creation', function () {
@@ -71,10 +73,12 @@ describe('Testing Dao', function () {
           100,
           0, // minDepositAmount
           1, // minMemberTokenToJoin
+          [],
         ]);
 
         const daoAddr = await adam.daos(0);
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
 
       it('should not be able to call create member token', async function () {
@@ -82,14 +86,14 @@ describe('Testing Dao', function () {
       });
 
       it('should not able to deposit when not enough minMemberTokenToJoin', async function () { // todo: need to create another test case for non DAO creator
-        await dao.deposit({ value: 1 });
-        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
+        await lp.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
       });
 
       it('should be able to deposit when enough minMemberTokenToJoin', async function () {
         await tokenC721.mint(creator.address);
-        await dao.deposit({ value: 1 });
-        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
+        await lp.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
       });
     });
 
@@ -114,6 +118,7 @@ describe('Testing Dao', function () {
           100,
           0, // minDepositAmount
           1, // minMemberTokenToJoin
+          [],
         ];
         await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('Not ERC 721 standard');
       });
@@ -133,6 +138,7 @@ describe('Testing Dao', function () {
           100,
           0, // minDepositAmount
           1, // minMemberTokenToJoin
+          [],
         ];
         await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('');
       });
@@ -155,10 +161,12 @@ describe('Testing Dao', function () {
           100,
           0, // minDepositAmount
           50, // minMemberTokenToJoin
+          [],
         ]);
 
         const daoAddr = await adam.daos(0);
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
 
       it('should not be able to call create member token', async function () {
@@ -173,15 +181,15 @@ describe('Testing Dao', function () {
       });
 
       it('should not able to deposit when not enough minMemberTokenToJoin', async function () { // todo: need to create another test case for non DAO creator
-        await dao.deposit({ value: 1 });
-        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
+        await lp.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
       });
 
       it('should be able to deposit when enough minMemberTokenToJoin', async function () {
         await dao.exposedTransferMemberToken(creator.address, 100);
 
-        await dao.deposit({ value: 1 });
-        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
+        await lp.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
       });
     });
 
@@ -202,20 +210,21 @@ describe('Testing Dao', function () {
           100,
           50, // minDepositAmount
           0, // minMemberTokenToJoin
+          [],
         ]);
 
         const daoAddr = await adam.daos(0);
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
 
       it('should not be able to deposit when not enough', async function () { // todo: need to create another test case for non DAO creator
-        await dao.deposit({ value: 1 });
-        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
+        await expect(lp.deposit({ value: 1 })).to.revertedWith('deposit amount not enough');
       });
 
       it('should be able to deposit when enough', async function () {
-        await dao.deposit({ value: 100 });
-        expect(await ethers.provider.getBalance(dao.address)).to.equal(100);
+        await lp.deposit({ value: 100 });
+        expect(await ethers.provider.getBalance(lp.address)).to.equal(100);
       });
     });
   });

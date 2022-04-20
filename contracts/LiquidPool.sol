@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
@@ -13,6 +14,9 @@ import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "./lib/Concat.sol";
 import "hardhat/console.sol";
 import "./interface/IDao.sol";
+import "./interface/IMembership.sol";
+import "./interface/IGovernFactory.sol";
+import "./interface/IAdam.sol";
 
 contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
     using Concat for string;
@@ -25,10 +29,27 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
     mapping(address => bool) public isAssetSupported;
     mapping(address => bool) public budgetApprovals;
 
-    function initialize(address owner, address feedRegistry) public initializer {
+    event CreateBudgetApproval(address budgetApproval, bytes data);
+    event AllowDepositToken(address token);
+
+    modifier govern(string memory category) {
+        address membership = IDao(dao).membership(); 
+        address governFactory = IDao(dao).governFactory(); 
+        address memberToken = IDao(dao).memberToken(); 
+        require(
+            (IMembership(membership).totalSupply() == 1 && IMembership(membership).isMember(msg.sender))
+                // for create member token, dao become one of the member
+                || (IMembership(membership).totalSupply() == 2 && IMembership(membership).isMember(msg.sender)  && address(memberToken) != address(0))
+                || msg.sender == IGovernFactory(governFactory).governMap(address(this), category),
+            string("Dao: only ").concat(category));
+        _;
+    }
+
+    function initialize(address owner, address feedRegistry, address[] calldata depositTokens) public initializer {
         __ERC20_init("LiquidPool", "LP");
         dao = payable(owner);
         registry = FeedRegistryInterface(feedRegistry);
+        _addAssets(depositTokens); // todo
     }
 
     // function delegateCallBA(bytes memory data) public {
@@ -37,22 +58,18 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
     //     require(success, "tx fail");
     // }
     
-    // Deposit ETH to LiquidPool //
     function deposit() public payable {
-        // if (!IDao(dao).contributors(msg.sender)) {
-        //     IDao(dao).mintContributor(msg.sender);
-        // }
         if (totalSupply() == 0) {
             _mint(msg.sender, msg.value);
+            _afterDeposit(msg.sender, msg.value);
             return;
         }
         uint256 total = address(this).balance - msg.value + _assetsPrice();
         _mint(msg.sender, (msg.value * 10 ** 18) / (total * 10 ** 18 / totalSupply()));
 
-        _afterDeposit(msg.value);
+        _afterDeposit(msg.sender, msg.value);
     }
 
-    // Redeem certain amount of assets //
     function redeem(uint256 amount) public {
         require(balanceOf(msg.sender) >= amount, "not enough balance");
         require(IDao(dao).firstDeposit(msg.sender) + IDao(dao).locktime() <= block.timestamp, "lockup time");
@@ -77,9 +94,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
     }
 
     function quote(uint256 eth) public view returns (uint256) {
-        if (totalSupply() == 0) {
-            return eth;
-        }
+        if (totalSupply() == 0) return eth;
         return (eth * 10 ** 18) / (totalPrice() * 10 ** 18 / totalSupply());
     }
 
@@ -89,8 +104,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
 
         _mint(msg.sender, quote(assetEthPrice(asset, amount)));
         IERC20Metadata(asset).transferFrom(msg.sender, address(this), amount);
-
-        _afterDeposit(assetEthPrice(asset, amount));
+        _afterDeposit(msg.sender, assetEthPrice(asset, amount));
     }
 
     function canAddAsset(address asset) public view returns (bool) {
@@ -101,12 +115,8 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
         }
     }
 
-    function addAssets(address[] calldata erc20s) public {
-        for (uint256 i = 0; i < erc20s.length; i++) {
-            require(canAddAsset(erc20s[i]) && !isAssetSupported[erc20s[i]], "Asset not support");
-            assets.push(erc20s[i]);
-            isAssetSupported[erc20s[i]] = true;
-        }
+    function addAssets(address[] calldata erc20s) public govern("DaoSetting") {
+        _addAssets(erc20s);
     }
 
     function assetEthPrice(address asset, uint256 amount) public view returns (uint256) {
@@ -121,6 +131,18 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
         return _assetsPrice() + address(this).balance;
     }
 
+    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public govern("BudgetApproval") {
+        require(_budgetApprovals.length == data.length, "input invalid");
+        address adam = IDao(dao).adam();
+
+        for(uint i = 0; i < _budgetApprovals.length; i++) {
+            require(IAdam(adam).budgetApprovalRegistry(_budgetApprovals[i]), "not whitelist");
+            ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
+            budgetApprovals[address(_budgetApproval)] = true;
+            emit CreateBudgetApproval(address(_budgetApproval), data[i]);
+        }
+    }
+
     function _assetsPrice() internal view returns (uint256) {
         uint256 total;
         for (uint256 i = 0; i < assets.length; i++) {
@@ -131,12 +153,31 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
 
 
     function _authorizeUpgrade(address newImplementation) internal override {}
-    function _afterDeposit(uint256 eth) private {
-        if (IDao(dao).firstDeposit(msg.sender) == 0) {
-            IDao(dao).setFirstDeposit(msg.sender);
+    function _afterDeposit(address account, uint256 eth) private {
+        address membership = IDao(dao).membership();
+        if (IDao(dao).firstDeposit(account) == 0) {
+            IDao(dao).setFirstDeposit(account);
+
             require(eth >= IDao(dao).minDepositAmount(), "deposit amount not enough");
-            require(IERC20(IDao(dao).memberToken()).balanceOf(msg.sender) >= IDao(dao).minMemberTokenToJoin(), "member token not enough");
+            if (!IMembership(membership).isMember(account)) {
+                require(IERC20(IDao(dao).memberToken()).balanceOf(account) >= IDao(dao).minMemberTokenToJoin(), "member token not enough");
+                IDao(dao).mintMember(account);
+            }
         }
+
+    }
+    function _addAssets(address[] memory erc20s) public {
+        for (uint256 i = 0; i < erc20s.length; i++) {
+            _addAsset(erc20s[i]);
+        }
+    }
+
+    function _addAsset(address erc20) public {
+        require(canAddAsset(erc20) && !isAssetSupported[erc20], "Asset not support");
+        assets.push(erc20);
+        isAssetSupported[erc20] = true;
+
+        emit AllowDepositToken(erc20);
     }
 
     receive() external payable {}
