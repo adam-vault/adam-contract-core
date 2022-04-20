@@ -30,6 +30,7 @@ describe('UniswapSwapper.sol', () => {
         0,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
+        [],
       ],
     );
     const daoAddr = await adam.daos(0);

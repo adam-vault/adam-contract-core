@@ -4,17 +4,22 @@ const _ = require('lodash');
 const { smock } = require('@defi-wonderland/smock');
 const { ethers } = hre;
 const { expect } = chai;
-const { createAdam } = require('../utils/createContract');
+const { createAdam, createFeedRegistry, createTokens } = require('../utils/createContract');
 const decodeBase64 = require('../utils/decodeBase64');
 chai.use(smock.matchers);
 
 describe('Create DAO', function () {
   let creator, owner1, owner2, owner3;
+  let token;
+  let feedRegistry;
   let adam;
 
   beforeEach(async function () {
     [creator, owner1, owner2, owner3] = await ethers.getSigners();
-    adam = await createAdam();
+    const tokens = await createTokens();
+    token = tokens.tokenA;
+    feedRegistry = await createFeedRegistry(token, creator);
+    adam = await createAdam(feedRegistry);
   });
 
   function createDao () {
@@ -33,6 +38,7 @@ describe('Create DAO', function () {
         0,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
+        [token.address], // depositTokens
       ],
     );
   }
@@ -64,49 +70,43 @@ describe('Create DAO', function () {
   });
 
   describe('Deposit ETH to DAO', function () {
-    let dao, membership, multiToken;
+    let dao, lp, membership;
     beforeEach(async function () {
       const tx1 = await createDao();
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
       const daoAddr = creationEventLog.args.dao;
       dao = await ethers.getContractAt('Dao', daoAddr);
-      multiToken = await ethers.getContractAt('MultiToken', await dao.multiToken());
 
       const membershipAddr = await dao.membership();
       membership = await ethers.getContractAt('Membership', membershipAddr);
+      lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     });
 
     it('create Membership when deposit()', async function () {
-      await dao.deposit({ value: ethers.utils.parseEther('0.000123') });
+      await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
       expect(await membership.balanceOf(creator.address)).to.equal(1);
 
       const jsonResponse = decodeBase64(await membership.tokenURI(1));
       expect(jsonResponse.name).to.equal('A Company Membership #1');
-      expect(jsonResponse.attributes[0].value).to.not.be.empty;
-      expect(await ethers.provider.getBalance(dao.address)).to.equal(ethers.utils.parseEther('0.000123'));
+      expect(await ethers.provider.getBalance(lp.address)).to.equal(ethers.utils.parseEther('0.000123'));
     });
 
     it('gives token uri with member address', async function () {
-      const tx = await dao.deposit({ value: ethers.utils.parseEther('0.000123') });
+      const tx = await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
       await tx.wait();
-      const memberAddr = await membership.members(0);
 
       const jsonResponse = decodeBase64(await membership.tokenURI(1));
       expect(jsonResponse.name).to.equal('A Company Membership #1');
-      expect(jsonResponse.attributes[0].value.toLowerCase()).to.equal(memberAddr.toLowerCase());
     });
 
     it('should not recreate Member when deposit() again by same EOA', async function () {
-      await dao.deposit({ value: ethers.utils.parseEther('0.000123') });
-      await dao.deposit({ value: ethers.utils.parseEther('0.000123') });
-      await dao.deposit({ value: ethers.utils.parseEther('0.000123') });
-
-      const memberAddr = await membership.members(0);
+      await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
+      await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
+      await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
-      expect(await multiToken.balanceOf(memberAddr, multiToken.ethId())).to.equal(ethers.utils.parseEther('0.000369'));
-      expect(await ethers.provider.getBalance(dao.address)).to.equal(ethers.utils.parseEther('0.000369'));
+      expect(await ethers.provider.getBalance(lp.address)).to.equal(ethers.utils.parseEther('0.000369'));
     });
   });
 
@@ -167,7 +167,7 @@ describe('Create DAO', function () {
   // });
 
   describe('Redeem ETH from DAO', function () {
-    let dao, membership, multiToken;
+    let dao, lp, membership;
     beforeEach(async function () {
       const tx1 = await adam.createDao(
         [
@@ -184,29 +184,29 @@ describe('Create DAO', function () {
           0,
           0, // minDepositAmount
           0, // minMemberTokenToJoin
+          [token.address], // depositTokens
         ],
       );
       const receipt = await tx1.wait();
       const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
       const daoAddr = creationEventLog.args.dao;
       dao = await ethers.getContractAt('Dao', daoAddr);
-      multiToken = await ethers.getContractAt('MultiToken', await dao.multiToken());
 
       const membershipAddr = await dao.membership();
       membership = await ethers.getContractAt('Membership', membershipAddr);
-      await dao.deposit({ value: ethers.utils.parseEther('123') });
+      lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+      await lp.deposit({ value: ethers.utils.parseEther('123') });
     });
 
     it('redeem and burn exact amount of eth', async function () {
       await hre.ethers.provider.send('evm_increaseTime', [1000]);
-      await dao.redeem(ethers.utils.parseEther('3'));
+      await lp.redeem(ethers.utils.parseEther('3'));
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
-      const memberAddr = await membership.members(0);
-      expect(await multiToken.balanceOf(memberAddr, multiToken.ethId())).to.equal(ethers.utils.parseEther('120'));
+      expect(await lp.balanceOf(creator.address)).to.equal(ethers.utils.parseEther('120'));
     });
     it('cannot redeem and burn exact amount of eth inside lockup period', async function () {
-      await expect(dao.redeem(ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
+      await expect(lp.redeem(ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
     });
   });
 

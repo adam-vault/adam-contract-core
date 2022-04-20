@@ -5,7 +5,7 @@ const _ = require('lodash');
 const { createTokens, createAdam } = require('../utils/createContract');
 
 describe('Testing TransferERC20BudgetApproval', function () {
-  let adam, dao, transferERC20BAImplementation, budgetApproval;
+  let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
   let tokenA;
 
@@ -30,10 +30,12 @@ describe('Testing TransferERC20BudgetApproval', function () {
         0,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
+        [],
       ],
     );
     const daoAddr = await adam.daos(0);
     dao = await ethers.getContractAt('Dao', daoAddr);
+    lp = await ethers.getContractAt('Dao', await dao.liquidPool());
     const transferERC20BAImplementationAddr = await adam.budgetApprovals(0);
     transferERC20BAImplementation = await ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BAImplementationAddr);
   });
@@ -111,7 +113,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
   describe('Execute Transaction (Transfer ETH)', function () {
     beforeEach(async function () {
-      await dao.connect(executor).deposit({ value: ethers.utils.parseEther('100') });
+      await lp.connect(executor).deposit({ value: ethers.utils.parseEther('1000') });
     });
 
     context('complete flow', () => {
