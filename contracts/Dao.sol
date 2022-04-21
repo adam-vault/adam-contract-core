@@ -116,12 +116,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     }
 
-    modifier govern(string memory category) {
+    modifier onlyGovern(string memory category) {
         require(
-            (IMembership(membership).totalSupply() == 1 && IMembership(membership).isMember(msg.sender))
-                // for create member token, dao become one of the member
-                || (IMembership(membership).totalSupply() == 2 && IMembership(membership).isMember(msg.sender)  && address(memberToken) != address(0))
-                || msg.sender == IGovernFactory(governFactory).governMap(address(this), category),
+            byPassGovern(msg.sender) || msg.sender == govern(category),
             string("Dao: only ").concat(category));
         _;
     }
@@ -136,23 +133,39 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         firstDeposit[owner] = block.timestamp;
     }
 
-    function mintMemberToken(uint amount) public govern("BudgetApproval") {
+    function mintMemberToken(uint amount) public onlyGovern("BudgetApproval") {
         _mintMemberToken(amount);
     }
 
-    function transferMemberToken(address to, uint amount) public govern("BudgetApproval") {
+    function transferMemberToken(address to, uint amount) public onlyGovern("BudgetApproval") {
         _transferMemberToken(to, amount);
     }
 
-    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public govern("BudgetApproval") {
+    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public onlyGovern("BudgetApproval") {
         require(_budgetApprovals.length == data.length, "input invalid");
 
         for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(IAdam(adam).budgetApprovalRegistry(_budgetApprovals[i]), "not whitelist");
+            require(canCreateBudgetApproval(_budgetApprovals[i]), "not whitelist");
             ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
             budgetApprovals[address(_budgetApproval)] = true;
             emit CreateBudgetApproval(address(_budgetApproval), data[i]);
         }
+    }
+
+    function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
+        return IAdam(adam).budgetApprovalRegistry(budgetApproval);
+    }
+
+    function govern(string memory gName) public view returns (address) {
+        return IGovernFactory(governFactory).governMap(address(this), gName);
+    }
+
+    function byPassGovern(address account) public view returns (bool) {
+        return (IMembership(membership).totalSupply() == 1 && isMember(account));
+    }
+
+    function isMember(address account) public view returns (bool) {
+        return IMembership(membership).isMember(account);
     }
 
     // for handling Uniswap Iframe
@@ -185,7 +198,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     }
 
-    function updateDaoSetting(IDao.DaoSetting calldata _setting) public govern("DaoSetting") {
+    function updateDaoSetting(IDao.DaoSetting calldata _setting) public onlyGovern("DaoSetting") {
         minDepositAmount = _setting.minDepositAmount;
         minMemberTokenToJoin = _setting.minMemberTokenToJoin;
     }
@@ -197,7 +210,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         uint passThreshold,
         uint[] calldata voteWeights,
         uint voteToken
-    ) public govern("Govern") {
+    ) public onlyGovern("Govern") {
         _createGovern(
             _name,
             duration,
@@ -236,7 +249,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         revert("Unsupported Token type");
     }
 
-    function addAssets(address[] calldata erc20s) public govern("DaoSetting") {
+    function addAssets(address[] calldata erc20s) public onlyGovern("DaoSetting") {
         _addAssets(erc20s);
     }
     function mintMember(address owner) public {

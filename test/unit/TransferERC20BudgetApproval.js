@@ -35,7 +35,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
     );
     const daoAddr = await adam.daos(0);
     dao = await ethers.getContractAt('Dao', daoAddr);
-    lp = await ethers.getContractAt('Dao', await dao.liquidPool());
+    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     const transferERC20BAImplementationAddr = await adam.budgetApprovals(0);
     transferERC20BAImplementation = await ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BAImplementationAddr);
   });
