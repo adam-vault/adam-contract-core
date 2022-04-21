@@ -11,7 +11,6 @@ import "../lib/BytesLib.sol";
 import "../lib/RevertMsg.sol";
 
 import "../interface/IDao.sol";
-import "../interface/IMultiToken.sol";
 
 import "../interface/IMembership.sol";
 
@@ -282,16 +281,16 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function _getAmountsOfAllMembersOnProRata(address _token, uint256 _totalAmount) internal view returns (address[] memory, uint256[] memory) {
         address _membership = IDao(dao).membership();
         address mt = dao; // TODO remove
-        uint256 tokenId = IMultiToken(mt).addressToId(_token);
+        uint256 tokenId;
         address[] memory members; // = IMembership(_membership).getAllMembers();
         uint256[] memory amounts = new uint[](members.length);
 
-        uint256 totalBalance = IMultiToken(mt).tokenTotalSupply(tokenId);
+        uint256 totalBalance;
 
         uint256 amountLeft = _totalAmount;
         
         for(uint i = 0; i < members.length - 1; i++) {
-            uint256 memberBalance = IMultiToken(mt).balanceOf(members[i], tokenId);
+            uint256 memberBalance;
             amounts[i] = _totalAmount * memberBalance / totalBalance;
             amountLeft -= _totalAmount * memberBalance / totalBalance;
         }

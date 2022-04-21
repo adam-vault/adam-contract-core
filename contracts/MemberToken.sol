@@ -4,16 +4,16 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpg
 import "hardhat/console.sol";
 
 contract MemberToken is ERC20VotesUpgradeable {
-    address public owner;
+    address public minter;
 
-    modifier onlyOwner() {
-        require(msg.sender == address(owner), "Not owner");
+    modifier onlyMinter() {
+        require(msg.sender == address(minter), "Not minter");
         _;
     }
 
-    function initialize(address _owner, string memory _name, string memory _symbol) public initializer
+    function initialize(address _minter, string memory _name, string memory _symbol) public initializer
     {
-        owner = _owner;
+        minter = _minter;
         __ERC20_init(_name, _symbol);
     }
 
@@ -25,7 +25,7 @@ contract MemberToken is ERC20VotesUpgradeable {
         }
     }
 
-    function mint(address account, uint256 amount) public onlyOwner
+    function mint(address account, uint256 amount) public onlyMinter
     {
         _mint(account, amount);
     }
