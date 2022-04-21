@@ -7,23 +7,27 @@ describe('LiquidPool.sol', function () {
   let creator;
   let signer1, signer2;
   let token, tokenAsSigner1, tokenAsSigner2;
-  let feedRegistry;
+  let feedRegistry, dao;
 
   beforeEach(async function () {
     [creator, signer1, signer2] = await ethers.getSigners();
     const MockFeedRegistry = await ethers.getContractFactory('MockFeedRegistry', { signer: creator });
     const MockToken = await ethers.getContractFactory('MockToken', { signer: creator });
+    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: creator });
+
     const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
 
     feedRegistry = await MockFeedRegistry.deploy();
+    dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
-    lp = await upgrades.deployProxy(LiquidPool, [creator.address, feedRegistry.address, [token.address]], { kind: 'uups' });
 
     await feedRegistry.setPrice(parseEther('0.0046'));
     await feedRegistry.setFeed(token.address, true);
-    await lp.addAssets([token.address]);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
+    await dao.setMemberToken(token.address);
+
+    lp = await upgrades.deployProxy(LiquidPool, [dao.address, feedRegistry.address, [token.address]], { kind: 'uups' });
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);
