@@ -1,11 +1,11 @@
 const hre = require('hardhat');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 
 // rinkeby
-const daoAddress = '0xA3183A78A3E5bEe6Bb44022B6CB806Ee4ECAa688';
+const daoAddress = process.env.DAO_LOCK_TIME_0;
 
 async function main () {
-  const [creator] = await ethers.getSigners();
-
   const dao = await hre.ethers.getContractAt('Dao', daoAddress);
   await dao.deposit({ value: hre.ethers.utils.parseEther('0.000345') });
 }

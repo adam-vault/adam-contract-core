@@ -1,11 +1,16 @@
 const hre = require('hardhat');
 const _ = require('lodash');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, './.env') });
+const overwriteAddressEnv = require('./utils/overwriteAddressEnv');
 
 // rinkeby
-const daoAddress = '0xA3183A78A3E5bEe6Bb44022B6CB806Ee4ECAa688';
-const transferERC20BudgetApprovalAddress = '0x60EA35bB45019d1fa3cAE7FEFd6445aC9Fa3B608';
-const uniswapBudetApprovalAddress = '0x16a08c8fD57C90A55713b26ccc49A10ba14856c6';
+const daoAddress = process.env.DAO_LOCK_TIME_0;
+const transferERC20BudgetApprovalAddress = process.env.TRANSFER_ERC20_APPROVAL_IMPLEMENTATION;
+const uniswapBudetApprovalAddress = process.env.UNISWAP_APPROVAL_IMPLEMENTATION;
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
+
+const budgetApprovalAddresses = [];
 
 async function main () {
   const transferERC20BudgetApproval = await hre.ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BudgetApprovalAddress);
@@ -84,7 +89,15 @@ async function main () {
     [dataERC20, dataUniswap]);
   const receipt = await tx.wait();
   const creationEventLogs = _.filter(receipt.events, { event: 'CreateBudgetApproval' });
-  creationEventLogs.forEach(({ args }) => console.log('budget approval created at:', args.budgetApproval));
+  creationEventLogs.forEach(({ args }) => {
+    console.log('budget approval created at:', args.budgetApproval);
+    budgetApprovalAddresses.push(args.budgetApproval);
+  });
+
+  overwriteAddressEnv({
+    TRANSFER_ERC20_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[0],
+    UNISWAP_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[1],
+  });
 }
 
 // We recommend this pattern to be able to use async/await everywhere

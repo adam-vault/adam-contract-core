@@ -4,6 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require('hardhat');
+const overwriteAddressEnv = require('./utils/overwriteAddressEnv');
 
 const deployConstantState = async (network = 'rinkeby') => {
   if (network === 'rinkeby') {
@@ -39,13 +40,13 @@ const deployGovernFactory = async () => {
 
   console.log('governFactory deployed to', governFactory.address);
   console.log('govern deployed to', govern.address);
-  return governFactory.address;
+  return [governFactory.address, govern.address];
 };
 
 async function main () {
   const constantState = await deployConstantState();
   const budgetApprovalsAddress = await deployBudgetApprovals();
-  const governFactory = await deployGovernFactory();
+  const governInfo = await deployGovernFactory();
 
   const Dao = await hre.ethers.getContractFactory('Dao');
   const Membership = await hre.ethers.getContractFactory('Membership');
@@ -63,13 +64,25 @@ async function main () {
   await memberToken.deployed();
 
   const adam = await hre.upgrades.deployProxy(Adam, [
-      dao.address, membership.address, multiToken.address, memberToken.address, budgetApprovalsAddress, governFactory, constantState,
-    ], { kind: 'uups' });
+    dao.address, membership.address, multiToken.address, memberToken.address, budgetApprovalsAddress, governInfo[0], constantState,
+  ], { kind: 'uups' });
   await adam.deployed();
 
+  console.log('multiToken:', multiToken.address);
   console.log('dao deployed to: ', dao.address);
   console.log('membership deployed to: ', membership.address);
   console.log('adam deployed to: ', adam.address);
+
+  overwriteAddressEnv({
+    TRANSFER_ERC20_APPROVAL_IMPLEMENTATION: budgetApprovalsAddress[0],
+    UNISWAP_APPROVAL_IMPLEMENTATION: budgetApprovalsAddress[1],
+    GOVERN_IMPLEMENTATION: governInfo[1],
+    DAO_IMPLEMENTATION: dao.address,
+    MEMBERSHIP_IMPLEMENTATION: membership.address,
+    MULTI_TOKEN_IMPLEMENTATION: multiToken.address,
+    ADAM: adam.address,
+    GOVERN_FACTORY: governInfo[0],
+  });
 }
 
 main().catch((error) => {
