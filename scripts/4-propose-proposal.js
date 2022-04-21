@@ -1,17 +1,19 @@
 const hre = require('hardhat');
 const { faker } = require('@faker-js/faker');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 
 // rinkeby
-const governAddress = '0x25cC6C6C32FF04b3460FDB19CA053ee919d7b874';
-const daoAddress = '0xA3183A78A3E5bEe6Bb44022B6CB806Ee4ECAa688';
+const governAddress = process.env.GOVERN_DAO_LOCK_TIME_0;
+const daoAddress = process.env.DAO_LOCK_TIME_0;
 
 async function main () {
   const govern = await hre.ethers.getContractAt('Govern', governAddress);
-  const dao = await hre.ethers.getContractAt('Dao', daoAddress);
 
   const Dao = await hre.ethers.getContractFactory('Dao');
 
   const calldata = Dao.interface.encodeFunctionData('createGovern', ['New Proposal Cat', 3600, 1000, 10000, [1], 0]);
+
   await govern.propose([daoAddress], [0], [calldata], faker.commerce.productDescription());
 }
 
