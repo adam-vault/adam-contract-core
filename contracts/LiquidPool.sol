@@ -14,9 +14,6 @@ import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "./lib/Concat.sol";
 import "hardhat/console.sol";
 import "./interface/IDao.sol";
-import "./interface/IMembership.sol";
-import "./interface/IGovernFactory.sol";
-import "./interface/IAdam.sol";
 
 contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
     using Concat for string;
@@ -32,20 +29,14 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event AllowDepositToken(address token);
 
-    modifier govern(string memory category) {
-        address membership = IDao(dao).membership(); 
-        address governFactory = IDao(dao).governFactory(); 
-        address memberToken = IDao(dao).memberToken(); 
+    modifier onlyGovern(string memory category) {
         require(
-            (IMembership(membership).totalSupply() == 1 && IMembership(membership).isMember(msg.sender))
-                // for create member token, dao become one of the member
-                || (IMembership(membership).totalSupply() == 2 && IMembership(membership).isMember(msg.sender)  && address(memberToken) != address(0))
-                || msg.sender == IGovernFactory(governFactory).governMap(address(this), category),
+            (IDao(dao).byPassGovern(msg.sender)) || msg.sender == IDao(dao).govern(category),
             string("Dao: only ").concat(category));
         _;
     }
 
-    function initialize(address owner, address feedRegistry, address[] calldata depositTokens) public initializer {
+    function initialize(address owner, address feedRegistry, address[] memory depositTokens) public initializer {
         __ERC20_init("LiquidPool", "LP");
         dao = payable(owner);
         registry = FeedRegistryInterface(feedRegistry);
@@ -115,7 +106,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
         }
     }
 
-    function addAssets(address[] calldata erc20s) public govern("DaoSetting") {
+    function addAssets(address[] calldata erc20s) public onlyGovern("DaoSetting") {
         _addAssets(erc20s);
     }
 
@@ -131,12 +122,11 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
         return _assetsPrice() + address(this).balance;
     }
 
-    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public govern("BudgetApproval") {
+    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public onlyGovern("BudgetApproval") {
         require(_budgetApprovals.length == data.length, "input invalid");
-        address adam = IDao(dao).adam();
 
         for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(IAdam(adam).budgetApprovalRegistry(_budgetApprovals[i]), "not whitelist");
+            require(IDao(dao).canCreateBudgetApproval(_budgetApprovals[i]), "not whitelist");
             ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
             budgetApprovals[address(_budgetApproval)] = true;
             emit CreateBudgetApproval(address(_budgetApproval), data[i]);
@@ -154,12 +144,11 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
 
     function _authorizeUpgrade(address newImplementation) internal override {}
     function _afterDeposit(address account, uint256 eth) private {
-        address membership = IDao(dao).membership();
         if (IDao(dao).firstDeposit(account) == 0) {
             IDao(dao).setFirstDeposit(account);
 
             require(eth >= IDao(dao).minDepositAmount(), "deposit amount not enough");
-            if (!IMembership(membership).isMember(account)) {
+            if (!IDao(dao).isMember(account)) {
                 require(IERC20(IDao(dao).memberToken()).balanceOf(account) >= IDao(dao).minMemberTokenToJoin(), "member token not enough");
                 IDao(dao).mintMember(account);
             }
