@@ -4,7 +4,7 @@ const { faker } = require('@faker-js/faker');
 const { ethers } = require('ethers');
 
 // rinkeby
-const adamAddress = '0x4099d92F97C48695c8cC388D04Bd2384CDa68A0c';
+const adamAddress = '0xe66781e2db80A69B809A4f12fa7767b007735d02';
 const testingDataSet = [
   { lockup: 0, memberTokenType: 0, memberToken: ethers.constants.AddressZero },
   { lockup: 100, memberTokenType: 0, memberToken: ethers.constants.AddressZero },
@@ -26,7 +26,7 @@ async function main () {
       [300, 3000, 5000, 0],
       [300, 3000, 5000, 0],
       [300, 3000, 5000, 0],
-      memberTokenType === 1 ? [300, 3000, 5000, 1] : [300, 3000, 5000, 0],
+      [300, 3000, 5000, 0],
       [`${faker.company.companyName()}Token`, 'MT'],
       100,
       0,

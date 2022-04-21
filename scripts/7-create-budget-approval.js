@@ -2,9 +2,9 @@ const hre = require('hardhat');
 const _ = require('lodash');
 
 // rinkeby
-const daoAddress = '0x38B190D5779dC03209132842f070EfD137AA07E4';
-const transferERC20BudgetApprovalAddress = '0xFdD508bd57746FB40dB506211B0105fEb6ebf89c';
-const uniswapBudetApprovalAddress = '0xeB84829a76ff7452be11f11E49ECD142F41eA0E1';
+const daoAddress = '0xA3183A78A3E5bEe6Bb44022B6CB806Ee4ECAa688';
+const transferERC20BudgetApprovalAddress = '0x60EA35bB45019d1fa3cAE7FEFd6445aC9Fa3B608';
+const uniswapBudetApprovalAddress = '0x16a08c8fD57C90A55713b26ccc49A10ba14856c6';
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 
 async function main () {
@@ -14,58 +14,62 @@ async function main () {
       // dao address
       daoAddress,
       // executor
-      '0xBfAA947b65A4350f14895980D0c8f420576fC163',
+      '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
       // approvers
-      ['0x525BaB223a5F7D3E81699995DaA92fAe7329C5D9'],
+      [],
       // text
       'Transfer ERC20',
       // transaction type
-      'Outflow',
+      'outflow',
       // allow all addresses,
       false,
       // allowed addresses (use when above = false)
-      ['0xBfAA947b65A4350f14895980D0c8f420576fC163'],
-      // alow all tokens,
-      false,
+      ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
       // allowed token (use when above = false)
-      [DAIAddress],
+      [hre.ethers.constants.AddressZero, DAIAddress],
       // allow any amount
       false,
       // allowed total amount
       hre.ethers.utils.parseEther('1000'),
       // allowed amount percentage
       '10',
+      Math.round(Date.now() / 1000) - 86400, // startTime
+      Math.round(Date.now() / 1000) + 86400, // endTime
+      true, // allow unlimited usage count
+      0, // usage count
     ]]);
 
   const uniswapBudgetApproval = await hre.ethers.getContractAt('UniswapBudgetApproval', uniswapBudetApprovalAddress);
-  const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])',
+  const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize((address,address,address[],string,string,bool,address[],address[],bool,uint256,uint8,uint256,uint256,bool,uint256),bool,address[])',
     [
       // common params
       [
       // dao address
         daoAddress,
         // executor
-        '0xBfAA947b65A4350f14895980D0c8f420576fC163',
+        '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
         // approvers
         [],
         // text
         'Uniswap',
         // transaction type
-        'Swap',
+        'swap',
         // allow all addresses,
         false,
         // allowed addresses (use when above = false)
         ['0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45'],
-        // alow all tokens,
-        true,
         // allowed token (use when above = false)
-        [],
+        [hre.ethers.constants.AddressZero],
         // allow any amount
         true,
         // allowed total amount
         hre.ethers.utils.parseEther('0'),
         // allowed amount percentage
         '100',
+        Math.round(Date.now() / 1000) - 86400, // startTime
+        Math.round(Date.now() / 1000) + 86400, // endTime
+        true, // allow unlimited usage count
+        0, // usage count
       ],
       // extra params
       // allow all to tokens,

@@ -41,6 +41,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     event AllowAddress(address target);
     event AllowToken(address token);
     event AllowAmount(uint256 amount);
+    event UsageCount(uint256 count);
 
     Counters.Counter private _transactionIds;
 
@@ -60,7 +61,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
 
-    bool public allowAllTokens;
     address[] public tokens;
     mapping(address => bool) public tokensMapping;
 
@@ -68,6 +68,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     uint256 public totalAmount;
 
     uint8 public amountPercentage;
+
+    uint256 public startTime;
+    uint256 public endTime;
+
+    bool public allowUnlimitedUsageCount;
+    uint256 public usageCount;
 
     modifier onlyDao {
         require(msg.sender == dao, "access denied");
@@ -89,8 +95,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
-    modifier checkDeadline(uint256 _transactionId) {
+    modifier checkTime(uint256 _transactionId) {
         require(block.timestamp <= transactions[_transactionId].deadline, "transaction expired");
+        require(block.timestamp >= startTime, "budget approval not yet started");
+        if(endTime != 0) {
+            require(block.timestamp < endTime, "budget approval ended");
+        }
         _;
     }
 
@@ -102,11 +112,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         string transactionType;
         bool allowAllAddresses;
         address[] addresses;
-        bool allowAllTokens;
         address[] tokens;
         bool allowAnyAmount;
         uint256 totalAmount;
         uint8 amountPercentage;
+        uint256 startTime;
+        uint256 endTime;
+        bool allowUnlimitedUsageCount;
+        uint256 usageCount;
     }
 
     function initialize(
@@ -128,7 +141,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             emit AllowAddress(params.addresses[i]);
         }
 
-        allowAllTokens = params.allowAllTokens;
         tokens = params.tokens;
         for(uint i = 0; i < params.tokens.length; i++) {
             tokensMapping[params.tokens[i]] = true;
@@ -139,11 +151,18 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         totalAmount = params.totalAmount;
         emit AllowAmount(totalAmount);
         amountPercentage = params.amountPercentage;
+
+        startTime = params.startTime;
+        endTime = params.endTime;
+
+        allowUnlimitedUsageCount = params.allowUnlimitedUsageCount;
+        usageCount = params.usageCount;
+        emit UsageCount(usageCount);
     }
 
     function NAME() external virtual returns (string calldata);
 
-    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkDeadline(_transactionId) {
+    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkTime(_transactionId) {
         require(msg.sender == executor || msg.sender == dao, "access denied");
 
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
@@ -208,7 +227,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function checkTokenValid(address token) public view returns (bool) {
-        return allowAllTokens || tokensMapping[token];
+        return tokensMapping[token];
     }
 
     function checkAmountValid(uint256 amount) public view returns (bool) {
@@ -218,23 +237,15 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
 
         uint256 _totalAmount;
-        address[] memory ownedTokens;
-
         if(executed) {
             _totalAmount += amount;
         }
 
-        if(allowAllTokens) {
-            ownedTokens =  IMultiToken(IDao(dao).multiToken()).mintedContracts();
-        } else {
-            ownedTokens = tokens;
-        }
-
-        for(uint i = 0; i < ownedTokens.length; i++) {
-            if(ownedTokens[i] == ETH_ADDRESS) {
+        for(uint i = 0; i < tokens.length; i++) {
+            if(tokens[i] == ETH_ADDRESS) {
                 _totalAmount += dao.balance;
             } else {
-                _totalAmount += IERC20(ownedTokens[i]).balanceOf(dao);
+                _totalAmount += IERC20(tokens[i]).balanceOf(dao);
             }
         }
 
@@ -251,6 +262,18 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             emit AllowAmount(totalAmount);
         }
     }
+
+    function checkUsageCountValid() public view returns (bool) {
+        return allowUnlimitedUsageCount || usageCount > 0;
+    }
+
+    function _updateUsageCount() internal {
+        if(!allowUnlimitedUsageCount) {
+            usageCount--;
+            emit UsageCount(usageCount);
+        }
+    }
+
 
     function _getAmountOfMembersByRatio(uint256 _totalAmount, address[] memory members, uint256[] memory amountsForRatio, uint256 totalAmountForRatio) internal pure returns (address[] memory, uint256[] memory) {
         require(members.length == amountsForRatio.length, "invalid input");
@@ -316,8 +339,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
 
-        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8))
-        if(_data.toBytes4(0) != 0x28746e66) {
+        if(_data.toBytes4(0) != this.initialize.selector) {
             revert("unexpected function");
         }
 

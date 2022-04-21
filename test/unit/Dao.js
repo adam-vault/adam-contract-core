@@ -3,7 +3,7 @@ const { ethers } = require('hardhat');
 const { createAdam, createTokens } = require('../utils/createContract.js');
 
 describe('Testing Dao', function () {
-  let adam, dao, tokenC721;
+  let adam, dao, tokenC721, tokenA;
   let creator;
 
   describe('when do not create member token at dao creation', function () {
@@ -81,15 +81,60 @@ describe('Testing Dao', function () {
         await expect(dao.exposedCreateMemberToken(['name1', 'symbol1'], 100)).to.revertedWith('Member token already initialized');
       });
 
-      it('should not able to deposit when not enough minMemberTokenToJoin', async function () {
-        await expect(dao.deposit({ value: 1 })).to.revertedWith('member token not enough');
+      it('should not able to deposit when not enough minMemberTokenToJoin', async function () { // todo: need to create another test case for non DAO creator
+        await dao.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
       });
 
       it('should be able to deposit when enough minMemberTokenToJoin', async function () {
-        console.log(creator.address);
         await tokenC721.mint(creator.address);
         await dao.deposit({ value: 1 });
         expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
+      });
+    });
+
+    describe('when import Not 721 member token at dao creation', function () {
+      beforeEach(async function () {
+        adam = await createAdam();
+        tokenA = (await createTokens()).tokenA;
+      });
+
+      it('should not able to create DAO with importing ERC 20 address', async function () {
+        const initParaWithIncorrectAddress = [
+          'A Company', // _name
+          'Description', // _description
+          10000000, // _locktime
+          2, // MemberTokenType
+          tokenA.address, // memberToken
+          [13, 3000, 5000, 0], // budgetApproval
+          [13, 3000, 5000, 0], // revokeBudgetApproval
+          [13, 3000, 5000, 0], // general
+          [13, 3000, 5000, 1], // daoSetting
+          ['name', 'symbol'], // tokenInfo
+          100,
+          0, // minDepositAmount
+          1, // minMemberTokenToJoin
+        ];
+        await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('Not ERC 721 standard');
+      });
+
+      it('should not able to create DAO with importing zero address', async function () {
+        const initParaWithIncorrectAddress = [
+          'A Company', // _name
+          'Description', // _description
+          10000000, // _locktime
+          2, // MemberTokenType
+          ethers.constants.AddressZero, // memberToken
+          [13, 3000, 5000, 0], // budgetApproval
+          [13, 3000, 5000, 0], // revokeBudgetApproval
+          [13, 3000, 5000, 0], // general
+          [13, 3000, 5000, 1], // daoSetting
+          ['name', 'symbol'], // tokenInfo
+          100,
+          0, // minDepositAmount
+          1, // minMemberTokenToJoin
+        ];
+        await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('');
       });
     });
 
@@ -127,8 +172,9 @@ describe('Testing Dao', function () {
         expect(await memberToken.balanceOf(dao.address)).to.eq(100);
       });
 
-      it('should not able to deposit when not enough minMemberTokenToJoin', async function () {
-        await expect(dao.deposit({ value: 1 })).to.revertedWith('member token not enough');
+      it('should not able to deposit when not enough minMemberTokenToJoin', async function () { // todo: need to create another test case for non DAO creator
+        await dao.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
       });
 
       it('should be able to deposit when enough minMemberTokenToJoin', async function () {
@@ -162,8 +208,9 @@ describe('Testing Dao', function () {
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
       });
 
-      it('should not be able to deposit when not enough', async function () {
-        await expect(dao.deposit({ value: 10 })).to.revertedWith('deposit amount not enough');
+      it('should not be able to deposit when not enough', async function () { // todo: need to create another test case for non DAO creator
+        await dao.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(dao.address)).to.equal(1);
       });
 
       it('should be able to deposit when enough', async function () {

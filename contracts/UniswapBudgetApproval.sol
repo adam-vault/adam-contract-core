@@ -66,6 +66,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         require(checkValid(tokenIn, tokenOut, amountIn, true), "transaction not valid");
 
         _updateTotalAmount(amountIn);
+        _updateUsageCount();
 
         // return unused amount (triggered when input is estimated)
         if(amountIn < requiredAmount) {
@@ -101,7 +102,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         return checkTokenValid(_tokenIn) && 
                checkAmountValid(_amount) && 
                checkAmountPercentageValid(_amount, executed) &&
-               checkToTokenValid(_tokenOut);
+               checkToTokenValid(_tokenOut) &&
+               checkUsageCountValid();
     }
 
     function checkToTokenValid(address _token) public view returns (bool) {
@@ -135,7 +137,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         address[] calldata _toTokens
     ) public pure returns (bytes memory data) {
         return abi.encodeWithSignature(
-            "initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])",
+            "initialize((address,address,address[],string,string,bool,address[],address[],bool,uint256,uint8,uint256,uint256,bool,uint256),bool,address[])",
             params,
             _allowAllTokens,
             _toTokens
@@ -144,8 +146,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     function decodeUniswapInitializeData(bytes memory _data) public pure returns (InitializeParams memory, bool, address[] memory) {
 
-        // initialize((address,address,address[],string,string,bool,address[],bool,address[],bool,uint256,uint8),bool,address[])
-        if(_data.toBytes4(0) != 0xf3d74a99) {
+        // initialize((address,address,address[],string,string,bool,address[],address[],bool,uint256,uint8,uint256,uint256,bool,uint256),bool,address[])
+        if(_data.toBytes4(0) != 0xc3471922) {
             revert("unexpected function");
         }
 

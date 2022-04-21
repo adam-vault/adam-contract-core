@@ -2,8 +2,8 @@ const hre = require('hardhat');
 const { faker } = require('@faker-js/faker');
 
 // rinkeby
-const governAddress = '0x2396657C0c870a95deBb5c3C947bd47DEfc721F6';
-const daoAddress = '0x38B190D5779dC03209132842f070EfD137AA07E4';
+const governAddress = '0x25cC6C6C32FF04b3460FDB19CA053ee919d7b874';
+const daoAddress = '0xA3183A78A3E5bEe6Bb44022B6CB806Ee4ECAa688';
 
 async function main () {
   const govern = await hre.ethers.getContractAt('Govern', governAddress);
