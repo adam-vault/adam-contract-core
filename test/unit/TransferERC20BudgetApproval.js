@@ -40,6 +40,8 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
   describe('Create Budget Approval', function () {
     it('should success', async function () {
+      const startTime = Math.round(Date.now() / 1000) - 86400;
+      const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = await transferERC20BAImplementation.callStatic.encodeInitializeData(
         [
           // dao address
@@ -56,9 +58,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
           false,
           // allowed addresses (use when above = false)
           [receiver.address],
-          // alow all tokens,
-          false,
-          // allowed token (use when above = false)
+          // allowed token
           [ethers.constants.AddressZero, tokenA.address],
           // allow any amount
           false,
@@ -66,8 +66,10 @@ describe('Testing TransferERC20BudgetApproval', function () {
           ethers.utils.parseEther('100'),
           // allowed amount percentage
           '10',
-          Math.round(Date.now() / 1000) - 86400, // startTime
-          Math.round(Date.now() / 1000) + 86400, // endTime
+          startTime, // startTime
+          endTime, // endTime
+          false, // allow unlimited usage
+          10, // usage count
         ],
       );
 
@@ -90,7 +92,6 @@ describe('Testing TransferERC20BudgetApproval', function () {
       expect(await budgetApproval.callStatic.allowAllAddresses()).to.eq(false);
       expect(await budgetApproval.callStatic.addressesMapping(receiver.address)).to.eq(true);
 
-      expect(await budgetApproval.callStatic.allowAllTokens()).to.eq(false);
       expect(await budgetApproval.callStatic.tokens(0)).to.eq(ethers.constants.AddressZero);
       expect(await budgetApproval.callStatic.tokens(1)).to.eq(tokenA.address);
       expect(await budgetApproval.callStatic.tokensMapping(ethers.constants.AddressZero)).to.eq(true);
@@ -99,12 +100,18 @@ describe('Testing TransferERC20BudgetApproval', function () {
       expect(await budgetApproval.callStatic.allowAnyAmount()).to.eq(false);
       expect(await budgetApproval.callStatic.totalAmount()).to.eq(ethers.utils.parseEther('100'));
       expect(await budgetApproval.callStatic.amountPercentage()).to.eq(10);
+
+      expect(await budgetApproval.callStatic.startTime()).to.eq(startTime);
+      expect(await budgetApproval.callStatic.endTime()).to.eq(endTime);
+
+      expect(await budgetApproval.callStatic.allowUnlimitedUsageCount()).to.eq(false);
+      expect(await budgetApproval.callStatic.usageCount()).to.eq(10);
     });
   });
 
   describe('Execute Transaction (Transfer ETH)', function () {
     beforeEach(async function () {
-      await dao.connect(executor).deposit({ value: ethers.utils.parseEther('1000') });
+      await dao.connect(executor).deposit({ value: ethers.utils.parseEther('100') });
     });
 
     context('complete flow', () => {
@@ -200,6 +207,172 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
         await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
           .to.be.revertedWith('transaction not allowed');
+      });
+    });
+
+    context('execute before startTime', () => {
+      it('should revert', async function () {
+        const initData =
+          await transferERC20BAImplementation.callStatic.encodeInitializeData([
+            dao.address, // dao address
+            executor.address, // executor
+            [], // approvers
+            'Transfer ERC20', // text
+            'Outflow', // transaction type
+            false, // allow all addresses,
+            [receiver.address], // allowed addresses (use when above = false)
+            [ethers.constants.AddressZero, tokenA.address], // allowed token (use when above = false)
+            false, // allow any amount
+            ethers.utils.parseEther('100'), // allowed total amount
+            100, // allowed amount percentage
+            Math.round(Date.now() / 1000) + 86400, // startTime
+            0, // endTime
+            false, // allow unlimited usage
+            10, // usage count
+          ]);
+
+        const tx = await dao.createBudgetApprovals(
+          [transferERC20BAImplementation.address],
+          [initData],
+        );
+        const receipt = await tx.wait();
+        const creationEventLog = _.find(receipt.events, {
+          event: 'CreateBudgetApproval',
+        });
+        const budgetApprovalAddress = creationEventLog.args.budgetApproval;
+
+        const testBudgetApproval = await ethers.getContractAt(
+          'TransferERC20BudgetApproval',
+          budgetApprovalAddress,
+        );
+
+        const transactionData = testBudgetApproval.callStatic[
+          'encodeTransactionData(address,bytes,uint256)'
+        ](receiver.address, [], ethers.utils.parseEther('101'));
+
+        await expect(
+          dao
+            .connect(executor)
+            .createBudgetApprovalTransaction(
+              testBudgetApproval.address,
+              transactionData,
+              Math.round(Date.now() / 1000) + 86400,
+              true,
+            ),
+        ).to.be.revertedWith('budget approval not yet started');
+      });
+    });
+
+    context('execute after endTime', () => {
+      it('should revert', async function () {
+        const initData =
+          await transferERC20BAImplementation.callStatic.encodeInitializeData([
+            dao.address, // dao address
+            executor.address, // executor
+            [], // approvers
+            'Transfer ERC20', // text
+            'Outflow', // transaction type
+            false, // allow all addresses,
+            [receiver.address], // allowed addresses (use when above = false)
+            [ethers.constants.AddressZero, tokenA.address], // allowed token (use when above = false)
+            false, // allow any amount
+            ethers.utils.parseEther('100'), // allowed total amount
+            100, // allowed amount percentage
+            0, // startTime
+            Math.round(Date.now() / 1000) - 86400, // endTime
+            false, // allow unlimited usage
+            10, // usage count
+          ]);
+
+        const tx = await dao.createBudgetApprovals(
+          [transferERC20BAImplementation.address],
+          [initData],
+        );
+        const receipt = await tx.wait();
+        const creationEventLog = _.find(receipt.events, {
+          event: 'CreateBudgetApproval',
+        });
+        const budgetApprovalAddress = creationEventLog.args.budgetApproval;
+
+        const testBudgetApproval = await ethers.getContractAt(
+          'TransferERC20BudgetApproval',
+          budgetApprovalAddress,
+        );
+
+        const transactionData = testBudgetApproval.callStatic[
+          'encodeTransactionData(address,bytes,uint256)'
+        ](receiver.address, [], ethers.utils.parseEther('101'));
+
+        await expect(
+          dao
+            .connect(executor)
+            .createBudgetApprovalTransaction(
+              testBudgetApproval.address,
+              transactionData,
+              Math.round(Date.now() / 1000) + 86400,
+              true,
+            ),
+        ).to.be.revertedWith('budget approval ended');
+      });
+    });
+
+    context('execute if not enough usage count', () => {
+      it('should revert', async function () {
+        const initData =
+          await transferERC20BAImplementation.callStatic.encodeInitializeData([
+            dao.address, // dao address
+            executor.address, // executor
+            [], // approvers
+            'Transfer ERC20', // text
+            'Outflow', // transaction type
+            false, // allow all addresses,
+            [receiver.address], // allowed addresses (use when above = false)
+            [ethers.constants.AddressZero, tokenA.address], // allowed token (use when above = false)
+            false, // allow any amount
+            ethers.utils.parseEther('100'), // allowed total amount
+            100, // allowed amount percentage
+            0, // startTime
+            0, // endTime
+            false, // allow unlimited usage
+            1, // usage count
+          ]);
+
+        const tx = await dao.createBudgetApprovals(
+          [transferERC20BAImplementation.address],
+          [initData],
+        );
+        const receipt = await tx.wait();
+        const creationEventLog = _.find(receipt.events, {
+          event: 'CreateBudgetApproval',
+        });
+        const budgetApprovalAddress = creationEventLog.args.budgetApproval;
+
+        const testBudgetApproval = await ethers.getContractAt(
+          'TransferERC20BudgetApproval',
+          budgetApprovalAddress,
+        );
+
+        const transactionData = testBudgetApproval.callStatic[
+          'encodeTransactionData(address,bytes,uint256)'
+        ](receiver.address, [], ethers.utils.parseEther('1'));
+
+        await dao.connect(executor).createBudgetApprovalTransaction(
+          testBudgetApproval.address,
+          transactionData,
+          Math.round(Date.now() / 1000) + 86400,
+          true,
+        );
+
+        await expect(
+          dao
+            .connect(executor)
+            .createBudgetApprovalTransaction(
+              testBudgetApproval.address,
+              transactionData,
+              Math.round(Date.now() / 1000) + 86400,
+              true,
+            ),
+        ).to.be.revertedWith('transaction not allowed');
       });
     });
   });

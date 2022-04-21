@@ -52,10 +52,8 @@ describe('UniswapSwapper.sol', () => {
         true,
         // allowed addresses (use when above = false)
         [],
-        // alow all tokens,
-        true,
         // allowed token (use when above = false)
-        [],
+        [ETHAddress, WETHAddress, DAIAddress, UNIAddress],
         // allow any amount
         true,
         // allowed total amount
@@ -63,7 +61,9 @@ describe('UniswapSwapper.sol', () => {
         // allowed amount percentage
         '100',
         Math.round(Date.now() / 1000) - 86400, // startTime
-        Math.round(Date.now() / 1000) + 86400, // endTime
+        Math.round(Date.now() / 1000) + 86400, // endTime,
+        true,
+        0,
       ],
       true,
       [],
