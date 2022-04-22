@@ -34,6 +34,7 @@ async function main () {
       100,
       0,
       0,
+      [],
     ]);
 
     return tx.wait().then((receipt) => {
