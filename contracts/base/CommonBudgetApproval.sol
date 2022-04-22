@@ -117,9 +117,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         uint256 endTime;
     }
 
-    function initialize(
+    function __BudgetApproval_init(
         InitializeParams calldata params
-        ) public initializer {
+        ) internal onlyInitializing {
         dao = payable(params.dao);
         executor = params.executor;
         text = params.text;
@@ -280,22 +280,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         }
 
         return abi.decode(_data.slice(4, _data.length - 4), (address, address, bytes, uint256));
-    }
-
-    function encodeInitializeData(InitializeParams calldata params) public pure returns (bytes memory data) {
-        return abi.encodeWithSelector(
-            this.initialize.selector,
-            params
-        );
-    }
-
-    function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
-
-        if(_data.toBytes4(0) != this.initialize.selector) {
-            revert("unexpected function");
-        }
-
-        return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
     }
 
     receive() external payable {}
