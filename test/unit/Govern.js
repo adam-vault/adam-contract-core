@@ -373,45 +373,22 @@ describe('Voting and executing budget approval', function () {
     it('should transfer memberToken from Dao to owner2', async function () {
       const memberTokenAddr = await dao.memberToken();
       const memberToken = await ethers.getContractAt('MemberToken', memberTokenAddr);
-      const governAddr = await governFactory.governMap(dao.address, 'BudgetApproval');
-      const govern = await ethers.getContractAt('Govern', governAddr);
       const transferBudgetApprovalImplementationAddr = await adam.budgetApprovals(0);
       const transferBudgetApprovalAddr = await createTransferERC20BudgetApproval(transferBudgetApprovalImplementationAddr, memberTokenAddr);
       const transferBudgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', transferBudgetApprovalAddr);
       const transferCalldata = memberToken.interface.encodeFunctionData('transfer', [owner2.address, 50]);
-      const transactionData = await transferBudgetApproval.callStatic['encodeTransactionData(address,bytes,uint256)'](memberTokenAddr, transferCalldata, 0);
-      const proposalExecuteData = dao.interface.encodeFunctionData(
-        'createBudgetApprovalTransaction',
-        [
-          transferBudgetApprovalAddr,
-          transactionData,
-          Date.now() + 86400,
-          true,
-        ],
-      );
+      const transactionData = await transferBudgetApproval.callStatic['encodeTransactionData(address,address,bytes,uint256)'](dao.address, memberTokenAddr, transferCalldata, 0);
 
       await lp.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
 
-      const tx = await govern.propose(
-        [dao.address],
-        [0],
-        [proposalExecuteData],
-        'Proposal: transfer member token',
-      );
-      const rc = await tx.wait();
-      const event = rc.events.find(event => event.event === 'ProposalCreated');
-      const [proposalId] = event.args;
-      await govern.connect(owner1).castVote(proposalId, 1);
       await hre.network.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
 
-      expect(await govern.state(proposalId)).to.eq(4); // Success
       expect(await memberToken.balanceOf(owner2.address)).to.eq(0);
 
-      await govern.execute(
-        [dao.address],
-        [0],
-        [proposalExecuteData],
-        ethers.utils.id('Proposal: transfer member token'),
+      await transferBudgetApproval.createTransaction(
+        transactionData,
+        Date.now() + 86400,
+        true,
       );
       expect(await memberToken.balanceOf(owner2.address)).to.eq(50);
     });
