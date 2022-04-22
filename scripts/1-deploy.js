@@ -41,6 +41,13 @@ const deployGovernFactory = async () => {
   return [governFactory.address, govern.address];
 };
 
+const createFeedRegistry = async () => {
+  const FeedRegistry = await hre.ethers.getContractFactory('MockFeedRegistry');
+  const feedRegistry = await FeedRegistry.deploy();
+
+  return feedRegistry;
+};
+
 async function main () {
   // Gather Current Block Number
   const blockNumber = await hre.ethers.provider.getBlockNumber();
@@ -53,20 +60,22 @@ async function main () {
   const Dao = await hre.ethers.getContractFactory('Dao');
   const Membership = await hre.ethers.getContractFactory('Membership');
   const Adam = await hre.ethers.getContractFactory('Adam');
-  const MultiToken = await hre.ethers.getContractFactory('MultiToken');
+  const LiquidPool = await hre.ethers.getContractFactory('LiquidPool');
   const MemberToken = await hre.ethers.getContractFactory('MemberToken');
 
+  const feedRegistry = await createFeedRegistry();
   const dao = await Dao.deploy();
   await dao.deployed();
   const membership = await Membership.deploy();
   await membership.deployed();
-  const multiToken = await MultiToken.deploy();
-  await multiToken.deployed();
+  const liquidPool = await LiquidPool.deploy();
+  await liquidPool.deployed();
   const memberToken = await MemberToken.deploy();
   await memberToken.deployed();
 
   const adam = await hre.upgrades.deployProxy(Adam, [
-    dao.address, membership.address, multiToken.address, memberToken.address, budgetApprovalsAddress, governInfo[0], constantState,
+    dao.address, membership.address, liquidPool.address, memberToken.address, budgetApprovalsAddress, governInfo[0], constantState,
+    feedRegistry.address,
   ], { kind: 'uups' });
   await adam.deployed();
 
@@ -75,7 +84,6 @@ async function main () {
     adam: adam.address,
     dao: dao.address,
     membership: membership.address,
-    multiToken: multiToken.address,
     governFactory: governInfo[0],
     govern: governInfo[1],
     transferErc20BudgetApproval: budgetApprovalsAddress[0],
@@ -97,7 +105,6 @@ async function main () {
       GOVERN_IMPLEMENTATION: governInfo[1],
       DAO_IMPLEMENTATION: dao.address,
       MEMBERSHIP_IMPLEMENTATION: membership.address,
-      MULTI_TOKEN_IMPLEMENTATION: multiToken.address,
       ADAM: adam.address,
       GOVERN_FACTORY: governInfo[0],
     });
