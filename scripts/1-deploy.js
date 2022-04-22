@@ -80,7 +80,10 @@ async function main () {
   console.log('Contract Addresses', contractAddresses);
 
   if (process.env.CI) {
-    fs.writeFileSync(`deploy_${new Date().valueOf()}.json`, JSON.stringify(contractAddresses));
+    if (!fs.existsSync('deploy')) {
+      fs.mkdirSync('deploy');
+    }
+    fs.writeFileSync('deploy/contract_address.json', JSON.stringify(contractAddresses));
   } else {
     overwriteAddressEnv({
       TRANSFER_ERC20_APPROVAL_IMPLEMENTATION: budgetApprovalsAddress[0],
