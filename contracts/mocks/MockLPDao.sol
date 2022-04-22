@@ -9,13 +9,11 @@ contract MockLPDao {
     uint256 public minDepositAmount;
     address public memberToken;
     mapping(address => uint256) public firstDeposit;
+    mapping(address => bool) public isMember;
 
     function byPassGovern(address) public pure returns (bool) {
         return true;
-    } 
-    function isMember(address) public pure returns (bool) {
-        return true;
-    } 
+    }
     function govern(string memory) public pure returns (address) {
         return address(1);
     } 
@@ -24,11 +22,18 @@ contract MockLPDao {
     } 
     function setMemberToken(address mt) public {
         memberToken = mt;
-    } 
+    }
+    function setMinMemberTokenToJoin(uint256 amount) public {
+        minMemberTokenToJoin = amount;
+    }
+    function setMinDepositAmount(uint256 amount) public {
+        minDepositAmount = amount;
+    }
     function canCreateBudgetApproval(address) public pure returns (bool) {
         return true;
     } 
     function mintMember(address account) public {
+        isMember[account] = true;
     } 
     function setFirstDeposit(address account) public {
         firstDeposit[account] = block.timestamp;
