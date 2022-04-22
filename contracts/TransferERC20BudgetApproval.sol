@@ -20,18 +20,18 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         __BudgetApproval_init(params);
     }
 
-    function executeMultiple(address executee, address[] memory to, bytes[] memory data, uint256[] memory value) public {
+    function executeMultiple(address[] memory to, bytes[] memory data, uint256[] memory value) public {
         require(data.length == to.length, "invalid input");
         require(data.length == value.length, "invalid input");
 
         for(uint i = 0; i < data.length; i++) {
-            execute(executee, to[i], data[i], value[i]);
+            execute(to[i], data[i], value[i]);
         }
     }
 
     // transfer ETH by sending data.length == 0
     // transfer ERC20 by using transfer(address,uint256)
-    function execute(address executee, address to, bytes memory data, uint256 value) public override onlySelf {
+    function execute(address to, bytes memory data, uint256 value) public override onlySelf {
 
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
 
@@ -83,7 +83,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
     }
 
-    function encodeMultipleTransactionData(address _executee, address[] calldata _to, bytes[] calldata _data, uint256[] calldata _amount) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(this.executeMultiple.selector, _executee, _to, _data, _amount);
+    function encodeMultipleTransactionData(address[] calldata _to, bytes[] calldata _data, uint256[] calldata _amount) public pure returns (bytes memory) {
+        return abi.encodeWithSelector(this.executeMultiple.selector, _to, _data, _amount);
     }
 }

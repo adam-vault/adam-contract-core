@@ -10,8 +10,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "../lib/BytesLib.sol";
 import "../lib/RevertMsg.sol";
 
-import "../interface/IDao.sol";
-
 import "../interface/IMembership.sol";
 
 abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
@@ -50,6 +48,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     address public executor;
     address payable public dao;
+    address public executee;
 
     address[] public approvers;
     mapping(address => bool) public approversMapping;
@@ -73,11 +72,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     bool public allowUnlimitedUsageCount;
     uint256 public usageCount;
-
-    modifier onlyDao {
-        require(msg.sender == dao, "access denied");
-        _;
-    }
 
     modifier onlyApprover () {
         require(approversMapping[msg.sender], "access denied");
@@ -125,6 +119,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         InitializeParams calldata params
         ) internal onlyInitializing {
         dao = payable(params.dao);
+        executee = msg.sender;
         executor = params.executor;
         text = params.text;
         transactionType = params.transactionType;
@@ -243,9 +238,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
         for(uint i = 0; i < tokens.length; i++) {
             if(tokens[i] == ETH_ADDRESS) {
-                _totalAmount += dao.balance;
+                _totalAmount += executee.balance;
             } else {
-                _totalAmount += IERC20(tokens[i]).balanceOf(dao);
+                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
             }
         }
 
@@ -276,20 +271,20 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function _authorizeUpgrade(address) internal override initializer {}
 
-    function execute(address, address, bytes memory, uint256) public virtual;
+    function execute(address, bytes memory, uint256) public virtual;
 
-    function encodeTransactionData(address _executee, address _to, bytes memory _data, uint256 _amount) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(this.execute.selector, _executee, _to, _data, _amount);
+    function encodeTransactionData(address _to, bytes memory _data, uint256 _amount) public pure returns (bytes memory) {
+        return abi.encodeWithSelector(this.execute.selector, _to, _data, _amount);
     }
 
-    function decodeTransactionData(bytes memory _data) public pure returns (address, address, bytes memory, uint256) {
+    function decodeTransactionData(bytes memory _data) public pure returns (address, bytes memory, uint256) {
 
         if(_data.toBytes4(0) != this.execute.selector) {
             // execute(address,address,bytes,uint256)
             revert("unexpected function call");
         }
 
-        return abi.decode(_data.slice(4, _data.length - 4), (address, address, bytes, uint256));
+        return abi.decode(_data.slice(4, _data.length - 4), (address, bytes, uint256));
     }
 
     receive() external payable {}
