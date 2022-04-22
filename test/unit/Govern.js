@@ -377,7 +377,7 @@ describe('Voting and executing budget approval', function () {
       const transferBudgetApprovalAddr = await createTransferERC20BudgetApproval(transferBudgetApprovalImplementationAddr, memberTokenAddr);
       const transferBudgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', transferBudgetApprovalAddr);
       const transferCalldata = memberToken.interface.encodeFunctionData('transfer', [owner2.address, 50]);
-      const transactionData = await transferBudgetApproval.callStatic['encodeTransactionData(address,address,bytes,uint256)'](dao.address, memberTokenAddr, transferCalldata, 0);
+      const transactionData = await transferBudgetApproval.callStatic.encodeTransactionData(dao.address, memberTokenAddr, transferCalldata, 0);
 
       await lp.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
 
