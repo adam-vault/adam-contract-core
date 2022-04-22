@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
+import "./base/BudgetApprovalExecutee.sol";
+
 import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
@@ -15,7 +17,7 @@ import "./lib/Concat.sol";
 import "hardhat/console.sol";
 import "./interface/IDao.sol";
 
-contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
+contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetApprovalExecutee {
     using Concat for string;
     using Counters for Counters.Counter;
     
@@ -24,7 +26,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
 
     address[] public assets;
     mapping(address => bool) public isAssetSupported;
-    mapping(address => bool) public budgetApprovals;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event AllowDepositToken(address token);
@@ -42,12 +43,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
         registry = FeedRegistryInterface(feedRegistry);
         _addAssets(depositTokens); // todo
     }
-
-    // function delegateCallBA(bytes memory data) public {
-    //     require(budgetApprovals[msg.sender], "only BA");
-    //     (bool success,) = address(msg.sender).delegatecall(data);
-    //     require(success, "tx fail");
-    // }
     
     function deposit() public payable {
         if (totalSupply() == 0) {
@@ -140,7 +135,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable {
         }
         return total;
     }
-
 
     function _authorizeUpgrade(address newImplementation) internal override {}
     function _afterDeposit(address account, uint256 eth) private {
