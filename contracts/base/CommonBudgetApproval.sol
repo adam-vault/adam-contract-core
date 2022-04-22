@@ -279,12 +279,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function execute(address, address, bytes memory, uint256) public virtual;
 
     function encodeTransactionData(address _executee, address _to, bytes memory _data, uint256 _amount) public pure returns (bytes memory) {
-        return abi.encodeWithSignature("execute(address,address,bytes,uint256)", _executee, _to, _data, _amount);
+        return abi.encodeWithSelector(this.execute.selector, _executee, _to, _data, _amount);
     }
 
     function decodeTransactionData(bytes memory _data) public pure returns (address, address, bytes memory, uint256) {
 
-        if(_data.toBytes4(0) != 0x0fcb3706) {
+        if(_data.toBytes4(0) != this.execute.selector) {
             // execute(address,address,bytes,uint256)
             revert("unexpected function call");
         }
