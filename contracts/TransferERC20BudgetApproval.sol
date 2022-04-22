@@ -14,7 +14,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     string public constant override NAME = "Transfer ERC20 Budget Approval";
 
-    function execute(address executee, address[] memory to, bytes[] memory data, uint256[] memory value) public {
+    function executeMultiple(address executee, address[] memory to, bytes[] memory data, uint256[] memory value) public {
         require(data.length == to.length, "invalid input");
         require(data.length == value.length, "invalid input");
 
@@ -61,7 +61,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return (to, recipient, amount);
     }
 
-    function encodeTransactionData(address _executee, address[] calldata _to, bytes[] calldata _data, uint256[] calldata _amount) public pure returns (bytes memory) {
-        return abi.encodeWithSignature("execute(address,address[],bytes[],uint256[])", _executee, _to, _data, _amount);
+    function encodeMultipleTransactionData(address _executee, address[] calldata _to, bytes[] calldata _data, uint256[] calldata _amount) public pure returns (bytes memory) {
+        return abi.encodeWithSelector(this.executeMultiple.selector, _executee, _to, _data, _amount);
     }
 }
