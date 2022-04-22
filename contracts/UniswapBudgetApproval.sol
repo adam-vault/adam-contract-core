@@ -38,7 +38,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         UniswapSwapper.setParams(IAdam(IDao(dao).adam()).constantState());
     }
 
-    function execute(address executee, address to, bytes memory data, uint256 value) public override onlySelf {
+    function execute(address to, bytes memory data, uint256 value) public override onlySelf {
 
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
 
