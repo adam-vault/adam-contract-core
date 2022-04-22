@@ -1,9 +1,10 @@
 name: Deploy Contracts
 on:
-  push
-  # push:
-  #   tags:    
-  #     - 'v[0-9].[0-9]+.[0-9]+\-dev'
+  push:
+    tags:    
+      - 'v[0-9].[0-9]+.[0-9]+\-dev'
+      - 'v[0-9].[0-9]+.[0-9]+\-alpha'
+
 env:
   REACT_APP_GIT_REF: ${{ github.ref_name }} # either branch name or tag
   CONTRACT_DEPLOY_NETWORK: rinkeby
@@ -42,3 +43,16 @@ jobs:
           path: |
             abis/
             deploy/contract_address.json
+
+      - name: Slack Notification
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
+        with:
+          # For posting a rich message using Block Kit
+          payload: |
+            {
+              "text": "Contract Deploy Success: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
