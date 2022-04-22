@@ -29,13 +29,13 @@ jobs:
       - name: Compile Contracts
         run: npm run compile
       
-      - name: Generate ABIs into artifacts
+      - name: Generate ABIs
         run: npx hardhat export # This generates json files into "abis/" folder
       
       - name: Deploy Contracts
         run: npx hardhat run scripts/1-deploy.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
 
-      - name: Upload Contract Addresses artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: deploy_${{ github.ref_name }}
