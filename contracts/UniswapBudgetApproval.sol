@@ -21,13 +21,13 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
     bool public allowAllToTokens;
     mapping(address => bool) public toTokensMapping;
 
-    function uniswapInitialize(
+    function initialize(
        InitializeParams calldata params,
         // extra params
         bool _allowAllTokens,
         address[] calldata _toTokens
     ) public initializer {
-        CommonBudgetApproval.initialize(params);
+        __BudgetApproval_init(params);
 
         allowAllToTokens = _allowAllTokens;
         for(uint i = 0; i < _toTokens.length; i++) {
@@ -77,23 +77,23 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         return UniswapSwapper.decodeUniswapData(to, data, value);
     }
 
-    function encodeUniswapInitializeData(
+    function encodeInitializeData(
        InitializeParams calldata params,
         // extra params
         bool _allowAllTokens,
         address[] calldata _toTokens
     ) public pure returns (bytes memory data) {
         return abi.encodeWithSelector(
-           this.uniswapInitialize.selector,
+           this.initialize.selector,
             params,
             _allowAllTokens,
             _toTokens
         );
     }
 
-    function decodeUniswapInitializeData(bytes memory _data) public pure returns (InitializeParams memory, bool, address[] memory) {
+    function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory, bool, address[] memory) {
 
-        if(_data.toBytes4(0) != this.uniswapInitialize.selector) {
+        if(_data.toBytes4(0) != this.initialize.selector) {
             revert("unexpected function");
         }
 
