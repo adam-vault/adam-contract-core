@@ -51,7 +51,7 @@ jobs:
           # For posting a rich message using Block Kit
           payload: |
             {
-              "text": "Contract Deploy Success: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              "text": "** Contract Deployment Success** \nversion: ${{ github.ref_name }} \n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
