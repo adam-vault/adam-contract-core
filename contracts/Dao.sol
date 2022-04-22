@@ -13,20 +13,20 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 
+import "./base/BudgetApprovalExecutee.sol";
+
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
 import "./interface/IGovernFactory.sol";
-import "./interface/ICommonBudgetApproval.sol";
 import "./interface/IMemberToken.sol";
 import "./interface/IDao.sol";
 
 import "./lib/Concat.sol";
 import "./lib/ToString.sol";
 import "./lib/BytesLib.sol";
-import "./dex/UniswapSwapper.sol";
 import "hardhat/console.sol";
 
-contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155Holder {
+contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155Holder, BudgetApprovalExecutee {
     // list strategy
     using Strings for uint256;
     using Concat for string;
@@ -49,7 +49,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public governFactory;
     address public memberTokenImplementation;
     string public name;
-    mapping(address => bool) public budgetApprovals;
     mapping(address => uint256) public firstDeposit;
 
     uint256 public locktime;
@@ -123,11 +122,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _;
     }
 
-    modifier onlyBudgetApproval {
-        require(budgetApprovals[msg.sender], "access denied");
-        _;
-    }
-
     function setFirstDeposit(address owner) public {
         require(msg.sender == liquidPool, "only LP");
         firstDeposit[owner] = block.timestamp;
@@ -166,36 +160,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function isMember(address account) public view returns (bool) {
         return IMembership(membership).isMember(account);
-    }
-
-    // for handling Uniswap Iframe
-    function approveERC20(address _token, address _to, uint256 _amount) public onlyBudgetApproval {
-        IERC20(_token).approve(_to,_amount);
-    }
-
-    function createBudgetApprovalTransaction (address _budgetApproval, bytes calldata _data, uint256 _deadline, bool _execute) external {
-        require(budgetApprovals[_budgetApproval], "budget approval invalid");
-        require(ICommonBudgetApproval(_budgetApproval).supportsInterface(_data.toBytes4(0)), "not supported interface");
-    
-        ICommonBudgetApproval(_budgetApproval).createTransaction(_data, _deadline, _execute);
-    }
-
-    function withdrawByBudgetApproval(
-        address _token, 
-        address[] memory _members, 
-        uint256[] memory _amounts, 
-        bool transferred
-    ) external onlyBudgetApproval returns (uint256 totalAmount) {
-
-    }
-
-    function depositByBudgetApproval(
-        address _token, 
-        address[] memory _members, 
-        uint256[] memory _amounts, 
-        bool transferred
-    ) external payable onlyBudgetApproval returns (uint256 totalAmount) {
-
     }
 
     function updateDaoSetting(IDao.DaoSetting calldata _setting) public onlyGovern("DaoSetting") {
