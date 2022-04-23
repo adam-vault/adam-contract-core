@@ -8,7 +8,6 @@ env:
 jobs:
   sync-subgraph-repo:
     name: Syncrhonize with Subgraph Repo
-    needs: deploy-contracts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Subgraph Repo
