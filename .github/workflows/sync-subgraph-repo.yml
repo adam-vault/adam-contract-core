@@ -13,7 +13,7 @@ jobs:
       - name: Checkout Subgraph Repo
         uses: actions/checkout@v3
         with:
-          repository: ${{ github.event.repository.name }}/adam-subgraph
+          repository: ${{ github.repository_owner }}/adam-subgraph
           ref: feat/AS-625/adding-auto-replace-subgraph-yaml-address
           token: ${{ secrets.GH_PAT }}      
       
