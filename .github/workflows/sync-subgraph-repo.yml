@@ -1,0 +1,44 @@
+name: Test Syncrhonize Subgraph Repo
+on:
+  push
+
+env:
+  GIT_REF: v0.0.2-dev
+
+jobs:
+  sync-subgraph-repo:
+    name: Syncrhonize with Subgraph Repo
+    needs: deploy-contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Subgraph Repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.repository.name }}/adam-subgraph
+          ref: feat/AS-625/adding-auto-replace-subgraph-yaml-address
+          token: ${{ secrets.GH_PAT }}      
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'yarn'
+      
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Fetch Deployment Info
+        uses: actions/download-artifact@v3
+        with:
+          name: deploy_$GIT_REF
+          path: ./deploy_artifacts
+
+      - name: Replace ABIs
+        run: cp ./deploy_artifacts/abis/* ./abis
+
+      - name: Replace Subgraph Address
+        run: yarn update-address -- --Adam $(jq .adam ./deploy_artifacts/deploy/contract_address.json) --GovernFactory $(jq .governFactory ./deploy_artifacts/deploy/contract_address.json)
+      
+      - name: Diff
+        run: git diff
+
