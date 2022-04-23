@@ -90,7 +90,10 @@ jobs:
         run: cp ./deploy_artifacts/abis/* ./abis
 
       - name: Replace Subgraph Address
-        run: yarn update-address -- --Adam $(jq .adam ./deploy_artifacts/deploy/contract_address.json) --GovernFactory $(jq .governFactory ./deploy_artifacts/deploy/contract_address.json)
+        run: | 
+          yarn update-address -- 
+            --Adam $(jq -r .adam ./deploy_artifacts/deploy/contract_address.json) 
+            --GovernFactory $(jq -r .governFactory ./deploy_artifacts/deploy/contract_address.json)
       
       - name: Diff
         run: git diff
