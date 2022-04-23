@@ -29,7 +29,7 @@ jobs:
       - name: Fetch Deployment Info
         uses: actions/download-artifact@v3
         with:
-          name: deploy_${{ GIT_REF }}
+          name: deploy_${{ env.GIT_REF }}
           path: ./deploy_artifacts
 
       - name: Replace ABIs
