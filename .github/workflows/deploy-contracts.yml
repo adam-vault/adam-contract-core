@@ -24,19 +24,19 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: 'yarn'
+          cache: 'npm'
       
       - name: Install Dependencies
-        run: yarn install
+        run: npm install
       
       - name: Compile Contracts
-        run: yarn compile
+        run: npm run compile
       
       - name: Generate ABIs
-        run: yarn hardhat export # This generates json files into "abis/" folder
+        run: npx hardhat export # This generates json files into "abis/" folder
       
       - name: Deploy Contracts
-        run: yarn hardhat run scripts/1-deploy.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
+        run: npx hardhat run scripts/1-deploy.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
