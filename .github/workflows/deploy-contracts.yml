@@ -94,5 +94,9 @@ jobs:
             --Adam $(jq -r .adam ./deploy_artifacts/deploy/contract_address.json)\
             --GovernFactory $(jq -r .governFactory ./deploy_artifacts/deploy/contract_address.json)
       
-      - name: Diff
-        run: git diff
+      - name: Make Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: autosync/deploy_${{ env.GIT_REF }}
+          title: Synchronize contract addresses and ABIs ${{ env.GIT_REF }}
