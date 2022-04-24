@@ -66,6 +66,7 @@ async function main () {
   ], { kind: 'uups' });
   await adam.deployed();
 
+  // Gather Contract Addresses
   const contractAddresses = {
     adam: adam.address,
     dao: dao.address,
@@ -76,14 +77,21 @@ async function main () {
     transferErc20BudgetApproval: budgetApprovalsAddress[0],
     uniswapBudgetApproval: budgetApprovalsAddress[1],
   };
-
   console.log('Contract Addresses', contractAddresses);
 
+  // Gather Current Block Number
+  const blockNumber = await hre.ethers.provider.getBlockNumber();
+  console.log('Current Block Number', blockNumber);
+
+  // Output Deployment Info as file
   if (process.env.CI) {
     if (!fs.existsSync('deploy')) {
       fs.mkdirSync('deploy');
     }
-    fs.writeFileSync('deploy/contract_address.json', JSON.stringify(contractAddresses));
+    fs.writeFileSync('deploy/results.json', JSON.stringify({
+      block_number: blockNumber,
+      addresses: contractAddresses,
+    }));
   } else {
     overwriteAddressEnv({
       TRANSFER_ERC20_APPROVAL_IMPLEMENTATION: budgetApprovalsAddress[0],
