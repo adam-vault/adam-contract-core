@@ -4,7 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require('hardhat');
-const fs = require('fs');
+const deployResultStore = require('./utils/deploy-result-store');
 const overwriteAddressEnv = require('./utils/overwriteAddressEnv');
 
 const deployConstantState = async (network = 'rinkeby') => {
@@ -85,13 +85,11 @@ async function main () {
 
   // Output Deployment Info as file
   if (process.env.CI) {
-    if (!fs.existsSync('deploy')) {
-      fs.mkdirSync('deploy');
-    }
-    fs.writeFileSync('deploy/results.json', JSON.stringify({
+    deployResultStore.save({
       block_number: blockNumber,
       addresses: contractAddresses,
-    }));
+      initdata_addresses: {},
+    });
   } else {
     overwriteAddressEnv({
       TRANSFER_ERC20_APPROVAL_IMPLEMENTATION: budgetApprovalsAddress[0],
