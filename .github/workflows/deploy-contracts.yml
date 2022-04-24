@@ -93,7 +93,7 @@ jobs:
           yarn update-address --\
             --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deploy_artifacts/deploy/results.json)\
             --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deploy_artifacts/deploy/results.json)\
-            --blockNumber $(jq -r .block_number ${{ runner.temp }}/deploy_artifacts/deploy/results.json)
+            --block $(jq -r .block_number ${{ runner.temp }}/deploy_artifacts/deploy/results.json)
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
