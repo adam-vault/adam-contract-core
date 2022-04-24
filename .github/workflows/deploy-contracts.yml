@@ -62,8 +62,6 @@ jobs:
     name: Syncrhonize with Subgraph Repo
     needs: deploy-contracts
     runs-on: ubuntu-latest
-    env: 
-      ARTIFACT_PATH: ${{ runner.temp }}/deploy_artifacts
     steps:
       - name: Checkout Subgraph Repo
         uses: actions/checkout@v3
@@ -85,16 +83,16 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: deploy_${{ env.GIT_REF }}
-          path: ${{ env.ARTIFACT_PATH }}
+          path: ${{ runner.temp }}/deploy_artifacts
 
       - name: Replace ABIs
-        run: cp ${{ env.ARTIFACT_PATH }}/abis/* ./abis
+        run: cp ${{ runner.temp }}/deploy_artifacts/abis/* ./abis
 
       - name: Replace Subgraph Address
         run: | 
           yarn update-address --\
-            --Adam $(jq -r .adam ${{ env.ARTIFACT_PATH }}/deploy/contract_address.json)\
-            --GovernFactory $(jq -r .governFactory ${{ env.ARTIFACT_PATH }}/deploy/contract_address.json)
+            --Adam $(jq -r .adam ${{ runner.temp }}/deploy_artifacts/deploy/contract_address.json)\
+            --GovernFactory $(jq -r .governFactory ${{ runner.temp }}/deploy_artifacts/deploy/contract_address.json)
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
