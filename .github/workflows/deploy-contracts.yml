@@ -83,20 +83,20 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: deploy_${{ env.GIT_REF }}
-          path: ./deploy_artifacts
+          path: ${{ RUNNER_TEMP }}/deploy_artifacts
 
       - name: Replace ABIs
-        run: cp ./deploy_artifacts/abis/* ./abis
+        run: cp ${{ RUNNER_TEMP }}/deploy_artifacts/abis/* ./abis
 
       - name: Replace Subgraph Address
         run: | 
           yarn update-address --\
-            --Adam $(jq -r .adam ./deploy_artifacts/deploy/contract_address.json)\
-            --GovernFactory $(jq -r .governFactory ./deploy_artifacts/deploy/contract_address.json)
+            --Adam $(jq -r .adam ${{ RUNNER_TEMP }}/deploy_artifacts/deploy/contract_address.json)\
+            --GovernFactory $(jq -r .governFactory ${{ RUNNER_TEMP }}/deploy_artifacts/deploy/contract_address.json)
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GH_PAT }}
           branch: autosync/deploy_${{ env.GIT_REF }}
-          title: Synchronize contract addresses and ABIs ${{ env.GIT_REF }}
+          title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
