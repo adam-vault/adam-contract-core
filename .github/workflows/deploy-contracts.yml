@@ -63,7 +63,7 @@ jobs:
     needs: deploy-contracts
     runs-on: ubuntu-latest
     env: 
-      ARTIFACT_PATH: ${{ env.RUNNER_TEMP }}/deploy_artifacts
+      ARTIFACT_PATH: ${{ runner.temp }}/deploy_artifacts
     steps:
       - name: Checkout Subgraph Repo
         uses: actions/checkout@v3
