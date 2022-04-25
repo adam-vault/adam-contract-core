@@ -7,6 +7,8 @@ const hre = require('hardhat');
 const deployResultStore = require('./utils/deploy-result-store');
 const overwriteAddressEnv = require('./utils/overwriteAddressEnv');
 
+const FEED_REGISTRY = '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF';
+
 const deployConstantState = async (network = 'rinkeby') => {
   if (network === 'rinkeby') {
     const RinkebyConstant = await hre.ethers.getContractFactory('RinkebyConstant');
@@ -41,13 +43,6 @@ const deployGovernFactory = async () => {
   return [governFactory.address, govern.address];
 };
 
-const createFeedRegistry = async () => {
-  const FeedRegistry = await hre.ethers.getContractFactory('MockFeedRegistry');
-  const feedRegistry = await FeedRegistry.deploy();
-
-  return feedRegistry;
-};
-
 async function main () {
   // Gather Current Block Number
   const blockNumber = await hre.ethers.provider.getBlockNumber();
@@ -63,7 +58,6 @@ async function main () {
   const LiquidPool = await hre.ethers.getContractFactory('LiquidPool');
   const MemberToken = await hre.ethers.getContractFactory('MemberToken');
 
-  const feedRegistry = await createFeedRegistry();
   const dao = await Dao.deploy();
   await dao.deployed();
   const membership = await Membership.deploy();
@@ -75,7 +69,7 @@ async function main () {
 
   const adam = await hre.upgrades.deployProxy(Adam, [
     dao.address, membership.address, liquidPool.address, memberToken.address, budgetApprovalsAddress, governInfo[0], constantState,
-    feedRegistry.address,
+    FEED_REGISTRY, // rinkeby
   ], { kind: 'uups' });
   await adam.deployed();
 

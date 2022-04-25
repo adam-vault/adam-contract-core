@@ -261,7 +261,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
     function _addAssets(address[] memory erc20s) public {
         for (uint256 i = 0; i < erc20s.length; i++) {
-            isAssetSupported[erc20s[i]] = true;
+            _addAsset(erc20s[i]);
         }
     }
     function _addAsset(address erc20) public {
