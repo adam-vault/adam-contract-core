@@ -24,12 +24,12 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
     function initialize(
        InitializeParams calldata params,
         // extra params
-        bool _allowAllTokens,
+        bool _allowAllToTokens,
         address[] calldata _toTokens
     ) public initializer {
         __BudgetApproval_init(params);
 
-        allowAllToTokens = _allowAllTokens;
+        allowAllToTokens = _allowAllToTokens;
         for(uint i = 0; i < _toTokens.length; i++) {
             toTokensMapping[_toTokens[i]] = true;
             emit AllowToToken(_toTokens[i]);
