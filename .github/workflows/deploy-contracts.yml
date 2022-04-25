@@ -34,69 +34,82 @@ jobs:
       - name: Generate ABIs
         run: npx hardhat export # This generates json files into "abis/" folder
       
-      - name: Deploy Contracts
-        run: npx hardhat run scripts/1-deploy.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
+      # - name: Deploy Contracts
+      #   run: npx hardhat run scripts/1-deploy.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
 
-      - name: Upload Artifacts
+      # - name: Upload Deployment Artifacts
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: deploy_results_${{ env.GIT_REF }}
+      #     path: |
+      #       deploy/results.json
+      
+      - name: Upload ABI Human Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: deploy_${{ env.GIT_REF }}
+          name: abi_human_${{ env.GIT_REF }}
           path: |
             abis/
-            deploy/results.json
-
-      - name: Slack Notification
-        id: slack
-        uses: slackapi/slack-github-action@v1.18.0
-        with:
-          # For posting a rich message using Block Kit
-          payload: |
-            {
-              "text": "*Contract Deployment Success*\n*version*: ${{ env.GIT_REF }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-
-  sync-subgraph-repo:
-    name: Syncrhonize with Subgraph Repo
-    needs: deploy-contracts
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Subgraph Repo
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ github.repository_owner }}/adam-subgraph
-          token: ${{ secrets.GH_PAT }}      
       
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      - name: Upload ABI Machine Artifacts
+        uses: actions/upload-artifact@v3
         with:
-          node-version: 16
-          cache: 'yarn'
+          name: abi_machine_${{ env.GIT_REF }}
+          path: |
+            artifacts/contracts/**/*.sol/!(*.dbg).ts
+
+      # - name: Slack Notification
+      #   id: slack
+      #   uses: slackapi/slack-github-action@v1.18.0
+      #   with:
+      #     # For posting a rich message using Block Kit
+      #     payload: |
+      #       {
+      #         "text": "*Contract Deployment Success*\n*version*: ${{ env.GIT_REF }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  # sync-subgraph-repo:
+  #   name: Syncrhonize with Subgraph Repo
+  #   needs: deploy-contracts
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Subgraph Repo
+  #       uses: actions/checkout@v3
+  #       with:
+  #         repository: ${{ github.repository_owner }}/adam-subgraph
+  #         token: ${{ secrets.GH_PAT }}      
       
-      - name: Install Dependencies
-        run: yarn install
-
-      - name: Fetch Deployment Info
-        uses: actions/download-artifact@v3
-        with:
-          name: deploy_${{ env.GIT_REF }}
-          path: ${{ runner.temp }}/deploy_artifacts
-
-      - name: Replace ABIs
-        run: cp ${{ runner.temp }}/deploy_artifacts/abis/* ./abis
-
-      - name: Replace Subgraph Address
-        run: | 
-          yarn update-datasource --\
-            --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deploy_artifacts/deploy/results.json)\
-            --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deploy_artifacts/deploy/results.json)\
-            --block $(jq -r .block_number ${{ runner.temp }}/deploy_artifacts/deploy/results.json)
+  #     - name: Setup Node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 16
+  #         cache: 'yarn'
       
-      - name: Make Pull Request
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.GH_PAT }}
-          branch: autosync/deploy_${{ env.GIT_REF }}
-          title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
+  #     - name: Install Dependencies
+  #       run: yarn install
+
+  #     - name: Fetch Deployment Info
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: deploy_${{ env.GIT_REF }}
+  #         path: ${{ runner.temp }}/deploy_artifacts
+
+  #     - name: Replace ABIs
+  #       run: cp ${{ runner.temp }}/deploy_artifacts/abis/* ./abis
+
+  #     - name: Replace Subgraph Address
+  #       run: | 
+  #         yarn update-datasource --\
+  #           --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deploy_artifacts/deploy/results.json)\
+  #           --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deploy_artifacts/deploy/results.json)\
+  #           --block $(jq -r .block_number ${{ runner.temp }}/deploy_artifacts/deploy/results.json)
+      
+  #     - name: Make Pull Request
+  #       uses: peter-evans/create-pull-request@v4
+  #       with:
+  #         token: ${{ secrets.GH_PAT }}
+  #         branch: autosync/deploy_${{ env.GIT_REF }}
+  #         title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
