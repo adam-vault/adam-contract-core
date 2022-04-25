@@ -29,10 +29,13 @@ async function exportABI ({
     await writeFile(path.join(__dirname, '..', outputPath, '/', `${contractName}.json`), JSON.stringify(formattedAbi, null, 2));
   }));
 };
-task('export', 'Generate abi for contracts', async function (args, hre) {
+task('export-abi-human', 'Generate Human Readable ABIs for contracts', async function (args, hre) {
+  if (!fs.existsSync('./abis/human')) {
+    fs.mkdirSync('./abis/human');
+  }
   return exportABI({
     artifacts: './artifacts/contracts',
     contracts: 'contracts/*.sol',
-    outputPath: './abis',
+    outputPath: './abis/human',
   }, hre);
 });
