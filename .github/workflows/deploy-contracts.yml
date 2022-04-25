@@ -28,48 +28,48 @@ jobs:
       - name: Install Dependencies
         run: npm install
       
-      - name: Compile Contracts
-        run: npm run compile
-      
-      - name: Generate ABIs
-        run: npx hardhat export # This generates json files into "abis/" folder
-      
-      # - name: Deploy Contracts
-      #   run: npx hardhat run scripts/1-deploy.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
+      - name: Compile Contracts # This also copies Machine ABIs to "abis/machine"
+        run: |
+          npm run compile && mkdir -p abis/machine && cp \
+            artifacts/contracts/Adam.sol/Adam.json\
+            artifacts/contracts/base/CommonBudgetApproval.sol/CommonBudgetApproval.json\
+            artifacts/contracts/Dao.sol/Dao.json\
+            artifacts/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol/IERC20Metadata.json\
+            artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json\
+            artifacts/contracts/Govern.sol/Govern.json\
+            artifacts/contracts/GovernFactory.sol/GovernFactory.json\
+            artifacts/contracts/Member.sol/Member.json\
+            artifacts/contracts/Membership.sol/Membership.json\
+            artifacts/contracts/MultiToken.sol/MultiToken.json\
+            artifacts/contracts/TransferERC20BudgetApproval.sol/TransferERC20BudgetApproval.json\
+            artifacts/contracts/UniswapBudgetApproval.sol/UniswapBudgetApproval.json\
+            abis/machine
 
-      # - name: Upload Deployment Artifacts
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: deploy_results_${{ env.GIT_REF }}
-      #     path: |
-      #       deploy/results.json
+      - name: Generate Human Readable ABIs
+        run: npx hardhat export-abi-human # This generates json files into "abis/human" folder
       
-      - name: Upload ABI Human Artifacts
+      - name: Deploy Contracts
+        run: npx hardhat run scripts/1-deploy.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
+
+      - name: Upload Deployment Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: abi_human_${{ env.GIT_REF }}
+          name: deploy_${{ env.GIT_REF }}
           path: |
             abis/
+            deploy/results.json
       
-      - name: Upload ABI Machine Artifacts
-        uses: actions/upload-artifact@v3
+      - name: Slack Notification
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
         with:
-          name: abi_machine_${{ env.GIT_REF }}
-          path: |
-            artifacts/contracts/**/*.sol/!(*.dbg).json
-
-      # - name: Slack Notification
-      #   id: slack
-      #   uses: slackapi/slack-github-action@v1.18.0
-      #   with:
-      #     # For posting a rich message using Block Kit
-      #     payload: |
-      #       {
-      #         "text": "*Contract Deployment Success*\n*version*: ${{ env.GIT_REF }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      #       }
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          payload: |
+            {
+              "text": "*Contracts Deployed*\n*version*: ${{ env.GIT_REF }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
   # sync-subgraph-repo:
   #   name: Syncrhonize with Subgraph Repo
