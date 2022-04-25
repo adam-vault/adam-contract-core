@@ -42,6 +42,10 @@ const deployGovernFactory = async () => {
 };
 
 async function main () {
+  // Gather Current Block Number
+  const blockNumber = await hre.ethers.provider.getBlockNumber();
+  console.log('Current Block Number', blockNumber);
+
   const constantState = await deployConstantState();
   const budgetApprovalsAddress = await deployBudgetApprovals();
   const governInfo = await deployGovernFactory();
@@ -78,10 +82,6 @@ async function main () {
     uniswapBudgetApproval: budgetApprovalsAddress[1],
   };
   console.log('Contract Addresses', contractAddresses);
-
-  // Gather Current Block Number
-  const blockNumber = await hre.ethers.provider.getBlockNumber();
-  console.log('Current Block Number', blockNumber);
 
   // Output Deployment Info as file
   if (process.env.CI) {
