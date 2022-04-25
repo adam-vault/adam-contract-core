@@ -71,45 +71,45 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
-  # sync-subgraph-repo:
-  #   name: Syncrhonize with Subgraph Repo
-  #   needs: deploy-contracts
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Subgraph Repo
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: ${{ github.repository_owner }}/adam-subgraph
-  #         token: ${{ secrets.GH_PAT }}      
+  sync-subgraph-repo:
+    name: Syncrhonize with Subgraph Repo
+    needs: deploy-contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Subgraph Repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository_owner }}/adam-subgraph
+          token: ${{ secrets.GH_PAT }}      
       
-  #     - name: Setup Node
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 16
-  #         cache: 'yarn'
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'yarn'
       
-  #     - name: Install Dependencies
-  #       run: yarn install
+      - name: Install Dependencies
+        run: yarn install
 
-  #     - name: Fetch Deployment Info
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: deploy_${{ env.GIT_REF }}
-  #         path: ${{ runner.temp }}/deploy_artifacts
+      - name: Fetch Deployment Info
+        uses: actions/download-artifact@v3
+        with:
+          name: deploy_${{ env.GIT_REF }}
+          path: ${{ runner.temp }}/deployment
 
-  #     - name: Replace ABIs
-  #       run: cp ${{ runner.temp }}/deploy_artifacts/abis/* ./abis
+      - name: Replace ABIs
+        run: cp ${{ runner.temp }}/deployment/abis/machine/* ./abis
 
-  #     - name: Replace Subgraph Address
-  #       run: | 
-  #         yarn update-datasource --\
-  #           --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deploy_artifacts/deploy/results.json)\
-  #           --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deploy_artifacts/deploy/results.json)\
-  #           --block $(jq -r .block_number ${{ runner.temp }}/deploy_artifacts/deploy/results.json)
+      - name: Replace Subgraph Address
+        run: | 
+          yarn update-datasource --\
+            --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)\
+            --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deployment/deploy/results.json)\
+            --block $(jq -r .block_number ${{ runner.temp }}/deployment/deploy/results.json)
       
-  #     - name: Make Pull Request
-  #       uses: peter-evans/create-pull-request@v4
-  #       with:
-  #         token: ${{ secrets.GH_PAT }}
-  #         branch: autosync/deploy_${{ env.GIT_REF }}
-  #         title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
+      - name: Make Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: autosync/deploy_${{ env.GIT_REF }}
+          title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
