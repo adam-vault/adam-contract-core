@@ -149,13 +149,13 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
         }
 
     }
-    function _addAssets(address[] memory erc20s) public {
+    function _addAssets(address[] memory erc20s) internal {
         for (uint256 i = 0; i < erc20s.length; i++) {
             _addAsset(erc20s[i]);
         }
     }
 
-    function _addAsset(address erc20) public {
+    function _addAsset(address erc20) internal {
         require(canAddAsset(erc20) && !isAssetSupported[erc20], "Asset not support");
         assets.push(erc20);
         isAssetSupported[erc20] = true;
