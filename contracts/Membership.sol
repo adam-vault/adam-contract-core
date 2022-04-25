@@ -26,6 +26,8 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     Counters.Counter private _tokenIds;
     mapping(address => bool) public isMember;
 
+    event CreateMember(address to);
+
     function initialize(address _dao, string memory _name) public initializer
     {
         __ERC721_init(_name.concat(" Membership"), "MS");
@@ -40,6 +42,8 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         _safeMint(to, newId, "");
         totalSupply++;
         isMember[to] = true;
+
+        emit CreateMember(to);
     }
 
     function _afterTokenTransfer(
