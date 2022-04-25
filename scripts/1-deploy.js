@@ -4,6 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require('hardhat');
+const deployResultStore = require('./utils/deploy-result-store');
 const overwriteAddressEnv = require('./utils/overwriteAddressEnv');
 
 const deployConstantState = async (network = 'rinkeby') => {
@@ -24,7 +25,6 @@ const deployBudgetApprovals = async () => {
   const uniswapBudgetApproval = await UniswapBudgetApproval.deploy();
   await uniswapBudgetApproval.deployed();
 
-  console.log('budget approvals deployed to: ', [transferERC20BudgetApproval.address, uniswapBudgetApproval.address]);
   return [transferERC20BudgetApproval.address, uniswapBudgetApproval.address];
 };
 
@@ -38,12 +38,14 @@ const deployGovernFactory = async () => {
   const governFactory = await hre.upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
 
-  console.log('governFactory deployed to', governFactory.address);
-  console.log('govern deployed to', govern.address);
   return [governFactory.address, govern.address];
 };
 
 async function main () {
+  // Gather Current Block Number
+  const blockNumber = await hre.ethers.provider.getBlockNumber();
+  console.log('Current Block Number', blockNumber);
+
   const constantState = await deployConstantState();
   const budgetApprovalsAddress = await deployBudgetApprovals();
   const governInfo = await deployGovernFactory();
@@ -68,21 +70,38 @@ async function main () {
   ], { kind: 'uups' });
   await adam.deployed();
 
-  console.log('multiToken:', multiToken.address);
-  console.log('dao deployed to: ', dao.address);
-  console.log('membership deployed to: ', membership.address);
-  console.log('adam deployed to: ', adam.address);
+  // Gather Contract Addresses
+  const contractAddresses = {
+    adam: adam.address,
+    dao: dao.address,
+    membership: membership.address,
+    multiToken: multiToken.address,
+    governFactory: governInfo[0],
+    govern: governInfo[1],
+    transferErc20BudgetApproval: budgetApprovalsAddress[0],
+    uniswapBudgetApproval: budgetApprovalsAddress[1],
+  };
+  console.log('Contract Addresses', contractAddresses);
 
-  overwriteAddressEnv({
-    TRANSFER_ERC20_APPROVAL_IMPLEMENTATION: budgetApprovalsAddress[0],
-    UNISWAP_APPROVAL_IMPLEMENTATION: budgetApprovalsAddress[1],
-    GOVERN_IMPLEMENTATION: governInfo[1],
-    DAO_IMPLEMENTATION: dao.address,
-    MEMBERSHIP_IMPLEMENTATION: membership.address,
-    MULTI_TOKEN_IMPLEMENTATION: multiToken.address,
-    ADAM: adam.address,
-    GOVERN_FACTORY: governInfo[0],
-  });
+  // Output Deployment Info as file
+  if (process.env.CI) {
+    deployResultStore.save({
+      block_number: blockNumber,
+      addresses: contractAddresses,
+      initdata_addresses: {},
+    });
+  } else {
+    overwriteAddressEnv({
+      TRANSFER_ERC20_APPROVAL_IMPLEMENTATION: budgetApprovalsAddress[0],
+      UNISWAP_APPROVAL_IMPLEMENTATION: budgetApprovalsAddress[1],
+      GOVERN_IMPLEMENTATION: governInfo[1],
+      DAO_IMPLEMENTATION: dao.address,
+      MEMBERSHIP_IMPLEMENTATION: membership.address,
+      MULTI_TOKEN_IMPLEMENTATION: multiToken.address,
+      ADAM: adam.address,
+      GOVERN_FACTORY: governInfo[0],
+    });
+  };
 }
 
 main().catch((error) => {

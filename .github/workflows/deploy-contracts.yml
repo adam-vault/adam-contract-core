@@ -1,0 +1,126 @@
+name: Deploy Contracts
+on:
+  push:
+    tags:    
+      - 'v[0-9].[0-9]+.[0-9]+\-dev'
+      - 'v[0-9].[0-9]+.[0-9]+\-alpha'
+
+env:
+  GIT_REF: ${{ github.ref_name }} # either branch name or tag
+  CONTRACT_DEPLOY_NETWORK: rinkeby
+  RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
+  PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+jobs:
+  deploy-contracts:
+    name: Deploy Contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3.0.0
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: npm install
+      
+      - name: Compile Contracts # This also copies Machine ABIs to "abis/machine"
+        run: |
+          npm run compile && mkdir -p abis/machine && cp \
+            artifacts/contracts/Adam.sol/Adam.json\
+            artifacts/contracts/base/CommonBudgetApproval.sol/CommonBudgetApproval.json\
+            artifacts/contracts/Dao.sol/Dao.json\
+            artifacts/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol/IERC20Metadata.json\
+            artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json\
+            artifacts/contracts/Govern.sol/Govern.json\
+            artifacts/contracts/GovernFactory.sol/GovernFactory.json\
+            artifacts/contracts/Member.sol/Member.json\
+            artifacts/contracts/Membership.sol/Membership.json\
+            artifacts/contracts/MultiToken.sol/MultiToken.json\
+            artifacts/contracts/TransferERC20BudgetApproval.sol/TransferERC20BudgetApproval.json\
+            artifacts/contracts/UniswapBudgetApproval.sol/UniswapBudgetApproval.json\
+            abis/machine
+
+      - name: Generate Human Readable ABIs
+        run: npx hardhat export-abi-human # This generates json files into "abis/human" folder
+      
+      - name: Deploy Contracts
+        run: npx hardhat run scripts/1-deploy.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
+
+      - name: Upload Deployment Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: deploy_${{ env.GIT_REF }}
+          path: |
+            abis/
+            deploy/results.json
+      
+      - name: Slack Notification
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
+        with:
+          payload: |
+            {
+              "text": "*Contracts Deployed*\n*version*: ${{ env.GIT_REF }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+  sync-subgraph-repo:
+    name: Syncrhonize with Subgraph Repo
+    needs: deploy-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Subgraph Repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository_owner }}/adam-subgraph
+          token: ${{ secrets.GH_PAT }}      
+      
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Fetch Deployment Info
+        uses: actions/download-artifact@v3
+        with:
+          name: deploy_${{ env.GIT_REF }}
+          path: ${{ runner.temp }}/deployment
+
+      - name: Replace ABIs
+        run: cp ${{ runner.temp }}/deployment/abis/machine/* ./abis
+
+      - name: Replace Subgraph Address
+        run: | 
+          npm run update-datasource --\
+            --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)\
+            --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deployment/deploy/results.json)\
+            --block $(jq -r .block_number ${{ runner.temp }}/deployment/deploy/results.json)
+      
+      - name: Make Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: autosync/deploy_${{ env.GIT_REF }}
+          title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
+          body: |
+            Syncrhonizing Contract Addresses and ABIs from adam-contract-core
+            Version: ${{ env.GIT_REF }}
+            Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
+          reviewers: |
+            ayame30
+            chikchoi6
