@@ -119,7 +119,8 @@ jobs:
             Syncrhonizing Contract Addresses and ABIs from adam-contract-core
             Version: ${{ env.GIT_REF }}
             Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          commit-message: "["Auto Commit"]" Sync ${{ env.GIT_REF }} deployment from adam-contract-core
+
+          commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
           reviewers: |
             ayame30
             chikchoi6
