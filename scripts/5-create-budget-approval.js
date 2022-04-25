@@ -13,7 +13,6 @@ const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 const budgetApprovalAddresses = [];
 
 async function main () {
-
   const dao = await hre.ethers.getContractAt('Dao', daoAddress);
   const lpAddress = await dao.liquidPool();
 
