@@ -6,8 +6,6 @@
   "event CreateMemberToken(address creator, address token)",
   "event Upgraded(address indexed implementation)",
   "function ETH_ADDRESS() view returns (address)",
-  "function _addAsset(address erc20)",
-  "function _addAssets(address[] erc20s)",
   "function adam() view returns (address)",
   "function addAssets(address[] erc20s)",
   "function budgetApprovals(address) view returns (bool)",
