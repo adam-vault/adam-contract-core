@@ -15,6 +15,7 @@ jobs:
   deploy-contracts:
     name: Deploy Contracts
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3.0.0
@@ -75,6 +76,7 @@ jobs:
     name: Syncrhonize with Subgraph Repo
     needs: deploy-contracts
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout Subgraph Repo
         uses: actions/checkout@v3
@@ -86,10 +88,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: 'yarn'
+          cache: 'npm'
       
       - name: Install Dependencies
-        run: yarn install
+        run: npm install
 
       - name: Fetch Deployment Info
         uses: actions/download-artifact@v3
@@ -102,7 +104,7 @@ jobs:
 
       - name: Replace Subgraph Address
         run: | 
-          yarn update-datasource --\
+          npm run update-datasource --\
             --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)\
             --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deployment/deploy/results.json)\
             --block $(jq -r .block_number ${{ runner.temp }}/deployment/deploy/results.json)
@@ -113,3 +115,11 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           branch: autosync/deploy_${{ env.GIT_REF }}
           title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
+          body: |
+            Syncrhonizing Contract Addresses and ABIs from adam-contract-core
+            Version: ${{ env.GIT_REF }}
+            Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          commit-message: "["Auto Commit"]" Sync ${{ env.GIT_REF }} deployment from adam-contract-core
+          reviewers: |
+            ayame30
+            chikchoi6
