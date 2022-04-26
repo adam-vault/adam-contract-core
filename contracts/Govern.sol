@@ -18,14 +18,6 @@ contract Govern is
     using SafeCastUpgradeable for uint256;
     using TimersUpgradeable for TimersUpgradeable.BlockNumber;
 
-    address public owner;
-    uint public duration;
-    uint public quorumThreshold;
-    uint public passThreshold;
-    uint[] public voteWeights;
-    address[] public voteTokens;
-    mapping(uint256 => ProposalVote) private _proposalVotes;
-
     enum VoteType {
         Against,
         For,
@@ -39,12 +31,20 @@ contract Govern is
         mapping(address => bool) hasVoted;
     }
 
+    address public owner;
+    uint public duration;
+    uint public quorumThreshold;
+    uint public passThreshold;
+    uint[] public voteWeights;
+    address[] public voteTokens;
+    mapping(uint256 => ProposalVote) private _proposalVotes;
+
+    event AddVoteToken(address token, uint weight);
+
     modifier onlyOwner {
         require(msg.sender == owner, "Access denied");
         _;
     }
-
-    event AddVoteToken(address token, uint weight);
 
     function initialize(
         address _owner,
@@ -80,12 +80,12 @@ contract Govern is
         }
     }
 
-    function votingDelay() public pure override returns (uint256) {
-        return 0;
-    }
-
     function votingPeriod() public view override returns (uint256) {
         return duration / 13;
+    }
+
+    function votingDelay() public pure override returns (uint256) {
+        return 0;
     }
 
     function proposalThreshold() public pure override returns (uint256) {
@@ -94,6 +94,69 @@ contract Govern is
 
     function COUNTING_MODE() public pure override returns (string memory) {
         return "support=bravo&quorum=bravo";
+    }
+
+    function hasVoted(uint256 proposalId, address account) public view override returns (bool) {
+        return _proposalVotes[proposalId].hasVoted[account];
+    }
+
+    function getVotes(address account, uint256 blockNumber) public view override returns (uint256) {
+        uint256 totalVotes = 0;
+
+        for(uint i=0; i < voteTokens.length; i++) {
+            uint accountVotes = VotesUpgradeable(voteTokens[i]).getPastVotes(account, blockNumber);
+
+            totalVotes = totalVotes + accountVotes * voteWeights[i];
+        }
+
+        return totalVotes;
+    }
+
+    function quorum(uint256 blockNumber) public view override returns (uint256) {
+        return totalPastSupply(blockNumber) * (quorumThreshold / 100);
+    }
+
+    function totalPastSupply(uint256 blockNumber) public view returns (uint256) {
+        uint256 sum = 0;
+
+        for(uint256 i=0; i<voteTokens.length; i++) {
+            uint accountSupply = VotesUpgradeable(voteTokens[i]).getPastTotalSupply(blockNumber);
+            sum = sum + accountSupply;
+        } 
+
+        return sum;
+    }
+
+    function quorumReached(uint256 proposalId) public view returns (bool) {
+        return _quorumReached(proposalId);
+    }
+
+    function voteSucceeded(uint256 proposalId) public view returns (bool) {
+        return _voteSucceeded(proposalId);
+    }
+
+    function addVoteToken(address token, uint weight) public onlyOwner {
+        for(uint256 i=0; i <voteTokens.length; i++) {
+            require(voteTokens[i] != token, "Token already in list");
+        }
+
+        voteTokens.push(token);
+        voteWeights.push(weight);
+
+        emit AddVoteToken(token, weight);
+    }
+
+    function execute(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) public payable override returns (uint256) {
+        if (targets[0] == address(0)) {
+            revert("no content");
+        }
+
+        return super.execute(targets, values, calldatas, descriptionHash);
     }
 
     function _countVote(
@@ -130,70 +193,5 @@ contract Govern is
         uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
         return (proposalvote.forVotes * 100) >= totalVotes * passThreshold / 100;
     }
-
-    function hasVoted(uint256 proposalId, address account) public view override returns (bool) {
-        return _proposalVotes[proposalId].hasVoted[account];
-    }
-
-    function getVotes(address account, uint256 blockNumber) public view override returns (uint256) {
-        uint256 totalVotes = 0;
-
-        for(uint i=0; i < voteTokens.length; i++) {
-            uint accountVotes = VotesUpgradeable(voteTokens[i]).getPastVotes(account, blockNumber);
-
-            totalVotes = totalVotes + accountVotes * voteWeights[i];
-        }
-
-        return totalVotes;
-    }
-
-    function quorum(uint256 blockNumber) public view override returns (uint256) {
-        return totalPastSupply(blockNumber) * (quorumThreshold / 100);
-    }
-
-    function totalPastSupply(uint256 blockNumber) public view returns (uint256) {
-        uint256 sum = 0;
-
-        for(uint256 i=0; i<voteTokens.length; i++) {
-            uint accountSupply = VotesUpgradeable(voteTokens[i]).getPastTotalSupply(blockNumber);
-            sum = sum + accountSupply;
-        } 
-
-        return sum;
-    }
-
-
-    function quorumReached(uint256 proposalId) public view returns (bool) {
-        return _quorumReached(proposalId);
-    }
-
-    function voteSucceeded(uint256 proposalId) public view returns (bool) {
-        return _voteSucceeded(proposalId);
-    }
-
-    function addVoteToken(address token, uint weight) public onlyOwner {
-        for(uint256 i=0; i <voteTokens.length; i++) {
-            require(voteTokens[i] != token, "Token already in list");
-        }
-
-        voteTokens.push(token);
-        voteWeights.push(weight);
-
-        emit AddVoteToken(token, weight);
-    }
-
-    function execute(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) public payable override returns (uint256) {
-        if (targets[0] == address(0)) {
-            revert("General proposal should not be executed");
-        }
-
-        super.execute(targets, values, calldatas, descriptionHash);
-    }
-
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
 }

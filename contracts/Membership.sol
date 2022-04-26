@@ -18,8 +18,8 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     using Strings for uint256;
     using ToString for address;
     using Concat for string;
-
     using Base64 for bytes;
+
     address payable public dao;
     uint256 public totalSupply;
 
@@ -46,19 +46,6 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         emit CreateMember(to);
     }
 
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal override {
-        super._afterTokenTransfer(from, to, tokenId);
-        // check if it is mint and delegatee is not yet delegated
-
-        if (from == address(0) && to != address(0) && delegates(to) == address(0)) {
-            _delegate(to, to);
-        }
-    }
-
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
 
         string memory metadata = string(abi.encodePacked(
@@ -73,6 +60,19 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
             "data:application/json;base64,",
             bytes(metadata).base64()
         ));
+    }
+
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override {
+        super._afterTokenTransfer(from, to, tokenId);
+        // check if it is mint and delegatee is not yet delegated
+
+        if (from == address(0) && to != address(0) && delegates(to) == address(0)) {
+            _delegate(to, to);
+        }
     }
 
     function _authorizeUpgrade(address) internal override {}

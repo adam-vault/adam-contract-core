@@ -3,15 +3,11 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
 
@@ -22,23 +18,20 @@ import "./interface/IMemberToken.sol";
 import "./interface/IDao.sol";
 
 import "./lib/Concat.sol";
-import "./lib/ToString.sol";
-import "./lib/BytesLib.sol";
-import "hardhat/console.sol";
 
-contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155Holder, BudgetApprovalExecutee {
-    // list strategy
-    using Strings for uint256;
+contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
-    using BytesLib for bytes;
-    using Counters for Counters.Counter;
-
-    address constant public ETH_ADDRESS = address(0x0);
 
     enum MemberTokenTypeOption {
         NotInUsed,
         InternalErc20Token,
         ExternalErc721Token
+    }
+
+    enum VoteType {
+        Membership,
+        MemberToken,
+        Other
     }
 
     address public memberToken;
@@ -49,29 +42,18 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public governFactory;
     address public memberTokenImplementation;
     string public name;
-    mapping(address => uint256) public firstDeposit;
-
     uint256 public locktime;
     uint256 public minDepositAmount;
     uint256 public minMemberTokenToJoin;
-    mapping(address => bool) public isAssetSupported;
-
-    enum VoteType {
-        Membership,
-        MemberToken,
-        Other
-    }
     uint8 public memberTokenType;
+    mapping(address => uint256) public firstDeposit;
+    mapping(address => bool) public isAssetSupported;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
 
-    function initialize(
-        IDao.InitializeParams calldata params
-    ) public initializer {
-        __ERC721Holder_init();
-
+    function initialize(IDao.InitializeParams calldata params) public initializer {
         adam = msg.sender;
         creator = params._creator;
         membership = params._membership;
@@ -103,12 +85,38 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         uint256[] memory w = new uint256[](1);
         w[0] = 1;
         // CAUTION: if later on support create govern with multi token, also need to add VoteType
-        _createGovern("BudgetApproval", params.budgetApproval[0], params.budgetApproval[1], params.budgetApproval[2], w, params.budgetApproval[3]);
-        _createGovern("RevokeBudgetApproval", params.revokeBudgetApproval[0], params.revokeBudgetApproval[1], params.revokeBudgetApproval[2], w, params.revokeBudgetApproval[3]);
-        _createGovern("General", params.general[0], params.general[1], params.general[2], w, params.revokeBudgetApproval[3]);
-        
-        // TODO: confirm govern naming and setting
-        _createGovern("DaoSetting", params.daoSettingApproval[0], params.daoSettingApproval[1], params.daoSettingApproval[2], w, params.daoSettingApproval[3]);
+        _createGovern(
+            "BudgetApproval",
+            params.budgetApproval[0],
+            params.budgetApproval[1],
+            params.budgetApproval[2],
+            w,
+            params.budgetApproval[3]
+        );
+        _createGovern(
+            "RevokeBudgetApproval",
+            params.revokeBudgetApproval[0],
+            params.revokeBudgetApproval[1],
+            params.revokeBudgetApproval[2],
+            w,
+            params.revokeBudgetApproval[3]
+        );
+        _createGovern(
+            "General",
+            params.general[0],
+            params.general[1],
+            params.general[2],
+            w,
+            params.revokeBudgetApproval[3]
+        );
+        _createGovern(
+            "DaoSetting",
+            params.daoSettingApproval[0],
+            params.daoSettingApproval[1],
+            params.daoSettingApproval[2],
+            w,
+            params.daoSettingApproval[3]
+        );
 
         _mintMember(creator);
         _addAssets(params.depositTokens);
@@ -118,7 +126,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     modifier onlyGovern(string memory category) {
         require(
             byPassGovern(msg.sender) || msg.sender == govern(category),
-            string("Dao: only ").concat(category));
+            string("Dao: only Govern ").concat(category));
         _;
     }
 
