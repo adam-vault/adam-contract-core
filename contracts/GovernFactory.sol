@@ -9,6 +9,7 @@ import "./interface/IGovern.sol";
 import "hardhat/console.sol";
 
 contract GovernFactory is Initializable, UUPSUpgradeable {
+
     address public governImplementation;
     mapping(address => mapping(string => address)) public governMap;
 

@@ -9,18 +9,36 @@ import "./interface/IDao.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
-
     using BytesLib for bytes;
 
     string public constant override NAME = "Transfer ERC20 Budget Approval";
 
-    function initialize(
-       InitializeParams calldata params
-    ) public initializer {
+    function initialize(InitializeParams calldata params) public initializer {
         __BudgetApproval_init(params);
     }
 
-    function executeMultiple(address[] memory to, bytes[] memory data, uint256[] memory value) public {
+    function checkValid(
+        address _token,
+        address _recipient,
+        uint256 _amount,
+        bool executed
+    )
+        public
+        view
+        returns(bool valid)
+    {
+        return checkAddressValid(_recipient) && 
+               checkTokenValid(_token) && 
+               checkAmountValid(_amount) && 
+               checkAmountPercentageValid(_amount, executed) &&
+               checkUsageCountValid();
+    }
+
+    function executeMultiple(
+        address[] memory to,
+        bytes[] memory data,
+        uint256[] memory value
+    ) public {
         require(data.length == to.length, "invalid input");
         require(data.length == value.length, "invalid input");
 
@@ -31,10 +49,12 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     // transfer ETH by sending data.length == 0
     // transfer ERC20 by using transfer(address,uint256)
-    function execute(address to, bytes memory data, uint256 value) public override onlySelf {
-
+    function execute(
+        address to,
+        bytes memory data,
+        uint256 value
+    ) public override onlySelf {
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
-
         (address _token, address _recipient, uint256 _amount) = decode(to, data, value);
 
         require(checkValid(_token, _recipient, _amount, true), "transaction not allowed");
@@ -42,16 +62,16 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         _updateUsageCount();
     }
 
-    function checkValid(address _token, address _recipient, uint256 _amount, bool executed) public view returns(bool valid) {
-        return checkAddressValid(_recipient) && 
-               checkTokenValid(_token) && 
-               checkAmountValid(_amount) && 
-               checkAmountPercentageValid(_amount, executed) &&
-               checkUsageCountValid();
-    }
-
     // return (address token, address recipient, uint256 amount)
-    function decode(address to, bytes memory data, uint256 value) public pure returns (address, address, uint256) {
+    function decode(
+        address to,
+        bytes memory data,
+        uint256 value
+    )
+        public
+        pure
+        returns (address, address, uint256)
+    {
 
         // transfer ETH
         if(data.length == 0) {
@@ -83,7 +103,11 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
     }
 
-    function encodeMultipleTransactionData(address[] calldata _to, bytes[] calldata _data, uint256[] calldata _amount) public pure returns (bytes memory) {
+    function encodeMultipleTransactionData(
+        address[] calldata _to,
+        bytes[] calldata _data,
+        uint256[] calldata _amount
+    ) public pure returns (bytes memory) {
         return abi.encodeWithSelector(this.executeMultiple.selector, _to, _data, _amount);
     }
 }
