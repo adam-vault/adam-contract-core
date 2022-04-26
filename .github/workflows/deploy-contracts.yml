@@ -39,11 +39,10 @@ jobs:
             artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json\
             artifacts/contracts/Govern.sol/Govern.json\
             artifacts/contracts/GovernFactory.sol/GovernFactory.json\
-            artifacts/contracts/Member.sol/Member.json\
             artifacts/contracts/Membership.sol/Membership.json\
-            artifacts/contracts/MultiToken.sol/MultiToken.json\
             artifacts/contracts/TransferERC20BudgetApproval.sol/TransferERC20BudgetApproval.json\
             artifacts/contracts/UniswapBudgetApproval.sol/UniswapBudgetApproval.json\
+            artifacts/contracts/LiquidPool.sol/LiquidPool.json\
             abis/machine
 
       - name: Generate Human Readable ABIs
