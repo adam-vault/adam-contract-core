@@ -5,7 +5,7 @@ const _ = require('lodash');
 const { createTokens, createAdam } = require('../utils/createContract');
 
 describe('Testing TransferERC20BudgetApproval', function () {
-  let adam, dao, transferERC20BAImplementation, budgetApproval;
+  let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
   let tokenA;
 
@@ -30,10 +30,12 @@ describe('Testing TransferERC20BudgetApproval', function () {
         0,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
+        [],
       ],
     );
     const daoAddr = await adam.daos(0);
     dao = await ethers.getContractAt('Dao', daoAddr);
+    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     const transferERC20BAImplementationAddr = await adam.budgetApprovals(0);
     transferERC20BAImplementation = await ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BAImplementationAddr);
   });
@@ -73,7 +75,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
         ],
       );
 
-      const tx = await dao.createBudgetApprovals(
+      const tx = await lp.createBudgetApprovals(
         [transferERC20BAImplementation.address], [initData],
       );
       const receipt = await tx.wait();
@@ -82,7 +84,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
       budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
 
-      expect(await dao.callStatic.budgetApprovals(budgetApprovalAddress)).to.eq(true);
+      expect(await lp.callStatic.budgetApprovals(budgetApprovalAddress)).to.eq(true);
 
       expect(await budgetApproval.callStatic.dao()).to.eq(dao.address);
       expect(await budgetApproval.callStatic.executor()).to.eq(executor.address);
@@ -110,15 +112,15 @@ describe('Testing TransferERC20BudgetApproval', function () {
   });
 
   describe('Execute Transaction (Transfer ETH)', function () {
-    beforeEach(async function () {
-      await dao.connect(executor).deposit({ value: ethers.utils.parseEther('100') });
+    before(async function () {
+      await lp.connect(executor).deposit({ value: ethers.utils.parseEther('200') });
     });
 
     context('complete flow', () => {
       it('should success', async function () {
-        const transactionData = budgetApproval.callStatic['encodeTransactionData(address,bytes,uint256)'](receiver.address, [], ethers.utils.parseEther('10'));
+        const transactionData = budgetApproval.callStatic.encodeTransactionData(receiver.address, [], ethers.utils.parseEther('10'));
 
-        await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
+        await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
         const transactionId = await budgetApproval.callStatic.lastTransactionId();
 
         const originalBalance = await receiver.getBalance();
@@ -131,9 +133,9 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
     context('multiple outflow', () => {
       it('should success', async function () {
-        const transactionData = budgetApproval.callStatic['encodeTransactionData(address[],bytes[],uint256[])']([receiver.address, receiver.address], [[], []], [ethers.utils.parseEther('10'), ethers.utils.parseEther('10')]);
+        const transactionData = budgetApproval.callStatic.encodeMultipleTransactionData([receiver.address, receiver.address], [[], []], [ethers.utils.parseEther('10'), ethers.utils.parseEther('10')]);
 
-        await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
+        await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
         const transactionId = await budgetApproval.callStatic.lastTransactionId();
 
         const originalBalance = await receiver.getBalance();
@@ -146,9 +148,9 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
     context('not executed by executor', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.callStatic['encodeTransactionData(address,bytes,uint256)'](executor.address, [], ethers.utils.parseEther('10'));
+        const transactionData = budgetApproval.callStatic.encodeTransactionData(receiver.address, [], ethers.utils.parseEther('10'));
 
-        await dao.connect(approver).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
+        await budgetApproval.connect(approver).createTransaction(transactionData, Date.now() + 86400, false);
         const transactionId = await budgetApproval.callStatic.lastTransactionId();
         await budgetApproval.connect(approver).approveTransaction(transactionId);
 
@@ -159,9 +161,9 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
     context('not approved by approver', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.callStatic['encodeTransactionData(address,bytes,uint256)'](executor.address, [], ethers.utils.parseEther('10'));
+        const transactionData = budgetApproval.callStatic.encodeTransactionData(receiver.address, [], ethers.utils.parseEther('10'));
 
-        await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
+        await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
         const transactionId = await budgetApproval.callStatic.lastTransactionId();
 
         await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
@@ -171,9 +173,9 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
     context('not allowed address', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.callStatic['encodeTransactionData(address,bytes,uint256)'](executor.address, [], ethers.utils.parseEther('10'));
+        const transactionData = budgetApproval.callStatic.encodeTransactionData(executor.address, [], ethers.utils.parseEther('10'));
 
-        await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
+        await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
         const transactionId = await budgetApproval.callStatic.lastTransactionId();
         await budgetApproval.connect(approver).approveTransaction(transactionId);
 
@@ -184,12 +186,11 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
     context('exceed amount', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.callStatic['encodeTransactionData(address,bytes,uint256)'](receiver.address, [], ethers.utils.parseEther('51'));
+        const transactionData = budgetApproval.callStatic.encodeTransactionData(receiver.address, [], ethers.utils.parseEther('101'));
 
-        await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
+        await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
         const transactionId = await budgetApproval.callStatic.lastTransactionId();
         await budgetApproval.connect(approver).approveTransaction(transactionId);
-        await budgetApproval.connect(executor).executeTransaction(transactionId);
 
         await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
           .to.be.revertedWith('transaction not allowed');
@@ -198,9 +199,9 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
     context('exceed amount percentage', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.callStatic['encodeTransactionData(address,bytes,uint256)'](receiver.address, [], ethers.utils.parseEther('101'));
+        const transactionData = budgetApproval.callStatic.encodeTransactionData(receiver.address, [], ethers.utils.parseEther('21'));
 
-        await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
+        await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
         const transactionId = await budgetApproval.callStatic.lastTransactionId();
 
         await budgetApproval.connect(approver).approveTransaction(transactionId);
@@ -231,7 +232,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
             10, // usage count
           ]);
 
-        const tx = await dao.createBudgetApprovals(
+        const tx = await lp.createBudgetApprovals(
           [transferERC20BAImplementation.address],
           [initData],
         );
@@ -246,15 +247,12 @@ describe('Testing TransferERC20BudgetApproval', function () {
           budgetApprovalAddress,
         );
 
-        const transactionData = testBudgetApproval.callStatic[
-          'encodeTransactionData(address,bytes,uint256)'
-        ](receiver.address, [], ethers.utils.parseEther('101'));
+        const transactionData = testBudgetApproval.callStatic.encodeTransactionData(receiver.address, [], ethers.utils.parseEther('101'));
 
         await expect(
-          dao
+          testBudgetApproval
             .connect(executor)
-            .createBudgetApprovalTransaction(
-              testBudgetApproval.address,
+            .createTransaction(
               transactionData,
               Math.round(Date.now() / 1000) + 86400,
               true,
@@ -284,7 +282,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
             10, // usage count
           ]);
 
-        const tx = await dao.createBudgetApprovals(
+        const tx = await lp.createBudgetApprovals(
           [transferERC20BAImplementation.address],
           [initData],
         );
@@ -299,15 +297,12 @@ describe('Testing TransferERC20BudgetApproval', function () {
           budgetApprovalAddress,
         );
 
-        const transactionData = testBudgetApproval.callStatic[
-          'encodeTransactionData(address,bytes,uint256)'
-        ](receiver.address, [], ethers.utils.parseEther('101'));
+        const transactionData = testBudgetApproval.callStatic.encodeTransactionData(receiver.address, [], ethers.utils.parseEther('101'));
 
         await expect(
-          dao
+          testBudgetApproval
             .connect(executor)
-            .createBudgetApprovalTransaction(
-              testBudgetApproval.address,
+            .createTransaction(
               transactionData,
               Math.round(Date.now() / 1000) + 86400,
               true,
@@ -337,7 +332,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
             1, // usage count
           ]);
 
-        const tx = await dao.createBudgetApprovals(
+        const tx = await lp.createBudgetApprovals(
           [transferERC20BAImplementation.address],
           [initData],
         );
@@ -352,22 +347,18 @@ describe('Testing TransferERC20BudgetApproval', function () {
           budgetApprovalAddress,
         );
 
-        const transactionData = testBudgetApproval.callStatic[
-          'encodeTransactionData(address,bytes,uint256)'
-        ](receiver.address, [], ethers.utils.parseEther('1'));
+        const transactionData = testBudgetApproval.callStatic.encodeTransactionData(receiver.address, [], ethers.utils.parseEther('1'));
 
-        await dao.connect(executor).createBudgetApprovalTransaction(
-          testBudgetApproval.address,
+        await testBudgetApproval.connect(executor).createTransaction(
           transactionData,
           Math.round(Date.now() / 1000) + 86400,
           true,
         );
 
         await expect(
-          dao
+          testBudgetApproval
             .connect(executor)
-            .createBudgetApprovalTransaction(
-              testBudgetApproval.address,
+            .createTransaction(
               transactionData,
               Math.round(Date.now() / 1000) + 86400,
               true,

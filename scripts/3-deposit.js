@@ -7,7 +7,10 @@ const daoAddress = process.env.DAO_LOCK_TIME_0;
 
 async function main () {
   const dao = await hre.ethers.getContractAt('Dao', daoAddress);
-  await dao.deposit({ value: hre.ethers.utils.parseEther('0.000345') });
+  const lpAddress = await dao.liquidPool();
+  const lp = await hre.ethers.getContractAt('LiquidPool', lpAddress);
+
+  await lp.deposit({ value: hre.ethers.utils.parseEther('0.000345') });
 }
 
 // We recommend this pattern to be able to use async/await everywhere

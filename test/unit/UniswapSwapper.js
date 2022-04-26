@@ -30,13 +30,14 @@ describe('UniswapSwapper.sol', () => {
         0,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
+        [],
       ],
     );
     const daoAddr = await adam.daos(0);
     const dao = await ethers.getContractAt('Dao', daoAddr);
     const uniswapBAImplementationAddr = await adam.budgetApprovals(1);
     const uniswapBAImplementation = await ethers.getContractAt('UniswapBudgetApproval', uniswapBAImplementationAddr);
-    const initData = await uniswapBAImplementation.callStatic.encodeUniswapInitializeData(
+    const initData = await uniswapBAImplementation.callStatic.encodeInitializeData(
       [
         // dao address
         dao.address,

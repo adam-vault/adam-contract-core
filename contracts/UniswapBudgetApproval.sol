@@ -8,6 +8,7 @@ import "./dex/UniswapSwapper.sol";
 
 import "./interface/IDao.sol";
 import "./interface/IAdam.sol";
+import "./interface/IBudgetApprovalExecutee.sol";
 
 contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
@@ -26,7 +27,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         bool _allowAllTokens,
         address[] calldata _toTokens
     ) public initializer {
-        CommonBudgetApproval.initialize(params);
+        __BudgetApproval_init(params);
 
         allowAllToTokens = _allowAllTokens;
         for(uint i = 0; i < _toTokens.length; i++) {
@@ -39,63 +40,19 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     function execute(address to, bytes memory data, uint256 value) public override onlySelf {
 
+        bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
+
         // approve(address,uint256) for ERC20
         if(data.toBytes4(0) == 0x095ea7b3) {
-            (bool approved,) = to.call(data);
-            require(approved, "approved ERC20 failed");
-
-            IDao(dao).approveERC20(to, UNISWAP_ROUTER, type(uint256).max);
             return;
         }
 
-        (,address requiredToken, uint256 requiredAmount) = getRequiredAmount(to, data, value);
-        
-        // Withdraw required token
-        (address[] memory members, uint256[] memory amounts) = _getAmountsOfAllMembersOnProRata(requiredToken, requiredAmount);
-        uint256 totalAmount = IDao(dao).withdrawByBudgetApproval(requiredToken, members, amounts, false);
-
-        // approve token
-        if(to == UNISWAP_ROUTER && requiredToken != ETH_TOKEN_ADDRESS) {
-            IERC20(requiredToken).approve(UNISWAP_ROUTER, requiredAmount);
-        }
-
-        (bool success, bytes memory results) = to.call{ value: value }(data);
-        require(success, "execution failed");
-
-        (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) = decodeWithResult(to, data, value, results);
+        (address tokenIn, address tokenOut, uint256 amountIn,) = decodeWithResult(to, data, value, result);
         require(checkValid(tokenIn, tokenOut, amountIn, true), "transaction not valid");
 
         _updateTotalAmount(amountIn);
         _updateUsageCount();
 
-        // return unused amount (triggered when input is estimated)
-        if(amountIn < requiredAmount) {
-            (, uint256[] memory unusedAmounts) = _getAmountOfMembersByRatio(requiredAmount - amountIn, members, amounts, totalAmount);
-            if(tokenIn == ETH_ADDRESS) {
-                // transfer ETH when call function
-                IDao(dao).depositByBudgetApproval{ value: requiredAmount - amountIn }(tokenIn, members, unusedAmounts, false);
-            } else {
-                // ERC20 is transferred by dao
-                IERC20(tokenIn).approve(dao, requiredAmount - amountIn);
-                IDao(dao).depositByBudgetApproval(tokenIn, members, unusedAmounts, false);
-            }
-        }
-
-        // deposit swapped token
-        (, uint256[] memory mintAmounts) = _getAmountOfMembersByRatio(amountOut, members, amounts, totalAmount);
-        if(to == UNISWAP_ROUTER) {
-            IDao(dao).depositByBudgetApproval(tokenOut, members, mintAmounts, true);
-        } else {
-            if(tokenOut == ETH_ADDRESS) {
-                // transfer ETH when call function
-                IDao(dao).depositByBudgetApproval{ value: amountOut }(tokenOut, members, mintAmounts, false);
-            } else {
-                // ERC20 is transferred by dao
-                IERC20(tokenOut).approve(dao, amountOut);
-                IDao(dao).depositByBudgetApproval(tokenOut, members, mintAmounts, false);
-            }
-        }
-        
     }
 
     function checkValid(address _tokenIn, address _tokenOut, uint256 _amount, bool executed) public view returns(bool valid) {
@@ -120,34 +77,23 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         return UniswapSwapper.decodeUniswapData(to, data, value);
     }
 
-    function getRequiredAmount(address to, bytes memory data, uint256 value) public view returns(bool isRequireToken, address requiredToken, uint256 requiredAmount) {
-        (address _tokenIn,, uint256 _amountIn,,,) = decode(to, data, value);
-
-        if(_amountIn > 0) {
-            isRequireToken = true;
-            requiredToken = _tokenIn;
-            requiredAmount = _amountIn;
-        }
-    }
-
-    function encodeUniswapInitializeData(
+    function encodeInitializeData(
        InitializeParams calldata params,
         // extra params
         bool _allowAllTokens,
         address[] calldata _toTokens
     ) public pure returns (bytes memory data) {
-        return abi.encodeWithSignature(
-            "initialize((address,address,address[],string,string,bool,address[],address[],bool,uint256,uint8,uint256,uint256,bool,uint256),bool,address[])",
+        return abi.encodeWithSelector(
+           this.initialize.selector,
             params,
             _allowAllTokens,
             _toTokens
         );
     }
 
-    function decodeUniswapInitializeData(bytes memory _data) public pure returns (InitializeParams memory, bool, address[] memory) {
+    function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory, bool, address[] memory) {
 
-        // initialize((address,address,address[],string,string,bool,address[],address[],bool,uint256,uint8,uint256,uint256,bool,uint256),bool,address[])
-        if(_data.toBytes4(0) != 0xc3471922) {
+        if(_data.toBytes4(0) != this.initialize.selector) {
             revert("unexpected function");
         }
 

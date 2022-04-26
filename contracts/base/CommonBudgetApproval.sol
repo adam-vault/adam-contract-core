@@ -10,9 +10,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "../lib/BytesLib.sol";
 import "../lib/RevertMsg.sol";
 
-import "../interface/IDao.sol";
-import "../interface/IMultiToken.sol";
-
 import "../interface/IMembership.sol";
 
 abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
@@ -51,6 +48,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     address public executor;
     address payable public dao;
+    address public executee;
 
     address[] public approvers;
     mapping(address => bool) public approversMapping;
@@ -74,11 +72,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     bool public allowUnlimitedUsageCount;
     uint256 public usageCount;
-
-    modifier onlyDao {
-        require(msg.sender == dao, "access denied");
-        _;
-    }
 
     modifier onlyApprover () {
         require(approversMapping[msg.sender], "access denied");
@@ -122,10 +115,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         uint256 usageCount;
     }
 
-    function initialize(
+    function __BudgetApproval_init(
         InitializeParams calldata params
-        ) public initializer {
+        ) internal onlyInitializing {
         dao = payable(params.dao);
+        executee = msg.sender;
         executor = params.executor;
         text = params.text;
         transactionType = params.transactionType;
@@ -163,7 +157,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function NAME() external virtual returns (string calldata);
 
     function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkTime(_transactionId) {
-        require(msg.sender == executor || msg.sender == dao, "access denied");
+        require(msg.sender == executor, "access denied");
 
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
         require(success, RevertMsg.ToString(result));
@@ -171,7 +165,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
     }
 
-    function createTransaction(bytes memory _data, uint256 _deadline, bool _execute) external onlyDao returns (uint256) {
+    function createTransaction(bytes memory _data, uint256 _deadline, bool _execute) external returns (uint256) {
         _transactionIds.increment();
         uint256 _transactionId = _transactionIds.current();
 
@@ -179,13 +173,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         Transaction storage newTransaction = transactions[_transactionId];
         newTransaction.id = _transactionId;
         newTransaction.data = _data;
+        newTransaction.deadline = _deadline;
+        newTransaction.isExist = true;
+
         if(approvers.length == 0) {
             newTransaction.status = Status.Approved;
         } else {
             newTransaction.status = Status.Pending;
         }
-        newTransaction.deadline = _deadline;
-        newTransaction.isExist = true;
 
         emit CreateTransaction(_transactionId, _data, _deadline);
 
@@ -243,9 +238,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
         for(uint i = 0; i < tokens.length; i++) {
             if(tokens[i] == ETH_ADDRESS) {
-                _totalAmount += dao.balance;
+                _totalAmount += executee.balance;
             } else {
-                _totalAmount += IERC20(tokens[i]).balanceOf(dao);
+                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
             }
         }
 
@@ -274,85 +269,22 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         }
     }
 
-
-    function _getAmountOfMembersByRatio(uint256 _totalAmount, address[] memory members, uint256[] memory amountsForRatio, uint256 totalAmountForRatio) internal pure returns (address[] memory, uint256[] memory) {
-        require(members.length == amountsForRatio.length, "invalid input");
-        
-        uint256[] memory amounts = new uint[](members.length);
-        uint256 amountLeft = _totalAmount;
-        for(uint i = 0; i < members.length - 1; i++) {
-            amounts[i] = _totalAmount * amountsForRatio[i] / totalAmountForRatio;
-            amountLeft -= _totalAmount * amountsForRatio[i] / totalAmountForRatio;
-        }
-
-        amounts[members.length - 1] = amountLeft;
-
-        return (members, amounts);
-    }
-
-    function _getAmountsOfAllMembersOnProRata(address _token, uint256 _totalAmount) internal view returns (address[] memory, uint256[] memory) {
-        address _membership = IDao(dao).membership();
-        address mt = IDao(dao).multiToken();
-        uint256 tokenId = IMultiToken(mt).addressToId(_token);
-        address[] memory members = IMembership(_membership).getAllMembers();
-        uint256[] memory amounts = new uint[](members.length);
-
-        uint256 totalBalance = IMultiToken(mt).tokenTotalSupply(tokenId);
-
-        uint256 amountLeft = _totalAmount;
-        
-        for(uint i = 0; i < members.length - 1; i++) {
-            uint256 memberBalance = IMultiToken(mt).balanceOf(members[i], tokenId);
-            amounts[i] = _totalAmount * memberBalance / totalBalance;
-            amountLeft -= _totalAmount * memberBalance / totalBalance;
-        }
-
-        amounts[members.length - 1] = amountLeft;
-
-        return (members, amounts);
-    }
-
     function _authorizeUpgrade(address) internal override initializer {}
 
     function execute(address, bytes memory, uint256) public virtual;
 
     function encodeTransactionData(address _to, bytes memory _data, uint256 _amount) public pure returns (bytes memory) {
-        return abi.encodeWithSignature("execute(address,bytes,uint256)", _to, _data, _amount);
+        return abi.encodeWithSelector(this.execute.selector, _to, _data, _amount);
     }
 
     function decodeTransactionData(bytes memory _data) public pure returns (address, bytes memory, uint256) {
 
-        if(_data.toBytes4(0) != 0xa04a0908) {
-            // execute(address,bytes,uint256)
+        if(_data.toBytes4(0) != this.execute.selector) {
+            // execute(address,address,bytes,uint256)
             revert("unexpected function call");
         }
 
         return abi.decode(_data.slice(4, _data.length - 4), (address, bytes, uint256));
-    }
-
-    function encodeInitializeData(InitializeParams calldata params) public pure returns (bytes memory data) {
-        return abi.encodeWithSelector(
-            this.initialize.selector,
-            params
-        );
-    }
-
-    function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
-
-        if(_data.toBytes4(0) != this.initialize.selector) {
-            revert("unexpected function");
-        }
-
-        return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
-    }
-
-    function supportsInterface(bytes4 interfaceID) external pure virtual returns (bool) {
-        // execute(address,bytes,uint256)
-        if(interfaceID == 0xa04a0908) {
-            return true;
-        }
-
-        return false;
     }
 
     receive() external payable {}
