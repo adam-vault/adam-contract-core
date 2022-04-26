@@ -27,7 +27,11 @@ async function generateInterface ({
   return Promise.all(matchedFiles.map(async (filepath) => {
     const { abi, contractName } = require(filepath);
     const name = `${prefix}${contractName}`;
-    const output = generateSolidity({ abi, name, solidityVersion, license });
+
+    // workaround for handling generate struct interface
+    const updatedAbi = JSON.parse(JSON.stringify(abi).replace(/struct /gi, `struct ${prefix}`));
+
+    const output = generateSolidity({ abi: updatedAbi, name, solidityVersion, license });
     console.log('Generated interface:', `${name}.sol`);
     await writeFile(path.join(__dirname, '..', outputPath, '/', `${name}.sol`), output);
     return path.join(__dirname, '..', outputPath, '/', `${name}.sol`);

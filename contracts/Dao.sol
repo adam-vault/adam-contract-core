@@ -15,12 +15,37 @@ import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IMemberToken.sol";
-import "./interface/IDao.sol";
 
 import "./lib/Concat.sol";
 
 contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
+
+    struct InitializeParams {
+        address _creator;
+        address _membership;
+        address _liquidPool;
+        address _governFactory;
+        address _memberTokenImplementation;
+        string _name;
+        string _description;
+        uint256 _locktime;
+        uint8 memberTokenType;
+        address memberToken;
+        uint256[4] budgetApproval;
+        uint256[4] revokeBudgetApproval;
+        uint256[4] general;
+        uint256[4] daoSettingApproval;
+        string[] tokenInfo;
+        uint256 tokenAmount;
+        DaoSetting daoSetting;
+        address[] depositTokens;
+    }
+
+    struct DaoSetting {
+        uint256 minDepositAmount;
+        uint256 minMemberTokenToJoin;
+    }
 
     enum MemberTokenTypeOption {
         NotInUsed,
@@ -53,7 +78,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
 
-    function initialize(IDao.InitializeParams calldata params) public initializer {
+    function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
         creator = params._creator;
         membership = params._membership;
@@ -170,7 +195,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         return IMembership(membership).isMember(account);
     }
 
-    function updateDaoSetting(IDao.DaoSetting calldata _setting) public onlyGovern("DaoSetting") {
+    function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("DaoSetting") {
         minDepositAmount = _setting.minDepositAmount;
         minMemberTokenToJoin = _setting.minMemberTokenToJoin;
     }
