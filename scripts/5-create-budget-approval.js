@@ -13,6 +13,11 @@ const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 const budgetApprovalAddresses = [];
 
 async function main () {
+  const dao = await hre.ethers.getContractAt('Dao', daoAddress);
+  const lpAddress = await dao.liquidPool();
+
+  const lp = await hre.ethers.getContractAt('LiquidPool', lpAddress);
+
   const transferERC20BudgetApproval = await hre.ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BudgetApprovalAddress);
   const dataERC20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
     [[
@@ -83,13 +88,22 @@ async function main () {
       [],
     ]);
 
-  const dao = await hre.ethers.getContractAt('Dao', daoAddress);
-  const tx = await dao.createBudgetApprovals(
+  const tx1 = await dao.createBudgetApprovals(
     [transferERC20BudgetApprovalAddress, uniswapBudetApprovalAddress],
     [dataERC20, dataUniswap]);
-  const receipt = await tx.wait();
-  const creationEventLogs = _.filter(receipt.events, { event: 'CreateBudgetApproval' });
-  creationEventLogs.forEach(({ args }) => {
+  const receipt1 = await tx1.wait();
+  const creationEventLogs1 = _.filter(receipt1.events, { event: 'CreateBudgetApproval' });
+  creationEventLogs1.forEach(({ args }) => {
+    console.log('budget approval created at:', args.budgetApproval);
+    budgetApprovalAddresses.push(args.budgetApproval);
+  });
+
+  const tx2 = await lp.createBudgetApprovals(
+    [transferERC20BudgetApprovalAddress, uniswapBudetApprovalAddress],
+    [dataERC20, dataUniswap]);
+  const receipt2 = await tx2.wait();
+  const creationEventLogs2 = _.filter(receipt2.events, { event: 'CreateBudgetApproval' });
+  creationEventLogs2.forEach(({ args }) => {
     console.log('budget approval created at:', args.budgetApproval);
     budgetApprovalAddresses.push(args.budgetApproval);
   });
@@ -97,6 +111,8 @@ async function main () {
   overwriteAddressEnv({
     TRANSFER_ERC20_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[0],
     UNISWAP_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[1],
+    LP_TRANSFER_ERC20_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[2],
+    LP_UNISWAP_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[3],
   });
 }
 
