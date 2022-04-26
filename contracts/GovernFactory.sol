@@ -15,7 +15,9 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
     event CreateGovern(
         string name,
         address govern,
-        address caller
+        address caller,
+        uint[] voteWeights,
+        address[] voteTokens
     );
 
     function initialize(
@@ -51,7 +53,9 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
         emit CreateGovern(
             name,
             address(_govern),
-            msg.sender
+            msg.sender,
+            voteWeights,
+            voteTokens
         );
     }
 
