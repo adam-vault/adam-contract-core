@@ -6,6 +6,10 @@ require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 const overwriteAddressEnv = require('./utils/overwriteAddressEnv');
 
 // rinkeby
+const DAI = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
+const USDC = '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b';
+const USDT = '0xD9BA894E0097f8cC2BBc9D24D308b98e36dc6D02';
+
 const adamAddress = process.env.ADAM;
 const daoAddresses = [];
 const testingDataSet = [
@@ -34,7 +38,7 @@ async function main () {
       100,
       0,
       0,
-      [],
+      [DAI, USDC, USDT],
     ]);
 
     return tx.wait().then((receipt) => {
