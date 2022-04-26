@@ -103,12 +103,15 @@ describe('Testing Govern', function () {
 
       it('should be able to propose a proposal, vote and execute', async function () {
         await dao.exposedTransferMemberToken(creator.address, 1);
+
         const MT = await dao.memberToken();
         const mt = await ethers.getContractAt('MemberToken', MT);
         expect(await mt.balanceOf(creator.address)).to.eq(1);
 
-        const governAddr = await governFactory.governMap(dao.address, 'BudgetApproval');
+        const governAddr = await governFactory.governMap(dao.address, 'DaoSetting');
         const govern = await ethers.getContractAt('Govern', governAddr);
+        await hre.network.provider.send('hardhat_mine', ['0x2']);
+        expect(await mt.getPastVotes(creator.address, await ethers.provider.getBlockNumber() - 1)).to.eq(1);
 
         const token = await ethers.getContractAt('TokenA', tokenA.address);
         const transferCalldata = token.interface.encodeFunctionData(
