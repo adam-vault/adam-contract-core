@@ -180,7 +180,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
-        return IAdam(adam).budgetApprovalRegistry(budgetApproval);
+        return IAdam(adam).budgetApprovals(budgetApproval);
     }
 
     function govern(string memory gName) public view returns (address) {
