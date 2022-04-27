@@ -34,9 +34,8 @@ contract MemberToken is ERC20VotesUpgradeable {
         uint256 amount
     ) internal override {
         super._afterTokenTransfer(from, to, amount);
-        if(from == address(0) && to != address(0) && delegates(to) == address(0)) {
-            _delegate(to, to);
-        }
+
+        _delegate(to, to);
     }
 
 }
