@@ -6,13 +6,30 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "./interface/IAdam.sol";
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
 import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+
+    struct CreateDaoParams {
+        string _name;
+        string _description;
+        uint256 _locktime;
+        uint8 memberTokenType;
+        address memberToken;
+        uint256[4] budgetApproval;
+        uint256[4] revokeBudgetApproval;
+        uint256[4] general;
+        uint256[4] daoSettingApproval;
+        string[] tokenInfo;
+        uint256 tokenAmount;
+        uint256 minDepositAmount;
+        uint256 minMemberTokenToJoin;
+        address[] depositTokens;
+    }
+
     address public feedRegistry;
     address public daoImplementation;
     address public membershipImplementation;
@@ -74,7 +91,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function createDao(IAdam.CreateDaoParams calldata params) public returns (address) {
+    function createDao(CreateDaoParams calldata params) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
