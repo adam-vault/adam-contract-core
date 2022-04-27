@@ -15,7 +15,7 @@ describe('UniswapSwapper.sol', () => {
 
   before(async () => {
     const adam = await createAdam();
-    await adam.createDao(
+    const tx1 = await adam.createDao(
       [
         'A Company', // _name
         'Description', // _description
@@ -33,7 +33,9 @@ describe('UniswapSwapper.sol', () => {
         [],
       ],
     );
-    const daoAddr = await adam.daos(0);
+    const receipt1 = await tx1.wait();
+    const creationEventLog1 = _.find(receipt1.events, { event: 'CreateDao' });
+    const daoAddr = creationEventLog1.args.dao;
     const dao = await ethers.getContractAt('Dao', daoAddr);
     const uniswapBAImplementationAddr = await adam.budgetApprovals(1);
     const uniswapBAImplementation = await ethers.getContractAt('UniswapBudgetApproval', uniswapBAImplementationAddr);

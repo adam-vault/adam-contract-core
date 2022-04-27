@@ -2,20 +2,22 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const _ = require('lodash');
 
-const { createTokens, createAdam } = require('../utils/createContract');
+const { createTokens, createAdam, createFeedRegistry, createBudgetApprovals } = require('../utils/createContract');
 
 describe('Testing TransferERC20BudgetApproval', function () {
   let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
-  let tokenA;
+  let tokenA, feedRegistry, budgetApprovalAddresses;
 
   before(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
 
-    adam = await createAdam();
-    await adam.createDao(
+    feedRegistry = await createFeedRegistry(tokenA, executor);
+    budgetApprovalAddresses = await createBudgetApprovals(executor);
+    adam = await createAdam(feedRegistry, budgetApprovalAddresses);
+    const tx1 = await adam.createDao(
       [
         'A Company', // _name
         'Description', // _description
@@ -33,10 +35,12 @@ describe('Testing TransferERC20BudgetApproval', function () {
         [],
       ],
     );
-    const daoAddr = await adam.daos(0);
+    const receipt = await tx1.wait();
+    const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+    const daoAddr = creationEventLog.args.dao;
     dao = await ethers.getContractAt('Dao', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-    const transferERC20BAImplementationAddr = await adam.budgetApprovals(0);
+    const transferERC20BAImplementationAddr = budgetApprovalAddresses[0];
     transferERC20BAImplementation = await ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BAImplementationAddr);
   });
 
