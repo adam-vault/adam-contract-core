@@ -15,6 +15,7 @@ import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IMemberToken.sol";
+import "./interface/IBudgetApprovalExecutee.sol";
 
 import "./lib/Concat.sol";
 
@@ -155,6 +156,14 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _;
     }
 
+    // to be removed in future
+    modifier onlyGovernOrSelf(string memory category) {
+        require(
+            byPassGovern(msg.sender) || msg.sender == govern(category) || msg.sender == address(this),
+            string("Dao: only Govern ").concat(category));
+        _;
+    }
+
     function setFirstDeposit(address owner) public {
         require(msg.sender == liquidPool, "only LP");
         firstDeposit[owner] = block.timestamp;
@@ -168,7 +177,20 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _transferMemberToken(to, amount);
     }
 
-    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public onlyGovern("BudgetApproval") {
+    function createMultiExecuteeBudgetApprovals(address[] calldata executee, address[] calldata budgetApprovals, bytes[] calldata data) public onlyGovern("BudgetApproval") {
+        require(executee.length == data.length, "input invalid");
+        require(budgetApprovals.length == data.length, "input invalid");
+
+        for(uint i = 0; i < data.length; i++) {
+            address[] memory currentBudgetApproval = new address[](1);
+            bytes[] memory currentData = new bytes[](1);
+            currentBudgetApproval[0] = budgetApprovals[i];
+            currentData[0] = data[i];
+            IBudgetApprovalExecutee(executee[i]).createBudgetApprovals(currentBudgetApproval, currentData);
+        }
+    }
+
+    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public onlyGovernOrSelf("BudgetApproval") {
         require(_budgetApprovals.length == data.length, "input invalid");
 
         for(uint i = 0; i < _budgetApprovals.length; i++) {
