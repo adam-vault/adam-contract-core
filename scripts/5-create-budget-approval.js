@@ -1,13 +1,12 @@
 const hre = require('hardhat');
 const _ = require('lodash');
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, './.env') });
-const overwriteAddressEnv = require('./utils/overwriteAddressEnv');
+const deployResultStore = require('./utils/deploy-result-store');
+const deploymentResult = deployResultStore.load();
 
 // rinkeby
-const daoAddress = process.env.DAO_LOCK_TIME_0;
-const transferERC20BudgetApprovalAddress = process.env.TRANSFER_ERC20_APPROVAL_IMPLEMENTATION;
-const uniswapBudetApprovalAddress = process.env.UNISWAP_APPROVAL_IMPLEMENTATION;
+const daoAddress = deploymentResult.addresses.DAO_LOCK_TIME_0;
+const transferERC20BudgetApprovalAddress = deploymentResult.addresses.transferErc20BudgetApproval;
+const uniswapBudetApprovalAddress = deploymentResult.addresses.uniswapBudgetApproval;
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 
 const budgetApprovalAddresses = [];
@@ -108,11 +107,15 @@ async function main () {
     budgetApprovalAddresses.push(args.budgetApproval);
   });
 
-  overwriteAddressEnv({
-    TRANSFER_ERC20_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[0],
-    UNISWAP_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[1],
-    LP_TRANSFER_ERC20_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[2],
-    LP_UNISWAP_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[3],
+  deployResultStore.save({
+    ...deploymentResult,
+    addresses: {
+      ...deploymentResult.addresses,
+      TRANSFER_ERC20_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[0],
+      UNISWAP_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[1],
+      LP_TRANSFER_ERC20_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[2],
+      LP_UNISWAP_APPROVAL_DAO_LOCK_TIME_0: budgetApprovalAddresses[3],
+    },
   });
 }
 

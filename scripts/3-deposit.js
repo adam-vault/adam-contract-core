@@ -1,9 +1,9 @@
 const hre = require('hardhat');
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, './.env') });
+const deployResultStore = require('./utils/deploy-result-store');
+const deploymentResult = deployResultStore.load();
 
 // rinkeby
-const daoAddress = process.env.DAO_LOCK_TIME_0;
+const daoAddress = deploymentResult.addresses.DAO_LOCK_TIME_0;
 
 async function main () {
   const dao = await hre.ethers.getContractAt('Dao', daoAddress);
