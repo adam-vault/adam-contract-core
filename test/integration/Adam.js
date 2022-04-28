@@ -46,21 +46,18 @@ describe('Create DAO', function () {
   it('can create dao', async function () {
     await expect(createDao())
       .to.emit(adam, 'CreateDao');
-
-    const daoAddr = await adam.daos(0);
-    const dao = await ethers.getContractAt('Dao', daoAddr);
-
-    expect(await dao.adam()).to.equal(adam.address);
   });
 
   it('can upgrade dao', async function () {
-    await createDao();
+    const tx1 = await createDao();
+    const receipt = await tx1.wait();
+    const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+    const daoAddr = creationEventLog.args.dao;
 
     const MockDaoV2 = await ethers.getContractFactory('MockDaoV2');
     const mockDaoV2 = await MockDaoV2.deploy();
     await mockDaoV2.deployed();
 
-    const daoAddr = await adam.daos(0);
     const dao = await ethers.getContractAt('Dao', daoAddr);
     await dao.upgradeTo(mockDaoV2.address);
 

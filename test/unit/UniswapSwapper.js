@@ -2,10 +2,12 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const _ = require('lodash');
 
-const { createAdam } = require('../utils/createContract');
+const { createAdam, createFeedRegistry, createBudgetApprovals,　createTokens } = require('../utils/createContract');
 
 describe('UniswapSwapper.sol', () => {
   let decode;
+  let tokenA, feedRegistry, budgetApprovalAddresses, adam;
+  let executor;
 
   const ETHAddress = '0x0000000000000000000000000000000000000000';
   const WETHAddress = '0xc778417E063141139Fce010982780140Aa0cD5Ab';
@@ -14,8 +16,14 @@ describe('UniswapSwapper.sol', () => {
   const UniswapRouter = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
 
   before(async () => {
-    const adam = await createAdam();
-    await adam.createDao(
+    ({ tokenA } = await createTokens());
+    [executor] = await ethers.getSigners();
+
+    feedRegistry = await createFeedRegistry(tokenA, executor);
+    budgetApprovalAddresses = await createBudgetApprovals(executor);
+    adam = await createAdam(feedRegistry, budgetApprovalAddresses);
+
+    const tx1 = await adam.createDao(
       [
         'A Company', // _name
         'Description', // _description
@@ -33,9 +41,11 @@ describe('UniswapSwapper.sol', () => {
         [],
       ],
     );
-    const daoAddr = await adam.daos(0);
+    const receipt1 = await tx1.wait();
+    const creationEventLog1 = _.find(receipt1.events, { event: 'CreateDao' });
+    const daoAddr = creationEventLog1.args.dao;
     const dao = await ethers.getContractAt('Dao', daoAddr);
-    const uniswapBAImplementationAddr = await adam.budgetApprovals(1);
+    const uniswapBAImplementationAddr = budgetApprovalAddresses[1];
     const uniswapBAImplementation = await ethers.getContractAt('UniswapBudgetApproval', uniswapBAImplementationAddr);
     const initData = await uniswapBAImplementation.callStatic.encodeInitializeData(
       [

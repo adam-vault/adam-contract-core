@@ -9,7 +9,7 @@ const deployConstantState = async (signer, network = 'rinkeby') => {
   }
 };
 
-const deployBudgetApprovals = async (signer) => {
+const createBudgetApprovals = async (signer) => {
   const TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer });
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
   await transferERC20BudgetApproval.deployed();
@@ -29,11 +29,10 @@ const createFeedRegistry = async (token, signer) => {
   return feedRegistry;
 };
 
-const createAdam = async (feedRegistry) => {
+const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   const [creator] = await ethers.getSigners();
 
   const constantState = await deployConstantState(creator);
-  const budgetApprovalsAddress = await deployBudgetApprovals(creator);
   const Dao = await ethers.getContractFactory('MockDaoV2', { signer: creator });
 
   const Membership = await ethers.getContractFactory('Membership', { signer: creator });
@@ -50,6 +49,9 @@ const createAdam = async (feedRegistry) => {
     await token.deployed();
     feedRegistry = await createFeedRegistry(token, creator);
   }
+  if (!budgetApprovalAddresses) {
+    budgetApprovalAddresses = await createBudgetApprovals(creator);
+  }
   const membership = await Membership.deploy();
   const liquidPool = await LiquidPool.deploy();
   const govern = await Govern.deploy();
@@ -62,7 +64,7 @@ const createAdam = async (feedRegistry) => {
 
   const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
-  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, liquidPool.address, memberToken.address, budgetApprovalsAddress, governFactory.address, constantState, feedRegistry.address], { kind: 'uups' });
+  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, liquidPool.address, memberToken.address, budgetApprovalAddresses, governFactory.address, constantState, feedRegistry.address], { kind: 'uups' });
 
   await adam.deployed();
   return adam;
@@ -111,4 +113,5 @@ module.exports = {
   createAdam,
   createTokens,
   createGovern,
+  createBudgetApprovals,
 };

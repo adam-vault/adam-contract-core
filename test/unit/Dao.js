@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const _ = require('lodash');
 const { createAdam, createTokens } = require('../utils/createContract.js');
 
 describe('Testing Dao', function () {
@@ -10,7 +11,7 @@ describe('Testing Dao', function () {
     beforeEach(async function () {
       [creator] = await ethers.getSigners();
       adam = await createAdam();
-      await adam.createDao([
+      const tx1 = await adam.createDao([
         'A Company', // _name
         'Description', // _description
         10000000, // _locktime
@@ -26,7 +27,9 @@ describe('Testing Dao', function () {
         0, // minMemberTokenToJoin
         [],
       ]);
-      const daoAddr = await adam.daos(0);
+      const receipt = await tx1.wait();
+      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+      const daoAddr = creationEventLog.args.dao;
       dao = await ethers.getContractAt('MockDaoV2', daoAddr);
       lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     });
@@ -59,7 +62,7 @@ describe('Testing Dao', function () {
       beforeEach(async function () {
         adam = await createAdam();
         tokenC721 = (await createTokens()).tokenC721;
-        await adam.createDao([
+        const tx1 = await adam.createDao([
           'A Company', // _name
           'Description', // _description
           10000000, // _locktime
@@ -75,8 +78,9 @@ describe('Testing Dao', function () {
           1, // minMemberTokenToJoin
           [],
         ]);
-
-        const daoAddr = await adam.daos(0);
+        const receipt = await tx1.wait();
+        const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+        const daoAddr = creationEventLog.args.dao;
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
@@ -147,7 +151,7 @@ describe('Testing Dao', function () {
     describe('when create ERC20 member token at dao creation', function () {
       beforeEach(async function () {
         adam = await createAdam();
-        await adam.createDao([
+        const tx1 = await adam.createDao([
           'A Company', // _name
           'Description', // _description
           10000000, // _locktime
@@ -164,7 +168,9 @@ describe('Testing Dao', function () {
           [],
         ]);
 
-        const daoAddr = await adam.daos(0);
+        const receipt = await tx1.wait();
+        const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+        const daoAddr = creationEventLog.args.dao;
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
@@ -196,7 +202,7 @@ describe('Testing Dao', function () {
     describe('when set minDepositAmount at dao creation', function () {
       beforeEach(async function () {
         adam = await createAdam();
-        await adam.createDao([
+        const tx1 = await adam.createDao([
           'A Company', // _name
           'Description', // _description
           10000000, // _locktime
@@ -212,8 +218,9 @@ describe('Testing Dao', function () {
           0, // minMemberTokenToJoin
           [],
         ]);
-
-        const daoAddr = await adam.daos(0);
+        const receipt = await tx1.wait();
+        const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+        const daoAddr = creationEventLog.args.dao;
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });

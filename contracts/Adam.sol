@@ -38,11 +38,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public governImplementation;
     address public memberTokenImplementation;
     address public constantState;
-
-    address[] public budgetApprovals;
-    address[] public daos;
-    mapping(address => bool) public budgetApprovalRegistry;
-    mapping(address => bool) public daoRegistry;
+    mapping(address => bool) public budgetApprovals;
+    mapping(address => bool) public daos;
 
     event CreateDao(address dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
@@ -70,23 +67,19 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         constantState = _constantState;
         feedRegistry = _feedRegistry;
     }
-    
-    function totalDaos() public view returns (uint256) {
-        return daos.length;
-    }
 
     function setDaoImplementation(address _daoImplementation) public {
         daoImplementation = _daoImplementation;
     }
+
     function setMembershipImplementation(address _membershipImplementation) public {
         membershipImplementation = _membershipImplementation;
     }
 
     function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public {
         for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(budgetApprovalRegistry[_budgetApprovals[i]] == false, "budget approval already whitelisted");
-            budgetApprovals.push(_budgetApprovals[i]);
-            budgetApprovalRegistry[_budgetApprovals[i]] = true;
+            require(budgetApprovals[_budgetApprovals[i]] == false, "budget approval already whitelisted");
+            budgetApprovals[_budgetApprovals[i]] = true;
             emit WhitelistBudgetApproval(_budgetApprovals[i]);
         }
     }
@@ -96,8 +89,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
         
-        daos.push(address(_dao));
-        daoRegistry[address(_dao)] = true;
+        daos[address(_dao)] = true;
 
         IMembership(address(_membership)).initialize(
             address(_dao),
