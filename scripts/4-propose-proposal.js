@@ -1,11 +1,11 @@
 const hre = require('hardhat');
 const { faker } = require('@faker-js/faker');
-const deployResultStore = require('./utils/deploy-result-store');
-const deploymentResult = deployResultStore.load();
+const fileReader = require('../utils/fileReader');
+const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 
-// rinkeby   deploymentResult.addresses.GOVERN_DAO_LOCK_TIME_0
-const governAddress = deploymentResult.addresses.GOVERN_DAO_LOCK_TIME_0;
-const daoAddress = deploymentResult.addresses.DAO_LOCK_TIME_0;
+// rinkeby
+const governAddress = deploymentResult.initdata_addresses.dao0BudgetGovern;
+const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
 
 async function main () {
   const govern = await hre.ethers.getContractAt('Govern', governAddress);

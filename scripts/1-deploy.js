@@ -4,7 +4,7 @@
 // When running the script with `npx hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require('hardhat');
-const deployResultStore = require('./utils/deploy-result-store');
+const fileReader = require('../utils/fileReader');
 
 const FEED_REGISTRY = '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF';
 
@@ -85,7 +85,7 @@ async function main () {
   console.log('Contract Addresses', contractAddresses);
 
   // Output Deployment Info as file
-  deployResultStore.save({
+  fileReader.save('deploy', 'results.json', {
     block_number: blockNumber,
     addresses: contractAddresses,
     initdata_addresses: {},

@@ -1,9 +1,9 @@
 const hre = require('hardhat');
-const deployResultStore = require('./utils/deploy-result-store');
-const deploymentResult = deployResultStore.load();
+const fileReader = require('../utils/fileReader');
+const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 
 // rinkeby
-const daoAddress = deploymentResult.addresses.DAO_LOCK_TIME_0;
+const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
 
 async function main () {
   const dao = await hre.ethers.getContractAt('Dao', daoAddress);
