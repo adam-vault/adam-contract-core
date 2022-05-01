@@ -91,13 +91,16 @@ jobs:
       - name: Replace ABIs
         run: cp ${{ runner.temp }}/deployment/abis/human/* ./src/contracts
 
+      - name: Setup Address as env vars
+        run: |
+          echo "REACT_APP_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)" >> $GITHUB_ENV
+          echo "REACT_APP_OUTFLOW_CONTRACT_ADDRESS=$(jq -r .addresses.transferErc20BudgetApproval ${{ runner.temp }}/deployment/deploy/results.json)" >> $GITHUB_ENV
+          echo "REACT_APP_SWAP_CONTRACT_ADDRESS=$(jq -r .addresses.uniswapBudgetApproval ${{ runner.temp }}/deployment/deploy/results.json)" >> $GITHUB_ENV
+
       - name: Replace Contract Address
         uses: mikefarah/yq@master
         with:
           cmd: |
-            REACT_APP_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)\
-            REACT_APP_OUTFLOW_CONTRACT_ADDRESS=$(jq -r .addresses.transferErc20BudgetApproval ${{ runner.temp }}/deployment/deploy/results.json)\
-            REACT_APP_SWAP_CONTRACT_ADDRESS=$(jq -r .addresses.uniswapBudgetApproval ${{ runner.temp }}/deployment/deploy/results.json)\
             yq -i '
               .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS) |
               .jobs.call-deploy-site.with.REACT_APP_OUTFLOW_CONTRACT_ADDRESS = strenv(REACT_APP_OUTFLOW_CONTRACT_ADDRESS) |
