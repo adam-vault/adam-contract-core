@@ -116,55 +116,55 @@ jobs:
           reviewers: |
             redocsss
 
-  sync-subgraph-repo:
-    name: Syncrhonize with Subgraph Repo
-    needs: deploy-contracts
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout Subgraph Repo
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ github.repository_owner }}/adam-subgraph
-          token: ${{ secrets.GH_PAT }}      
+  # sync-subgraph-repo:
+  #   name: Syncrhonize with Subgraph Repo
+  #   needs: deploy-contracts
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 5
+  #   steps:
+  #     - name: Checkout Subgraph Repo
+  #       uses: actions/checkout@v3
+  #       with:
+  #         repository: ${{ github.repository_owner }}/adam-subgraph
+  #         token: ${{ secrets.GH_PAT }}      
       
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          cache: 'npm'
+  #     - name: Setup Node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 16
+  #         cache: 'npm'
       
-      - name: Install Dependencies
-        run: npm install
+  #     - name: Install Dependencies
+  #       run: npm install
 
-      - name: Fetch Deployment Info
-        uses: actions/download-artifact@v3
-        with:
-          name: deploy_${{ env.GIT_REF }}
-          path: ${{ runner.temp }}/deployment
+  #     - name: Fetch Deployment Info
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: deploy_${{ env.GIT_REF }}
+  #         path: ${{ runner.temp }}/deployment
 
-      - name: Replace ABIs
-        run: cp ${{ runner.temp }}/deployment/abis/machine/* ./abis
+  #     - name: Replace ABIs
+  #       run: cp ${{ runner.temp }}/deployment/abis/machine/* ./abis
 
-      - name: Replace Subgraph Address
-        run: | 
-          npm run update-datasource --\
-            --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)\
-            --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deployment/deploy/results.json)\
-            --block $(jq -r .block_number ${{ runner.temp }}/deployment/deploy/results.json)
+  #     - name: Replace Subgraph Address
+  #       run: | 
+  #         npm run update-datasource --\
+  #           --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)\
+  #           --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deployment/deploy/results.json)\
+  #           --block $(jq -r .block_number ${{ runner.temp }}/deployment/deploy/results.json)
       
-      - name: Make Pull Request
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.GH_PAT }}
-          branch: autosync/deploy_${{ env.GIT_REF }}
-          title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
-          body: |
-            Syncrhonizing Contract Addresses and ABIs from adam-contract-core
-            Version: ${{ env.GIT_REF }}
-            Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  #     - name: Make Pull Request
+  #       uses: peter-evans/create-pull-request@v4
+  #       with:
+  #         token: ${{ secrets.GH_PAT }}
+  #         branch: autosync/deploy_${{ env.GIT_REF }}
+  #         title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
+  #         body: |
+  #           Syncrhonizing Contract Addresses and ABIs from adam-contract-core
+  #           Version: ${{ env.GIT_REF }}
+  #           Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-          commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
-          reviewers: |
-            ayame30
-            chikchoi6
+  #         commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
+  #         reviewers: |
+  #           ayame30
+  #           chikchoi6
