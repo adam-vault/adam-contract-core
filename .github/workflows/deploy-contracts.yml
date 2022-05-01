@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout Subgraph Repo
+      - name: Checkout Frontend Repo
         uses: actions/checkout@v3
         with:
           repository: ${{ github.repository_owner }}/adam-frontend
@@ -95,10 +95,13 @@ jobs:
         uses: mikefarah/yq@master
         with:
           cmd: |
+            REACT_APP_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)\
+            REACT_APP_OUTFLOW_CONTRACT_ADDRESS=$(jq -r .addresses.transferErc20BudgetApproval ${{ runner.temp }}/deployment/deploy/results.json)\
+            REACT_APP_SWAP_CONTRACT_ADDRESS=$(jq -r .addresses.uniswapBudgetApproval ${{ runner.temp }}/deployment/deploy/results.json)\
             yq -i '
-              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json) |
-              .jobs.call-deploy-site.with.REACT_APP_OUTFLOW_CONTRACT_ADDRESS = $(jq -r .addresses.transferErc20BudgetApproval ${{ runner.temp }}/deployment/deploy/results.json) |
-              .jobs.call-deploy-site.with.REACT_APP_SWAP_CONTRACT_ADDRESS = $(jq -r .addresses.uniswapBudgetApproval ${{ runner.temp }}/deployment/deploy/results.json) |
+              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS) |
+              .jobs.call-deploy-site.with.REACT_APP_OUTFLOW_CONTRACT_ADDRESS = strenv(REACT_APP_OUTFLOW_CONTRACT_ADDRESS) |
+              .jobs.call-deploy-site.with.REACT_APP_SWAP_CONTRACT_ADDRESS = strenv(REACT_APP_SWAP_CONTRACT_ADDRESS)
             ' .github/workflows/deploy.dev.yml
       
       - name: Make Pull Request
