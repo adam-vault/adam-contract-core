@@ -2,8 +2,7 @@ name: Deploy Contracts
 on:
   push:
     tags:    
-      - 'v[0-9].[0-9]+.[0-9]+\-dev'
-      - 'v[0-9].[0-9]+.[0-9]+\-alpha'
+      - 'v[0-9].[0-9]+.[0-9]+\-test'
 
 env:
   GIT_REF: ${{ github.ref_name }} # either branch name or tag
@@ -70,6 +69,52 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+  
+  sync-frontend-repo:
+    name: Syncrhonize with Frontend Repo
+    needs: deploy-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Subgraph Repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ github.repository_owner }}/adam-frontend
+          token: ${{ secrets.GH_PAT }}      
+      
+      - name: Fetch Deployment Info
+        uses: actions/download-artifact@v3
+        with:
+          name: deploy_${{ env.GIT_REF }}
+          path: ${{ runner.temp }}/deployment
+
+      - name: Replace ABIs
+        run: cp ${{ runner.temp }}/deployment/abis/human/* ./src/contracts
+
+      - name: Replace Contract Address
+        uses: mikefarah/yq@master
+        with:
+          cmd: |
+            yq -i '
+              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json) |
+              .jobs.call-deploy-site.with.REACT_APP_OUTFLOW_CONTRACT_ADDRESS = $(jq -r .addresses.transferErc20BudgetApproval ${{ runner.temp }}/deployment/deploy/results.json) |
+              .jobs.call-deploy-site.with.REACT_APP_SWAP_CONTRACT_ADDRESS = $(jq -r .addresses.uniswapBudgetApproval ${{ runner.temp }}/deployment/deploy/results.json) |
+            ' deploy.dev.yaml
+      
+      - name: Make Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: autosync/deploy_${{ env.GIT_REF }}
+          title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
+          body: |
+            Syncrhonizing Contract Addresses and ABIs from adam-contract-core
+            Version: ${{ env.GIT_REF }}
+            Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
+          reviewers: |
+            redocsss
 
   sync-subgraph-repo:
     name: Syncrhonize with Subgraph Repo
