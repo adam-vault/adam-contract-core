@@ -99,7 +99,7 @@ jobs:
               .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json) |
               .jobs.call-deploy-site.with.REACT_APP_OUTFLOW_CONTRACT_ADDRESS = $(jq -r .addresses.transferErc20BudgetApproval ${{ runner.temp }}/deployment/deploy/results.json) |
               .jobs.call-deploy-site.with.REACT_APP_SWAP_CONTRACT_ADDRESS = $(jq -r .addresses.uniswapBudgetApproval ${{ runner.temp }}/deployment/deploy/results.json) |
-            ' .github/workflows/deploy.dev.yaml
+            ' .github/workflows/deploy.dev.yml
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
