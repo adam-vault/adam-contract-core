@@ -106,7 +106,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
 
     function redeem(uint256 amount) public {
         require(balanceOf(msg.sender) >= amount, "not enough balance");
-        require(IDao(dao).firstDeposit(msg.sender) + IDao(dao).locktime() <= block.timestamp, "lockup time");
+        require(IDao(dao).firstDepositTime(msg.sender) + IDao(dao).locktime() <= block.timestamp, "lockup time");
 
         payable(msg.sender).transfer(ethShares(amount));
         for (uint256 i = 0; i < assets.length; i++) {
@@ -148,8 +148,8 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
     }
     
     function _afterDeposit(address account, uint256 eth) private {
-        if (IDao(dao).firstDeposit(account) == 0) {
-            IDao(dao).setFirstDeposit(account);
+        if (IDao(dao).firstDepositTime(account) == 0) {
+            IDao(dao).setFirstDepositTime(account);
 
             require(eth >= IDao(dao).minDepositAmount(), "deposit amount not enough");
             if (!IDao(dao).isMember(account)) {

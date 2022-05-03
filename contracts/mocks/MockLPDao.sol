@@ -8,7 +8,7 @@ contract MockLPDao {
     uint256 public minMemberTokenToJoin;
     uint256 public minDepositAmount;
     address public memberToken;
-    mapping(address => uint256) public firstDeposit;
+    mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isMember;
 
     function byPassGovern(address) public pure returns (bool) {
@@ -35,7 +35,7 @@ contract MockLPDao {
     function mintMember(address account) public {
         isMember[account] = true;
     } 
-    function setFirstDeposit(address account) public {
-        firstDeposit[account] = block.timestamp;
+    function setFirstDepositTime(address account) public {
+        firstDepositTime[account] = block.timestamp;
     } 
 }

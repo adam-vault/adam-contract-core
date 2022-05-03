@@ -1,7 +1,7 @@
 [
   "event AdminChanged(address previousAdmin, address newAdmin)",
   "event BeaconUpgraded(address indexed beacon)",
-  "event CreateGovern(string name, address govern, address caller)",
+  "event CreateGovern(string name, address govern, address caller, uint256[] voteWeights, address[] voteTokens)",
   "event Upgraded(address indexed implementation)",
   "function addVoteToken(string name, address token, uint256 weight)",
   "function createGovern(string name, uint256 duration, uint256 quorum, uint256 passThreshold, uint256[] voteWeights, address[] voteTokens)",
