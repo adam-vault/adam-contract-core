@@ -153,9 +153,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
 
             require(eth >= IDao(dao).minDepositAmount(), "deposit amount not enough");
             if (!IDao(dao).isMember(account)) {
-                if(IDao(dao).memberToken() != address(0x0)) {
-                    require(IERC20(IDao(dao).memberToken()).balanceOf(account) >= IDao(dao).minMemberTokenToJoin(), "member token not enough");
-                }
+                require(IDao(dao).memberToken() != address(0x0) || IERC20(IDao(dao).memberToken()).balanceOf(account) >= IDao(dao).minMemberTokenToJoin(), "member token not enough");
                 IDao(dao).mintMember(account);
             }
         }
