@@ -71,7 +71,7 @@ interface IDao {
         uint256 _value
     ) external returns (bytes memory);
 
-    function firstDeposit(address) external view returns (uint256);
+    function firstDepositTime(address) external view returns (uint256);
 
     function govern(string memory gName) external view returns (address);
 
@@ -130,7 +130,7 @@ interface IDao {
 
     function proxiableUUID() external view returns (bytes32);
 
-    function setFirstDeposit(address owner) external;
+    function setFirstDepositTime(address owner) external;
 
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 

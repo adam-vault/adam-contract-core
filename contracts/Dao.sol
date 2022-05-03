@@ -72,12 +72,13 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     uint256 public minDepositAmount;
     uint256 public minMemberTokenToJoin;
     uint8 public memberTokenType;
-    mapping(address => uint256) public firstDeposit;
+    mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
+    event SetFirstDepositTime(address owner, uint256 time);
 
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
@@ -164,9 +165,10 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _;
     }
 
-    function setFirstDeposit(address owner) public {
+    function setFirstDepositTime(address owner) public {
         require(msg.sender == liquidPool, "only LP");
-        firstDeposit[owner] = block.timestamp;
+        firstDepositTime[owner] = block.timestamp;
+        emit SetFirstDepositTime(owner, block.timestamp);
     }
 
     function mintMemberToken(uint amount) public onlyGovern("BudgetApproval") {

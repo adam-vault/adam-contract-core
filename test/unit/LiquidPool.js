@@ -73,22 +73,22 @@ describe('LiquidPool.sol', function () {
 
     it('can deposit twice if not deposit before', async function () {
       expect(await dao.isMember(signer1.address)).to.eq(false);
-      expect(await dao.firstDeposit(signer1.address)).to.eq(0);
+      expect(await dao.firstDepositTime(signer1.address)).to.eq(0);
 
       await lpAsSigner1.deposit({ value: parseEther('1') });
       await lpAsSigner1.deposit({ value: parseEther('1') });
       expect(await dao.isMember(signer1.address)).to.eq(true);
-      expect(await dao.firstDeposit(signer1.address)).to.not.eq(0);
+      expect(await dao.firstDepositTime(signer1.address)).to.not.eq(0);
     });
 
     it('can deposit if already is a member', async function () {
       await dao.mintMember(signer1.address);
       expect(await dao.isMember(signer1.address)).to.eq(true);
-      expect(await dao.firstDeposit(signer1.address)).to.eq(0);
+      expect(await dao.firstDepositTime(signer1.address)).to.eq(0);
 
       await lpAsSigner1.deposit({ value: parseEther('1') });
       expect(await dao.isMember(signer1.address)).to.eq(true);
-      expect(await dao.firstDeposit(signer1.address)).to.not.eq(0);
+      expect(await dao.firstDepositTime(signer1.address)).to.not.eq(0);
     });
 
     it('can deposit if meet minDeposit amount & minTokenToJoin', async function () {
@@ -265,24 +265,24 @@ describe('LiquidPool.sol', function () {
 
     it('can deposit twice if not deposit before', async function () {
       expect(await dao.isMember(signer1.address)).to.eq(false);
-      expect(await dao.firstDeposit(signer1.address)).to.eq(0);
+      expect(await dao.firstDepositTime(signer1.address)).to.eq(0);
 
       await tokenAsSigner1.approve(lp.address, parseEther('2'));
       await lpAsSigner1.depositToken(token.address, parseEther('1'));
       await lpAsSigner1.depositToken(token.address, parseEther('1'));
       expect(await dao.isMember(signer1.address)).to.eq(true);
-      expect(await dao.firstDeposit(signer1.address)).to.not.eq(0);
+      expect(await dao.firstDepositTime(signer1.address)).to.not.eq(0);
     });
 
     it('can deposit if already is a member', async function () {
       await dao.mintMember(signer1.address);
       expect(await dao.isMember(signer1.address)).to.eq(true);
-      expect(await dao.firstDeposit(signer1.address)).to.eq(0);
+      expect(await dao.firstDepositTime(signer1.address)).to.eq(0);
 
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await lpAsSigner1.depositToken(token.address, parseEther('1'));
       expect(await dao.isMember(signer1.address)).to.eq(true);
-      expect(await dao.firstDeposit(signer1.address)).to.not.eq(0);
+      expect(await dao.firstDepositTime(signer1.address)).to.not.eq(0);
     });
 
     it('can deposit if meet minDeposit amount & minTokenToJoin', async function () {
