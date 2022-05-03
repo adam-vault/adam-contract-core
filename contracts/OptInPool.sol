@@ -80,7 +80,7 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
     function join(uint256 amount) public {
         require(block.timestamp < depositDeadline, "depositDeadline passed");
         depositPool.safeTransferFrom(msg.sender, address(this), depositPool.id(depositToken), amount, "");
-        depositPool.redeem(depositToken, amount);
+        depositPool.withdraw(depositToken, amount);
 
         _mint(msg.sender, amount);
         recevied += amount;

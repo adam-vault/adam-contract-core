@@ -5,7 +5,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
-
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -14,7 +15,7 @@ import "./lib/ToString.sol";
 import "./lib/Base64.sol";
 import "./lib/Concat.sol";
 
-contract DepositPool is ERC1155Upgradeable {
+contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
     using Counters for Counters.Counter;
     using Strings for uint256;
     using Strings for uint8;
@@ -42,6 +43,7 @@ contract DepositPool is ERC1155Upgradeable {
         __ERC1155_init("");
         dao = IDao(payable(owner));
         registry = FeedRegistryInterface(feedRegistry);
+        _addAsset(Denominations.ETH);
         _addAssets(depositTokens);
     }
 
@@ -87,6 +89,8 @@ contract DepositPool is ERC1155Upgradeable {
         return 0;
     }
     function canAddAsset(address asset) public view returns (bool) {
+        if (asset == Denominations.ETH)
+            return true;
         try registry.getFeed(asset, Denominations.ETH) {
             return true;
         } catch (bytes memory /*lowLevelData*/) {
@@ -114,7 +118,7 @@ contract DepositPool is ERC1155Upgradeable {
         _afterDeposit(msg.sender, assetEthPrice(asset, amount));
     }
 
-    function redeem(address asset, uint256 amount) public {
+    function withdraw(address asset, uint256 amount) public {
         require(amount <= balanceOf(msg.sender, id[asset]), "not enough balance");
         require(dao.firstDeposit(msg.sender) + dao.locktime() <= block.timestamp, "lockup time");
         _burn(msg.sender, id[asset], amount);
@@ -162,5 +166,6 @@ contract DepositPool is ERC1155Upgradeable {
         }
 
     }
+    function _authorizeUpgrade(address newImplementation) internal override initializer {}
 
 }
