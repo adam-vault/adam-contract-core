@@ -5,11 +5,11 @@ const { createAdam, createTokens } = require('../utils/createContract.js');
 
 describe('Testing Dao', function () {
   let adam, dao, tokenC721, tokenA, lp;
-  let creator;
+  let creator, member;
 
   describe('when do not create member token at dao creation', function () {
     beforeEach(async function () {
-      [creator] = await ethers.getSigners();
+      [creator, member] = await ethers.getSigners();
       adam = await createAdam();
       const tx1 = await adam.createDao([
         'A Company', // _name
@@ -55,6 +55,18 @@ describe('Testing Dao', function () {
 
       it('should revert if tokenInfo.length < 2', async function () {
         await expect(dao.exposedCreateMemberToken(['name1'], 100)).to.revertedWith('Insufficient info to create member token');
+      });
+
+      it('owner should be able to deposit', async function () {
+        const balance = await ethers.provider.getBalance(lp.address);
+        await lp.deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(lp.address)).to.equal(balance.add(1));
+      });
+
+      it('new member should be able to deposit', async function () {
+        const balance = await ethers.provider.getBalance(lp.address);
+        await lp.connect(member).deposit({ value: 1 });
+        expect(await ethers.provider.getBalance(lp.address)).to.equal(balance.add(1));
       });
     });
 
