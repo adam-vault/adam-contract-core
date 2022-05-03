@@ -11,6 +11,7 @@ const FEED_REGISTRY = '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF';
 
 const deployConstantState = async (network = 'rinkeby') => {
   if (network === 'rinkeby') {
+    console.log('Deploying RinkebyConstant');
     const RinkebyConstant = await hre.ethers.getContractFactory('RinkebyConstant');
     const rinkebyConstant = await RinkebyConstant.deploy();
     await rinkebyConstant.deployed();
@@ -19,10 +20,12 @@ const deployConstantState = async (network = 'rinkeby') => {
 };
 
 const deployBudgetApprovals = async () => {
+  console.log('Deploying TransferERC20BudgetApproval');
   const TransferERC20BudgetApproval = await hre.ethers.getContractFactory('TransferERC20BudgetApproval');
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
   await transferERC20BudgetApproval.deployed();
 
+  console.log('Deploying UniswapBudgetApproval');
   const UniswapBudgetApproval = await hre.ethers.getContractFactory('UniswapBudgetApproval');
   const uniswapBudgetApproval = await UniswapBudgetApproval.deploy();
   await uniswapBudgetApproval.deployed();
@@ -34,9 +37,11 @@ const deployGovernFactory = async () => {
   const GovernFactory = await hre.ethers.getContractFactory('GovernFactory');
   const Govern = await hre.ethers.getContractFactory('Govern');
 
+  console.log('Deploying Govern');
   const govern = await Govern.deploy();
   await govern.deployed();
 
+  console.log('Deploying governFactory');
   const governFactory = await hre.upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
 
@@ -58,15 +63,23 @@ async function main () {
   const LiquidPool = await hre.ethers.getContractFactory('LiquidPool');
   const MemberToken = await hre.ethers.getContractFactory('MemberToken');
 
+  console.log('Deploying DAO');
   const dao = await Dao.deploy();
   await dao.deployed();
+
+  console.log('Deploying Membership');
   const membership = await Membership.deploy();
   await membership.deployed();
+
+  console.log('Deploying LiquidPool');
   const liquidPool = await LiquidPool.deploy();
   await liquidPool.deployed();
+
+  console.log('Deploying MemberToken');
   const memberToken = await MemberToken.deploy();
   await memberToken.deployed();
 
+  console.log('Deploying Adam');
   const adam = await hre.upgrades.deployProxy(Adam, [
     dao.address, membership.address, liquidPool.address, memberToken.address, budgetApprovalsAddress, governInfo[0], constantState,
     FEED_REGISTRY, // rinkeby
