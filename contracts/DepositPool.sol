@@ -120,7 +120,7 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 
     function withdraw(address asset, uint256 amount) public {
         require(amount <= balanceOf(msg.sender, id[asset]), "not enough balance");
-        require(dao.firstDeposit(msg.sender) + dao.locktime() <= block.timestamp, "lockup time");
+        require(dao.firstDepositTime(msg.sender) + dao.locktime() <= block.timestamp, "lockup time");
         _burn(msg.sender, id[asset], amount);
         totalSupply[asset] -= amount;
 
@@ -155,8 +155,8 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
     }
 
     function _afterDeposit(address account, uint256 eth) private {
-        if (dao.firstDeposit(account) == 0) {
-            dao.setFirstDeposit(account);
+        if (dao.firstDepositTime(account) == 0) {
+            dao.setFirstDepositTime(account);
 
             require(eth >= dao.minDepositAmount(), "deposit amount not enough");
             if (!dao.isMember(account)) {
