@@ -111,7 +111,7 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GH_PAT }}
-          branch: autosync/deploy_${{ env.GIT_REF }}
+          branch: autosync/contract_deploy_${{ env.GIT_REF }}
           title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
           body: |
             Syncrhonizing Contract Addresses and ABIs from adam-contract-core
@@ -163,7 +163,7 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GH_PAT }}
-          branch: autosync/deploy_${{ env.GIT_REF }}
+          branch: autosync/contract_deploy_${{ env.GIT_REF }}
           title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
           body: |
             Syncrhonizing Contract Addresses and ABIs from adam-contract-core
