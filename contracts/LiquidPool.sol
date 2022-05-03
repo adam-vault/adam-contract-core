@@ -20,7 +20,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
     using Concat for string;
     
     FeedRegistryInterface public registry;
-    address payable public dao;
+    IDao public dao;
     address[] public assets;
     mapping(address => bool) public isAssetSupported;
 
@@ -29,7 +29,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
 
     modifier onlyGovern(string memory category) {
         require(
-            (IDao(dao).byPassGovern(msg.sender)) || msg.sender == IDao(dao).govern(category),
+            (dao.byPassGovern(msg.sender)) || msg.sender == dao.govern(category),
             string("Dao: only Govern").concat(category));
         _;
     }
@@ -37,7 +37,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
     // to be removed in future
     modifier onlyGovernOrDao(string memory category) {
         require(
-            (IDao(dao).byPassGovern(msg.sender)) || msg.sender == IDao(dao).govern(category) || msg.sender == dao,
+            (dao.byPassGovern(msg.sender)) || msg.sender == dao.govern(category) || msg.sender == address(dao),
             string("Dao: only Govern").concat(category));
         _;
     }
@@ -50,7 +50,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
         public initializer
     {
         __ERC20_init("LiquidPool", "LP");
-        dao = payable(owner);
+        dao = IDao(payable(owner));
         registry = FeedRegistryInterface(feedRegistry);
         _addAssets(depositTokens); // todo
     }
@@ -106,7 +106,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
 
     function redeem(uint256 amount) public {
         require(balanceOf(msg.sender) >= amount, "not enough balance");
-        require(IDao(dao).firstDepositTime(msg.sender) + IDao(dao).locktime() <= block.timestamp, "lockup time");
+        require(dao.firstDepositTime(msg.sender) + dao.locktime() <= block.timestamp, "lockup time");
 
         payable(msg.sender).transfer(ethShares(amount));
         for (uint256 i = 0; i < assets.length; i++) {
@@ -132,7 +132,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
         require(_budgetApprovals.length == data.length, "input invalid");
 
         for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(IDao(dao).canCreateBudgetApproval(_budgetApprovals[i]), "not whitelist");
+            require(dao.canCreateBudgetApproval(_budgetApprovals[i]), "not whitelist");
             ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
             budgetApprovals[address(_budgetApproval)] = true;
             emit CreateBudgetApproval(address(_budgetApproval), data[i]);
@@ -148,13 +148,13 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
     }
     
     function _afterDeposit(address account, uint256 eth) private {
-        if (IDao(dao).firstDepositTime(account) == 0) {
-            IDao(dao).setFirstDepositTime(account);
+        if (dao.firstDepositTime(account) == 0) {
+            dao.setFirstDepositTime(account);
 
-            require(eth >= IDao(dao).minDepositAmount(), "deposit amount not enough");
-            if (!IDao(dao).isMember(account)) {
-                require(IDao(dao).memberToken() == address(0x0) || IERC20(IDao(dao).memberToken()).balanceOf(account) >= IDao(dao).minMemberTokenToJoin(), "member token not enough");
-                IDao(dao).mintMember(account);
+            require(eth >= dao.minDepositAmount(), "deposit amount not enough");
+            if (!dao.isMember(account)) {
+                require(dao.memberToken() == address(0x0) || IERC20(dao.memberToken()).balanceOf(account) >= dao.minMemberTokenToJoin(), "member token not enough");
+                dao.mintMember(account);
             }
         }
 
