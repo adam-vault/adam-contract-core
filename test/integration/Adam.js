@@ -8,7 +8,7 @@ const { createAdam, createFeedRegistry, createTokens } = require('../utils/creat
 const decodeBase64 = require('../utils/decodeBase64');
 chai.use(smock.matchers);
 
-describe('Create DAO', function () {
+describe('Integration - Create DAO', function () {
   let creator, owner1, owner2, owner3;
   let token;
   let feedRegistry;

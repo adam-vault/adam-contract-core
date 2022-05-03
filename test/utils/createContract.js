@@ -40,6 +40,8 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   const GovernFactory = await ethers.getContractFactory('GovernFactory', { signer: creator });
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
   const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
+  const DepositPool = await ethers.getContractFactory('DepositPool', { signer: creator });
+
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
 
   const dao = await Dao.deploy();
@@ -54,17 +56,29 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   }
   const membership = await Membership.deploy();
   const liquidPool = await LiquidPool.deploy();
+  const depositPool = await DepositPool.deploy();
   const govern = await Govern.deploy();
   const memberToken = await MemberToken.deploy();
   await dao.deployed();
   await membership.deployed();
   await govern.deployed();
   await liquidPool.deployed();
+  await depositPool.deployed();
   await memberToken.deployed();
 
   const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
-  const adam = await upgrades.deployProxy(Adam, [dao.address, membership.address, liquidPool.address, memberToken.address, budgetApprovalAddresses, governFactory.address, constantState, feedRegistry.address], { kind: 'uups' });
+  const adam = await upgrades.deployProxy(Adam, [
+    dao.address,
+    membership.address,
+    liquidPool.address,
+    memberToken.address,
+    depositPool.address,
+    budgetApprovalAddresses,
+    governFactory.address,
+    constantState,
+    feedRegistry.address,
+  ], { kind: 'uups' });
 
   await adam.deployed();
   return adam;

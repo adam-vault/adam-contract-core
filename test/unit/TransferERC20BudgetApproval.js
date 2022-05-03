@@ -4,7 +4,7 @@ const _ = require('lodash');
 
 const { createTokens, createAdam, createFeedRegistry, createBudgetApprovals } = require('../utils/createContract');
 
-describe('Testing TransferERC20BudgetApproval', function () {
+describe('TransferERC20BudgetApproval.sol', function () {
   let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
   let tokenA, feedRegistry, budgetApprovalAddresses;

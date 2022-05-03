@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
+import "./interface/IDepositPool.sol";
 import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
@@ -34,6 +35,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
     address public liquidPoolImplementation;
+    address public depositPoolImplementation;
     address public governFactory;
     address public governImplementation;
     address public memberTokenImplementation;
@@ -49,6 +51,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _membershipImplementation,
         address _liquidPoolImplementation,
         address _memberTokenImplementation,
+        address _depositPoolImplementation,
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
         address _constantState,
@@ -62,6 +65,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         membershipImplementation = _membershipImplementation;
         liquidPoolImplementation = _liquidPoolImplementation;
         memberTokenImplementation = _memberTokenImplementation;
+        depositPoolImplementation = _depositPoolImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
         constantState = _constantState;
@@ -74,6 +78,9 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function setMembershipImplementation(address _membershipImplementation) public {
         membershipImplementation = _membershipImplementation;
+    }
+    function setDepositPoolImplementation(address _depositPoolImplementation) public {
+        depositPoolImplementation = _depositPoolImplementation;
     }
 
     function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public {
@@ -88,7 +95,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
-        
+        ERC1967Proxy _depositPool = new ERC1967Proxy(depositPoolImplementation, "");
+
         daos[address(_dao)] = true;
 
         IMembership(address(_membership)).initialize(
@@ -96,6 +104,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             params._name
         );
         ILiquidPool(payable(address(_liquidPool))).initialize(
+            address(_dao),
+            feedRegistry,
+            params.depositTokens
+        );
+        IDepositPool(payable(address(_depositPool))).initialize(
             address(_dao),
             feedRegistry,
             params.depositTokens

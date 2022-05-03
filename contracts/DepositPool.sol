@@ -42,7 +42,6 @@ contract DepositPool is ERC1155Upgradeable {
         __ERC1155_init("");
         dao = IDao(payable(owner));
         registry = FeedRegistryInterface(feedRegistry);
-        _addAsset(Denominations.ETH);
         _addAssets(depositTokens);
     }
 
@@ -95,6 +94,10 @@ contract DepositPool is ERC1155Upgradeable {
         }
     }
 
+    function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
+        return dao.budgetApprovals(budgetApproval);
+    }
+
     function deposit() public payable {
         require(isAssetSupported[Denominations.ETH], "asset not support");
         require(msg.value > 0, "cannot be 0");
@@ -126,10 +129,6 @@ contract DepositPool is ERC1155Upgradeable {
 
     function addAssets(address[] calldata erc20s) public onlyDao {
         _addAssets(erc20s);
-    }
-
-    function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
-        return dao.budgetApprovals(budgetApproval);
     }
 
     function _addAssets(address[] memory erc20s) internal {
