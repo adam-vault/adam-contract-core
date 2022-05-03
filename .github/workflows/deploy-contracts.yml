@@ -83,7 +83,7 @@ jobs:
         id: split_version_tag
         with:
           msg: ${{ env.GIT_REF }}
-          seperator: '-'
+          separator: '-'
 
       - name: Checkout Frontend Repo
         uses: actions/checkout@v3
@@ -142,7 +142,7 @@ jobs:
         id: split_version_tag
         with:
           msg: ${{ env.GIT_REF }}
-          seperator: '-'
+          separator: '-'
 
       - name: Checkout Subgraph Repo
         uses: actions/checkout@v3
