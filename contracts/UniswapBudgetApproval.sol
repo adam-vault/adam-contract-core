@@ -101,13 +101,13 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     function encodeInitializeData(
        InitializeParams calldata params,
-        bool _allowAllTokens,
+        bool _allowAllToTokens,
         address[] calldata _toTokens
     ) public pure returns (bytes memory data) {
         return abi.encodeWithSelector(
            this.initialize.selector,
             params,
-            _allowAllTokens,
+            _allowAllToTokens,
             _toTokens
         );
     }
