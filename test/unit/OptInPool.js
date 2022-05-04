@@ -7,7 +7,7 @@ const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const ETH_TOKEN_ID = 1;
 const FAKE_TOKEN_ID = 2;
 
-describe('DepositPool.sol', function () {
+describe('OptInPool.sol', function () {
   let dp, op, opAsSigner1, opAsSigner2;
   let creator;
   let signer1, signer2;
@@ -46,7 +46,6 @@ describe('DepositPool.sol', function () {
     op = await upgrades.deployProxy(
       OptInPool,
       [
-        creator.address,
         dp.address,
         ETH,
         parseEther('100'),

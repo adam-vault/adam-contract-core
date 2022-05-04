@@ -13,6 +13,7 @@ import "./base/BudgetApprovalExecutee.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
+import "./interface/IOptInPool.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IMemberToken.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
@@ -26,6 +27,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address _creator;
         address _membership;
         address _liquidPool;
+        address _depositPool;
         address _governFactory;
         address _memberTokenImplementation;
         address _optInPoolImplementation;
@@ -66,6 +68,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public adam;
     address public membership;
     address public liquidPool;
+    address public depositPool;
     address public governFactory;
     address public memberTokenImplementation;
     address public optInPoolImplementation;
@@ -78,7 +81,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     mapping(address => bool) public isAssetSupported;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
-    event CreateOptInPool(address optInPool, bytes data);
+    event CreateOptInPool(address optInPool);
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
     event SetFirstDepositTime(address owner, uint256 time);
@@ -88,6 +91,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         creator = params._creator;
         membership = params._membership;
         liquidPool = params._liquidPool;
+        depositPool = params._depositPool;
         name = params._name;
         locktime = params._locktime;
         governFactory = params._governFactory;
@@ -208,9 +212,28 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
 
-    function createOptInPool(bytes data) public {
-        ERC1967Proxy _optInPool = new ERC1967Proxy(optInPoolImplementation, data);
-        emit CreateOptInPool(address(_optInPool), data);
+    function createOptInPool(
+        address _depositToken,
+        uint256 _depositThreshold,
+        uint256 _depositDeadline,
+        address[] memory _redeemTokens,
+        uint256 _redeemTime,
+        address[] memory _budgetApprovals,
+        bytes[] memory _budgetApprovalsData
+    ) public {
+
+        ERC1967Proxy _optInPool = new ERC1967Proxy(optInPoolImplementation, "");
+        IOptInPool(payable(address(_optInPool))).initialize(
+            depositPool,
+            _depositToken,
+            _depositThreshold,
+            _depositDeadline,
+            _redeemTokens,
+            _redeemTime,
+            _budgetApprovals,
+            _budgetApprovalsData
+        );
+        emit CreateOptInPool(address(_optInPool));
     }
 
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {

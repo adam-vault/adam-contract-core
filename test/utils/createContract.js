@@ -41,6 +41,7 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
   const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
   const DepositPool = await ethers.getContractFactory('DepositPool', { signer: creator });
+  const OptInPool = await ethers.getContractFactory('OptInPool', { signer: creator });
 
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
 
@@ -57,6 +58,8 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   const membership = await Membership.deploy();
   const liquidPool = await LiquidPool.deploy();
   const depositPool = await DepositPool.deploy();
+  const optInPool = await OptInPool.deploy();
+
   const govern = await Govern.deploy();
   const memberToken = await MemberToken.deploy();
   await dao.deployed();
@@ -64,6 +67,7 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   await govern.deployed();
   await liquidPool.deployed();
   await depositPool.deployed();
+  await optInPool.deployed();
   await memberToken.deployed();
 
   const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
@@ -74,6 +78,7 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
     liquidPool.address,
     memberToken.address,
     depositPool.address,
+    optInPool.address,
     budgetApprovalAddresses,
     governFactory.address,
     constantState,

@@ -125,6 +125,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 msg.sender,
                 address(_membership),
                 address(_liquidPool),
+                address(_depositPool),
                 address(governFactory),
                 address(memberTokenImplementation),
                 address(optInPoolImplementation),
