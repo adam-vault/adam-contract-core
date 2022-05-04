@@ -20,7 +20,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     enum Status {
         Pending,
         Approved,
-        Rejected,
         Completed
     }
 
@@ -30,10 +29,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         Status status;
         uint256 deadline;
         mapping(address => bool) approved;
+        uint256 approvedCount;
         bool isExist;
     }
 
     event CreateTransaction(uint256 id, bytes data, uint256 deadline);
+    event ApproveTransaction(uint256 id, address approver);
     event ExecuteTransaction(uint256 id, bytes data);
     event AllowAddress(address target);
     event AllowToken(address token);
@@ -50,8 +51,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     address payable public dao;
     address public executee;
 
-    address[] public approvers;
     mapping(address => bool) public approversMapping;
+    uint256 minApproval;
 
     string public text;
     string public transactionType;
@@ -101,6 +102,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         address dao;
         address executor;
         address[] approvers;
+        uint256 minApproval;
         string text;
         string transactionType;
         bool allowAllAddresses;
@@ -124,10 +126,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         text = params.text;
         transactionType = params.transactionType;
 
-        approvers = params.approvers;
         for (uint i = 0; i < params.approvers.length; i++) {
             approversMapping[params.approvers[i]] = true;
         }
+
+        minApproval = params.minApproval;
+        require(minApproval <= params.approvers.length, "minApproval invalid");
 
         allowAllAddresses = params.allowAllAddresses;
         for(uint i = 0; i < params.addresses.length; i++) {
@@ -162,6 +166,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
         require(success, RevertMsg.ToString(result));
 
+        transactions[_transactionId].status = Status.Completed;
         emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
     }
 
@@ -176,7 +181,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         newTransaction.deadline = _deadline;
         newTransaction.isExist = true;
 
-        if(approvers.length == 0) {
+        if(minApproval == 0) {
             newTransaction.status = Status.Approved;
         } else {
             newTransaction.status = Status.Pending;
@@ -191,30 +196,21 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         return _transactionId;
     }
 
-    function approveTransaction(uint256 _transactionId) external onlyApprover matchStatus(_transactionId, Status.Pending) {
-        transactions[_transactionId].approved[msg.sender] = true;
+    function approveTransaction(uint256 _transactionId) external onlyApprover {
+        if(!transactions[_transactionId].approved[msg.sender]) {
+            transactions[_transactionId].approved[msg.sender] = true;
+            transactions[_transactionId].approvedCount++;
 
-        if(checkAllApproved(_transactionId)) {
-            transactions[_transactionId].status = Status.Approved;
+            emit ApproveTransaction(_transactionId, msg.sender);
+
+            if(transactions[_transactionId].approvedCount >= minApproval) {
+                transactions[_transactionId].status = Status.Approved;
+            }
         }
-    }
-
-    function rejectTransaction(uint256 _transactionId) external onlyApprover matchStatus(_transactionId, Status.Pending) {
-        transactions[_transactionId].status = Status.Rejected;
     }
 
     function lastTransactionId() public view returns (uint256) {
         return _transactionIds.current();
-    }
-
-    function checkAllApproved(uint256 _transactionId) public view returns (bool) {
-        for(uint i = 0; i < approvers.length; i++) {
-            if(transactions[_transactionId].approved[approvers[i]] == false) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     function checkAddressValid(address to) public view returns (bool) {
