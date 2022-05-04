@@ -14,6 +14,7 @@ const deployConstantState = async (network = 'rinkeby') => {
     const RinkebyConstant = await hre.ethers.getContractFactory('RinkebyConstant');
     const rinkebyConstant = await RinkebyConstant.deploy();
     await rinkebyConstant.deployed();
+    console.log(`Deployed RinkebyConstant ${rinkebyConstant.address}`);
     return rinkebyConstant.address;
   }
 };
@@ -22,10 +23,12 @@ const deployBudgetApprovals = async () => {
   const TransferERC20BudgetApproval = await hre.ethers.getContractFactory('TransferERC20BudgetApproval');
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
   await transferERC20BudgetApproval.deployed();
+  console.log(`Deployed TransferERC20BudgetApproval ${transferERC20BudgetApproval.address}`);
 
   const UniswapBudgetApproval = await hre.ethers.getContractFactory('UniswapBudgetApproval');
   const uniswapBudgetApproval = await UniswapBudgetApproval.deploy();
   await uniswapBudgetApproval.deployed();
+  console.log(`Deployed UniswapBudgetApproval ${uniswapBudgetApproval.address}`);
 
   return [transferERC20BudgetApproval.address, uniswapBudgetApproval.address];
 };
@@ -36,9 +39,11 @@ const deployGovernFactory = async () => {
 
   const govern = await Govern.deploy();
   await govern.deployed();
+  console.log(`Deployed Govern ${govern.address}`);
 
   const governFactory = await hre.upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
+  console.log(`Deployed GovernFactory ${governFactory.address}`);
 
   return [governFactory.address, govern.address];
 };
@@ -60,18 +65,26 @@ async function main () {
 
   const dao = await Dao.deploy();
   await dao.deployed();
+  console.log(`Deployed DAO ${dao.address}`);
+
   const membership = await Membership.deploy();
   await membership.deployed();
+  console.log(`Deployed Membership ${membership.address}`);
+
   const liquidPool = await LiquidPool.deploy();
   await liquidPool.deployed();
+  console.log(`Deployed LiquidPool ${liquidPool.address}`);
+
   const memberToken = await MemberToken.deploy();
   await memberToken.deployed();
+  console.log(`Deployed MemberToken ${memberToken.address}`);
 
   const adam = await hre.upgrades.deployProxy(Adam, [
     dao.address, membership.address, liquidPool.address, memberToken.address, budgetApprovalsAddress, governInfo[0], constantState,
     FEED_REGISTRY, // rinkeby
   ], { kind: 'uups' });
   await adam.deployed();
+  console.log(`Deployed Adam ${adam.address}`);
 
   // Gather Contract Addresses
   const contractAddresses = {

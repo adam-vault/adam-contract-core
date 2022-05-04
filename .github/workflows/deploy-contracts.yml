@@ -3,6 +3,7 @@ on:
   push:
     tags:    
       - 'v[0-9].[0-9]+.[0-9]+\-dev'
+      - 'v[0-9].[0-9]+.[0-9]+\-alpha'
 
 env:
   GIT_REF: ${{ github.ref_name }} # either branch name or tag
@@ -76,6 +77,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Split Version Tag
+        uses: jungwinter/split@v2
+        id: split_version_tag
+        with:
+          msg: ${{ env.GIT_REF }}
+          separator: '-'
+
       - name: Checkout Frontend Repo
         uses: actions/checkout@v3
         with:
@@ -105,7 +113,7 @@ jobs:
               .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS) |
               .jobs.call-deploy-site.with.REACT_APP_OUTFLOW_CONTRACT_ADDRESS = strenv(REACT_APP_OUTFLOW_CONTRACT_ADDRESS) |
               .jobs.call-deploy-site.with.REACT_APP_SWAP_CONTRACT_ADDRESS = strenv(REACT_APP_SWAP_CONTRACT_ADDRESS)
-            ' .github/workflows/deploy.dev.yml
+            ' .github/workflows/deploy.${{ steps.split_version_tag.outputs._1 }}.yml
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
@@ -128,6 +136,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Split Version Tag
+        uses: jungwinter/split@v2
+        id: split_version_tag
+        with:
+          msg: ${{ env.GIT_REF }}
+          separator: '-'
+
       - name: Checkout Subgraph Repo
         uses: actions/checkout@v3
         with:
@@ -154,10 +169,11 @@ jobs:
 
       - name: Replace Subgraph Address
         run: | 
-          npm run update-datasource --\
-            --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)\
-            --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deployment/deploy/results.json)\
-            --block $(jq -r .block_number ${{ runner.temp }}/deployment/deploy/results.json)
+          jq -s '.[0].startBlock = .[1].block_number | 
+            .[0].addresses.adam = .[1].addresses.adam |
+            .[0].addresses.governFactory = .[1].addresses.governFactory |
+            .[0]' \
+            config/${{ steps.split_version_tag.outputs._1 }}.json ${{ runner.temp }}/deployment/deploy/results.json
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
