@@ -9,6 +9,7 @@ interface IDao {
         address _liquidPool;
         address _governFactory;
         address _memberTokenImplementation;
+        address _optInPoolImplementation;
         string _name;
         string _description;
         uint256 _locktime;

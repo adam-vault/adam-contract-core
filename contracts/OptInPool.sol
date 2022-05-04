@@ -28,37 +28,36 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
     address public depositToken;
     address[] public redeemTokens;
     mapping(address => bool) public isRedeemTokens;
-    uint256 public depositThrehold;
+    uint256 public depositThreshold;
     uint256 public recevied;
     uint256 public depositDeadline;
     uint256 public redeemTime;
-
-    address public executor;
-
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event AllowDepositToken(address token);
 
     function initialize(
-        address _executor,
         address _depositPool,
         address _depositToken,
-        uint256 _depositThrehold,
+        uint256 _depositThreshold,
         uint256 _depositDeadline,
         address[] memory _redeemTokens,
         uint256 _redeemTime,
         address[] memory _budgetApprovals,
         bytes[] memory _budgetApprovalsData
     ) public initializer {
-        require(depositPool.id(depositToken) != 0, "Token not supported");
         __ERC20_init("OptInPool", "OP");
-        executor = _executor;
         depositPool = IDepositPool(_depositPool);
         depositToken = _depositToken;
-        depositThrehold = _depositThrehold;
+        depositThreshold = _depositThreshold;
         depositDeadline = _depositDeadline;
         redeemTime = _redeemTime;
+
+        require(depositPool.id(depositToken) != 0, "Token not supported");
+
         for (uint256 i = 0; i < _redeemTokens.length; i++) {
+            require(depositPool.id(_redeemTokens[i]) != 0, "Token not supported");
+            require(!isRedeemTokens[_redeemTokens[i]], "Token duplicated");
             redeemTokens.push(_redeemTokens[i]);
             isRedeemTokens[_redeemTokens[i]] = true;
         }
@@ -86,28 +85,28 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
         recevied += amount;
     }
 
-    function refund(address[] memory accounts) public {
-        require(block.timestamp >= depositDeadline && recevied < depositThrehold, "cannot refund");
-        require(msg.sender == executor, "not executor");
+    function refund(address[] calldata accounts) public {
+        require(block.timestamp >= depositDeadline && recevied < depositThreshold, "cannot refund");
         for(uint i = 0; i < accounts.length; i++) {
             _refund(accounts[i]);
         }
     }
 
-    function redeem(uint256 amount) public {
-        require(balanceOf(msg.sender) >= amount, "not enough balance");
+    function redeem(address[] calldata accounts) public {
         require(block.timestamp >= redeemTime, "invalid redeemTime");
-
-        _burn(msg.sender, amount);
-        for (uint256 i = 0; i < redeemTokens.length; i++) {
-            uint256 assetAmount;
-            if (Denominations.ETH == redeemTokens[i]) {
-                assetAmount = ethShares(amount);
-            } else {
-                assetAmount = assetsShares(redeemTokens[i], amount);
+        for (uint256 i = 0; i < accounts.length; i++) {
+            uint256 amount = balanceOf(accounts[i]);
+            for (uint256 j = 0; j < redeemTokens.length; j++) {
+                uint256 assetAmount;
+                if (Denominations.ETH == redeemTokens[j]) {
+                    assetAmount = ethShares(amount);
+                } else {
+                    assetAmount = assetsShares(redeemTokens[j], amount);
+                }
+                _depositToDP(redeemTokens[j], assetAmount);
+                depositPool.safeTransferFrom(address(this), accounts[i], depositPool.id(redeemTokens[j]), assetAmount, "");
             }
-            _depositToDP(redeemTokens[i], assetAmount);
-            depositPool.safeTransferFrom(address(this), msg.sender, depositPool.id(redeemTokens[i]), assetAmount, "");
+            _burn(accounts[i], amount);
         }
     }
 
@@ -132,7 +131,7 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
     function _refund(address account) internal {
         uint256 balance = balanceOf(account);
         require(balance > 0, "not in list");
-        _burn(msg.sender, balance);
+        _burn(account, balance);
         _depositToDP(depositToken, balance);
         depositPool.safeTransferFrom(address(this), account, depositPool.id(depositToken), balance, "");
         recevied -= balance;

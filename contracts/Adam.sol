@@ -36,6 +36,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public membershipImplementation;
     address public liquidPoolImplementation;
     address public depositPoolImplementation;
+    address public optInPoolImplementation;
     address public governFactory;
     address public governImplementation;
     address public memberTokenImplementation;
@@ -52,6 +53,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _liquidPoolImplementation,
         address _memberTokenImplementation,
         address _depositPoolImplementation,
+        address _optInPoolImplementation,
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
         address _constantState,
@@ -66,6 +68,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         liquidPoolImplementation = _liquidPoolImplementation;
         memberTokenImplementation = _memberTokenImplementation;
         depositPoolImplementation = _depositPoolImplementation;
+        optInPoolImplementation = _optInPoolImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
         constantState = _constantState;
@@ -81,6 +84,10 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
     function setDepositPoolImplementation(address _depositPoolImplementation) public {
         depositPoolImplementation = _depositPoolImplementation;
+    }
+
+    function setOptInPoolImplementation(address _optInPoolImplementation) public {
+        optInPoolImplementation = _optInPoolImplementation;
     }
 
     function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public {
@@ -120,6 +127,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 address(_liquidPool),
                 address(governFactory),
                 address(memberTokenImplementation),
+                address(optInPoolImplementation),
                 params._name,
                 params._description,
                 params._locktime,

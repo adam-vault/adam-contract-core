@@ -28,6 +28,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address _liquidPool;
         address _governFactory;
         address _memberTokenImplementation;
+        address _optInPoolImplementation;
         string _name;
         string _description;
         uint256 _locktime;
@@ -67,6 +68,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public liquidPool;
     address public governFactory;
     address public memberTokenImplementation;
+    address public optInPoolImplementation;
     string public name;
     uint256 public locktime;
     uint256 public minDepositAmount;
@@ -76,6 +78,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     mapping(address => bool) public isAssetSupported;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
+    event CreateOptInPool(address optInPool, bytes data);
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
     event SetFirstDepositTime(address owner, uint256 time);
@@ -89,6 +92,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         locktime = params._locktime;
         governFactory = params._governFactory;
         memberTokenImplementation = params._memberTokenImplementation;
+        optInPoolImplementation = params._optInPoolImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
         minMemberTokenToJoin = params.daoSetting.minMemberTokenToJoin;
         memberTokenType = params.memberTokenType;
@@ -201,6 +205,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             budgetApprovals[address(_budgetApproval)] = true;
             emit CreateBudgetApproval(address(_budgetApproval), data[i]);
         }
+    }
+
+
+    function createOptInPool(bytes data) public {
+        ERC1967Proxy _optInPool = new ERC1967Proxy(optInPoolImplementation, data);
+        emit CreateOptInPool(address(_optInPool), data);
     }
 
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
