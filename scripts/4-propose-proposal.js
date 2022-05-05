@@ -1,11 +1,11 @@
 const hre = require('hardhat');
 const { faker } = require('@faker-js/faker');
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, './.env') });
+const fileReader = require('../utils/fileReader');
+const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 
 // rinkeby
-const governAddress = process.env.GOVERN_DAO_LOCK_TIME_0;
-const daoAddress = process.env.DAO_LOCK_TIME_0;
+const governAddress = deploymentResult.initdata_addresses.dao0BudgetGovern;
+const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
 
 async function main () {
   const govern = await hre.ethers.getContractAt('Govern', governAddress);
