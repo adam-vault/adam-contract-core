@@ -173,7 +173,8 @@ jobs:
             .[0].addresses.adam = .[1].addresses.adam |
             .[0].addresses.governFactory = .[1].addresses.governFactory |
             .[0]' \
-            config/${{ steps.split_version_tag.outputs._1 }}.json ${{ runner.temp }}/deployment/deploy/results.json
+            config/${{ steps.split_version_tag.outputs._1 }}.json ${{ runner.temp }}/deployment/deploy/results.json > temp.json \
+            && mv temp.json config/${{ steps.split_version_tag.outputs._1 }}.json
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
