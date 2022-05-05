@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
 
-import "./interface/IDao.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract TransferERC20BudgetApproval is CommonBudgetApproval {

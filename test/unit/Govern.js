@@ -3,7 +3,7 @@ const { ethers } = require('hardhat');
 const _ = require('lodash');
 const { createTokens, createAdam, createBudgetApprovals, createFeedRegistry } = require('../utils/createContract');
 
-describe('Testing Govern', function () {
+describe('Govern.sol', function () {
   let adam, dao, governFactory, lp;
   let creator, owner1, owner2;
   let tokenA, feedRegistry, budgetApprovalAddresses;
