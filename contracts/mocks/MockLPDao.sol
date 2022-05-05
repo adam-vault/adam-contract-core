@@ -8,6 +8,7 @@ contract MockLPDao {
     address public memberToken;
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isMember;
+    mapping(address => bool) public isOptInPool;
 
     function byPassGovern(address) public pure returns (bool) {
         return true;
