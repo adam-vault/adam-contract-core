@@ -155,16 +155,17 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
     }
 
     function _afterDeposit(address account, uint256 eth) private {
+        if (dao.isOptInPool(account))
+            return;
         if (dao.firstDepositTime(account) == 0) {
             dao.setFirstDepositTime(account);
 
             require(eth >= dao.minDepositAmount(), "deposit amount not enough");
             if (!dao.isMember(account)) {
-                require(IERC20(dao.memberToken()).balanceOf(account) >= dao.minMemberTokenToJoin(), "member token not enough");
+                require(dao.memberToken() == address(0x0) || IERC20(dao.memberToken()).balanceOf(account) >= dao.minMemberTokenToJoin(), "member token not enough");
                 dao.mintMember(account);
             }
         }
-
     }
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
 
