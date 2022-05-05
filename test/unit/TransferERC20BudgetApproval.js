@@ -50,28 +50,18 @@ describe('Testing TransferERC20BudgetApproval', function () {
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = await transferERC20BAImplementation.callStatic.encodeInitializeData(
         [
-          // dao address
-          dao.address,
-          // executor
-          executor.address,
-          // approvers
-          [approver.address],
-          // text
-          'Transfer ERC20',
-          // transaction type
-          'Outflow',
-          // allow all addresses,
-          false,
-          // allowed addresses (use when above = false)
-          [receiver.address],
-          // allowed token
-          [ethers.constants.AddressZero, tokenA.address],
-          // allow any amount
-          false,
-          // allowed total amount
-          ethers.utils.parseEther('100'),
-          // allowed amount percentage
-          '10',
+          dao.address, // dao address
+          executor.address, // executor
+          [approver.address], // approvers
+          1, // minApproval
+          'Transfer ERC20', // text
+          'Outflow', // transaction type
+          false, // allow all addresses
+          [receiver.address], // allowed addresses (use when above = false)
+          [ethers.constants.AddressZero, tokenA.address], // allowed token
+          false, // allow any amount
+          ethers.utils.parseEther('100'), // allowed total amount
+          '10', // allowed amount percentage
           startTime, // startTime
           endTime, // endTime
           false, // allow unlimited usage
@@ -92,8 +82,8 @@ describe('Testing TransferERC20BudgetApproval', function () {
 
       expect(await budgetApproval.callStatic.dao()).to.eq(dao.address);
       expect(await budgetApproval.callStatic.executor()).to.eq(executor.address);
-      expect(await budgetApproval.callStatic.approvers(0)).to.eq(approver.address);
       expect(await budgetApproval.callStatic.approversMapping(approver.address)).to.eq(true);
+      expect(await budgetApproval.callStatic.minApproval()).to.eq(1);
 
       expect(await budgetApproval.callStatic.allowAllAddresses()).to.eq(false);
       expect(await budgetApproval.callStatic.addressesMapping(receiver.address)).to.eq(true);
@@ -113,6 +103,35 @@ describe('Testing TransferERC20BudgetApproval', function () {
       expect(await budgetApproval.callStatic.allowUnlimitedUsageCount()).to.eq(false);
       expect(await budgetApproval.callStatic.usageCount()).to.eq(10);
     });
+
+    it('should fail if minApproval larger than approvers length', async function () {
+      const initData =
+        await transferERC20BAImplementation.callStatic.encodeInitializeData([
+          dao.address, // dao address
+          executor.address, // executor
+          [approver.address], // approvers
+          2, // minApproval
+          'Transfer ERC20', // text
+          'Outflow', // transaction type
+          false, // allow all addresses,
+          [receiver.address], // allowed addresses (use when above = false)
+          [ethers.constants.AddressZero, tokenA.address], // allowed token (use when above = false)
+          false, // allow any amount
+          ethers.utils.parseEther('100'), // allowed total amount
+          100, // allowed amount percentage
+          Math.round(Date.now() / 1000) - 86400, // startTime
+          Math.round(Date.now() / 1000) + 86400, // endTime
+          false, // allow unlimited usage
+          10, // usage count
+        ]);
+
+      await expect(
+        dao.createBudgetApprovals(
+          [transferERC20BAImplementation.address],
+          [initData],
+        ),
+      ).to.be.revertedWith('minApproval invalid');
+    });
   });
 
   describe('Create Multiple Excuetee BudgetApprovals On Dao', function () {
@@ -125,6 +144,8 @@ describe('Testing TransferERC20BudgetApproval', function () {
           executor.address,
           // approvers
           [approver.address],
+          // minApproval
+          1,
           // text
           'Transfer ERC20',
           // transaction type
@@ -267,6 +288,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
             dao.address, // dao address
             executor.address, // executor
             [], // approvers
+            0, // minApproval
             'Transfer ERC20', // text
             'Outflow', // transaction type
             false, // allow all addresses,
@@ -317,6 +339,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
             dao.address, // dao address
             executor.address, // executor
             [], // approvers
+            0, // minApproval
             'Transfer ERC20', // text
             'Outflow', // transaction type
             false, // allow all addresses,
@@ -367,6 +390,7 @@ describe('Testing TransferERC20BudgetApproval', function () {
             dao.address, // dao address
             executor.address, // executor
             [], // approvers
+            0, // minApproval
             'Transfer ERC20', // text
             'Outflow', // transaction type
             false, // allow all addresses,
@@ -417,24 +441,24 @@ describe('Testing TransferERC20BudgetApproval', function () {
     });
   });
 
-  //   describe('Execute Transaction (Transfer ERC20)', function () {
-  //     beforeEach(async function () {
-  //       await tokenA.mint(executor.address, ethers.utils.parseEther('100'));
-  //       await tokenA.connect(executor).approve(dao.address, ethers.utils.parseEther('100'));
-  //       await dao.connect(executor).depositToken(tokenA.address, ethers.utils.parseEther('100'));
-  //     });
+  describe('Execute Transaction (Transfer ERC20)', function () {
+    beforeEach(async function () {
+      await tokenA.mint(executor.address, ethers.utils.parseEther('100'));
+      await tokenA.connect(executor).approve(dao.address, ethers.utils.parseEther('100'));
+      await lp.connect(executor).depositToken(tokenA.address, ethers.utils.parseEther('100'));
+    });
 
-  //     it('should success', async function () {
-  //       const transferData = tokenA.interface.encodeFunctionData('transfer', [receiver.address, ethers.utils.parseEther('10')]);
-  //       const transactionData = budgetApproval.callStatic.encodeTransactionData(tokenA.address, transferData, 0);
+    it('should success', async function () {
+      const transferData = tokenA.interface.encodeFunctionData('transfer', [receiver.address, ethers.utils.parseEther('10')]);
+      const transactionData = budgetApproval.callStatic.encodeTransactionData(tokenA.address, transferData, 0);
 
-  //       await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
-  //       const transactionId = await budgetApproval.callStatic.lastTransactionId();
+      await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
+      const transactionId = await budgetApproval.callStatic.lastTransactionId();
 
-  //       await budgetApproval.connect(approver).approveTransaction(transactionId);
-  //       await budgetApproval.connect(executor).executeTransaction(transactionId);
+      await budgetApproval.connect(approver).approveTransaction(transactionId);
+      await budgetApproval.connect(executor).executeTransaction(transactionId);
 
-//       expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.utils.parseEther('10'));
-//     });
-//   });
+      expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.utils.parseEther('10'));
+    });
+  });
 });

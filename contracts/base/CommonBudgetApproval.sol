@@ -52,7 +52,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     address public executee;
 
     mapping(address => bool) public approversMapping;
-    uint256 minApproval;
+    uint256 public minApproval;
 
     string public text;
     string public transactionType;
