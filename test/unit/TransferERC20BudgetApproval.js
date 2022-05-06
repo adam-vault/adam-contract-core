@@ -4,6 +4,8 @@ const _ = require('lodash');
 
 const { createTokens, createAdam, createFeedRegistry, createBudgetApprovals } = require('../utils/createContract');
 
+const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
 describe('TransferERC20BudgetApproval.sol', function () {
   let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
@@ -58,7 +60,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           'Outflow', // transaction type
           false, // allow all addresses
           [receiver.address], // allowed addresses (use when above = false)
-          [ethers.constants.AddressZero, tokenA.address], // allowed token
+          [ETHAddress, tokenA.address], // allowed token
           false, // allow any amount
           ethers.utils.parseEther('100'), // allowed total amount
           '10', // allowed amount percentage
@@ -88,9 +90,9 @@ describe('TransferERC20BudgetApproval.sol', function () {
       expect(await budgetApproval.callStatic.allowAllAddresses()).to.eq(false);
       expect(await budgetApproval.callStatic.addressesMapping(receiver.address)).to.eq(true);
 
-      expect(await budgetApproval.callStatic.tokens(0)).to.eq(ethers.constants.AddressZero);
+      expect(await budgetApproval.callStatic.tokens(0)).to.eq(ETHAddress);
       expect(await budgetApproval.callStatic.tokens(1)).to.eq(tokenA.address);
-      expect(await budgetApproval.callStatic.tokensMapping(ethers.constants.AddressZero)).to.eq(true);
+      expect(await budgetApproval.callStatic.tokensMapping(ETHAddress)).to.eq(true);
       expect(await budgetApproval.callStatic.tokensMapping(tokenA.address)).to.eq(true);
 
       expect(await budgetApproval.callStatic.allowAnyAmount()).to.eq(false);
@@ -115,7 +117,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           'Outflow', // transaction type
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
-          [ethers.constants.AddressZero, tokenA.address], // allowed token (use when above = false)
+          [ETHAddress, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           ethers.utils.parseEther('100'), // allowed total amount
           100, // allowed amount percentage
@@ -155,7 +157,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           // allowed addresses (use when above = false)
           [receiver.address],
           // allowed token
-          [ethers.constants.AddressZero, tokenA.address],
+          [ETHAddress, tokenA.address],
           // allow any amount
           false,
           // allowed total amount
@@ -306,7 +308,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
             'Outflow', // transaction type
             false, // allow all addresses,
             [receiver.address], // allowed addresses (use when above = false)
-            [ethers.constants.AddressZero, tokenA.address], // allowed token (use when above = false)
+            [ETHAddress, tokenA.address], // allowed token (use when above = false)
             false, // allow any amount
             ethers.utils.parseEther('100'), // allowed total amount
             100, // allowed amount percentage
@@ -357,7 +359,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
             'Outflow', // transaction type
             false, // allow all addresses,
             [receiver.address], // allowed addresses (use when above = false)
-            [ethers.constants.AddressZero, tokenA.address], // allowed token (use when above = false)
+            [ETHAddress, tokenA.address], // allowed token (use when above = false)
             false, // allow any amount
             ethers.utils.parseEther('100'), // allowed total amount
             100, // allowed amount percentage
@@ -408,7 +410,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
             'Outflow', // transaction type
             false, // allow all addresses,
             [receiver.address], // allowed addresses (use when above = false)
-            [ethers.constants.AddressZero, tokenA.address], // allowed token (use when above = false)
+            [ETHAddress, tokenA.address], // allowed token (use when above = false)
             false, // allow any amount
             ethers.utils.parseEther('100'), // allowed total amount
             100, // allowed amount percentage
