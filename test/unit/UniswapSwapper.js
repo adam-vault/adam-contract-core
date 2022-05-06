@@ -55,6 +55,8 @@ describe('UniswapSwapper.sol', () => {
         ethers.constants.AddressZero,
         // approvers
         [],
+        // minApproval
+        0,
         // text
         'Uniswap',
         // transaction type
