@@ -241,6 +241,19 @@ describe('Testing TransferERC20BudgetApproval', function () {
       });
     });
 
+    context('revoked by executor', () => {
+      it('should revert', async function () {
+        const transactionData = budgetApproval.callStatic.encodeTransactionData(receiver.address, [], ethers.utils.parseEther('10'));
+
+        await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
+        const transactionId = await budgetApproval.callStatic.lastTransactionId();
+
+        await budgetApproval.connect(executor).revokeTransaction(transactionId);
+        await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
+          .to.be.revertedWith('status invalid');
+      });
+    });
+
     context('not allowed address', () => {
       it('should revert', async function () {
         const transactionData = budgetApproval.callStatic.encodeTransactionData(executor.address, [], ethers.utils.parseEther('10'));
@@ -441,24 +454,24 @@ describe('Testing TransferERC20BudgetApproval', function () {
     });
   });
 
-  describe('Execute Transaction (Transfer ERC20)', function () {
-    beforeEach(async function () {
-      await tokenA.mint(executor.address, ethers.utils.parseEther('100'));
-      await tokenA.connect(executor).approve(dao.address, ethers.utils.parseEther('100'));
-      await lp.connect(executor).depositToken(tokenA.address, ethers.utils.parseEther('100'));
-    });
+  // describe('Execute Transaction (Transfer ERC20)', function () {
+  //   beforeEach(async function () {
+  //     await tokenA.mint(executor.address, ethers.utils.parseEther('100'));
+  //     await tokenA.connect(executor).approve(dao.address, ethers.utils.parseEther('100'));
+  //     await lp.connect(executor).depositToken(tokenA.address, ethers.utils.parseEther('100'));
+  //   });
 
-    it('should success', async function () {
-      const transferData = tokenA.interface.encodeFunctionData('transfer', [receiver.address, ethers.utils.parseEther('10')]);
-      const transactionData = budgetApproval.callStatic.encodeTransactionData(tokenA.address, transferData, 0);
+  //   it('should success', async function () {
+  //     const transferData = tokenA.interface.encodeFunctionData('transfer', [receiver.address, ethers.utils.parseEther('10')]);
+  //     const transactionData = budgetApproval.callStatic.encodeTransactionData(tokenA.address, transferData, 0);
 
-      await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
-      const transactionId = await budgetApproval.callStatic.lastTransactionId();
+  //     await dao.connect(executor).createBudgetApprovalTransaction(budgetApproval.address, transactionData, Date.now() + 86400, false);
+  //     const transactionId = await budgetApproval.callStatic.lastTransactionId();
 
-      await budgetApproval.connect(approver).approveTransaction(transactionId);
-      await budgetApproval.connect(executor).executeTransaction(transactionId);
+  //     await budgetApproval.connect(approver).approveTransaction(transactionId);
+  //     await budgetApproval.connect(executor).executeTransaction(transactionId);
 
-      expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.utils.parseEther('10'));
-    });
-  });
+  //     expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.utils.parseEther('10'));
+  //   });
+  // });
 });
