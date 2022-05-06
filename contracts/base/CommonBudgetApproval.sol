@@ -47,7 +47,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     mapping(uint256 => Transaction) public transactions;
 
-    address constant public ETH_ADDRESS = address(0x0);
+    address constant public ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     address public executor;
     address payable public dao;

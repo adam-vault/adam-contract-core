@@ -9,7 +9,7 @@ describe('UniswapSwapper.sol', () => {
   let tokenA, feedRegistry, budgetApprovalAddresses, adam;
   let executor;
 
-  const ETHAddress = '0x0000000000000000000000000000000000000000';
+  const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
   const WETHAddress = '0xc778417E063141139Fce010982780140Aa0cD5Ab';
   const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
   const UNIAddress = '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984';
