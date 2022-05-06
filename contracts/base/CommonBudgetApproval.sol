@@ -20,7 +20,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     enum Status {
         Pending,
         Approved,
-        Completed
+        Completed,
+        Cancelled
     }
 
     struct Transaction {
@@ -36,6 +37,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     event CreateTransaction(uint256 id, bytes data, uint256 deadline);
     event ApproveTransaction(uint256 id, address approver);
     event ExecuteTransaction(uint256 id, bytes data);
+    event RevokeTransaction(uint256 id);
     event AllowAddress(address target);
     event AllowToken(address token);
     event AllowAmount(uint256 amount);
@@ -81,6 +83,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     modifier onlySelf() {
         require(msg.sender == address(this), "access denied");
+        _;
+    }
+
+    modifier onlyExecutor() {
+        require(msg.sender == executor, "access denied");
         _;
     }
 
@@ -160,9 +167,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function NAME() external virtual returns (string calldata);
 
-    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkTime(_transactionId) {
-        require(msg.sender == executor, "access denied");
-
+    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkTime(_transactionId) onlyExecutor {
         (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
         require(success, RevertMsg.ToString(result));
 
@@ -207,6 +212,13 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
                 transactions[_transactionId].status = Status.Approved;
             }
         }
+    }
+
+    function revokeTransaction(uint256 _transactionId) external onlyExecutor {
+        require(transactions[_transactionId].status != Status.Completed, "transaction already completed");
+        transactions[_transactionId].status = Status.Cancelled;
+
+        emit RevokeTransaction(_transactionId);
     }
 
     function lastTransactionId() public view returns (uint256) {
