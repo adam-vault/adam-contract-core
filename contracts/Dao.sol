@@ -79,6 +79,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     uint8 public memberTokenType;
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
+    mapping(address => bool) public isOptInPool;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event CreateOptInPool(address optInPool);
@@ -174,7 +175,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     function setFirstDepositTime(address owner) public {
-        require(msg.sender == liquidPool, "only LP");
+        require(msg.sender == liquidPool || msg.sender == depositPool, "only LP or DP");
         firstDepositTime[owner] = block.timestamp;
         emit SetFirstDepositTime(owner, block.timestamp);
     }
@@ -233,6 +234,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             _budgetApprovals,
             _budgetApprovalsData
         );
+        isOptInPool[address(_optInPool)] = true;
         emit CreateOptInPool(address(_optInPool));
     }
 
@@ -307,7 +309,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _addAssets(erc20s);
     }
     function mintMember(address owner) public {
-        require(msg.sender == liquidPool, "only LP");
+        require(msg.sender == liquidPool || msg.sender == depositPool, "only LP or DP");
         _mintMember(owner);
     }
 
