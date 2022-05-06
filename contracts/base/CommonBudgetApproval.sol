@@ -202,6 +202,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function approveTransaction(uint256 _transactionId) external onlyApprover {
+        require(
+            transactions[_transactionId].status == Status.Pending || transactions[_transactionId].status == Status.Approved,
+            "tx cannot be approved");
+
         if(!transactions[_transactionId].approved[msg.sender]) {
             transactions[_transactionId].approved[msg.sender] = true;
             transactions[_transactionId].approvedCount++;
