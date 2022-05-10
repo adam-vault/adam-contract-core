@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy-contracts:
-    name: Deploy Contracts
+    name: Deploy
     uses: ./.github/workflows/reusable-deploy-contracts.yml
     with:
       GIT_REF: ${{ github.ref_name }}
@@ -17,7 +17,7 @@ jobs:
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
   sync-subgraph:
-    name: Deploy Contracts
+    name: Sync Subgraph
     needs: deploy-contracts
     uses: ./.github/workflows/reusable-sync-subgraph.yml
     with:
@@ -27,7 +27,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
 
   sync-frontend:
-    name: Deploy Contracts
+    name: Sync Frontend
     needs: deploy-contracts
     uses: ./.github/workflows/reusable-sync-frontend.yml
     with:
