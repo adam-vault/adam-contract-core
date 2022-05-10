@@ -3,7 +3,7 @@ const { ethers } = require('hardhat');
 const _ = require('lodash');
 const { createAdam, createTokens } = require('../utils/createContract.js');
 
-describe('Testing Dao', function () {
+describe('Integration - Dao', function () {
   let adam, dao, tokenC721, tokenA, lp;
   let creator, member;
 

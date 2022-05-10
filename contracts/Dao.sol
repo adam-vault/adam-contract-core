@@ -13,6 +13,7 @@ import "./base/BudgetApprovalExecutee.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
+import "./interface/IOptInPool.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IMemberToken.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
@@ -26,8 +27,10 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address _creator;
         address _membership;
         address _liquidPool;
+        address _depositPool;
         address _governFactory;
         address _memberTokenImplementation;
+        address _optInPoolImplementation;
         string _name;
         string _description;
         uint256 _locktime;
@@ -65,8 +68,10 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public adam;
     address public membership;
     address public liquidPool;
+    address public depositPool;
     address public governFactory;
     address public memberTokenImplementation;
+    address public optInPoolImplementation;
     string public name;
     uint256 public locktime;
     uint256 public minDepositAmount;
@@ -74,8 +79,10 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     uint8 public memberTokenType;
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
+    mapping(address => bool) public isOptInPool;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
+    event CreateOptInPool(address optInPool);
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
     event SetFirstDepositTime(address owner, uint256 time);
@@ -85,10 +92,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         creator = params._creator;
         membership = params._membership;
         liquidPool = params._liquidPool;
+        depositPool = params._depositPool;
         name = params._name;
         locktime = params._locktime;
         governFactory = params._governFactory;
         memberTokenImplementation = params._memberTokenImplementation;
+        optInPoolImplementation = params._optInPoolImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
         minMemberTokenToJoin = params.daoSetting.minMemberTokenToJoin;
         memberTokenType = params.memberTokenType;
@@ -97,7 +106,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         if (memberTokenType == uint8(MemberTokenTypeOption.InternalErc20Token)) {
             // tokenInfo: [name, symbol]
             _createMemberToken(params.tokenInfo, params.tokenAmount);
-        }else if(memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
+        } else if(memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
 
             try IERC721(params.memberToken).supportsInterface(0x80ac58cd) returns (bool result) {
                 if(!result){ 
@@ -166,7 +175,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     function setFirstDepositTime(address owner) public {
-        require(msg.sender == liquidPool, "only LP");
+        require(msg.sender == liquidPool || msg.sender == depositPool, "only LP or DP");
         firstDepositTime[owner] = block.timestamp;
         emit SetFirstDepositTime(owner, block.timestamp);
     }
@@ -201,6 +210,32 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             budgetApprovals[address(_budgetApproval)] = true;
             emit CreateBudgetApproval(address(_budgetApproval), data[i]);
         }
+    }
+
+
+    function createOptInPool(
+        address _depositToken,
+        uint256 _depositThreshold,
+        uint256 _depositDeadline,
+        address[] memory _redeemTokens,
+        uint256 _redeemTime,
+        address[] memory _budgetApprovals,
+        bytes[] memory _budgetApprovalsData
+    ) public {
+
+        ERC1967Proxy _optInPool = new ERC1967Proxy(optInPoolImplementation, "");
+        IOptInPool(payable(address(_optInPool))).initialize(
+            depositPool,
+            _depositToken,
+            _depositThreshold,
+            _depositDeadline,
+            _redeemTokens,
+            _redeemTime,
+            _budgetApprovals,
+            _budgetApprovalsData
+        );
+        isOptInPool[address(_optInPool)] = true;
+        emit CreateOptInPool(address(_optInPool));
     }
 
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
@@ -274,7 +309,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _addAssets(erc20s);
     }
     function mintMember(address owner) public {
-        require(msg.sender == liquidPool, "only LP");
+        require(msg.sender == liquidPool || msg.sender == depositPool, "only LP or DP");
         _mintMember(owner);
     }
 

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.0;
 
-import "../Dao.sol";
-
 contract MockLPDao {
     uint256 public locktime;
     uint256 public minMemberTokenToJoin;
@@ -10,6 +8,7 @@ contract MockLPDao {
     address public memberToken;
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isMember;
+    mapping(address => bool) public isOptInPool;
 
     function byPassGovern(address) public pure returns (bool) {
         return true;

@@ -7,8 +7,9 @@ const { expect } = chai;
 const { createAdam, createFeedRegistry, createTokens } = require('../utils/createContract');
 const decodeBase64 = require('../utils/decodeBase64');
 chai.use(smock.matchers);
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
-describe('Create DAO', function () {
+describe('Integration - Create DAO', function () {
   let creator, owner1, owner2, owner3;
   let token;
   let feedRegistry;
@@ -104,6 +105,112 @@ describe('Create DAO', function () {
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
       expect(await ethers.provider.getBalance(lp.address)).to.equal(ethers.utils.parseEther('0.000369'));
+    });
+  });
+
+  describe('Deposit ETH to DP', function () {
+    let dao, dp, membership;
+    beforeEach(async function () {
+      const tx1 = await createDao();
+      const receipt = await tx1.wait();
+      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+      const daoAddr = creationEventLog.args.dao;
+      dao = await ethers.getContractAt('Dao', daoAddr);
+
+      const membershipAddr = await dao.membership();
+      membership = await ethers.getContractAt('Membership', membershipAddr);
+      dp = await ethers.getContractAt('DepositPool', await dao.depositPool());
+    });
+
+    it('create Membership when deposit()', async function () {
+      await dp.deposit({ value: ethers.utils.parseEther('0.000123') });
+      expect(await membership.balanceOf(creator.address)).to.equal(1);
+
+      const jsonResponse = decodeBase64(await membership.tokenURI(1));
+      expect(jsonResponse.name).to.equal('A Company Membership #1');
+      expect(await ethers.provider.getBalance(dp.address)).to.equal(ethers.utils.parseEther('0.000123'));
+    });
+
+    it('gives token uri with member address', async function () {
+      const tx = await dp.deposit({ value: ethers.utils.parseEther('0.000123') });
+      await tx.wait();
+
+      const jsonResponse = decodeBase64(await membership.tokenURI(1));
+      expect(jsonResponse.name).to.equal('A Company Membership #1');
+    });
+
+    it('should not recreate Member when deposit() again by same EOA', async function () {
+      await dp.deposit({ value: ethers.utils.parseEther('0.000123') });
+      await dp.deposit({ value: ethers.utils.parseEther('0.000123') });
+      await dp.deposit({ value: ethers.utils.parseEther('0.000123') });
+
+      expect(await membership.balanceOf(creator.address)).to.equal(1);
+      expect(await ethers.provider.getBalance(dp.address)).to.equal(ethers.utils.parseEther('0.000369'));
+    });
+  });
+
+  describe('Join Opt-in Pool', function () {
+    let dao, dp, membership, optInPool;
+    beforeEach(async function () {
+      const tx1 = await createDao();
+      const receipt = await tx1.wait();
+      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+      const daoAddr = creationEventLog.args.dao;
+      dao = await ethers.getContractAt('Dao', daoAddr);
+
+      const membershipAddr = await dao.membership();
+      membership = await ethers.getContractAt('Membership', membershipAddr);
+      dp = await ethers.getContractAt('DepositPool', await dao.depositPool());
+
+      const currentBlock = await ethers.provider.getBlock(await ethers.provider.getBlockNumber());
+      const tx2 = await dao.createOptInPool(
+        ETH,
+        ethers.utils.parseEther('1'),
+        currentBlock.timestamp + 100,
+        [ETH],
+        currentBlock.timestamp + 200,
+        [],
+        [],
+      );
+      const receipt2 = await tx2.wait();
+      const creationEventLog2 = _.find(receipt2.events, { event: 'CreateOptInPool' });
+      const optInPoolAddr = creationEventLog2.args.optInPool;
+      optInPool = await ethers.getContractAt('OptInPool', optInPoolAddr);
+
+      await dp.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
+      await dp.connect(owner1).setApprovalForAll(optInPool.address, true);
+      await dp.connect(owner2).deposit({ value: ethers.utils.parseEther('1') });
+      await dp.connect(owner2).setApprovalForAll(optInPool.address, true);
+    });
+
+    it('allow client to join before deadline', async function () {
+      await optInPool.connect(owner1).join(ethers.utils.parseEther('0.000123'));
+      expect(await ethers.provider.getBalance(optInPool.address)).to.equal(ethers.utils.parseEther('0.000123'));
+    });
+    it('allow client to refund after deadline', async function () {
+      await optInPool.connect(owner1).join(ethers.utils.parseEther('0.000123'));
+      expect(await ethers.provider.getBalance(optInPool.address)).to.equal(ethers.utils.parseEther('0.000123'));
+      await ethers.provider.send('evm_increaseTime', [100]);
+      await ethers.provider.send('evm_mine');
+      await optInPool.connect(owner1).refund([owner1.address]);
+      expect(await ethers.provider.getBalance(optInPool.address)).to.equal(ethers.utils.parseEther('0'));
+    });
+    it('allow client to redeem after pool executed', async function () {
+      await optInPool.connect(owner1).join(ethers.utils.parseEther('1'));
+      expect(await ethers.provider.getBalance(optInPool.address)).to.equal(ethers.utils.parseEther('1'));
+      await ethers.provider.send('evm_increaseTime', [200]);
+      await ethers.provider.send('evm_mine');
+      await optInPool.connect(owner1).redeem([owner1.address]);
+      expect(await ethers.provider.getBalance(optInPool.address)).to.equal(ethers.utils.parseEther('0'));
+    });
+    it('allow 2 client to redeem after pool executed', async function () {
+      await optInPool.connect(owner1).join(ethers.utils.parseEther('1'));
+      await optInPool.connect(owner2).join(ethers.utils.parseEther('1'));
+      expect(await ethers.provider.getBalance(optInPool.address)).to.equal(ethers.utils.parseEther('2'));
+      await ethers.provider.send('evm_increaseTime', [200]);
+      await ethers.provider.send('evm_mine');
+      await optInPool.connect(owner1).redeem([owner1.address, owner2.address]);
+      expect(await ethers.provider.getBalance(optInPool.address)).to.equal(ethers.utils.parseEther('0'));
     });
   });
 
