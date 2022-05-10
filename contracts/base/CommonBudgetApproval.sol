@@ -34,13 +34,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bool isExist;
     }
 
-    event CreateTransaction(uint256 id, bytes data, uint256 deadline);
+    event CreateTransaction(uint256 id, bytes data, uint256 deadline, Status status);
     event ApproveTransaction(uint256 id, address approver);
     event ExecuteTransaction(uint256 id, bytes data);
     event RevokeTransaction(uint256 id);
     event AllowAddress(address target);
     event AllowToken(address token);
     event AllowAmount(uint256 amount);
+    event SetApprover(address approver);
     event UsageCount(uint256 count);
 
     Counters.Counter private _transactionIds;
@@ -135,6 +136,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
         for (uint i = 0; i < params.approvers.length; i++) {
             approversMapping[params.approvers[i]] = true;
+            emit SetApprover(params.approvers[i]);
         }
 
         minApproval = params.minApproval;
@@ -192,7 +194,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             newTransaction.status = Status.Pending;
         }
 
-        emit CreateTransaction(_transactionId, _data, _deadline);
+        emit CreateTransaction(_transactionId, _data, _deadline,  newTransaction.status);
 
         if (_execute) {
             executeTransaction(_transactionId);
