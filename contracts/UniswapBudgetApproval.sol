@@ -84,9 +84,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         require(tokensMapping[tokenIn], "invalid token");
         require(allowAllToTokens || toTokensMapping[tokenOut], "invalid to token");
         require(allowAnyAmount || amountIn <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(amountIn, true), "invalid amount");
+        require(checkAmountPercentageValid(amountIn), "invalid amount");
         require(checkUsageCountValid(), "usage exceeded");
-
 
         if(!allowAnyAmount) {
             totalAmount -= amountIn;
@@ -95,14 +94,12 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         _updateUsageCount();
     }
 
-    function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
+    function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {
+        if (amountPercentage == 100) return true;
 
-        uint256 _totalAmount;
-        if(executed) {
-            _totalAmount += amount;
-        }
+        uint256 _totalAmount = amount;
 
-        for(uint i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < tokens.length; i++) {
             if(tokens[i] == ETH_ADDRESS) {
                 _totalAmount += executee.balance;
             } else {
@@ -110,9 +107,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
             }
         }
 
-        if(_totalAmount == 0) {
-            return false;
-        }
+        if (_totalAmount == 0) return false;
 
         return (amount * 100 / _totalAmount) <= amountPercentage;
     }

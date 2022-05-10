@@ -66,7 +66,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         require(allowAllAddresses || addressesMapping[_recipient], "invalid recipient");
         require(tokensMapping[_token], "invalid token");
         require(allowAnyAmount || _amount <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(_amount, true), "invalid amount");
+        require(checkAmountPercentageValid(_amount), "invalid amount");
         require(checkUsageCountValid(), "usage exceeded");
 
 
@@ -101,14 +101,12 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return (to, recipient, amount);
     }
 
-    function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
+    function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {
+        if (amountPercentage == 100) return true;
 
-        uint256 _totalAmount;
-        if(executed) {
-            _totalAmount += amount;
-        }
+        uint256 _totalAmount = amount;
 
-        for(uint i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < tokens.length; i++) {
             if(tokens[i] == ETH_ADDRESS) {
                 _totalAmount += executee.balance;
             } else {
@@ -116,9 +114,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
             }
         }
 
-        if(_totalAmount == 0) {
-            return false;
-        }
+        if (_totalAmount == 0) return false;
 
         return (amount * 100 / _totalAmount) <= amountPercentage;
     }
