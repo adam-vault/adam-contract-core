@@ -60,22 +60,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     string public text;
     string public transactionType;
 
-    bool public allowAllAddresses;
-    mapping(address => bool) public addressesMapping;
-
-    address[] public tokens;
-    mapping(address => bool) public tokensMapping;
-
-    bool public allowAnyAmount;
-    uint256 public totalAmount;
-
-    uint8 public amountPercentage;
+    bool public allowUnlimitedUsageCount;
+    uint256 public usageCount;
 
     uint256 public startTime;
     uint256 public endTime;
-
-    bool public allowUnlimitedUsageCount;
-    uint256 public usageCount;
 
     modifier onlyApprover () {
         require(approversMapping[msg.sender], "access denied");
@@ -92,7 +81,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
-    modifier matchStatus (uint256 _transactionId, Status _status) {
+    modifier matchStatus(uint256 _transactionId, Status _status) {
         require(transactions[_transactionId].status == _status, "status invalid");
         _;
     }
@@ -141,23 +130,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
         minApproval = params.minApproval;
         require(minApproval <= params.approvers.length, "minApproval invalid");
-
-        allowAllAddresses = params.allowAllAddresses;
-        for(uint i = 0; i < params.addresses.length; i++) {
-            addressesMapping[params.addresses[i]] = true;
-            emit AllowAddress(params.addresses[i]);
-        }
-
-        tokens = params.tokens;
-        for(uint i = 0; i < params.tokens.length; i++) {
-            tokensMapping[params.tokens[i]] = true;
-            emit AllowToken(params.tokens[i]);
-        }
-
-        allowAnyAmount = params.allowAnyAmount;
-        totalAmount = params.totalAmount;
-        emit AllowAmount(totalAmount);
-        amountPercentage = params.amountPercentage;
 
         startTime = params.startTime;
         endTime = params.endTime;
@@ -231,58 +203,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         return _transactionIds.current();
     }
 
-    function checkAddressValid(address to) public view returns (bool) {
-        return allowAllAddresses || addressesMapping[to];
-    }
-
-    function checkTokenValid(address token) public view returns (bool) {
-        return tokensMapping[token];
-    }
-
-    function checkAmountValid(uint256 amount) public view returns (bool) {
-        return allowAnyAmount || amount <= totalAmount;
-    }
-
-    function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
-
-        uint256 _totalAmount;
-        if(executed) {
-            _totalAmount += amount;
-        }
-
-        for(uint i = 0; i < tokens.length; i++) {
-            if(tokens[i] == ETH_ADDRESS) {
-                _totalAmount += executee.balance;
-            } else {
-                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
-            }
-        }
-
-        if(_totalAmount == 0) {
-            return false;
-        }
-
-        return (amount * 100 / _totalAmount) <= amountPercentage;
-    }
-
-    function _updateTotalAmount(uint256 usedAmount) internal {
-        if(!allowAnyAmount) {
-            totalAmount -= usedAmount;
-            emit AllowAmount(totalAmount);
-        }
-    }
-
-    function checkUsageCountValid() public view returns (bool) {
-        return allowUnlimitedUsageCount || usageCount > 0;
-    }
-
-    function _updateUsageCount() internal {
-        if(!allowUnlimitedUsageCount) {
-            usageCount--;
-            emit UsageCount(usageCount);
-        }
-    }
-
     function _authorizeUpgrade(address) internal override initializer {}
 
     function execute(address, bytes memory, uint256) public virtual;
@@ -301,5 +221,16 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         return abi.decode(_data.slice(4, _data.length - 4), (address, bytes, uint256));
     }
 
+    // TODO
+    function checkUsageCountValid() public view returns (bool) {
+        return allowUnlimitedUsageCount || usageCount > 0;
+    }
+
+    function _updateUsageCount() internal {
+        if(!allowUnlimitedUsageCount) {
+            usageCount--;
+            emit UsageCount(usageCount);
+        }
+    }
     receive() external payable {}
 }

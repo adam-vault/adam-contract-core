@@ -18,6 +18,13 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     string public constant override NAME = "Uniswap Budget Approval";
 
+    bool public allowAllAddresses;
+    mapping(address => bool) public addressesMapping;
+    address[] public tokens;
+    mapping(address => bool) public tokensMapping;
+    bool public allowAnyAmount;
+    uint256 public totalAmount;
+    uint8 public amountPercentage;
     bool public allowAllToTokens;
     mapping(address => bool) public toTokensMapping;
 
@@ -27,6 +34,24 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         address[] calldata _toTokens
     ) public initializer {
         __BudgetApproval_init(params);
+        
+        allowAllAddresses = params.allowAllAddresses;
+        for(uint i = 0; i < params.addresses.length; i++) {
+            addressesMapping[params.addresses[i]] = true;
+            emit AllowAddress(params.addresses[i]);
+        }
+
+        tokens = params.tokens;
+        for(uint i = 0; i < params.tokens.length; i++) {
+            tokensMapping[params.tokens[i]] = true;
+            emit AllowToken(params.tokens[i]);
+        }
+
+        allowAnyAmount = params.allowAnyAmount;
+        totalAmount = params.totalAmount;
+        emit AllowAmount(totalAmount);
+        amountPercentage = params.amountPercentage;
+
 
         allowAllToTokens = _allowAllToTokens;
         for(uint i = 0; i < _toTokens.length; i++) {
@@ -35,90 +60,6 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         }
 
         UniswapSwapper.setParams(IAdam(IDao(dao).adam()).constantState());
-    }
-
-    function checkValid(
-        address _tokenIn,
-        address _tokenOut,
-        uint256 _amount,
-        bool executed
-    )
-        public
-        view
-        returns(bool valid)
-    {
-        return checkTokenValid(_tokenIn) && 
-               checkAmountValid(_amount) && 
-               checkAmountPercentageValid(_amount, executed) &&
-               checkToTokenValid(_tokenOut) &&
-               checkUsageCountValid();
-    }
-
-    function checkToTokenValid(address _token) public view returns (bool) {
-        return allowAllToTokens || toTokensMapping[_token];
-    }
-
-    function decodeWithResult(
-        address to,
-        bytes memory data,
-        uint256 value,
-        bytes memory _results
-    )
-        public
-        view
-        returns (address, address, uint256, uint256)
-    {
-        (
-            address tokenIn,
-            address tokenOut,
-            uint256 amountIn,
-            uint256 amountOut,
-            bool estimatedIn,
-            bool estimatedOut
-        ) = UniswapSwapper.decodeUniswapData(to, data, value, _results);
-        require(!estimatedIn && !estimatedOut, "unexpected result");
-        return (tokenIn, tokenOut, amountIn, amountOut);
-    }
-
-    function decode(
-        address to,
-        bytes memory data,
-        uint256 value
-    )
-        public
-        view
-        returns (
-            address tokenIn,
-            address tokenOut,
-            uint256 amountIn,
-            uint256 amountOut,
-            bool estimatedIn,
-            bool estimatedOut
-        )
-    {
-        return UniswapSwapper.decodeUniswapData(to, data, value);
-    }
-
-    function encodeInitializeData(
-       InitializeParams calldata params,
-        bool _allowAllToTokens,
-        address[] calldata _toTokens
-    ) public pure returns (bytes memory data) {
-        return abi.encodeWithSelector(
-           this.initialize.selector,
-            params,
-            _allowAllToTokens,
-            _toTokens
-        );
-    }
-
-    function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory, bool, address[] memory) {
-
-        if(_data.toBytes4(0) != this.initialize.selector) {
-            revert("unexpected function");
-        }
-
-        return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams,bool,address[]));
     }
 
 
@@ -130,11 +71,50 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
             return;
         }
 
-        (address tokenIn, address tokenOut, uint256 amountIn,) = decodeWithResult(to, data, value, result);
-        require(checkValid(tokenIn, tokenOut, amountIn, true), "transaction not valid");
+        (
+            address tokenIn,
+            address tokenOut,
+            uint256 amountIn,
+            ,
+            bool estimatedIn,
+            bool estimatedOut
+        ) = UniswapSwapper.decodeUniswapDataAfterSwap(to, data, value, result);
+        require(!estimatedIn && !estimatedOut, "unexpected result");
 
-        _updateTotalAmount(amountIn);
+        require(tokensMapping[tokenIn], "invalid token");
+        require(allowAllToTokens || toTokensMapping[tokenOut], "invalid to token");
+        require(allowAnyAmount || amountIn <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(amountIn, true), "invalid amount");
+        require(checkUsageCountValid(), "usage exceeded");
+
+
+        if(!allowAnyAmount) {
+            totalAmount -= amountIn;
+        }
+
         _updateUsageCount();
-
     }
+
+    function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
+
+        uint256 _totalAmount;
+        if(executed) {
+            _totalAmount += amount;
+        }
+
+        for(uint i = 0; i < tokens.length; i++) {
+            if(tokens[i] == ETH_ADDRESS) {
+                _totalAmount += executee.balance;
+            } else {
+                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
+            }
+        }
+
+        if(_totalAmount == 0) {
+            return false;
+        }
+
+        return (amount * 100 / _totalAmount) <= amountPercentage;
+    }
+
 }

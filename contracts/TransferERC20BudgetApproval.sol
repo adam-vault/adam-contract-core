@@ -12,25 +12,32 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     string public constant override NAME = "Transfer ERC20 Budget Approval";
 
+    bool public allowAllAddresses;
+    mapping(address => bool) public addressesMapping;
+    address[] public tokens;
+    mapping(address => bool) public tokensMapping;
+    bool public allowAnyAmount;
+    uint256 public totalAmount;
+    uint8 public amountPercentage;
+
     function initialize(InitializeParams calldata params) public initializer {
         __BudgetApproval_init(params);
-    }
+        allowAllAddresses = params.allowAllAddresses;
+        for(uint i = 0; i < params.addresses.length; i++) {
+            addressesMapping[params.addresses[i]] = true;
+            emit AllowAddress(params.addresses[i]);
+        }
 
-    function checkValid(
-        address _token,
-        address _recipient,
-        uint256 _amount,
-        bool executed
-    )
-        public
-        view
-        returns(bool valid)
-    {
-        return checkAddressValid(_recipient) && 
-               checkTokenValid(_token) && 
-               checkAmountValid(_amount) && 
-               checkAmountPercentageValid(_amount, executed) &&
-               checkUsageCountValid();
+        tokens = params.tokens;
+        for(uint i = 0; i < params.tokens.length; i++) {
+            tokensMapping[params.tokens[i]] = true;
+            emit AllowToken(params.tokens[i]);
+        }
+
+        allowAnyAmount = params.allowAnyAmount;
+        totalAmount = params.totalAmount;
+        emit AllowAmount(totalAmount);
+        amountPercentage = params.amountPercentage;
     }
 
     function executeMultiple(
@@ -56,8 +63,16 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
         (address _token, address _recipient, uint256 _amount) = decode(to, data, value);
 
-        require(checkValid(_token, _recipient, _amount, true), "transaction not allowed");
-        _updateTotalAmount(_amount);
+        require(allowAllAddresses || addressesMapping[_recipient], "invalid recipient");
+        require(tokensMapping[_token], "invalid token");
+        require(allowAnyAmount || _amount <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(_amount, true), "invalid amount");
+        require(checkUsageCountValid(), "usage exceeded");
+
+
+        if(!allowAnyAmount) {
+            totalAmount -= _amount;
+        }
         _updateUsageCount();
     }
 
@@ -86,27 +101,27 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return (to, recipient, amount);
     }
 
-    function encodeInitializeData(InitializeParams calldata params) public pure returns (bytes memory data) {
-        return abi.encodeWithSelector(
-            this.initialize.selector,
-            params
-        );
-    }
+    function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
 
-    function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
-
-        if(_data.toBytes4(0) != this.initialize.selector) {
-            revert("unexpected function");
+        uint256 _totalAmount;
+        if(executed) {
+            _totalAmount += amount;
         }
 
-        return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
+        for(uint i = 0; i < tokens.length; i++) {
+            if(tokens[i] == ETH_ADDRESS) {
+                _totalAmount += executee.balance;
+            } else {
+                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
+            }
+        }
+
+        if(_totalAmount == 0) {
+            return false;
+        }
+
+        return (amount * 100 / _totalAmount) <= amountPercentage;
     }
 
-    function encodeMultipleTransactionData(
-        address[] calldata _to,
-        bytes[] calldata _data,
-        uint256[] calldata _amount
-    ) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(this.executeMultiple.selector, _to, _data, _amount);
-    }
+
 }
