@@ -7,7 +7,7 @@ on:
 jobs:
   deploy-contracts:
     name: Deploy Contracts
-    uses: ./.github/workflows/reusable/deploy-contracts.yml
+    uses: ./.github/workflows/reusable-deploy-contracts.yml
     with:
       GIT_REF: ${{ github.ref_name }}
       CONTRACT_DEPLOY_NETWORK: rinkeby
@@ -19,7 +19,7 @@ jobs:
   sync-subgraph:
     name: Deploy Contracts
     needs: deploy-contracts
-    uses: ./.github/workflows/reusable/sync-subgraph.yml
+    uses: ./.github/workflows/reusable-sync-subgraph.yml
     with:
       GIT_REF: ${{ github.ref_name }}
       DEPLOY_ENV: alpha
@@ -29,7 +29,7 @@ jobs:
   sync-frontend:
     name: Deploy Contracts
     needs: deploy-contracts
-    uses: ./.github/workflows/reusable/sync-frontend.yml
+    uses: ./.github/workflows/reusable-sync-frontend.yml
     with:
       GIT_REF: ${{ github.ref_name }}
       DEPLOY_ENV: alpha

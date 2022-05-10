@@ -27,15 +27,6 @@ jobs:
           repository: ${{ github.repository_owner }}/adam-subgraph
           token: ${{ secrets.GH_PAT }}      
       
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          cache: 'npm'
-      
-      - name: Install Dependencies
-        run: npm install
-
       - name: Fetch Deployment Info
         uses: actions/download-artifact@v3
         with:
@@ -47,10 +38,12 @@ jobs:
 
       - name: Replace Subgraph Address
         run: | 
-          npm run update-datasource --\
-            --Adam $(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)\
-            --GovernFactory $(jq -r .addresses.governFactory ${{ runner.temp }}/deployment/deploy/results.json)\
-            --block $(jq -r .block_number ${{ runner.temp }}/deployment/deploy/results.json)
+          jq -s '.[0].startBlock = .[1].block_number | 
+            .[0].addresses.adam = .[1].addresses.adam |
+            .[0].addresses.governFactory = .[1].addresses.governFactory |
+            .[0]' \
+            config/${{ env.DEPLOY_ENV }}.json ${{ runner.temp }}/deployment/deploy/results.json > temp.json \
+            && mv temp.json config/${{ env.DEPLOY_ENV }}.json
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4

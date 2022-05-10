@@ -1,8 +1,8 @@
-name: Deploy Dev
+name: Deploy Pre-Dev
 on:
   push:
     tags:    
-      - 'v[0-9].[0-9]+.[0-9]+\-dev'
+      - 'v[0-9].[0-9]+.[0-9]+\-predev'
 
 jobs:
   deploy-contracts:
@@ -22,17 +22,6 @@ jobs:
     uses: ./.github/workflows/reusable-sync-subgraph.yml
     with:
       GIT_REF: ${{ github.ref_name }}
-      DEPLOY_ENV: dev
+      DEPLOY_ENV: predev
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
-
-  sync-frontend:
-    name: Deploy Contracts
-    needs: deploy-contracts
-    uses: ./.github/workflows/reusable-sync-frontend.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-      DEPLOY_ENV: dev
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
-
