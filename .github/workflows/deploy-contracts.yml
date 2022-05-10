@@ -102,17 +102,13 @@ jobs:
       - name: Setup Address as Env Vars
         run: |
           echo "REACT_APP_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)" >> $GITHUB_ENV
-          echo "REACT_APP_OUTFLOW_CONTRACT_ADDRESS=$(jq -r .addresses.transferErc20BudgetApproval ${{ runner.temp }}/deployment/deploy/results.json)" >> $GITHUB_ENV
-          echo "REACT_APP_SWAP_CONTRACT_ADDRESS=$(jq -r .addresses.uniswapBudgetApproval ${{ runner.temp }}/deployment/deploy/results.json)" >> $GITHUB_ENV
 
       - name: Replace Contract Address
         uses: mikefarah/yq@master
         with:
           cmd: |
             yq -i '
-              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS) |
-              .jobs.call-deploy-site.with.REACT_APP_OUTFLOW_CONTRACT_ADDRESS = strenv(REACT_APP_OUTFLOW_CONTRACT_ADDRESS) |
-              .jobs.call-deploy-site.with.REACT_APP_SWAP_CONTRACT_ADDRESS = strenv(REACT_APP_SWAP_CONTRACT_ADDRESS)
+              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS)
             ' .github/workflows/deploy.${{ steps.split_version_tag.outputs._1 }}.yml
       
       - name: Make Pull Request
@@ -149,15 +145,6 @@ jobs:
           repository: ${{ github.repository_owner }}/adam-subgraph
           token: ${{ secrets.GH_PAT }}      
       
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          cache: 'npm'
-      
-      - name: Install Dependencies
-        run: npm install
-
       - name: Fetch Deployment Info
         uses: actions/download-artifact@v3
         with:
