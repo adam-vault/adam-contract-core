@@ -208,4 +208,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             usageCount--;
         }
     }
+
+    function _authorizeUpgrade(address) internal override initializer {}
 }
