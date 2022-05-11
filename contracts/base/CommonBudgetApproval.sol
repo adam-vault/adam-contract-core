@@ -80,13 +80,13 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
-    modifier matchStatus(uint256 _transactionId, Status _status) {
-        require(transactions[_transactionId].status == _status, "status invalid");
+    modifier matchStatus(uint256 id, Status status) {
+        require(transactions[id].status == status, "status invalid");
         _;
     }
 
-    modifier checkTime(uint256 _transactionId) {
-        require(block.timestamp <= transactions[_transactionId].deadline, "transaction expired");
+    modifier checkTime(uint256 id) {
+        require(block.timestamp <= transactions[id].deadline, "transaction expired");
         require(block.timestamp >= startTime, "budget approval not yet started");
         if(endTime != 0) {
             require(block.timestamp < endTime, "budget approval ended");
@@ -139,12 +139,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function NAME() external virtual returns (string calldata);
 
-    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkTime(_transactionId) onlyExecutor {
-        (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
+    function executeTransaction(uint256 id) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
+        (bool success, bytes memory result) = address(this).call(transactions[id].data);
         require(success, RevertMsg.ToString(result));
 
-        transactions[_transactionId].status = Status.Completed;
-        emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
+        transactions[id].status = Status.Completed;
+        emit ExecuteTransaction(id, transactions[id].data);
     }
 
     function createTransaction(bytes memory _data, uint256 _deadline, bool _execute) external {
