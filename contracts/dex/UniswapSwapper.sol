@@ -21,7 +21,7 @@ contract UniswapSwapper is Initializable {
         WETH_TOKEN_ADDRESS = IConstant(_constantState).WETH_ADDRESS();
     }
 
-    function decodeUniswapData(address to, bytes memory _data, uint256 amount) internal view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+    function decodeUniswapDataBeforeSwap(address to, bytes memory _data, uint256 amount) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         
         if(to == UNISWAP_ROUTER) {
             // Uniswap Swap Router
@@ -34,7 +34,7 @@ contract UniswapSwapper is Initializable {
         }
     }
 
-    function decodeUniswapData(address to, bytes memory _data, uint256 amount, bytes memory swapResult) internal view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+    function decodeUniswapDataAfterSwap(address to, bytes memory _data, uint256 amount, bytes memory swapResult) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         if(to == UNISWAP_ROUTER) {
             // Uniswap Swap Router
             (bytes[] memory byteResults) = abi.decode(swapResult, (bytes[]));
