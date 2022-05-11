@@ -16,7 +16,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     event AllowToToken(address token);
 
-    string public constant override NAME = "Uniswap Budget Approval";
+    string public constant override name = "Uniswap Budget Approval";
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
@@ -62,15 +62,25 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         UniswapSwapper.setParams(IAdam(IDao(dao).adam()).constantState());
     }
 
+    function executeParams() public pure override returns (string[] memory) {
+        string[] memory arr = new string[](3);
+        arr[0] = "address to";
+        arr[1] = "bytes data";
+        arr[2] = "uint256 value";
+        return arr;
+    }
 
-    function execute(address to, bytes memory data, uint256 value) public override onlySelf {
-        bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
+    function _execute(
+        bytes memory data
+    ) internal override {
+        (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
+
+        bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
 
         // approve(address,uint256) for ERC20
         if(data.toBytes4(0) == 0x095ea7b3) {
             return;
         }
-
         (
             address tokenIn,
             address tokenOut,
@@ -79,19 +89,17 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
             bool estimatedIn,
             bool estimatedOut
         ) = UniswapSwapper.decodeUniswapDataAfterSwap(to, data, value, result);
+
         require(!estimatedIn && !estimatedOut, "unexpected result");
 
         require(tokensMapping[tokenIn], "invalid token");
         require(allowAllToTokens || toTokensMapping[tokenOut], "invalid to token");
         require(allowAnyAmount || amountIn <= totalAmount, "invalid amount");
         require(checkAmountPercentageValid(amountIn), "invalid amount");
-        require(checkUsageCountValid(), "usage exceeded");
 
         if(!allowAnyAmount) {
             totalAmount -= amountIn;
         }
-
-        _updateUsageCount();
     }
 
     function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {

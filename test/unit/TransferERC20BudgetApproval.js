@@ -5,6 +5,8 @@ const _ = require('lodash');
 const { createTokens, createAdam, createFeedRegistry, createBudgetApprovals } = require('../utils/createContract');
 
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const { parseEther } = ethers.utils;
+const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferERC20BudgetApproval.sol', function () {
   let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
@@ -51,7 +53,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize', [[
-        dao.address, // dao address
+        dao.address, // dao addressc
         executor.address, // executor
         [approver.address], // approvers
         1, // minApproval
@@ -61,7 +63,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         [receiver.address], // allowed addresses (use when above = false)
         [ETHAddress, tokenA.address], // allowed token
         false, // allow any amount
-        ethers.utils.parseEther('100'), // allowed total amount
+        parseEther('100'), // allowed total amount
         '10', // allowed amount percentage
         startTime, // startTime
         endTime, // endTime
@@ -94,7 +96,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       expect(await budgetApproval.tokensMapping(tokenA.address)).to.eq(true);
 
       expect(await budgetApproval.allowAnyAmount()).to.eq(false);
-      expect(await budgetApproval.totalAmount()).to.eq(ethers.utils.parseEther('100'));
+      expect(await budgetApproval.totalAmount()).to.eq(parseEther('100'));
       expect(await budgetApproval.amountPercentage()).to.eq(10);
 
       expect(await budgetApproval.startTime()).to.eq(startTime);
@@ -116,7 +118,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         [receiver.address], // allowed addresses (use when above = false)
         [ETHAddress, tokenA.address], // allowed token (use when above = false)
         false, // allow any amount
-        ethers.utils.parseEther('100'), // allowed total amount
+        parseEther('100'), // allowed total amount
         100, // allowed amount percentage
         Math.round(Date.now() / 1000) - 86400, // startTime
         Math.round(Date.now() / 1000) + 86400, // endTime
@@ -157,7 +159,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         // allow any amount
         false,
         // allowed total amount
-        ethers.utils.parseEther('100'),
+        parseEther('100'),
         // allowed amount percentage
         '10',
         0, // startTime
@@ -180,16 +182,18 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
   describe('Execute Transaction (Transfer ETH)', function () {
     before(async function () {
-      await lp.connect(executor).deposit({ value: ethers.utils.parseEther('200') });
+      await lp.connect(executor).deposit({ value: parseEther('200') });
     });
 
-    context('complete flow', () => {
+    context('ETH complete flow', () => {
       it('should success', async function () {
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
-          receiver.address, [], ethers.utils.parseEther('10'),
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
+          receiver.address,
+          parseEther('10'),
         ]);
 
-        const tx = await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
         const receipt = await tx.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
 
@@ -199,19 +203,41 @@ describe('TransferERC20BudgetApproval.sol', function () {
         await budgetApproval.connect(approver).approveTransaction(transactionId);
         await budgetApproval.connect(executor).executeTransaction(transactionId);
 
-        expect(await receiver.getBalance()).to.eq(originalBalance.add(ethers.utils.parseEther('10')));
+        expect(await receiver.getBalance()).to.eq(originalBalance.add(parseEther('10')));
+      });
+    });
+
+    context('ERC20 complete flow', () => {
+      it('should success', async function () {
+        await tokenA.mint(lp.address, parseEther('10'));
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          tokenA.address,
+          receiver.address,
+          parseEther('10'),
+        ]);
+
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+        const receipt = await tx.wait();
+        const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
+
+        const transactionId = creationEventLog.args.id;
+
+        await budgetApproval.connect(approver).approveTransaction(transactionId);
+        await budgetApproval.connect(executor).executeTransaction(transactionId);
+
+        expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('0'));
+        expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('10'));
       });
     });
 
     context('multiple outflow', () => {
       it('should success', async function () {
-        const transactionData = budgetApproval.interface.encodeFunctionData('executeMultiple', [
-          [receiver.address, receiver.address],
-          [[], []],
-          [ethers.utils.parseEther('10'), ethers.utils.parseEther('10')],
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
+          receiver.address,
+          parseEther('10'),
         ]);
-
-        const tx = await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData], Date.now() + 86400, false);
         const receipt = await tx.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
         const transactionId = creationEventLog.args.id;
@@ -220,18 +246,18 @@ describe('TransferERC20BudgetApproval.sol', function () {
         await budgetApproval.connect(approver).approveTransaction(transactionId);
         await budgetApproval.connect(executor).executeTransaction(transactionId);
 
-        expect(await receiver.getBalance()).to.eq(originalBalance.add(ethers.utils.parseEther('20')));
+        expect(await receiver.getBalance()).to.eq(originalBalance.add(parseEther('20')));
       });
     });
 
     context('not executed by executor', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
           receiver.address,
-          [],
-          ethers.utils.parseEther('10'),
+          parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(approver).createTransaction(transactionData, Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false);
         const receipt = await tx.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
         const transactionId = creationEventLog.args.id;
@@ -245,12 +271,12 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     context('not approved by approver', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
           receiver.address,
-          [],
-          ethers.utils.parseEther('10'),
+          parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
         const receipt = await tx.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
         const transactionId = creationEventLog.args.id;
@@ -262,12 +288,12 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     context('revoked by executor', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
           receiver.address,
-          [],
-          ethers.utils.parseEther('10'),
+          parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
         const receipt = await tx.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
         const transactionId = creationEventLog.args.id;
@@ -280,12 +306,12 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     context('not allowed address', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
           executor.address,
-          [],
-          ethers.utils.parseEther('10'),
+          parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
         const receipt = await tx.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
         const transactionId = creationEventLog.args.id;
@@ -299,12 +325,12 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     context('exceed amount', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
           receiver.address,
-          [],
-          ethers.utils.parseEther('101'),
+          parseEther('101'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
         const receipt = await tx.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
         const transactionId = creationEventLog.args.id;
@@ -318,12 +344,12 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     context('exceed amount percentage', () => {
       it('should revert', async function () {
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
           receiver.address,
-          [],
-          ethers.utils.parseEther('21'),
+          parseEther('21'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction(transactionData, Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
         const receipt = await tx.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
         const transactionId = creationEventLog.args.id;
@@ -348,7 +374,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           [receiver.address], // allowed addresses (use when above = false)
           [ETHAddress, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
-          ethers.utils.parseEther('100'), // allowed total amount
+          parseEther('100'), // allowed total amount
           100, // allowed amount percentage
           Math.round(Date.now() / 1000) + 86400, // startTime
           0, // endTime
@@ -370,16 +396,16 @@ describe('TransferERC20BudgetApproval.sol', function () {
           'TransferERC20BudgetApproval',
           budgetApprovalAddress,
         );
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
           receiver.address,
-          [],
-          ethers.utils.parseEther('101'),
+          parseEther('101'),
         ]);
         await expect(
           testBudgetApproval
             .connect(executor)
             .createTransaction(
-              transactionData,
+              [transactionData],
               Math.round(Date.now() / 1000) + 86400,
               true,
             ),
@@ -400,7 +426,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           [receiver.address], // allowed addresses (use when above = false)
           [ETHAddress, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
-          ethers.utils.parseEther('100'), // allowed total amount
+          parseEther('100'), // allowed total amount
           100, // allowed amount percentage
           0, // startTime
           Math.round(Date.now() / 1000) - 86400, // endTime
@@ -423,17 +449,16 @@ describe('TransferERC20BudgetApproval.sol', function () {
           budgetApprovalAddress,
         );
 
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
           receiver.address,
-          [],
-          ethers.utils.parseEther('101'),
+          parseEther('101'),
         ]);
-
         await expect(
           testBudgetApproval
             .connect(executor)
             .createTransaction(
-              transactionData,
+              [transactionData],
               Math.round(Date.now() / 1000) + 86400,
               true,
             ),
@@ -454,7 +479,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           [receiver.address], // allowed addresses (use when above = false)
           [ETHAddress, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
-          ethers.utils.parseEther('100'), // allowed total amount
+          parseEther('100'), // allowed total amount
           100, // allowed amount percentage
           0, // startTime
           0, // endTime
@@ -476,14 +501,13 @@ describe('TransferERC20BudgetApproval.sol', function () {
           'TransferERC20BudgetApproval',
           budgetApprovalAddress,
         );
-        const transactionData = budgetApproval.interface.encodeFunctionData('execute', [
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
           receiver.address,
-          [],
-          ethers.utils.parseEther('1'),
+          parseEther('1'),
         ]);
-
         await testBudgetApproval.connect(executor).createTransaction(
-          transactionData,
+          [transactionData],
           Math.round(Date.now() / 1000) + 86400,
           true,
         );
@@ -492,7 +516,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           testBudgetApproval
             .connect(executor)
             .createTransaction(
-              transactionData,
+              [transactionData],
               Math.round(Date.now() / 1000) + 86400,
               true,
             ),

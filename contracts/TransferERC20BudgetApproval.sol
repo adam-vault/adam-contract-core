@@ -4,13 +4,14 @@ pragma solidity ^0.8.0;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;
 
-    string public constant override NAME = "Transfer ERC20 Budget Approval";
+    string public constant override name = "Transfer ERC20 Budget Approval";
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
@@ -40,65 +41,34 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         amountPercentage = params.amountPercentage;
     }
 
-    function executeMultiple(
-        address[] memory to,
-        bytes[] memory data,
-        uint256[] memory value
-    ) public {
-        require(data.length == to.length, "invalid input");
-        require(data.length == value.length, "invalid input");
-
-        for(uint i = 0; i < data.length; i++) {
-            execute(to[i], data[i], value[i]);
-        }
+    function executeParams() public pure override returns (string[] memory) {
+        string[] memory arr = new string[](3);
+        arr[0] = "address token";
+        arr[1] = "address to";
+        arr[2] = "uint256 value";
+        return arr;
     }
 
-    // transfer ETH by sending data.length == 0
-    // transfer ERC20 by using transfer(address,uint256)
-    function execute(
-        address to,
-        bytes memory data,
-        uint256 value
-    ) public override onlySelf {
-        IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
-        (address _token, address _recipient, uint256 _amount) = decode(to, data, value);
+    function _execute(
+        bytes memory data
+    ) internal override {
+        (address token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
 
-        require(allowAllAddresses || addressesMapping[_recipient], "invalid recipient");
-        require(tokensMapping[_token], "invalid token");
-        require(allowAnyAmount || _amount <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(_amount), "invalid amount");
-        require(checkUsageCountValid(), "usage exceeded");
+        if (token == ETH_ADDRESS) {
+            IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, "", value);
+        } else {
+            bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
+            IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
+        }
 
+        require(allowAllAddresses || addressesMapping[to], "invalid recipient");
+        require(tokensMapping[token], "invalid token");
+        require(allowAnyAmount || value <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(value), "invalid amount");
 
         if(!allowAnyAmount) {
-            totalAmount -= _amount;
+            totalAmount -= value;
         }
-        _updateUsageCount();
-    }
-
-    // return (address token, address recipient, uint256 amount)
-    function decode(
-        address to,
-        bytes memory data,
-        uint256 value
-    )
-        public
-        pure
-        returns (address, address, uint256)
-    {
-
-        // transfer ETH
-        if(data.length == 0) {
-            return (ETH_ADDRESS, to, value);
-        }
-
-        // transfer(address,uint256)
-        if(data.toBytes4(0) != 0xa9059cbb) {
-            revert("unexpected function call");
-        }
-    
-        (address recipient, uint256 amount) = abi.decode(data.slice(4, data.length - 4),(address, uint256));
-        return (to, recipient, amount);
     }
 
     function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {

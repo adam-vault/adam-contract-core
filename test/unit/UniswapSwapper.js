@@ -3,6 +3,7 @@ const { expect } = require('chai');
 const _ = require('lodash');
 
 const { createAdam, createFeedRegistry, createBudgetApprovals, createTokens } = require('../utils/createContract');
+const { parseEther } = ethers.utils;
 
 describe('UniswapSwapper.sol', () => {
   let decode;
@@ -70,7 +71,7 @@ describe('UniswapSwapper.sol', () => {
         // allow any amount
         true,
         // allowed total amount
-        ethers.utils.parseEther('0'),
+        parseEther('0'),
         // allowed amount percentage
         '100',
         Math.round(Date.now() / 1000) - 86400, // startTime
@@ -95,7 +96,7 @@ describe('UniswapSwapper.sol', () => {
   it('decode transaction data', async () => {
     context('decode WETH9', async () => {
       it('ETH => WETH', async () => {
-        const msgValue = ethers.utils.parseEther('0.1');
+        const msgValue = parseEther('0.1');
         const data = '0xd0e30db0';
 
         const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapDataBeforeSwap(WETHAddress, data, msgValue);
@@ -115,8 +116,8 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(WETHAddress);
         expect(tokenOut).to.equal(ETHAddress);
-        expect(amountIn).to.equal(ethers.utils.parseEther('0.1'));
-        expect(amountOut).to.equal(ethers.utils.parseEther('0.1'));
+        expect(amountIn).to.equal(parseEther('0.1'));
+        expect(amountOut).to.equal(parseEther('0.1'));
         expect(estimatedIn).to.equal(false);
         expect(estimatedOut).to.equal(false);
       });
@@ -124,7 +125,7 @@ describe('UniswapSwapper.sol', () => {
 
     context('decode V2 Uniswap Router', async () => {
       it('ETH (exact) => DAI', async () => {
-        const msgValue = ethers.utils.parseEther('0.1');
+        const msgValue = parseEther('0.1');
         const data = '0x5ae401dc00000000000000000000000000000000000000000000000000000000621360a200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000e4472b43f3000000000000000000000000000000000000000000000000016345785d8a0000000000000000000000000000000000000000005db3338b89c8ee48136867a9ff0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc1630000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c778417e063141139fce010982780140aa0cd5ab000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc473500000000000000000000000000000000000000000000000000000000';
 
         const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapDataBeforeSwap(UniswapRouter, data, msgValue);
@@ -137,14 +138,14 @@ describe('UniswapSwapper.sol', () => {
       });
 
       it('ETH => DAI (exact)', async () => {
-        const msgValue = ethers.utils.parseEther('0.13571596');
+        const msgValue = parseEther('0.13571596');
         const data = '0x5ae401dc00000000000000000000000000000000000000000000000000000000621368ac000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000e442712a67000000000000000000000000000000000000007e37be2022c0914b268000000000000000000000000000000000000000000000000000000001e228da0ade2bfa0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc1630000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c778417e063141139fce010982780140aa0cd5ab000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc473500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000412210e8a00000000000000000000000000000000000000000000000000000000';
 
         const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapDataBeforeSwap(UniswapRouter, data, msgValue);
 
         expect(tokenIn).to.equal(ETHAddress);
         expect(tokenOut).to.equal(DAIAddress);
-        expect(amountOut).to.equal(ethers.utils.parseEther('10000000000000'));
+        expect(amountOut).to.equal(parseEther('10000000000000'));
         expect(estimatedIn).to.equal(true);
         expect(estimatedOut).to.equal(false);
       });
@@ -156,7 +157,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(WETHAddress);
         expect(tokenOut).to.equal(DAIAddress);
-        expect(amountIn).to.equal(ethers.utils.parseEther('0.1'));
+        expect(amountIn).to.equal(parseEther('0.1'));
         expect(estimatedIn).to.equal(false);
         expect(estimatedOut).to.equal(true);
       });
@@ -168,7 +169,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(WETHAddress);
         expect(tokenOut).to.equal(DAIAddress);
-        expect(amountOut).to.equal(ethers.utils.parseEther('7500000000000'));
+        expect(amountOut).to.equal(parseEther('7500000000000'));
         expect(estimatedIn).to.equal(true);
         expect(estimatedOut).to.equal(false);
       });
@@ -180,7 +181,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(UNIAddress);
         expect(tokenOut).to.equal(ETHAddress);
-        expect(amountIn).to.equal(ethers.utils.parseEther('0.06'));
+        expect(amountIn).to.equal(parseEther('0.06'));
         expect(estimatedIn).to.equal(false);
         expect(estimatedOut).to.equal(true);
       });
@@ -192,7 +193,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(UNIAddress);
         expect(tokenOut).to.equal(ETHAddress);
-        expect(amountOut).to.equal(ethers.utils.parseEther('0.15'));
+        expect(amountOut).to.equal(parseEther('0.15'));
         expect(estimatedIn).to.equal(true);
         expect(estimatedOut).to.equal(false);
       });
@@ -200,7 +201,7 @@ describe('UniswapSwapper.sol', () => {
 
     context('decode V3 Uniswap Router', async () => {
       it('ETH (exact) => DAI', async () => {
-        const msgValue = ethers.utils.parseEther('0.1');
+        const msgValue = parseEther('0.1');
         const data = '0x5ae401dc000000000000000000000000000000000000000000000000000000006213634600000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000e404e45aaf000000000000000000000000c778417e063141139fce010982780140aa0cd5ab000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc473500000000000000000000000000000000000000000000000000000000000001f4000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc163000000000000000000000000000000000000000000000000016345785d8a000000000000000000000000000000000000000000acd640142a980d9a6ed709ba5d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
 
         const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapDataBeforeSwap(UniswapRouter, data, msgValue);
@@ -213,14 +214,14 @@ describe('UniswapSwapper.sol', () => {
       });
 
       it('ETH => DAI (exact)', async () => {
-        const msgValue = ethers.utils.parseEther('0.0000000000013459');
+        const msgValue = parseEther('0.0000000000013459');
         const data = '0x5ae401dc0000000000000000000000000000000000000000000000000000000062136662000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000e45023b4df000000000000000000000000c778417e063141139fce010982780140aa0cd5ab000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc47350000000000000000000000000000000000000000000000000000000000002710000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc1630000000000000000000000000000000000000000000000056bc75e2d63100000000000000000000000000000000000000000000000000000000000000014891d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000412210e8a00000000000000000000000000000000000000000000000000000000';
 
         const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapDataBeforeSwap(UniswapRouter, data, msgValue);
 
         expect(tokenIn).to.equal(ETHAddress);
         expect(tokenOut).to.equal(DAIAddress);
-        expect(amountOut).to.equal(ethers.utils.parseEther('100'));
+        expect(amountOut).to.equal(parseEther('100'));
         expect(estimatedIn).to.equal(true);
         expect(estimatedOut).to.equal(false);
       });
@@ -232,7 +233,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(WETHAddress);
         expect(tokenOut).to.equal(DAIAddress);
-        expect(amountIn).to.equal(ethers.utils.parseEther('0.1'));
+        expect(amountIn).to.equal(parseEther('0.1'));
         expect(estimatedIn).to.equal(false);
         expect(estimatedOut).to.equal(true);
       });
@@ -244,7 +245,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(WETHAddress);
         expect(tokenOut).to.equal(DAIAddress);
-        expect(amountOut).to.equal(ethers.utils.parseEther('7500000000000'));
+        expect(amountOut).to.equal(parseEther('7500000000000'));
         expect(estimatedIn).to.equal(true);
         expect(estimatedOut).to.equal(false);
       });
@@ -256,7 +257,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(DAIAddress);
         expect(tokenOut).to.equal(ETHAddress);
-        expect(amountIn).to.equal(ethers.utils.parseEther('100'));
+        expect(amountIn).to.equal(parseEther('100'));
         expect(estimatedIn).to.equal(false);
         expect(estimatedOut).to.equal(true);
       });
@@ -268,7 +269,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(UNIAddress);
         expect(tokenOut).to.equal(ETHAddress);
-        expect(amountOut).to.equal(ethers.utils.parseEther('0.0001'));
+        expect(amountOut).to.equal(parseEther('0.0001'));
         expect(estimatedIn).to.equal(true);
         expect(estimatedOut).to.equal(false);
       });
@@ -276,7 +277,7 @@ describe('UniswapSwapper.sol', () => {
 
     context('decode hybrid (V2 + V3) Uniswap Router', async () => {
       it('ETH (exact) => DAI', async () => {
-        const msgValue = ethers.utils.parseEther('0.3');
+        const msgValue = parseEther('0.3');
         const data = '0x5ae401dc00000000000000000000000000000000000000000000000000000000621362ec000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000e4472b43f30000000000000000000000000000000000000000000000000354a6ba7a18000000000000000000000000000000000000000000e06c72447c78d7d9f8bf7a79340000000000000000000000000000000000000000000000000000000000000080000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc1630000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c778417e063141139fce010982780140aa0cd5ab000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc47350000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e404e45aaf000000000000000000000000c778417e063141139fce010982780140aa0cd5ab000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc47350000000000000000000000000000000000000000000000000000000000000bb8000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc16300000000000000000000000000000000000000000000000000d529ae9e860000000000000000000000000000000000000000003836e4c2245dba427297bea15c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
 
         const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapDataBeforeSwap(UniswapRouter, data, msgValue);
@@ -289,14 +290,14 @@ describe('UniswapSwapper.sol', () => {
       });
 
       it('ETH => DAI (exact)', async () => {
-        const msgValue = ethers.utils.parseEther('0.20347979');
+        const msgValue = parseEther('0.20347979');
         const data = '0x5ae401dc0000000000000000000000000000000000000000000000000000000062136a14000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000002a000000000000000000000000000000000000000000000000000000000000000e442712a67000000000000000000000000000000000000008dfeb5e42718a3748b50000000000000000000000000000000000000000000000000000000021e8ff2205824150000000000000000000000000000000000000000000000000000000000000080000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc1630000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c778417e063141139fce010982780140aa0cd5ab000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc47350000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e45023b4df000000000000000000000000c778417e063141139fce010982780140aa0cd5ab000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc47350000000000000000000000000000000000000000000000000000000000002710000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc163000000000000000000000000000000000000002f54e74c0d08367c2e7000000000000000000000000000000000000000000000000000000000b457c1647f3acc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000412210e8a00000000000000000000000000000000000000000000000000000000';
 
         const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapDataBeforeSwap(UniswapRouter, data, msgValue);
 
         expect(tokenIn).to.equal(ETHAddress);
         expect(tokenOut).to.equal(DAIAddress);
-        expect(amountOut).to.equal(ethers.utils.parseEther('15000000000000'));
+        expect(amountOut).to.equal(parseEther('15000000000000'));
         expect(estimatedIn).to.equal(true);
         expect(estimatedOut).to.equal(false);
       });
@@ -308,7 +309,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(WETHAddress);
         expect(tokenOut).to.equal(DAIAddress);
-        expect(amountIn).to.equal(ethers.utils.parseEther('0.2'));
+        expect(amountIn).to.equal(parseEther('0.2'));
         expect(estimatedIn).to.equal(false);
         expect(estimatedOut).to.equal(true);
       });
@@ -320,7 +321,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(WETHAddress);
         expect(tokenOut).to.equal(DAIAddress);
-        expect(amountOut).to.equal(ethers.utils.parseEther('10000000000000'));
+        expect(amountOut).to.equal(parseEther('10000000000000'));
         expect(estimatedIn).to.equal(true);
         expect(estimatedOut).to.equal(false);
       });
@@ -332,7 +333,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(UNIAddress);
         expect(tokenOut).to.equal(ETHAddress);
-        expect(amountIn).to.equal(ethers.utils.parseEther('0.005'));
+        expect(amountIn).to.equal(parseEther('0.005'));
         expect(estimatedIn).to.equal(false);
         expect(estimatedOut).to.equal(true);
       });
@@ -344,7 +345,7 @@ describe('UniswapSwapper.sol', () => {
 
         expect(tokenIn).to.equal(UNIAddress);
         expect(tokenOut).to.equal(ETHAddress);
-        expect(amountOut).to.equal(ethers.utils.parseEther('0.015'));
+        expect(amountOut).to.equal(parseEther('0.015'));
         expect(estimatedIn).to.equal(true);
         expect(estimatedOut).to.equal(false);
       });
