@@ -31,10 +31,10 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address _governFactory;
         address _memberTokenImplementation;
         address _optInPoolImplementation;
+        address _admissionToken;
         string _name;
         string _description;
         uint256 _locktime;
-        uint8 memberTokenType;
         address memberToken;
         uint256[4] budgetApproval;
         uint256[4] revokeBudgetApproval;
@@ -44,17 +44,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         uint256 tokenAmount;
         DaoSetting daoSetting;
         address[] depositTokens;
+        bool mintMemberToken;
     }
 
     struct DaoSetting {
         uint256 minDepositAmount;
-        uint256 minMemberTokenToJoin;
-    }
-
-    enum MemberTokenTypeOption {
-        NotInUsed,
-        InternalErc20Token,
-        ExternalErc721Token
+        uint256 minTokenToAdmission;
     }
 
     enum VoteType {
@@ -70,13 +65,14 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public liquidPool;
     address public depositPool;
     address public governFactory;
+    address public admissionToken;
     address public memberTokenImplementation;
     address public optInPoolImplementation;
     string public name;
     uint256 public locktime;
     uint256 public minDepositAmount;
-    uint256 public minMemberTokenToJoin;
-    uint8 public memberTokenType;
+    uint256 public minTokenToAdmission;
+    
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
     mapping(address => bool) public isOptInPool;
@@ -99,23 +95,17 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         memberTokenImplementation = params._memberTokenImplementation;
         optInPoolImplementation = params._optInPoolImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
-        minMemberTokenToJoin = params.daoSetting.minMemberTokenToJoin;
-        memberTokenType = params.memberTokenType;
-        memberToken = params.memberToken;
+        minTokenToAdmission = params.daoSetting.minTokenToAdmission;
 
-        if (memberTokenType == uint8(MemberTokenTypeOption.InternalErc20Token)) {
+        if (params.mintMemberToken) {
             // tokenInfo: [name, symbol]
             _createMemberToken(params.tokenInfo, params.tokenAmount);
-        } else if(memberTokenType == uint8(MemberTokenTypeOption.ExternalErc721Token)) {
+        }
 
-            try IERC721(params.memberToken).supportsInterface(0x80ac58cd) returns (bool result) {
-                if(!result){ 
-                    revert("Not ERC 721 standard");
-                }
-            } catch {
-                revert("Not ERC 721 standard");
-            }
-            memberToken = params.memberToken;
+        if(params._admissionToken == address(0)){
+            admissionToken = memberToken;
+        }else{
+            admissionToken = params._admissionToken;
         }
 
         uint256[] memory w = new uint256[](1);
@@ -256,7 +246,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("DaoSetting") {
         minDepositAmount = _setting.minDepositAmount;
-        minMemberTokenToJoin = _setting.minMemberTokenToJoin;
+        minTokenToAdmission = _setting.minTokenToAdmission;
     }
 
     function createGovern(
