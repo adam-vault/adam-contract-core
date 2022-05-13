@@ -38,4 +38,18 @@ contract MemberToken is ERC20VotesUpgradeable {
         _delegate(to, to);
     }
 
+    function getPastTotalSupply(uint256 blockNumber) public view override returns (uint256) {
+        return super.getPastTotalSupply(blockNumber) - super.getPastVotes(minter, blockNumber);
+    }
+
+    function getPastVotes(address account, uint256 blockNumber) public view override returns (uint256) {
+        if(account == minter) return 0;
+        return super.getPastVotes(account, blockNumber);
+    }
+
+    function getVotes(address account) public view virtual override returns (uint256) {
+        if(account == minter) return 0;
+        return super.getVotes(account);
+    }
+
 }
