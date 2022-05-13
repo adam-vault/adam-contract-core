@@ -2,8 +2,8 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const _ = require('lodash');
 
-const { createAdam, createFeedRegistry, createBudgetApprovals,　createTokens } = require('../utils/createContract');
-
+const { createAdam, createFeedRegistry, createBudgetApprovals, createTokens } = require('../utils/createContract');
+const paramsStruct = require('../../utils/paramsStruct');
 describe('UniswapSwapper.sol', () => {
   let decode;
   let tokenA, feedRegistry, budgetApprovalAddresses, adam;
@@ -23,24 +23,12 @@ describe('UniswapSwapper.sol', () => {
     budgetApprovalAddresses = await createBudgetApprovals(executor);
     adam = await createAdam(feedRegistry, budgetApprovalAddresses);
 
-    const tx1 = await adam.createDao(
-      [
-        'A Company', // _name
-        'Description', // _description
-        10000000, // _locktime
-        0, // MemberTokenType
-        '0x0000000000000000000000000000000000000000', // memberToken
-        [13, 3000, 5000, 0], // budgetApproval
-        [13, 3000, 5000, 0], // revokeBudgetApproval
-        [13, 3000, 5000, 0], // general,
-        [13, 3000, 5000, 0], // daoSetting
-        [], // tokenInfo
-        0,
-        0, // minDepositAmount
-        0, // minMemberTokenToJoin
-        [],
-      ],
-    );
+    const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
+      budgetApproval: [13, 3000, 5000, 0], // budgetApproval
+      revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
+      general: [13, 3000, 5000, 0], // general,
+      daoSettingApproval: [13, 3000, 5000, 0], // daoSetting
+    }));
     const receipt1 = await tx1.wait();
     const creationEventLog1 = _.find(receipt1.events, { event: 'CreateDao' });
     const daoAddr = creationEventLog1.args.dao;

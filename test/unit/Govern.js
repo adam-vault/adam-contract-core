@@ -2,6 +2,7 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const _ = require('lodash');
 const { createTokens, createAdam, createBudgetApprovals, createFeedRegistry } = require('../utils/createContract');
+const paramsStruct = require('../../utils/paramsStruct');
 
 describe('Govern.sol', function () {
   let adam, dao, governFactory, lp;
@@ -17,24 +18,7 @@ describe('Govern.sol', function () {
   };
 
   function createDao () {
-    return adam.createDao(
-      [
-        'A Company', // _name
-        'Description', // _description
-        10000000, // _locktime
-        1, // MemberTokenType
-        '0x0000000000000000000000000000000000000000', // memberToken
-        [13, 3000, 5000, 0], // budgetApproval
-        [13, 3000, 5000, 0], // revokeBudgetApproval
-        [13, 3000, 5000, 0], // general,
-        [13, 3000, 5000, 1], // daoSetting
-        ['name', 'symbol'], // tokenInfo
-        1,
-        0, // minDepositAmount
-        0, // minMemberTokenToJoin
-        [],
-      ],
-    );
+    return adam.createDao(paramsStruct.getCreateDaoParams({ mintMemberToken: true }));
   }
 
   beforeEach(async function () {
@@ -110,7 +94,6 @@ describe('Govern.sol', function () {
 
       it('should be able to propose a proposal, vote and execute', async function () {
         await dao.exposedTransferMemberToken(creator.address, 1);
-
         const MT = await dao.memberToken();
         const mt = await ethers.getContractAt('MemberToken', MT);
         expect(await mt.balanceOf(creator.address)).to.eq(1);
@@ -161,23 +144,13 @@ describe('Govern.sol', function () {
 
     context('For voting with membership ERC721Vote tokens', function () {
       it('should success due to 10% pass threshold (1 against 1 for)', async function () {
-        const tx1 = await adam.createDao(
-          [
-            'B Company', // _name
-            'Description', // _description
-            10000000, // _locktime
-            1, // MemberTokenType
-            '0x0000000000000000000000000000000000000000', // memberToken
-            [300, 1000, 1000, 0], // budgetApproval
-            [13, 3000, 5000, 0], // revokeBudgetApproval
-            [13, 3000, 5000, 0], // general,
-            [13, 3000, 5000, 1], // daoSetting
-            ['name', 'symbol'], // tokenInfo
-            1,
-            0, // minDepositAmount
-            0, // minMemberTokenToJoin
-            [],
-          ],
+        const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
+          budgetApproval: [300, 1000, 1000, 0], // budgetApproval
+          revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
+          general: [13, 3000, 5000, 0], // general,
+          daoSettingApproval: [13, 3000, 5000, 1], // daoSetting,
+          mintMemberToken: true,
+        }),
         );
         const receipt = await tx1.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
@@ -192,7 +165,6 @@ describe('Govern.sol', function () {
 
         await (lp.connect(owner1)).deposit({ value: ethers.utils.parseEther('1') });
         await (lp.connect(owner2)).deposit({ value: ethers.utils.parseEther('2') });
-        console.log(owner1.address);
         expect(await membership.balanceOf(owner1.address)).to.eq(1);
 
         expect(await membership.getVotes(owner1.address)).to.eq(1);
@@ -234,23 +206,13 @@ describe('Govern.sol', function () {
       });
 
       it('should failed due to 51% pass threshold (1 against 1 for)', async function () {
-        const tx1 = await adam.createDao(
-          [
-            'B Company', // _name
-            'Description', // _description
-            10000000, // _locktime
-            1, // MemberTokenType
-            '0x0000000000000000000000000000000000000000', // memberToken
-            [300, 1000, 5100, 0], // budgetApproval
-            [13, 3000, 5000, 0], // revokeBudgetApproval
-            [13, 3000, 5000, 0], // general,
-            [13, 3000, 5000, 1], // daoSetting
-            ['name', 'symbol'], // tokenInfo
-            1,
-            0, // minDepositAmount
-            0, // minMemberTokenToJoin
-            [],
-          ],
+        const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
+          budgetApproval: [300, 1000, 5100, 0], // budgetApproval
+          revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
+          general: [13, 3000, 5000, 0], // general,
+          daoSettingApproval: [13, 3000, 5000, 1], // daoSetting
+          mintMemberToken: true,
+        }),
         );
 
         const receipt = await tx1.wait();

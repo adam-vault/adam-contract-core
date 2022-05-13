@@ -92,19 +92,19 @@ describe('LiquidPool.sol', function () {
     });
 
     it('can deposit if meet minDeposit amount & minTokenToJoin', async function () {
-      await dao.setMinMemberTokenToJoin(parseEther('1'));
+      await dao.setMinTokenToAdmission(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('1'));
       await memberToken.mint(signer1.address, parseEther('1'));
       await expect(lpAsSigner1.deposit({ value: parseEther('1') })).to.not.be.reverted;
     });
     it('can not deposit if not meet minDeposit amount', async function () {
-      await dao.setMinMemberTokenToJoin(parseEther('1'));
+      await dao.setMinTokenToAdmission(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('1'));
       await memberToken.mint(signer1.address, parseEther('1'));
       await expect(lpAsSigner1.deposit({ value: parseEther('0.99') })).to.be.revertedWith('deposit amount not enough');
     });
     it('can not deposit if not meet minMemberTokenToJoin amount', async function () {
-      await dao.setMinMemberTokenToJoin(parseEther('1'));
+      await dao.setMinTokenToAdmission(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('1'));
       await memberToken.mint(signer1.address, parseEther('0.99'));
       await expect(lpAsSigner1.deposit({ value: parseEther('1') })).to.be.revertedWith('member token not enough');
@@ -286,21 +286,21 @@ describe('LiquidPool.sol', function () {
     });
 
     it('can deposit if meet minDeposit amount & minTokenToJoin', async function () {
-      await dao.setMinMemberTokenToJoin(parseEther('1'));
+      await dao.setMinTokenToAdmission(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('0.0046'));
       await memberToken.mint(signer1.address, parseEther('1'));
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await expect(lpAsSigner1.depositToken(token.address, parseEther('1'))).to.not.be.reverted;
     });
     it('can not deposit if not meet minDeposit amount', async function () {
-      await dao.setMinMemberTokenToJoin(parseEther('1'));
+      await dao.setMinTokenToAdmission(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('0.0046'));
       await memberToken.mint(signer1.address, parseEther('1'));
       await tokenAsSigner1.approve(lp.address, parseEther('0.99'));
       await expect(lpAsSigner1.depositToken(token.address, parseEther('0.99'))).to.be.revertedWith('deposit amount not enough');
     });
     it('can not deposit if not meet minMemberTokenToJoin amount', async function () {
-      await dao.setMinMemberTokenToJoin(parseEther('1'));
+      await dao.setMinTokenToAdmission(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('0.0046'));
       await memberToken.mint(signer1.address, parseEther('0.99'));
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
