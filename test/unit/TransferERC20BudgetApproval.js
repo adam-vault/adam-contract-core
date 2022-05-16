@@ -63,7 +63,8 @@ describe('TransferERC20BudgetApproval.sol', function () {
       expect(await budgetApproval.allowAllAddresses()).to.eq(false);
       expect(await budgetApproval.addressesMapping(receiver.address)).to.eq(true);
 
-      expect(await budgetApproval.tokens(0)).to.eq(tokenA.address);
+      expect(await budgetApproval.tokens(0)).to.eq(ETHAddress);
+      expect(await budgetApproval.tokens(1)).to.eq(tokenA.address);
       expect(await budgetApproval.tokensMapping(ETHAddress)).to.eq(true);
       expect(await budgetApproval.tokensMapping(tokenA.address)).to.eq(true);
 

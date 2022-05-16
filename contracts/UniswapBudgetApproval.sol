@@ -117,7 +117,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
         if (_totalAmount == 0) return false;
 
-        return (amount * 100 / _totalAmount) <= amountPercentage;
+        return amount <= _totalAmount * amountPercentage / 100;
     }
 
 }

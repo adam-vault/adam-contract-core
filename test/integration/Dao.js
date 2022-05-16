@@ -107,7 +107,7 @@ describe('Integration - Dao', function () {
       });
 
       it('should be able to deposit when enough minMemberTokenToJoin', async function () {
-        await tokenC721.mint(creator.address);
+        await tokenC721.mint(creator.address, 2345);
         await lp.deposit({ value: 1 });
         expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
       });

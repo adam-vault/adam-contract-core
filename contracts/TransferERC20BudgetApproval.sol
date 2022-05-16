@@ -7,6 +7,7 @@ import "./lib/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
+import "hardhat/console.sol";
 
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;
@@ -86,7 +87,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
         if (_totalAmount == 0) return false;
 
-        return (amount * 100 / _totalAmount) <= amountPercentage;
+        return amount <= _totalAmount * amountPercentage / 100;
     }
 
 
