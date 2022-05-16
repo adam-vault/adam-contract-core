@@ -1,34 +1,59 @@
 const { expect } = require('chai');
-const { ethers, upgrades } = require('hardhat');
+const { ethers } = require('hardhat');
 const _ = require('lodash');
 
-const { createTokens } = require('../utils/createContract');
+const { createTokens, createAdam, createFeedRegistry, createBudgetApprovals } = require('../utils/createContract');
 
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferERC20BudgetApproval.sol', function () {
-  let transferERC20BAImplementation, budgetApproval;
+  let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
-  let tokenA, executee, TransferERC20BudgetApproval;
+  let tokenA, feedRegistry, budgetApprovalAddresses;
 
-  beforeEach(async function () {
+  before(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
-    const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
-    TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
-    transferERC20BAImplementation = await TransferERC20BudgetApproval.deploy();
-    executee = await MockBudgetApprovalExecutee.deploy();
+
+    feedRegistry = await createFeedRegistry(tokenA, executor);
+    budgetApprovalAddresses = await createBudgetApprovals(executor);
+    adam = await createAdam(feedRegistry, budgetApprovalAddresses);
+    const tx1 = await adam.createDao(
+      [
+        'A Company', // _name
+        'Description', // _description
+        10000000, // _locktime
+        0, // MemberTokenType
+        '0x0000000000000000000000000000000000000000', // memberToken
+        [13, 3000, 5000, 0], // budgetApproval
+        [13, 3000, 5000, 0], // revokeBudgetApproval
+        [13, 3000, 5000, 0], // general,
+        [13, 3000, 5000, 0], // daoSetting
+        [], // tokenInfo
+        0,
+        0, // minDepositAmount
+        0, // minMemberTokenToJoin
+        [],
+      ],
+    );
+    const receipt = await tx1.wait();
+    const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+    const daoAddr = creationEventLog.args.dao;
+    dao = await ethers.getContractAt('Dao', daoAddr);
+    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+    const transferERC20BAImplementationAddr = budgetApprovalAddresses[0];
+    transferERC20BAImplementation = await ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BAImplementationAddr);
   });
 
   describe('Create Budget Approval', function () {
     it('should success', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', [[
-        executee.address, // dao addressc
+      const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize', [[
+        dao.address, // dao addressc
         executor.address, // executor
         [approver.address], // approvers
         1, // minApproval
@@ -46,7 +71,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         10, // usage count
       ]]);
 
-      const tx = await executee.createBudgetApprovals(
+      const tx = await lp.createBudgetApprovals(
         [transferERC20BAImplementation.address], [initData],
       );
       const receipt = await tx.wait();
@@ -55,7 +80,9 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
       budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
 
-      expect(await budgetApproval.dao()).to.eq(executee.address);
+      expect(await lp.budgetApprovals(budgetApprovalAddress)).to.eq(true);
+
+      expect(await budgetApproval.dao()).to.eq(dao.address);
       expect(await budgetApproval.executor()).to.eq(executor.address);
       expect(await budgetApproval.approversMapping(approver.address)).to.eq(true);
       expect(await budgetApproval.minApproval()).to.eq(1);
@@ -63,7 +90,8 @@ describe('TransferERC20BudgetApproval.sol', function () {
       expect(await budgetApproval.allowAllAddresses()).to.eq(false);
       expect(await budgetApproval.addressesMapping(receiver.address)).to.eq(true);
 
-      expect(await budgetApproval.tokens(0)).to.eq(tokenA.address);
+      expect(await budgetApproval.tokens(0)).to.eq(ETHAddress);
+      expect(await budgetApproval.tokens(1)).to.eq(tokenA.address);
       expect(await budgetApproval.tokensMapping(ETHAddress)).to.eq(true);
       expect(await budgetApproval.tokensMapping(tokenA.address)).to.eq(true);
 
@@ -80,7 +108,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     it('should fail if minApproval larger than approvers length', async function () {
       const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize', [[
-        executee.address, // dao address
+        dao.address, // dao address
         executor.address, // executor
         [approver.address], // approvers
         2, // minApproval
@@ -99,7 +127,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       ]]);
 
       await expect(
-        executee.createBudgetApprovals(
+        dao.createBudgetApprovals(
           [transferERC20BAImplementation.address],
           [initData],
         ),
@@ -107,39 +135,54 @@ describe('TransferERC20BudgetApproval.sol', function () {
     });
   });
 
-  describe('Execute Transaction (Transfer ETH)', function () {
-    beforeEach(async function () {
-      await executor.sendTransaction({ to: executee.address, value: parseEther('200') });
-
-      const startTime = Math.round(Date.now() / 1000) - 86400;
-      const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', [[
-        executee.address, // dao addressc
-        executor.address, // executor
-        [approver.address], // approvers
-        1, // minApproval
-        'Transfer ERC20', // text
-        'Outflow', // transaction type
-        false, // allow all addresses
-        [receiver.address], // allowed addresses (use when above = false)
-        [ETHAddress, tokenA.address], // allowed token
-        false, // allow any amount
-        parseEther('100'), // allowed total amount
-        '10', // allowed amount percentage
-        startTime, // startTime
-        endTime, // endTime
+  describe('Create Multiple Excuetee BudgetApprovals On Dao', function () {
+    it('should success', async function () {
+      const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize', [[
+        // dao address
+        dao.address,
+        // executor
+        executor.address,
+        // approvers
+        [approver.address],
+        // minApproval
+        1,
+        // text
+        'Transfer ERC20',
+        // transaction type
+        'Outflow',
+        // allow all addresses,
+        false,
+        // allowed addresses (use when above = false)
+        [receiver.address],
+        // allowed token
+        [ETHAddress, tokenA.address],
+        // allow any amount
+        false,
+        // allowed total amount
+        parseEther('100'),
+        // allowed amount percentage
+        '10',
+        0, // startTime
+        0, // endTime
         false, // allow unlimited usage
         10, // usage count
       ]]);
 
-      const tx = await executee.createBudgetApprovals(
-        [transferERC20BAImplementation.address], [initData],
+      const tx = await dao.createMultiExecuteeBudgetApprovals(
+        [dao.address, lp.address], [transferERC20BAImplementation.address, transferERC20BAImplementation.address], [initData, initData],
       );
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateBudgetApproval' });
-      const budgetApprovalAddress = creationEventLog.args.budgetApproval;
 
-      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
+      const receipt = await tx.wait();
+      const creationEventLog = _.filter(receipt.events, { event: 'CreateBudgetApproval' });
+
+      expect(await dao.budgetApprovals(creationEventLog[0].args.budgetApproval)).to.eq(true);
+      expect(await lp.budgetApprovals(creationEventLog[1].args.budgetApproval)).to.eq(true);
+    });
+  });
+
+  describe('Execute Transaction (Transfer ETH)', function () {
+    before(async function () {
+      await lp.connect(executor).deposit({ value: parseEther('200') });
     });
 
     context('ETH complete flow', () => {
@@ -166,7 +209,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     context('ERC20 complete flow', () => {
       it('should success', async function () {
-        await tokenA.mint(executee.address, parseEther('10'));
+        await tokenA.mint(lp.address, parseEther('10'));
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenA.address,
           receiver.address,
@@ -182,7 +225,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         await budgetApproval.connect(approver).approveTransaction(transactionId);
         await budgetApproval.connect(executor).executeTransaction(transactionId);
 
-        expect(await tokenA.balanceOf(executee.address)).to.eq(parseEther('0'));
+        expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('0'));
         expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('10'));
       });
     });
@@ -321,7 +364,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('execute before startTime', () => {
       it('should revert', async function () {
         const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize', [[
-          executee.address, // dao address
+          dao.address, // dao address
           executor.address, // executor
           [], // approvers
           0, // minApproval
@@ -339,7 +382,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           10, // usage count
         ]]);
 
-        const tx = await executee.createBudgetApprovals(
+        const tx = await lp.createBudgetApprovals(
           [transferERC20BAImplementation.address],
           [initData],
         );
@@ -373,7 +416,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('execute after endTime', () => {
       it('should revert', async function () {
         const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize', [[
-          executee.address, // dao address
+          dao.address, // dao address
           executor.address, // executor
           [], // approvers
           0, // minApproval
@@ -391,7 +434,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           10, // usage count
         ]]);
 
-        const tx = await executee.createBudgetApprovals(
+        const tx = await lp.createBudgetApprovals(
           [transferERC20BAImplementation.address],
           [initData],
         );
@@ -426,7 +469,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('execute if not enough usage count', () => {
       it('should revert', async function () {
         const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize', [[
-          executee.address, // dao address
+          dao.address, // dao address
           executor.address, // executor
           [], // approvers
           0, // minApproval
@@ -444,7 +487,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           1, // usage count
         ]]);
 
-        const tx = await executee.createBudgetApprovals(
+        const tx = await lp.createBudgetApprovals(
           [transferERC20BAImplementation.address],
           [initData],
         );
