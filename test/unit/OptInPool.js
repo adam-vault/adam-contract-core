@@ -1,7 +1,6 @@
 const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const { parseEther } = ethers.utils;
-const decodeBase64 = require('../utils/decodeBase64');
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const ETH_TOKEN_ID = 1;

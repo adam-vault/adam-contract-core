@@ -1,12 +1,11 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
-const _ = require('lodash');
+const findEventArgs = require('../../utils/findEventArgs');
 
 const { createAdam, createFeedRegistry, createBudgetApprovals, createTokens } = require('../utils/createContract');
 const { parseEther } = ethers.utils;
 
 describe('UniswapSwapper.sol', () => {
-  let decode;
   let tokenA, feedRegistry, budgetApprovalAddresses, adam;
   let executor, contract;
 
@@ -42,9 +41,7 @@ describe('UniswapSwapper.sol', () => {
         [],
       ],
     );
-    const receipt1 = await tx1.wait();
-    const creationEventLog1 = _.find(receipt1.events, { event: 'CreateDao' });
-    const daoAddr = creationEventLog1.args.dao;
+    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     const dao = await ethers.getContractAt('Dao', daoAddr);
     const uniswapBAImplementationAddr = budgetApprovalAddresses[1];
     const uniswapBAImplementation = await ethers.getContractAt('UniswapBudgetApproval', uniswapBAImplementationAddr);
@@ -85,12 +82,8 @@ describe('UniswapSwapper.sol', () => {
     const tx = await dao.createBudgetApprovals(
       [uniswapBAImplementationAddr], [initData],
     );
-    const receipt = await tx.wait();
-    const creationEventLog = _.find(receipt.events, { event: 'CreateBudgetApproval' });
-    const budgetApprovalAddress = creationEventLog.args.budgetApproval;
-
+    const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
     contract = await ethers.getContractAt('UniswapBudgetApproval', budgetApprovalAddress);
-    console.log({ budgetApprovalAddress });
   });
 
   it('decode transaction data', async () => {

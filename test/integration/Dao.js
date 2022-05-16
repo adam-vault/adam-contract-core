@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const _ = require('lodash');
+const findEventArgs = require('../../utils/findEventArgs');
+
 const { createAdam, createTokens } = require('../utils/createContract.js');
 
 describe('Integration - Dao', function () {
@@ -27,9 +28,7 @@ describe('Integration - Dao', function () {
         0, // minMemberTokenToJoin
         [],
       ]);
-      const receipt = await tx1.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-      const daoAddr = creationEventLog.args.dao;
+      const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
       dao = await ethers.getContractAt('MockDaoV2', daoAddr);
       lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     });
@@ -90,9 +89,7 @@ describe('Integration - Dao', function () {
           1, // minMemberTokenToJoin
           [],
         ]);
-        const receipt = await tx1.wait();
-        const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-        const daoAddr = creationEventLog.args.dao;
+        const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
@@ -179,10 +176,8 @@ describe('Integration - Dao', function () {
           50, // minMemberTokenToJoin
           [],
         ]);
+        const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
-        const receipt = await tx1.wait();
-        const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-        const daoAddr = creationEventLog.args.dao;
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
@@ -230,9 +225,8 @@ describe('Integration - Dao', function () {
           0, // minMemberTokenToJoin
           [],
         ]);
-        const receipt = await tx1.wait();
-        const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-        const daoAddr = creationEventLog.args.dao;
+        const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
+
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });

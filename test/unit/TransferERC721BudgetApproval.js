@@ -1,11 +1,7 @@
 const { expect } = require('chai');
-const { ethers, upgrades } = require('hardhat');
-const _ = require('lodash');
-
+const { ethers } = require('hardhat');
+const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
-
-const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferERC721BudgetApproval.sol', function () {
@@ -51,9 +47,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
       const tx = await executee.createBudgetApprovals(
         [transferERC721BAImplementation.address], [initData],
       );
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateBudgetApproval' });
-      const budgetApprovalAddress = creationEventLog.args.budgetApproval;
+      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
       budgetApproval = await ethers.getContractAt('TransferERC721BudgetApproval', budgetApprovalAddress);
 
@@ -135,9 +129,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
       const tx = await executee.createBudgetApprovals(
         [transferERC721BAImplementation.address], [initData],
       );
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateBudgetApproval' });
-      const budgetApprovalAddress = creationEventLog.args.budgetApproval;
+      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
       budgetApproval = await ethers.getContractAt('TransferERC721BudgetApproval', budgetApprovalAddress);
     });
@@ -151,13 +143,10 @@ describe('TransferERC721BudgetApproval.sol', function () {
       ]);
 
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      const transactionId = creationEventLog.args.id;
-
-      await budgetApproval.connect(approver).approveTransaction(transactionId);
-      await budgetApproval.connect(executor).executeTransaction(transactionId);
+      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(executor).executeTransaction(id);
 
       expect(await tokenC721.ownerOf(37752)).to.eq(receiver.address);
     });
@@ -177,12 +166,10 @@ describe('TransferERC721BudgetApproval.sol', function () {
         37753,
       ]);
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData2], Date.now() + 86400, false);
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
-      const transactionId = creationEventLog.args.id;
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(transactionId);
-      await budgetApproval.connect(executor).executeTransaction(transactionId);
+      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(executor).executeTransaction(id);
 
       expect(await tokenC721.ownerOf(37752)).to.eq(receiver.address);
       expect(await tokenC721.ownerOf(37753)).to.eq(receiver.address);
@@ -196,13 +183,11 @@ describe('TransferERC721BudgetApproval.sol', function () {
         37752,
       ]);
       const tx = await budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false);
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
-      const transactionId = creationEventLog.args.id;
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(transactionId);
+      await budgetApproval.connect(approver).approveTransaction(id);
 
-      await expect(budgetApproval.connect(approver).executeTransaction(transactionId))
+      await expect(budgetApproval.connect(approver).executeTransaction(id))
         .to.be.revertedWith('access denied');
     });
 
@@ -214,11 +199,9 @@ describe('TransferERC721BudgetApproval.sol', function () {
         37752,
       ]);
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
-      const transactionId = creationEventLog.args.id;
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
+      await expect(budgetApproval.connect(executor).executeTransaction(id))
         .to.be.revertedWith('status invalid');
     });
 
@@ -230,12 +213,10 @@ describe('TransferERC721BudgetApproval.sol', function () {
         37752,
       ]);
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
-      const transactionId = creationEventLog.args.id;
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(executor).revokeTransaction(transactionId);
-      await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
+      await budgetApproval.connect(executor).revokeTransaction(id);
+      await expect(budgetApproval.connect(executor).executeTransaction(id))
         .to.be.revertedWith('status invalid');
     });
 
@@ -247,13 +228,11 @@ describe('TransferERC721BudgetApproval.sol', function () {
         37752,
       ]);
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
-      const transactionId = creationEventLog.args.id;
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(transactionId);
+      await budgetApproval.connect(approver).approveTransaction(id);
 
-      await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
+      await expect(budgetApproval.connect(executor).executeTransaction(id))
         .to.be.revertedWith('invalid recipient');
     });
 
@@ -278,13 +257,11 @@ describe('TransferERC721BudgetApproval.sol', function () {
         37754,
       ]);
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData2, transactionData3], Date.now() + 86400, false);
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
-      const transactionId = creationEventLog.args.id;
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(transactionId);
+      await budgetApproval.connect(approver).approveTransaction(id);
 
-      await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
+      await expect(budgetApproval.connect(executor).executeTransaction(id))
         .to.be.revertedWith('invalid amount');
     });
 
@@ -312,11 +289,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [transferERC721BAImplementation.address],
         [initData],
       );
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, {
-        event: 'CreateBudgetApproval',
-      });
-      const budgetApprovalAddress = creationEventLog.args.budgetApproval;
+      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
       const testBudgetApproval = await ethers.getContractAt(
         'TransferERC721BudgetApproval',
@@ -363,11 +336,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [transferERC721BAImplementation.address],
         [initData],
       );
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, {
-        event: 'CreateBudgetApproval',
-      });
-      const budgetApprovalAddress = creationEventLog.args.budgetApproval;
+      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
       const testBudgetApproval = await ethers.getContractAt(
         'TransferERC721BudgetApproval',
@@ -415,11 +384,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [transferERC721BAImplementation.address],
         [initData],
       );
-      const receipt = await tx.wait();
-      const creationEventLog = _.find(receipt.events, {
-        event: 'CreateBudgetApproval',
-      });
-      const budgetApprovalAddress = creationEventLog.args.budgetApproval;
+      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
       const testBudgetApproval = await ethers.getContractAt(
         'TransferERC721BudgetApproval',

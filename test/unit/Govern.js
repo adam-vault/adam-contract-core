@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const _ = require('lodash');
+const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens, createAdam, createBudgetApprovals, createFeedRegistry } = require('../utils/createContract');
 
 describe('Govern.sol', function () {
@@ -44,9 +44,7 @@ describe('Govern.sol', function () {
     budgetApprovalAddresses = await createBudgetApprovals(creator);
     adam = await createAdam(feedRegistry, budgetApprovalAddresses);
     const tx1 = await createDao();
-    const receipt = await tx1.wait();
-    const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-    const daoAddr = creationEventLog.args.dao;
+    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     dao = await ethers.getContractAt('MockDaoV2', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     const governFactoryAddr = await dao.governFactory();
@@ -89,9 +87,7 @@ describe('Govern.sol', function () {
           [transferCalldata],
           'Proposal #1: Transfer token',
         );
-        const rc = await tx.wait();
-        const event = rc.events.find(event => event.event === 'ProposalCreated');
-        const [proposalId] = event.args;
+        const { proposalId } = await findEventArgs(tx, 'ProposalCreated');
 
         await govern.castVote(proposalId, 0);
         const hasVoted = await govern.hasVoted(proposalId, creator.address);
@@ -131,10 +127,7 @@ describe('Govern.sol', function () {
           [transferCalldata],
           'Proposal #1: Transfer token',
         );
-
-        const rc = await tx.wait();
-        const event = rc.events.find(event => event.event === 'ProposalCreated');
-        const [proposalId] = event.args;
+        const { proposalId } = await findEventArgs(tx, 'ProposalCreated');
 
         await govern.castVote(proposalId, 1);
         const hasVoted = await govern.hasVoted(proposalId, creator.address);
@@ -179,9 +172,7 @@ describe('Govern.sol', function () {
             [],
           ],
         );
-        const receipt = await tx1.wait();
-        const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-        const daoAddr = creationEventLog.args.dao;
+        const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
 
@@ -212,9 +203,7 @@ describe('Govern.sol', function () {
           [transferCalldata],
           'Proposal #1: Transfer token',
         );
-        const rc = await tx.wait();
-        const event = rc.events.find(event => event.event === 'ProposalCreated');
-        const [proposalId] = event.args;
+        const { proposalId } = await findEventArgs(tx, 'ProposalCreated');
 
         await govern.connect(owner1).castVote(proposalId, 0);
         await govern.connect(owner2).castVote(proposalId, 1);
@@ -253,9 +242,8 @@ describe('Govern.sol', function () {
           ],
         );
 
-        const receipt = await tx1.wait();
-        const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-        const daoAddr = creationEventLog.args.dao;
+        const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
+
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
         const governFactoryAddr = await dao.governFactory();
@@ -285,9 +273,7 @@ describe('Govern.sol', function () {
           [transferCalldata],
           'Proposal #1: Transfer token',
         );
-        const rc = await tx.wait();
-        const event = rc.events.find(event => event.event === 'ProposalCreated');
-        const [proposalId] = event.args;
+        const { proposalId } = await findEventArgs(tx, 'ProposalCreated');
 
         await govern.connect(owner1).castVote(proposalId, 0);
         await govern.connect(owner2).castVote(proposalId, 1);
