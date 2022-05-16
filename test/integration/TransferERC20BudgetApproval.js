@@ -13,7 +13,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
   let executor, approver, receiver;
   let tokenA, feedRegistry, budgetApprovalAddresses;
 
-  beforeEach(async function () {
+  before(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
@@ -181,7 +181,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
   });
 
   describe('Execute Transaction (Transfer ETH)', function () {
-    beforeEach(async function () {
+    before(async function () {
       await lp.connect(executor).deposit({ value: parseEther('200') });
     });
 
