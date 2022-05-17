@@ -7,6 +7,7 @@ const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
 const transferERC20BudgetApprovalAddress = deploymentResult.addresses.transferErc20BudgetApproval;
 const uniswapBudetApprovalAddress = deploymentResult.addresses.uniswapBudgetApproval;
+const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 
 const budgetApprovalAddresses = [];
@@ -35,7 +36,7 @@ async function main () {
       // allowed addresses (use when above = false)
       ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
       // allowed token (use when above = false)
-      [hre.ethers.constants.AddressZero, DAIAddress],
+      [ETHAddress, DAIAddress],
       // allow any amount
       false,
       // allowed total amount
@@ -68,7 +69,7 @@ async function main () {
         // allowed addresses (use when above = false)
         ['0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45'],
         // allowed token (use when above = false)
-        [hre.ethers.constants.AddressZero],
+        [ETHAddress],
         // allow any amount
         true,
         // allowed total amount
