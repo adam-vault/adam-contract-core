@@ -26,7 +26,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     struct Transaction {
         uint256 id;
-        bytes data;
+        bytes[] data;
         Status status;
         uint256 deadline;
         mapping(address => bool) approved;
@@ -34,9 +34,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bool isExist;
     }
 
-    event CreateTransaction(uint256 id, bytes data, uint256 deadline, Status status);
+    event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status);
     event ApproveTransaction(uint256 id, address approver);
-    event ExecuteTransaction(uint256 id, bytes data);
+    event ExecuteTransaction(uint256 id, bytes[] data);
     event RevokeTransaction(uint256 id);
     event AllowAddress(address target);
     event AllowToken(address token);
@@ -80,13 +80,13 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
-    modifier matchStatus(uint256 _transactionId, Status _status) {
-        require(transactions[_transactionId].status == _status, "status invalid");
+    modifier matchStatus(uint256 id, Status status) {
+        require(transactions[id].status == status, "status invalid");
         _;
     }
 
-    modifier checkTime(uint256 _transactionId) {
-        require(block.timestamp <= transactions[_transactionId].deadline, "transaction expired");
+    modifier checkTime(uint256 id) {
+        require(block.timestamp <= transactions[id].deadline, "transaction expired");
         require(block.timestamp >= startTime, "budget approval not yet started");
         if(endTime != 0) {
             require(block.timestamp < endTime, "budget approval ended");
@@ -101,12 +101,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         uint256 minApproval;
         string text;
         string transactionType;
-        bool allowAllAddresses;
-        address[] addresses;
-        address[] tokens;
-        bool allowAnyAmount;
-        uint256 totalAmount;
-        uint8 amountPercentage;
         uint256 startTime;
         uint256 endTime;
         bool allowUnlimitedUsageCount;
@@ -137,17 +131,20 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         usageCount = params.usageCount;
     }
 
-    function NAME() external virtual returns (string calldata);
+    function executeTransaction(uint256 id) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
+        for (uint i = 0; i < transactions[id].data.length; i++) {
+            require(allowUnlimitedUsageCount || usageCount > 0, "usage exceeded");
+            if (!allowUnlimitedUsageCount) {
+                usageCount--;
+            }
+            _execute(transactions[id].data[i]);
+        }
 
-    function executeTransaction(uint256 _transactionId) public matchStatus(_transactionId, Status.Approved) checkTime(_transactionId) onlyExecutor {
-        (bool success, bytes memory result) = address(this).call(transactions[_transactionId].data);
-        require(success, RevertMsg.ToString(result));
-
-        transactions[_transactionId].status = Status.Completed;
-        emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
+        transactions[id].status = Status.Completed;
+        emit ExecuteTransaction(id, transactions[id].data);
     }
 
-    function createTransaction(bytes memory _data, uint256 _deadline, bool _execute) external {
+    function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute) external returns (uint256) {
         _transactionIds.increment();
         uint256 id = _transactionIds.current();
 
@@ -166,9 +163,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
         emit CreateTransaction(id, _data, _deadline,  newTransaction.status);
 
-        if (_execute) {
+        if (_isExecute) {
             executeTransaction(id);
         }
+        return id;
     }
 
     function approveTransaction(uint256 id) external onlyApprover {
@@ -194,18 +192,19 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit RevokeTransaction(id);
     }
 
-    function execute(address, bytes memory, uint256) public virtual;
-
-    // TODO
-    function checkUsageCountValid() public view returns (bool) {
-        return allowUnlimitedUsageCount || usageCount > 0;
+    function statusOf(uint256 id) public view returns (Status) {
+        return transactions[id].status;
+    }
+    function approvedCountOf(uint256 id) public view returns (uint256) {
+        return transactions[id].approvedCount;
+    }
+    function deadlineOf(uint256 id) public view returns (uint256) {
+        return transactions[id].deadline;
     }
 
-    function _updateUsageCount() internal {
-        if(!allowUnlimitedUsageCount) {
-            usageCount--;
-        }
-    }
+    function _execute(bytes memory) internal virtual;
+    function executeParams() public pure virtual returns (string[] memory);
+    function name() external virtual returns (string memory);
 
     function _authorizeUpgrade(address) internal override initializer {}
 }

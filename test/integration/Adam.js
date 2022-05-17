@@ -1,6 +1,6 @@
 const chai = require('chai');
 const hre = require('hardhat');
-const _ = require('lodash');
+const findEventArgs = require('../../utils/findEventArgs');
 const { smock } = require('@defi-wonderland/smock');
 const { ethers } = hre;
 const { expect } = chai;
@@ -51,9 +51,7 @@ describe('Integration - Create DAO', function () {
 
   it('can upgrade dao', async function () {
     const tx1 = await createDao();
-    const receipt = await tx1.wait();
-    const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-    const daoAddr = creationEventLog.args.dao;
+    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
     const MockDaoV2 = await ethers.getContractFactory('MockDaoV2');
     const mockDaoV2 = await MockDaoV2.deploy();
@@ -71,9 +69,7 @@ describe('Integration - Create DAO', function () {
     let dao, lp, membership;
     beforeEach(async function () {
       const tx1 = await createDao();
-      const receipt = await tx1.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-      const daoAddr = creationEventLog.args.dao;
+      const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
       dao = await ethers.getContractAt('Dao', daoAddr);
 
       const membershipAddr = await dao.membership();
@@ -112,9 +108,7 @@ describe('Integration - Create DAO', function () {
     let dao, dp, membership;
     beforeEach(async function () {
       const tx1 = await createDao();
-      const receipt = await tx1.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-      const daoAddr = creationEventLog.args.dao;
+      const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
       dao = await ethers.getContractAt('Dao', daoAddr);
 
       const membershipAddr = await dao.membership();
@@ -153,9 +147,7 @@ describe('Integration - Create DAO', function () {
     let dao, dp, membership, optInPool;
     beforeEach(async function () {
       const tx1 = await createDao();
-      const receipt = await tx1.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-      const daoAddr = creationEventLog.args.dao;
+      const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
       dao = await ethers.getContractAt('Dao', daoAddr);
 
       const membershipAddr = await dao.membership();
@@ -172,9 +164,7 @@ describe('Integration - Create DAO', function () {
         [],
         [],
       );
-      const receipt2 = await tx2.wait();
-      const creationEventLog2 = _.find(receipt2.events, { event: 'CreateOptInPool' });
-      const optInPoolAddr = creationEventLog2.args.optInPool;
+      const { optInPool: optInPoolAddr } = await findEventArgs(tx2, 'CreateOptInPool');
       optInPool = await ethers.getContractAt('OptInPool', optInPoolAddr);
 
       await dp.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
@@ -214,62 +204,6 @@ describe('Integration - Create DAO', function () {
     });
   });
 
-  // describe('Deposit ERC20 to DAO', function () {
-  //   let dao, membership, erc20;
-  //   beforeEach(async function () {
-  //     const A = await ethers.getContractFactory('TokenA');
-  //     erc20 = await A.deploy();
-  //     await erc20.deployed();
-  //     await erc20.mint(creator.address, ethers.utils.parseEther('100'));
-
-  //     const tx1 = await adam.createDao('A Company', 'ACOM', 'Description', 10000000, [ethers.constants.AddressZero, erc20.address]);
-  //     const receipt = await tx1.wait();
-  //     const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-  //     const daoAddr = creationEventLog.args.dao;
-  //     dao = await ethers.getContractAt('Dao', daoAddr);
-  //     const membershipAddr = await dao.membership();
-  //     membership = await ethers.getContractAt('Membership', membershipAddr);
-  //   });
-
-  //   it('create Membership when depositToken()', async function () {
-  //     await erc20.approve(dao.address, ethers.utils.parseEther('1'));
-  //     await dao.depositToken(erc20.address, ethers.utils.parseEther('1'));
-  //     expect(await membership.balanceOf(creator.address)).to.equal(1);
-
-  //     const jsonResponse = decodeBase64(await membership.tokenURI(1));
-  //     expect(jsonResponse.name).to.equal('A Company Membership #1');
-  //     expect(jsonResponse.attributes[0].value).to.not.be.empty;
-  //     expect(await erc20.balanceOf(dao.address)).to.equal(ethers.utils.parseEther('1'));
-
-  //     const jsonResponse2 = decodeBase64(await dao.uri(2));
-  //     expect(jsonResponse2.name).to.equal('TokenA (A Company)');
-  //     expect(jsonResponse2.decimals).to.equal(18);
-  //   });
-
-  //   it('gives token uri with member address', async function () {
-  //     await erc20.approve(dao.address, ethers.utils.parseEther('1.2'));
-  //     await dao.depositToken(erc20.address, ethers.utils.parseEther('1.2'));
-  //     const memberAddr = await membership.members(0);
-
-  //     const jsonResponse = decodeBase64(await membership.tokenURI(1));
-  //     expect(jsonResponse.name).to.equal('A Company Membership #1');
-  //     expect(jsonResponse.attributes[0].value.toLowerCase()).to.equal(memberAddr.toLowerCase());
-  //   });
-
-  //   it('should not recreate Member when deposit() again by same EOA', async function () {
-  //     await erc20.approve(dao.address, ethers.utils.parseEther('3'));
-  //     await dao.depositToken(erc20.address, ethers.utils.parseEther('1.1'));
-  //     await dao.depositToken(erc20.address, ethers.utils.parseEther('1.2'));
-  //     await dao.depositToken(erc20.address, ethers.utils.parseEther('0.3'));
-
-  //     const memberAddr = await membership.members(0);
-
-  //     expect(await membership.balanceOf(creator.address)).to.equal(1);
-  //     expect(await dao.balanceOf(memberAddr, 2)).to.equal(ethers.utils.parseEther('2.6'));
-  //     expect(await erc20.balanceOf(dao.address)).to.equal(ethers.utils.parseEther('2.6'));
-  //   });
-  // });
-
   describe('Redeem ETH from DAO', function () {
     let dao, lp, membership;
     beforeEach(async function () {
@@ -291,9 +225,7 @@ describe('Integration - Create DAO', function () {
           [token.address], // depositTokens
         ],
       );
-      const receipt = await tx1.wait();
-      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-      const daoAddr = creationEventLog.args.dao;
+      const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
       dao = await ethers.getContractAt('Dao', daoAddr);
 
       const membershipAddr = await dao.membership();
@@ -314,37 +246,4 @@ describe('Integration - Create DAO', function () {
     });
   });
 
-  // describe('Redeem Token from DAO', function () {
-  //   let dao, membership, erc20;
-  //   beforeEach(async function () {
-  //     const A = await ethers.getContractFactory('TokenA');
-  //     erc20 = await A.deploy();
-  //     await erc20.deployed();
-  //     await erc20.mint(creator.address, ethers.utils.parseEther('123'));
-
-  //     const tx1 = await adam.createDao('A Company', 'ACOM', 'Description', 1000, [erc20.address]);
-  //     const receipt = await tx1.wait();
-  //     const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-  //     const daoAddr = creationEventLog.args.dao;
-  //     dao = await ethers.getContractAt('Dao', daoAddr);
-  //     const membershipAddr = await dao.membership();
-  //     membership = await ethers.getContractAt('Membership', membershipAddr);
-  //     await erc20.approve(dao.address, ethers.utils.parseEther('123'));
-  //     await dao.depositToken(erc20.address, ethers.utils.parseEther('123'));
-  //   });
-
-  //   it('redeem and burn exact amount of token', async function () {
-  //     await hre.ethers.provider.send('evm_increaseTime', [1000]);
-  //     await dao.redeemToken(erc20.address, ethers.utils.parseEther('3'));
-
-  //     expect(await membership.balanceOf(creator.address)).to.equal(1);
-  //     const memberAddr = await membership.members(0);
-
-  //     expect(await dao.balanceOf(memberAddr, 2)).to.equal(ethers.utils.parseEther('120'));
-  //     expect(await erc20.balanceOf(creator.address)).to.equal(ethers.utils.parseEther('3'));
-  //   });
-  //   it('cannot redeem and burn exact amount of token inside lockup period', async function () {
-  //     await expect(dao.redeemToken(erc20.address, ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
-  //   });
-  // });
 });

@@ -27,7 +27,7 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
     FeedRegistryInterface public registry;
     Counters.Counter private _tokenIds;
     mapping(uint256 => address) public contractAddress;
-    mapping(address => uint256) public id;
+    mapping(address => uint256) public idOf;
     mapping(address => uint256) public totalSupply;
     mapping(address => bool) public isAssetSupported;
 
@@ -106,7 +106,7 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
         require(isAssetSupported[Denominations.ETH], "asset not support");
         require(msg.value > 0, "cannot be 0");
         totalSupply[Denominations.ETH] += msg.value;
-        _mint(msg.sender, id[Denominations.ETH], msg.value, "");
+        _mint(msg.sender, idOf[Denominations.ETH], msg.value, "");
         _afterDeposit(msg.sender, msg.value);
     }
 
@@ -114,14 +114,14 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
         require(isAssetSupported[asset], "asset not support");
         IERC20(asset).transferFrom(msg.sender, address(this), amount);
         totalSupply[asset] += amount;
-        _mint(msg.sender, id[asset], amount, "");
+        _mint(msg.sender, idOf[asset], amount, "");
         _afterDeposit(msg.sender, assetEthPrice(asset, amount));
     }
 
     function withdraw(address asset, uint256 amount) public {
-        require(amount <= balanceOf(msg.sender, id[asset]), "not enough balance");
+        require(amount <= balanceOf(msg.sender, idOf[asset]), "not enough balance");
         require(dao.firstDepositTime(msg.sender) + dao.locktime() <= block.timestamp, "lockup time");
-        _burn(msg.sender, id[asset], amount);
+        _burn(msg.sender, idOf[asset], amount);
         totalSupply[asset] -= amount;
 
         if (asset == Denominations.ETH) {
@@ -143,15 +143,15 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 
     function _addAsset(address asset) internal {
         require(canAddAsset(asset) && !isAssetSupported[asset], "Asset not support");
-        if (id[asset] == 0) {
+        if (idOf[asset] == 0) {
             _tokenIds.increment();
-            id[asset] = _tokenIds.current();
+            idOf[asset] = _tokenIds.current();
             contractAddress[_tokenIds.current()] = asset;
             emit CreateToken(_tokenIds.current(), asset);
         }
 
         isAssetSupported[asset] = true;
-        emit AllowDepositToken(id[asset], asset);
+        emit AllowDepositToken(idOf[asset], asset);
     }
 
     function _afterDeposit(address account, uint256 eth) private {

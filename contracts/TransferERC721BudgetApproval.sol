@@ -4,15 +4,14 @@ pragma solidity ^0.8.0;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
-import "hardhat/console.sol";
 
-contract TransferERC20BudgetApproval is CommonBudgetApproval {
+contract TransferERC721BudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;
 
-    string public constant override name = "Transfer ERC20 Budget Approval";
+    string public constant override name = "Transfer ERC721 Budget Approval";
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
@@ -20,7 +19,6 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     mapping(address => bool) public tokensMapping;
     bool public allowAnyAmount;
     uint256 public totalAmount;
-    uint8 public amountPercentage;
 
     function initialize(
         InitializeParams calldata params,
@@ -28,11 +26,10 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         address[] memory _toAddresses,
         address[] memory _tokens,
         bool _allowAnyAmount,
-        uint256 _totalAmount,
-        uint8 _amountPercentage
+        uint256 _totalAmount
     ) public initializer {
         __BudgetApproval_init(params);
-
+        
         allowAllAddresses = _allowAllAddresses;
         for(uint i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
@@ -44,57 +41,32 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
-        amountPercentage = _amountPercentage;
     }
 
     function executeParams() public pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address token";
         arr[1] = "address to";
-        arr[2] = "uint256 value";
+        arr[2] = "uint256 tokenId";
         return arr;
     }
 
     function _execute(
         bytes memory data
     ) internal override {
-        (address token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
+        (address token, address to, uint256 tokenId) = abi.decode(data,(address, address, uint256));
 
-        if (token == ETH_ADDRESS) {
-            IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, "", value);
-        } else {
-            bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
-            IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
-        }
+        bytes memory executeData = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", executee, to, tokenId);
+        IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
 
         require(allowAllAddresses || addressesMapping[to], "invalid recipient");
         require(tokensMapping[token], "invalid token");
-        require(allowAnyAmount || value <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(value), "invalid amount");
+        require(allowAnyAmount || 1 <= totalAmount, "invalid amount");
 
         if(!allowAnyAmount) {
-            totalAmount -= value;
+            totalAmount -= 1;
         }
     }
-
-    function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {
-        if (amountPercentage == 100) return true;
-
-        uint256 _totalAmount = amount;
-
-        for (uint i = 0; i < tokens.length; i++) {
-            if(tokens[i] == ETH_ADDRESS) {
-                _totalAmount += executee.balance;
-            } else {
-                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
-            }
-        }
-
-        if (_totalAmount == 0) return false;
-
-        return amount <= _totalAmount * amountPercentage / 100;
-    }
-
     function _addToken(address token) internal {
         require(!tokensMapping[token], "duplicate token");
         tokens.push(token);
@@ -107,6 +79,5 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         addressesMapping[to] = true;
         emit AllowAddress(to);
     }
-
 
 }

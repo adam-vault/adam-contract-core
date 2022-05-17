@@ -58,12 +58,14 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
     function assetsShares(address asset, uint256 amount) public view returns (uint256) {
         require(amount <= totalSupply(), "gt totalSupply");
         require(isAssetSupported[asset], "Asset not support");
+        if (totalSupply() == 0) return 0;
 
         return IERC20Metadata(asset).balanceOf(address(this)) * amount / totalSupply();
     }
 
     function ethShares(uint256 amount) public view returns (uint256) {
         require(amount <= totalSupply(), "gt totalSupply");
+        if (totalSupply() == 0) return 0;
         return address(this).balance * amount / totalSupply();
     }
 

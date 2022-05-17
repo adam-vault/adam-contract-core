@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "../lib/BytesLib.sol";
 import "../interface/IConstant.sol";
