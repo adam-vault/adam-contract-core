@@ -1,8 +1,8 @@
 const hre = require('hardhat');
-const _ = require('lodash');
 const { faker } = require('@faker-js/faker');
 const fileReader = require('../utils/fileReader');
 const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
+const findEventArgs = require('../utils/findEventArgs');
 
 // rinkeby
 const DAI = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
@@ -40,12 +40,8 @@ async function main () {
       0,
       [DAI, USDC, USDT],
     ]);
-
-    return tx.wait().then((receipt) => {
-      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
-      console.log(`dao (lockup: ${lockup}) created at:`, creationEventLog.args.dao);
-      daoAddresses.push({ address: creationEventLog.args.dao, description });
-    });
+    const { dao } = await findEventArgs(tx, 'CreateDao');
+    daoAddresses.push({ address: dao, description });
   }, Promise.resolve());
 
   const governFactory = await hre.ethers.getContractAt('GovernFactory', deploymentResult.addresses.governFactory);

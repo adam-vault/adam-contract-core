@@ -101,12 +101,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         uint256 minApproval;
         string text;
         string transactionType;
-        bool allowAllAddresses;
-        address[] addresses;
-        address[] tokens;
-        bool allowAnyAmount;
-        uint256 totalAmount;
-        uint8 amountPercentage;
         uint256 startTime;
         uint256 endTime;
         bool allowUnlimitedUsageCount;

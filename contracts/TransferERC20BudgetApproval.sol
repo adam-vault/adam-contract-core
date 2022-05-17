@@ -22,24 +22,29 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     uint256 public totalAmount;
     uint8 public amountPercentage;
 
-    function initialize(InitializeParams calldata params) public initializer {
+    function initialize(
+        InitializeParams calldata params,
+        bool _allowAllAddresses,
+        address[] memory _toAddresses,
+        address[] memory _tokens,
+        bool _allowAnyAmount,
+        uint256 _totalAmount,
+        uint8 _amountPercentage
+    ) public initializer {
         __BudgetApproval_init(params);
-        allowAllAddresses = params.allowAllAddresses;
-        for(uint i = 0; i < params.addresses.length; i++) {
-            addressesMapping[params.addresses[i]] = true;
-            emit AllowAddress(params.addresses[i]);
+
+        allowAllAddresses = _allowAllAddresses;
+        for(uint i = 0; i < _toAddresses.length; i++) {
+            _addToAddress(_toAddresses[i]);
         }
 
-        tokens = params.tokens;
-        for(uint i = 0; i < params.tokens.length; i++) {
-            tokensMapping[params.tokens[i]] = true;
-            emit AllowToken(params.tokens[i]);
+        for(uint i = 0; i < _tokens.length; i++) {
+            _addToken(_tokens[i]);
         }
 
-        allowAnyAmount = params.allowAnyAmount;
-        totalAmount = params.totalAmount;
-        emit AllowAmount(totalAmount);
-        amountPercentage = params.amountPercentage;
+        allowAnyAmount = _allowAnyAmount;
+        totalAmount = _totalAmount;
+        amountPercentage = _amountPercentage;
     }
 
     function executeParams() public pure override returns (string[] memory) {
@@ -88,6 +93,19 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         if (_totalAmount == 0) return false;
 
         return amount <= _totalAmount * amountPercentage / 100;
+    }
+
+    function _addToken(address token) internal {
+        require(!tokensMapping[token], "duplicate token");
+        tokens.push(token);
+        tokensMapping[token] = true;
+        emit AllowToken(token);
+    }
+
+    function _addToAddress(address to) internal {
+        require(!addressesMapping[to], "duplicate token");
+        addressesMapping[to] = true;
+        emit AllowAddress(to);
     }
 
 

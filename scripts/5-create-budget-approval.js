@@ -8,6 +8,7 @@ const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
 const transferERC20BudgetApprovalAddress = deploymentResult.addresses.transferErc20BudgetApproval;
 const uniswapBudetApprovalAddress = deploymentResult.addresses.uniswapBudgetApproval;
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
+const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 const budgetApprovalAddresses = [];
 
@@ -18,8 +19,8 @@ async function main () {
   const lp = await hre.ethers.getContractAt('LiquidPool', lpAddress);
 
   const transferERC20BudgetApproval = await hre.ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BudgetApprovalAddress);
-  const dataERC20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
-    [[
+  const dataERC20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
+    [
       // dao address
       daoAddress,
       // executor
@@ -30,23 +31,24 @@ async function main () {
       'Transfer ERC20',
       // transaction type
       'outflow',
-      // allow all addresses,
-      false,
-      // allowed addresses (use when above = false)
-      ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
-      // allowed token (use when above = false)
-      [hre.ethers.constants.AddressZero, DAIAddress],
-      // allow any amount
-      false,
-      // allowed total amount
-      hre.ethers.utils.parseEther('1000'),
-      // allowed amount percentage
-      '10',
       Math.round(Date.now() / 1000) - 86400, // startTime
       Math.round(Date.now() / 1000) + 86400, // endTime
       true, // allow unlimited usage count
       0, // usage count
-    ]]);
+    ],
+    // allow all addresses,
+    false,
+    // allowed addresses (use when above = false)
+    ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
+    // allowed token (use when above = false)
+    [ETHAddress, DAIAddress],
+    // allow any amount
+    false,
+    // allowed total amount
+    hre.ethers.utils.parseEther('1000'),
+    // allowed amount percentage
+    '10',
+  ]);
 
   const uniswapBudgetApproval = await hre.ethers.getContractAt('UniswapBudgetApproval', uniswapBudetApprovalAddress);
   const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize((address,address,address[],string,string,bool,address[],address[],bool,uint256,uint8,uint256,uint256,bool,uint256),bool,address[])',

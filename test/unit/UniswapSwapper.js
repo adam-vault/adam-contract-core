@@ -59,25 +59,20 @@ describe('UniswapSwapper.sol', () => {
         'Uniswap',
         // transaction type
         'Swap',
-        // allow all addresses,
-        true,
-        // allowed addresses (use when above = false)
-        [],
-        // allowed token (use when above = false)
-        [ETHAddress, WETHAddress, DAIAddress, UNIAddress],
-        // allow any amount
-        true,
-        // allowed total amount
-        parseEther('0'),
-        // allowed amount percentage
-        '100',
         Math.round(Date.now() / 1000) - 86400, // startTime
         Math.round(Date.now() / 1000) + 86400, // endTime,
         true,
         0,
       ],
+      [ETHAddress, WETHAddress, DAIAddress, UNIAddress],
       true,
       [],
+      // allow any amount
+      true,
+      // allowed total amount
+      parseEther('0'),
+      // allowed amount percentage
+      '100',
     ]);
     const tx = await dao.createBudgetApprovals(
       [uniswapBAImplementationAddr], [initData],

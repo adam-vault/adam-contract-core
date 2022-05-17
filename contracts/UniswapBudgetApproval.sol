@@ -19,9 +19,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
     string public constant override name = "Uniswap Budget Approval";
 
     bool public allowAllAddresses;
-    mapping(address => bool) public addressesMapping;
-    address[] public tokens;
-    mapping(address => bool) public tokensMapping;
+    address[] public fromTokens;
+    mapping(address => bool) public fromTokensMapping;
     bool public allowAnyAmount;
     uint256 public totalAmount;
     uint8 public amountPercentage;
@@ -30,34 +29,27 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     function initialize(
         InitializeParams calldata params,
+        address[] memory _fromTokens,
         bool _allowAllToTokens,
-        address[] calldata _toTokens
+        address[] calldata _toTokens,
+        bool _allowAnyAmount,
+        uint256 _totalAmount,
+        uint8 _amountPercentage
     ) public initializer {
         __BudgetApproval_init(params);
         
-        allowAllAddresses = params.allowAllAddresses;
-        for(uint i = 0; i < params.addresses.length; i++) {
-            addressesMapping[params.addresses[i]] = true;
-            emit AllowAddress(params.addresses[i]);
+        for(uint i = 0; i < _fromTokens.length; i++) {
+            _addFromToken(_fromTokens[i]);
         }
-
-        tokens = params.tokens;
-        for(uint i = 0; i < params.tokens.length; i++) {
-            tokensMapping[params.tokens[i]] = true;
-            emit AllowToken(params.tokens[i]);
-        }
-
-        allowAnyAmount = params.allowAnyAmount;
-        totalAmount = params.totalAmount;
-        emit AllowAmount(totalAmount);
-        amountPercentage = params.amountPercentage;
-
 
         allowAllToTokens = _allowAllToTokens;
         for(uint i = 0; i < _toTokens.length; i++) {
-            toTokensMapping[_toTokens[i]] = true;
-            emit AllowToToken(_toTokens[i]);
+            _addToToken(_toTokens[i]);
         }
+
+        allowAnyAmount = _allowAnyAmount;
+        totalAmount = _totalAmount;
+        amountPercentage = _amountPercentage;
 
         UniswapSwapper.setParams(IAdam(IDao(dao).adam()).constantState());
     }
@@ -74,6 +66,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         bytes memory data
     ) internal override {
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
+        require(to == UNISWAP_ROUTER, "address not uniswap router");
 
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
 
@@ -81,6 +74,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         if(data.toBytes4(0) == 0x095ea7b3) {
             return;
         }
+
         (
             address tokenIn,
             address tokenOut,
@@ -92,7 +86,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
         require(!estimatedIn && !estimatedOut, "unexpected result");
 
-        require(tokensMapping[tokenIn], "invalid token");
+        require(fromTokensMapping[tokenIn], "invalid token");
         require(allowAllToTokens || toTokensMapping[tokenOut], "invalid to token");
         require(allowAnyAmount || amountIn <= totalAmount, "invalid amount");
         require(checkAmountPercentageValid(amountIn), "invalid amount");
@@ -107,17 +101,30 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
         uint256 _totalAmount = amount;
 
-        for (uint i = 0; i < tokens.length; i++) {
-            if(tokens[i] == ETH_ADDRESS) {
+        for (uint i = 0; i < fromTokens.length; i++) {
+            if(fromTokens[i] == ETH_ADDRESS) {
                 _totalAmount += executee.balance;
             } else {
-                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
+                _totalAmount += IERC20(fromTokens[i]).balanceOf(executee);
             }
         }
 
         if (_totalAmount == 0) return false;
 
         return amount <= _totalAmount * amountPercentage / 100;
+    }
+
+    function _addFromToken(address token) internal {
+        require(!fromTokensMapping[token], "duplicate from token");
+        fromTokens.push(token);
+        fromTokensMapping[token] = true;
+        emit AllowToken(token);
+    }
+
+    function _addToToken(address token) internal {
+        require(!toTokensMapping[token], "duplicate to token");
+        toTokensMapping[token] = true;
+        emit AllowToToken(token);
     }
 
 }
