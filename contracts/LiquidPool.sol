@@ -12,14 +12,14 @@ import "./base/BudgetApprovalExecutee.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
+import "./base/PriceResolver.sol";
 import "./lib/Concat.sol";
 import "hardhat/console.sol";
 import "./interface/IDao.sol";
 
-contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetApprovalExecutee {
+contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceResolver, BudgetApprovalExecutee {
     using Concat for string;
     
-    FeedRegistryInterface public registry;
     IDao public dao;
     address[] public assets;
     mapping(address => bool) public isAssetSupported;
@@ -49,6 +49,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
         public initializer
     {
         __ERC20_init("LiquidPool", "LP");
+        __PriceResolver_init(feedRegistry);
         dao = IDao(payable(owner));
         registry = FeedRegistryInterface(feedRegistry);
         _addAssets(depositTokens); // todo
@@ -72,19 +73,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
     }
 
     function canAddAsset(address asset) public view returns (bool) {
-        try registry.getFeed(asset, Denominations.ETH) {
-            return true;
-        } catch (bytes memory /*lowLevelData*/) {
-            return false;
-        }
-    }
-
-    function assetEthPrice(address asset, uint256 amount) public view returns (uint256) {
-        (, int price,,,) = registry.latestRoundData(asset, Denominations.ETH);
-        if (price > 0) {
-            return uint256(price) * amount / 10 ** IERC20Metadata(asset).decimals();
-        }
-        return 0;
+        return canResolvePrice(asset);
     }
 
     function totalPrice() public view returns (uint256) {
@@ -165,6 +154,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
         emit AllowDepositToken(erc20);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override {}
+    function _authorizeUpgrade(address newImplementation) internal override(PriceResolver, UUPSUpgradeable) initializer {}
     receive() external payable {}
 }
