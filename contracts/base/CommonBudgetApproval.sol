@@ -144,7 +144,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit ExecuteTransaction(id, transactions[id].data);
     }
 
-    function createTransaction(bytes[] memory _data, uint256 _deadline, bool _execute) external {
+    function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute) external returns (uint256) {
         _transactionIds.increment();
         uint256 id = _transactionIds.current();
 
@@ -163,9 +163,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
         emit CreateTransaction(id, _data, _deadline,  newTransaction.status);
 
-        if (_execute) {
+        if (_isExecute) {
             executeTransaction(id);
         }
+        return id;
     }
 
     function approveTransaction(uint256 id) external onlyApprover {
@@ -191,13 +192,13 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit RevokeTransaction(id);
     }
 
-    function status(uint256 id) public view returns (Status) {
+    function statusOf(uint256 id) public view returns (Status) {
         return transactions[id].status;
     }
-    function approvedCount(uint256 id) public view returns (uint256) {
+    function approvedCountOf(uint256 id) public view returns (uint256) {
         return transactions[id].approvedCount;
     }
-    function deadline(uint256 id) public view returns (uint256) {
+    function deadlineOf(uint256 id) public view returns (uint256) {
         return transactions[id].deadline;
     }
 
