@@ -62,14 +62,18 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         UniswapSwapper.setParams(IAdam(IDao(dao).adam()).constantState());
     }
 
+    function afterInitialized() external override onlyExecutee {
+        bytes memory data = abi.encodeWithSignature("approve(address,uint256)", UNISWAP_ROUTER, type(uint256).max);
+        for(uint i = 0; i < tokens.length; i++) {
+            if(tokens[i] != ETH_ADDRESS) {
+                IBudgetApprovalExecutee(executee).executeByBudgetApproval(tokens[i], data, 0);
+            }
+        }
+    }
+
 
     function execute(address to, bytes memory data, uint256 value) public override onlySelf {
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
-
-        // approve(address,uint256) for ERC20
-        if(data.toBytes4(0) == 0x095ea7b3) {
-            return;
-        }
 
         (
             address tokenIn,
