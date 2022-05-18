@@ -24,7 +24,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
     address[] public assets;
     mapping(address => bool) public isAssetSupported;
 
-    event CreateBudgetApproval(address budgetApproval, bytes data);
     event AllowDepositToken(address token);
 
     modifier onlyGovern(string memory category) {
@@ -128,15 +127,8 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetA
         _addAssets(erc20s);
     }
 
-    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public onlyGovernOrDao("BudgetApproval") {
-        require(_budgetApprovals.length == data.length, "input invalid");
-
-        for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(dao.canCreateBudgetApproval(_budgetApprovals[i]), "not whitelist");
-            ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
-            budgetApprovals[address(_budgetApproval)] = true;
-            emit CreateBudgetApproval(address(_budgetApproval), data[i]);
-        }
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovernOrDao("BudgetApproval") {
+        require(dao.canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
 
     function _assetsPrice() internal view returns (uint256) {
