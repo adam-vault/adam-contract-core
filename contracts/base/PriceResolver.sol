@@ -10,9 +10,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract PriceResolver is Initializable, UUPSUpgradeable {
+contract PriceResolver is Initializable {
     FeedRegistryInterface public registry;
-    function __PriceResolver_init(address feedRegistry) internal {
+    function __PriceResolver_init(address feedRegistry) internal onlyInitializing {
         registry = FeedRegistryInterface(feedRegistry);
     }
     function assetEthPrice(address asset, uint256 amount) public view returns (uint256) {
@@ -34,5 +34,4 @@ contract PriceResolver is Initializable, UUPSUpgradeable {
             return false;
         }
     }
-    function _authorizeUpgrade(address) internal override virtual {}
 }

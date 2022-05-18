@@ -154,6 +154,6 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
             }
         }
     }
-    function _authorizeUpgrade(address newImplementation) internal override(PriceResolver, UUPSUpgradeable) initializer {}
+    function _authorizeUpgrade(address newImplementation) internal override initializer {}
 
 }

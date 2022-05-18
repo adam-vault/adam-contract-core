@@ -4,10 +4,11 @@ pragma solidity ^0.8.0;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
-
+import "./base/PriceResolver.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
-
-contract TransferERC20BudgetApproval is CommonBudgetApproval {
+import "./interface/IDao.sol";
+import "./interface/IAdam.sol";
+contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
     using BytesLib for bytes;
 
     string public constant override NAME = "Transfer ERC20 Budget Approval";
@@ -38,6 +39,8 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         totalAmount = params.totalAmount;
         emit AllowAmount(totalAmount);
         amountPercentage = params.amountPercentage;
+
+        __PriceResolver_init(IAdam(IDao(dao).adam()).feedRegistry());
     }
 
     function executeMultiple(
@@ -62,16 +65,17 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     ) public override onlySelf {
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
         (address _token, address _recipient, uint256 _amount) = decode(to, data, value);
+        uint256 ethAmount = assetEthPrice(_token, _amount);
 
         require(allowAllAddresses || addressesMapping[_recipient], "invalid recipient");
         require(tokensMapping[_token], "invalid token");
-        require(allowAnyAmount || _amount <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(_amount), "invalid amount");
+        require(allowAnyAmount || ethAmount <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(ethAmount), "invalid amount");
         require(checkUsageCountValid(), "usage exceeded");
 
 
         if(!allowAnyAmount) {
-            totalAmount -= _amount;
+            totalAmount -= ethAmount;
         }
         _updateUsageCount();
     }
@@ -107,16 +111,16 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         uint256 _totalAmount = amount;
 
         for (uint i = 0; i < tokens.length; i++) {
-            if(tokens[i] == ETH_ADDRESS) {
+            if (tokens[i] == ETH_ADDRESS) {
                 _totalAmount += executee.balance;
             } else {
-                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
+                _totalAmount += assetEthPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
             }
         }
 
         if (_totalAmount == 0) return false;
 
-        return (amount * 100 / _totalAmount) <= amountPercentage;
+        return amount <= _totalAmount * amountPercentage / 100;
     }
 
 
