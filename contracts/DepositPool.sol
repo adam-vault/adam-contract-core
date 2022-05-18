@@ -11,11 +11,12 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "./interface/IDao.sol";
+import "./base/PriceResolver.sol";
 import "./lib/ToString.sol";
 import "./lib/Base64.sol";
 import "./lib/Concat.sol";
 
-contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
+contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, PriceResolver {
     using Counters for Counters.Counter;
     using Strings for uint256;
     using Strings for uint8;
@@ -24,7 +25,6 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
     using Concat for string;
 
     IDao public dao;
-    FeedRegistryInterface public registry;
     Counters.Counter private _tokenIds;
     mapping(uint256 => address) public contractAddress;
     mapping(address => uint256) public id;
@@ -41,8 +41,8 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
     }
     function initialize(address owner, address feedRegistry, address[] memory depositTokens) public initializer {
         __ERC1155_init("");
+        __PriceResolver_init(feedRegistry);
         dao = IDao(payable(owner));
-        registry = FeedRegistryInterface(feedRegistry);
         _addAsset(Denominations.ETH);
         _addAssets(depositTokens);
     }
@@ -81,21 +81,8 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
         ));
     }
 
-    function assetEthPrice(address asset, uint256 amount) public view returns (uint256) {
-        (, int price,,,) = registry.latestRoundData(asset, Denominations.ETH);
-        if (price > 0) {
-            return uint256(price) * amount / 10 ** IERC20Metadata(asset).decimals();
-        }
-        return 0;
-    }
     function canAddAsset(address asset) public view returns (bool) {
-        if (asset == Denominations.ETH)
-            return true;
-        try registry.getFeed(asset, Denominations.ETH) {
-            return true;
-        } catch (bytes memory /*lowLevelData*/) {
-            return false;
-        }
+        return canResolvePrice(asset);
     }
 
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
