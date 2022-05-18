@@ -23,7 +23,7 @@ contract BudgetApprovalExecutee {
 
     function _beforeCreateBudgetApproval(address) virtual internal {}
 
-    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public {
+    function createBudgetApprovals(address[] memory _budgetApprovals, bytes[] memory data) public {
         require(_budgetApprovals.length == data.length, "input invalid");
 
         for(uint i = 0; i < _budgetApprovals.length; i++) {

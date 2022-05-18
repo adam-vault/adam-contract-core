@@ -42,8 +42,8 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
         uint256 _depositDeadline,
         address[] memory _redeemTokens,
         uint256 _redeemTime,
-        address[] calldata _budgetApprovals,
-        bytes[] calldata _budgetApprovalsData
+        address[] memory _budgetApprovals,
+        bytes[] memory _budgetApprovalsData
     ) public initializer {
         __ERC20_init("OptInPool", "OP");
         depositPool = IDepositPool(_depositPool);
