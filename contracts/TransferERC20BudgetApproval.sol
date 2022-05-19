@@ -44,7 +44,9 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         for(uint i = 0; i < _tokens.length; i++) {
             _addToken(_tokens[i]);
         }
-        __PriceResolver_init(IAdam(IDao(dao).adam()).feedRegistry());
+        allowAnyAmount = _allowAnyAmount;
+        totalAmount = _totalAmount;
+        amountPercentage = _amountPercentage;
     }
 
     function executeParams() public pure override returns (string[] memory) {

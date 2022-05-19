@@ -13,7 +13,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpg
 
 import "./base/BudgetApprovalExecutee.sol";
 
-import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./lib/Concat.sol";
@@ -23,7 +22,6 @@ import "./interface/IDepositPool.sol";
 contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetApprovalExecutee, ERC721HolderUpgradeable, ERC1155HolderUpgradeable {
     using Concat for string;
     
-    FeedRegistryInterface public registry;
     IDepositPool public depositPool;
     address public depositToken;
     address[] public redeemTokens;

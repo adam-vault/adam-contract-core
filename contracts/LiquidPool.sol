@@ -49,9 +49,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         public initializer
     {
         __ERC20_init("LiquidPool", "LP");
-        __PriceResolver_init(feedRegistry);
         dao = IDao(payable(owner));
-        registry = FeedRegistryInterface(feedRegistry);
         _addAssets(depositTokens); // todo
     }
 

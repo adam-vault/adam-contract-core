@@ -41,7 +41,6 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
     }
     function initialize(address owner, address feedRegistry, address[] memory depositTokens) public initializer {
         __ERC1155_init("");
-        __PriceResolver_init(feedRegistry);
         dao = IDao(payable(owner));
         _addAsset(Denominations.ETH);
         _addAssets(depositTokens);

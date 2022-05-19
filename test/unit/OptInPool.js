@@ -30,7 +30,13 @@ describe('OptInPool.sol', function () {
       signer: creator,
     });
 
-    feedRegistry = await MockFeedRegistry.deploy();
+    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
+    await ethers.provider.send('hardhat_setCode', [
+      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      feedRegistryArticfact.deployedBytecode,
+    ]);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+
     dp = await MockDepositPool.deploy();
     token = await MockToken.deploy();
 

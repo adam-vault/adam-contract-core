@@ -20,7 +20,13 @@ describe('DepositPool.sol', function () {
 
     const DepositPool = await ethers.getContractFactory('DepositPool', { signer: creator });
 
-    feedRegistry = await MockFeedRegistry.deploy();
+    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
+    await ethers.provider.send('hardhat_setCode', [
+      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      feedRegistryArticfact.deployedBytecode,
+    ]);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+
     dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();

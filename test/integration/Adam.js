@@ -19,7 +19,15 @@ describe('Integration - Create DAO', function () {
     [creator, owner1, owner2, owner3] = await ethers.getSigners();
     const tokens = await createTokens();
     token = tokens.tokenA;
-    feedRegistry = await createFeedRegistry(token, creator);
+
+    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
+    await ethers.provider.send('hardhat_setCode', [
+      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      feedRegistryArticfact.deployedBytecode,
+    ]);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+    await feedRegistry.setFeed(token.address, true);
+
     adam = await createAdam(feedRegistry);
   });
 

@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
+import "./lib/Constant.sol";
 
 import "./base/PriceResolver.sol";
 import "./interface/IDao.sol";
@@ -51,13 +52,10 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
-
-        UniswapSwapper.setParams(IAdam(IDao(dao).adam()).constantState());
-        __PriceResolver_init(IAdam(IDao(dao).adam()).feedRegistry());
     }
 
     function afterInitialized() external override onlyExecutee {
-        bytes memory data = abi.encodeWithSignature("approve(address,uint256)", UNISWAP_ROUTER, type(uint256).max);
+        bytes memory data = abi.encodeWithSignature("approve(address,uint256)", Constant.UNISWAP_ROUTER, type(uint256).max);
         for(uint i = 0; i < fromTokens.length; i++) {
             if(fromTokens[i] != ETH_ADDRESS) {
                 IBudgetApprovalExecutee(executee).executeByBudgetApproval(fromTokens[i], data, 0);
@@ -77,7 +75,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         bytes memory data
     ) internal override {
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
-        require(to == UNISWAP_ROUTER, "address not uniswap router");
+        require(to == Constant.UNISWAP_ROUTER, "address not uniswap router");
 
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
 
