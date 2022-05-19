@@ -33,7 +33,6 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
     uint256 public depositDeadline;
     uint256 public redeemTime;
 
-    event CreateBudgetApproval(address budgetApproval, bytes data);
     event AllowDepositToken(address token);
 
     function initialize(
@@ -61,7 +60,8 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
             redeemTokens.push(_redeemTokens[i]);
             isRedeemTokens[_redeemTokens[i]] = true;
         }
-        _createBudgetApprovals(_budgetApprovals, _budgetApprovalsData);
+
+        createBudgetApprovals(_budgetApprovals, _budgetApprovalsData);
     }
 
 
@@ -117,15 +117,8 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
         IERC20(erc20).transfer(recipient, amount);
     }
 
-    function _createBudgetApprovals(address[] memory _budgetApprovals, bytes[] memory data) internal {
-        require(_budgetApprovals.length == data.length, "input invalid");
-
-        for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(depositPool.canCreateBudgetApproval(_budgetApprovals[i]), "not whitelist");
-            ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
-            budgetApprovals[address(_budgetApproval)] = true;
-            emit CreateBudgetApproval(address(_budgetApproval), data[i]);
-        }
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override {
+        require(depositPool.canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
 
     function _refund(address account) internal {

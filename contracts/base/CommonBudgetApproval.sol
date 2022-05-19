@@ -80,6 +80,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
+    modifier onlyExecutee() {
+        require(msg.sender == executee, "access denied");
+        _;
+    }
+
     modifier matchStatus(uint256 id, Status status) {
         require(transactions[id].status == status, "status invalid");
         _;
@@ -130,6 +135,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         allowUnlimitedUsageCount = params.allowUnlimitedUsageCount;
         usageCount = params.usageCount;
     }
+
+    function afterInitialized() virtual external onlyExecutee {}
 
     function executeTransaction(uint256 id) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
         for (uint i = 0; i < transactions[id].data.length; i++) {
