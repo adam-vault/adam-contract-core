@@ -5,11 +5,14 @@ pragma solidity ^0.8.0;
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./base/PriceResolver.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
+import "./interface/IDao.sol";
+import "./interface/IAdam.sol";
 import "hardhat/console.sol";
 
-contract TransferERC20BudgetApproval is CommonBudgetApproval {
+contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
     using BytesLib for bytes;
 
     string public constant override name = "Transfer ERC20 Budget Approval";
@@ -41,7 +44,6 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         for(uint i = 0; i < _tokens.length; i++) {
             _addToken(_tokens[i]);
         }
-
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
@@ -66,14 +68,14 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
             bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
             IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
         }
-
+        uint256 ethAmount = assetEthPrice(token, value);
         require(allowAllAddresses || addressesMapping[to], "invalid recipient");
         require(tokensMapping[token], "invalid token");
-        require(allowAnyAmount || value <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(value), "invalid amount");
+        require(allowAnyAmount || ethAmount <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(ethAmount), "invalid amount");
 
         if(!allowAnyAmount) {
-            totalAmount -= value;
+            totalAmount -= ethAmount;
         }
     }
 
@@ -83,10 +85,10 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         uint256 _totalAmount = amount;
 
         for (uint i = 0; i < tokens.length; i++) {
-            if(tokens[i] == ETH_ADDRESS) {
+            if (tokens[i] == ETH_ADDRESS) {
                 _totalAmount += executee.balance;
             } else {
-                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
+                _totalAmount += assetEthPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
             }
         }
 
@@ -97,6 +99,8 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     function _addToken(address token) internal {
         require(!tokensMapping[token], "duplicate token");
+        require(canResolvePrice(token), "token price cannot be resolve");
+
         tokens.push(token);
         tokensMapping[token] = true;
         emit AllowToken(token);
@@ -106,6 +110,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         require(!addressesMapping[to], "duplicate token");
         addressesMapping[to] = true;
         emit AllowAddress(to);
+
     }
 
 

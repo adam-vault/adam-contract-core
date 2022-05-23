@@ -5,12 +5,14 @@ pragma solidity ^0.8.0;
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
+import "./lib/Constant.sol";
 
+import "./base/PriceResolver.sol";
 import "./interface/IDao.sol";
 import "./interface/IAdam.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
-contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
+contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
 
     using BytesLib for bytes;
 
@@ -50,8 +52,15 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
+    }
 
-        UniswapSwapper.setParams(IAdam(IDao(dao).adam()).constantState());
+    function afterInitialized() external override onlyExecutee {
+        bytes memory data = abi.encodeWithSignature("approve(address,uint256)", Constant.UNISWAP_ROUTER, type(uint256).max);
+        for(uint i = 0; i < fromTokens.length; i++) {
+            if(fromTokens[i] != ETH_ADDRESS) {
+                IBudgetApprovalExecutee(executee).executeByBudgetApproval(fromTokens[i], data, 0);
+            }
+        }
     }
 
     function executeParams() public pure override returns (string[] memory) {
@@ -66,14 +75,9 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         bytes memory data
     ) internal override {
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
-        require(to == UNISWAP_ROUTER, "address not uniswap router");
+        require(to == Constant.UNISWAP_ROUTER, "address not uniswap router");
 
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
-
-        // approve(address,uint256) for ERC20
-        if(data.toBytes4(0) == 0x095ea7b3) {
-            return;
-        }
 
         (
             address tokenIn,
@@ -84,15 +88,18 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
             bool estimatedOut
         ) = UniswapSwapper.decodeUniswapDataAfterSwap(to, data, value, result);
 
+        uint256 ethAmountIn = assetEthPrice(tokenIn, amountIn);
+
         require(!estimatedIn && !estimatedOut, "unexpected result");
 
         require(fromTokensMapping[tokenIn], "invalid token");
         require(allowAllToTokens || toTokensMapping[tokenOut], "invalid to token");
-        require(allowAnyAmount || amountIn <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(amountIn), "invalid amount");
+        require(allowAnyAmount || ethAmountIn <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(ethAmountIn), "invalid amount");
+
 
         if(!allowAnyAmount) {
-            totalAmount -= amountIn;
+            totalAmount -= ethAmountIn;
         }
     }
 
@@ -102,10 +109,10 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         uint256 _totalAmount = amount;
 
         for (uint i = 0; i < fromTokens.length; i++) {
-            if(fromTokens[i] == ETH_ADDRESS) {
+            if (fromTokens[i] == ETH_ADDRESS) {
                 _totalAmount += executee.balance;
             } else {
-                _totalAmount += IERC20(fromTokens[i]).balanceOf(executee);
+                _totalAmount += assetEthPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee));
             }
         }
 
@@ -116,6 +123,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     function _addFromToken(address token) internal {
         require(!fromTokensMapping[token], "duplicate from token");
+        require(canResolvePrice(token), "token price cannot be resolve");
         fromTokens.push(token);
         fromTokensMapping[token] = true;
         emit AllowToken(token);

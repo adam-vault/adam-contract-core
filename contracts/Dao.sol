@@ -81,7 +81,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     mapping(address => bool) public isAssetSupported;
     mapping(address => bool) public isOptInPool;
 
-    event CreateBudgetApproval(address budgetApproval, bytes data);
     event CreateOptInPool(address optInPool);
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
@@ -201,17 +200,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         }
     }
 
-    function createBudgetApprovals(address[] calldata _budgetApprovals, bytes[] calldata data) public onlyGovernOrSelf("BudgetApproval") {
-        require(_budgetApprovals.length == data.length, "input invalid");
-
-        for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(canCreateBudgetApproval(_budgetApprovals[i]), "not whitelist");
-            ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
-            budgetApprovals[address(_budgetApproval)] = true;
-            emit CreateBudgetApproval(address(_budgetApproval), data[i]);
-        }
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovernOrSelf("BudgetApproval") {
+        require(canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
-
 
     function createOptInPool(
         address _depositToken,

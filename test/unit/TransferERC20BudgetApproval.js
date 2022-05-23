@@ -20,6 +20,14 @@ describe('TransferERC20BudgetApproval.sol', function () {
     TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
     transferERC20BAImplementation = await TransferERC20BudgetApproval.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
+    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
+    await ethers.provider.send('hardhat_setCode', [
+      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      feedRegistryArticfact.deployedBytecode,
+    ]);
+    const feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+    await feedRegistry.setFeed(tokenA.address, true);
+    await feedRegistry.setPrice(parseEther('1'));
   });
 
   describe('Create Budget Approval', function () {

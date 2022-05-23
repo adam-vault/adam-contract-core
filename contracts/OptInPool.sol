@@ -13,7 +13,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpg
 
 import "./base/BudgetApprovalExecutee.sol";
 
-import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./lib/Concat.sol";
@@ -23,7 +22,6 @@ import "./interface/IDepositPool.sol";
 contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetApprovalExecutee, ERC721HolderUpgradeable, ERC1155HolderUpgradeable {
     using Concat for string;
     
-    FeedRegistryInterface public registry;
     IDepositPool public depositPool;
     address public depositToken;
     address[] public redeemTokens;
@@ -33,7 +31,6 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
     uint256 public depositDeadline;
     uint256 public redeemTime;
 
-    event CreateBudgetApproval(address budgetApproval, bytes data);
     event AllowDepositToken(address token);
 
     function initialize(
@@ -61,7 +58,8 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
             redeemTokens.push(_redeemTokens[i]);
             isRedeemTokens[_redeemTokens[i]] = true;
         }
-        _createBudgetApprovals(_budgetApprovals, _budgetApprovalsData);
+
+        createBudgetApprovals(_budgetApprovals, _budgetApprovalsData);
     }
 
 
@@ -117,15 +115,8 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
         IERC20(erc20).transfer(recipient, amount);
     }
 
-    function _createBudgetApprovals(address[] memory _budgetApprovals, bytes[] memory data) internal {
-        require(_budgetApprovals.length == data.length, "input invalid");
-
-        for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(depositPool.canCreateBudgetApproval(_budgetApprovals[i]), "not whitelist");
-            ERC1967Proxy _budgetApproval = new ERC1967Proxy(_budgetApprovals[i], data[i]);
-            budgetApprovals[address(_budgetApproval)] = true;
-            emit CreateBudgetApproval(address(_budgetApproval), data[i]);
-        }
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override {
+        require(depositPool.canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
 
     function _refund(address account) internal {
