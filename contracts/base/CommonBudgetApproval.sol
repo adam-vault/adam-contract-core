@@ -35,7 +35,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     event CreateTransaction(uint256 id, bytes data, uint256 deadline, Status status);
-    event ApproveTransaction(uint256 id, address approver);
+    event ApproveTransaction(uint256 id, address approver, Status status);
     event ExecuteTransaction(uint256 id, bytes data);
     event RevokeTransaction(uint256 id);
     event AllowAddress(address target);
@@ -191,7 +191,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             transactions[id].status = Status.Approved;
         }
 
-        emit ApproveTransaction(id, msg.sender);
+        emit ApproveTransaction(id, msg.sender, transactions[id].status);
     }
 
     function revokeTransaction(uint256 id) external onlyExecutor {
