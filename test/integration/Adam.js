@@ -4,19 +4,20 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { smock } = require('@defi-wonderland/smock');
 const { ethers } = hre;
 const { expect } = chai;
-const { createAdam, createFeedRegistry, createTokens } = require('../utils/createContract');
+const { createAdam, createTokens } = require('../utils/createContract');
 const decodeBase64 = require('../utils/decodeBase64');
+const paramsStruct = require('../../utils/paramsStruct');
 chai.use(smock.matchers);
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 describe('Integration - Create DAO', function () {
-  let creator, owner1, owner2, owner3;
+  let creator, owner1, owner2;
   let token;
   let feedRegistry;
   let adam;
 
   beforeEach(async function () {
-    [creator, owner1, owner2, owner3] = await ethers.getSigners();
+    [creator, owner1, owner2] = await ethers.getSigners();
     const tokens = await createTokens();
     token = tokens.tokenA;
 
@@ -32,25 +33,8 @@ describe('Integration - Create DAO', function () {
   });
 
   function createDao () {
-    return adam.createDao(
-      [
-        'A Company', // _name
-        'Description', // _description
-        10000000, // _locktime
-        0, // MemberTokenType
-        '0x0000000000000000000000000000000000000000', // memberToken
-        [13, 3000, 5000, 0], // budgetApproval
-        [13, 3000, 5000, 0], // revokeBudgetApproval
-        [13, 3000, 5000, 0], // general
-        [13, 3000, 5000, 0], // daoSetting
-        [], // tokenInfo
-        0,
-        0, // minDepositAmount
-        0, // minMemberTokenToJoin
-        [token.address], // depositTokens
-      ],
-    );
-  }
+    return adam.createDao(paramsStruct.getCreateDaoParams({ name: 'A Company' }));
+  };
 
   it('can create dao', async function () {
     await expect(createDao())
@@ -152,16 +136,14 @@ describe('Integration - Create DAO', function () {
   });
 
   describe('Join Opt-in Pool', function () {
-    let dao, dp, membership, optInPool;
+    let dao, dp, optInPool;
     beforeEach(async function () {
       const tx1 = await createDao();
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
       dao = await ethers.getContractAt('Dao', daoAddr);
-
       const membershipAddr = await dao.membership();
-      membership = await ethers.getContractAt('Membership', membershipAddr);
+      await ethers.getContractAt('Membership', membershipAddr);
       dp = await ethers.getContractAt('DepositPool', await dao.depositPool());
-
       const currentBlock = await ethers.provider.getBlock(await ethers.provider.getBlockNumber());
       const tx2 = await dao.createOptInPool(
         ETH,
@@ -215,23 +197,10 @@ describe('Integration - Create DAO', function () {
   describe('Redeem ETH from DAO', function () {
     let dao, lp, membership;
     beforeEach(async function () {
-      const tx1 = await adam.createDao(
-        [
-          'A Company', // _name
-          'Description', // _description
-          1000, // _locktime
-          0, // MemberTokenType
-          '0x0000000000000000000000000000000000000000', // memberToken
-          [13, 3000, 5000, 0], // budgetApproval
-          [13, 3000, 5000, 0], // revokeBudgetApproval
-          [13, 3000, 5000, 0], // general
-          [13, 3000, 5000, 0], // daoSetting
-          [], // tokenInfo
-          0,
-          0, // minDepositAmount
-          0, // minMemberTokenToJoin
-          [token.address], // depositTokens
-        ],
+      const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
+        lockTime: 1000,
+        depositTokens: [token.address], // depositTokens
+      }),
       );
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
       dao = await ethers.getContractAt('Dao', daoAddr);
@@ -253,5 +222,4 @@ describe('Integration - Create DAO', function () {
       await expect(lp.redeem(ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
     });
   });
-
 });
