@@ -42,7 +42,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     event AllowToken(address token);
     event AllowAmount(uint256 amount);
     event SetApprover(address approver);
-    event UsageCount(uint256 count);
 
     Counters.Counter private _transactionIds;
 
@@ -60,22 +59,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     string public text;
     string public transactionType;
 
-    bool public allowAllAddresses;
-    mapping(address => bool) public addressesMapping;
-
-    address[] public tokens;
-    mapping(address => bool) public tokensMapping;
-
-    bool public allowAnyAmount;
-    uint256 public totalAmount;
-
-    uint8 public amountPercentage;
+    bool public allowUnlimitedUsageCount;
+    uint256 public usageCount;
 
     uint256 public startTime;
     uint256 public endTime;
-
-    bool public allowUnlimitedUsageCount;
-    uint256 public usageCount;
 
     modifier onlyApprover () {
         require(approversMapping[msg.sender], "access denied");
@@ -92,7 +80,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
-    modifier matchStatus (uint256 _transactionId, Status _status) {
+    modifier onlyExecutee() {
+        require(msg.sender == executee, "access denied");
+        _;
+    }
+
+    modifier matchStatus(uint256 _transactionId, Status _status) {
         require(transactions[_transactionId].status == _status, "status invalid");
         _;
     }
@@ -142,30 +135,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         minApproval = params.minApproval;
         require(minApproval <= params.approvers.length, "minApproval invalid");
 
-        allowAllAddresses = params.allowAllAddresses;
-        for(uint i = 0; i < params.addresses.length; i++) {
-            addressesMapping[params.addresses[i]] = true;
-            emit AllowAddress(params.addresses[i]);
-        }
-
-        tokens = params.tokens;
-        for(uint i = 0; i < params.tokens.length; i++) {
-            tokensMapping[params.tokens[i]] = true;
-            emit AllowToken(params.tokens[i]);
-        }
-
-        allowAnyAmount = params.allowAnyAmount;
-        totalAmount = params.totalAmount;
-        emit AllowAmount(totalAmount);
-        amountPercentage = params.amountPercentage;
-
         startTime = params.startTime;
         endTime = params.endTime;
 
         allowUnlimitedUsageCount = params.allowUnlimitedUsageCount;
         usageCount = params.usageCount;
-        emit UsageCount(usageCount);
     }
+
+    function afterInitialized() virtual external onlyExecutee {}
 
     function NAME() external virtual returns (string calldata);
 
@@ -177,101 +154,56 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit ExecuteTransaction(_transactionId, transactions[_transactionId].data);
     }
 
-    function createTransaction(bytes memory _data, uint256 _deadline, bool _execute) external returns (uint256) {
+    function createTransaction(bytes memory _data, uint256 _deadline, bool _execute) external {
         _transactionIds.increment();
-        uint256 _transactionId = _transactionIds.current();
+        uint256 id = _transactionIds.current();
 
         // workaround when have mapping in Struct
-        Transaction storage newTransaction = transactions[_transactionId];
-        newTransaction.id = _transactionId;
+        Transaction storage newTransaction = transactions[id];
+        newTransaction.id = id;
         newTransaction.data = _data;
         newTransaction.deadline = _deadline;
         newTransaction.isExist = true;
 
-        if(minApproval == 0) {
-            newTransaction.status = Status.Approved;
+        if (minApproval == 0) {
+            transactions[id].status = Status.Approved;
         } else {
-            newTransaction.status = Status.Pending;
+            transactions[id].status = Status.Pending;
         }
 
-        emit CreateTransaction(_transactionId, _data, _deadline,  newTransaction.status);
+        emit CreateTransaction(id, _data, _deadline,  newTransaction.status);
 
         if (_execute) {
-            executeTransaction(_transactionId);
+            executeTransaction(id);
         }
-
-        return _transactionId;
     }
 
-    function approveTransaction(uint256 _transactionId) external onlyApprover {
-        require(
-            transactions[_transactionId].status == Status.Pending || transactions[_transactionId].status == Status.Approved,
+    function approveTransaction(uint256 id) external onlyApprover {
+        require(transactions[id].status == Status.Pending
+            || transactions[id].status == Status.Approved,
             "tx cannot be approved");
+        require(!transactions[id].approved[msg.sender], "cannot approve twice");
 
-        if(!transactions[_transactionId].approved[msg.sender]) {
-            transactions[_transactionId].approved[msg.sender] = true;
-            transactions[_transactionId].approvedCount++;
+        transactions[id].approved[msg.sender] = true;
+        transactions[id].approvedCount++;
 
-            emit ApproveTransaction(_transactionId, msg.sender);
-
-            if(transactions[_transactionId].approvedCount >= minApproval) {
-                transactions[_transactionId].status = Status.Approved;
-            }
-        }
-    }
-
-    function revokeTransaction(uint256 _transactionId) external onlyExecutor {
-        require(transactions[_transactionId].status != Status.Completed, "transaction already completed");
-        transactions[_transactionId].status = Status.Cancelled;
-
-        emit RevokeTransaction(_transactionId);
-    }
-
-    function lastTransactionId() public view returns (uint256) {
-        return _transactionIds.current();
-    }
-
-    function checkAddressValid(address to) public view returns (bool) {
-        return allowAllAddresses || addressesMapping[to];
-    }
-
-    function checkTokenValid(address token) public view returns (bool) {
-        return tokensMapping[token];
-    }
-
-    function checkAmountValid(uint256 amount) public view returns (bool) {
-        return allowAnyAmount || amount <= totalAmount;
-    }
-
-    function checkAmountPercentageValid(uint256 amount, bool executed) public view returns (bool) {
-
-        uint256 _totalAmount;
-        if(executed) {
-            _totalAmount += amount;
+        if(transactions[id].approvedCount >= minApproval) {
+            transactions[id].status = Status.Approved;
         }
 
-        for(uint i = 0; i < tokens.length; i++) {
-            if(tokens[i] == ETH_ADDRESS) {
-                _totalAmount += executee.balance;
-            } else {
-                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
-            }
-        }
-
-        if(_totalAmount == 0) {
-            return false;
-        }
-
-        return (amount * 100 / _totalAmount) <= amountPercentage;
+        emit ApproveTransaction(id, msg.sender);
     }
 
-    function _updateTotalAmount(uint256 usedAmount) internal {
-        if(!allowAnyAmount) {
-            totalAmount -= usedAmount;
-            emit AllowAmount(totalAmount);
-        }
+    function revokeTransaction(uint256 id) external onlyExecutor {
+        require(transactions[id].status != Status.Completed, "transaction already completed");
+        transactions[id].status = Status.Cancelled;
+
+        emit RevokeTransaction(id);
     }
 
+    function execute(address, bytes memory, uint256) public virtual;
+
+    // TODO
     function checkUsageCountValid() public view returns (bool) {
         return allowUnlimitedUsageCount || usageCount > 0;
     }
@@ -279,27 +211,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function _updateUsageCount() internal {
         if(!allowUnlimitedUsageCount) {
             usageCount--;
-            emit UsageCount(usageCount);
         }
     }
 
     function _authorizeUpgrade(address) internal override initializer {}
-
-    function execute(address, bytes memory, uint256) public virtual;
-
-    function encodeTransactionData(address _to, bytes memory _data, uint256 _amount) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(this.execute.selector, _to, _data, _amount);
-    }
-
-    function decodeTransactionData(bytes memory _data) public pure returns (address, bytes memory, uint256) {
-
-        if(_data.toBytes4(0) != this.execute.selector) {
-            // execute(address,address,bytes,uint256)
-            revert("unexpected function call");
-        }
-
-        return abi.decode(_data.slice(4, _data.length - 4), (address, bytes, uint256));
-    }
-
-    receive() external payable {}
 }

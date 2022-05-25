@@ -4,33 +4,43 @@ pragma solidity ^0.8.0;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
-
+import "./base/PriceResolver.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
-
-contract TransferERC20BudgetApproval is CommonBudgetApproval {
+import "./interface/IDao.sol";
+import "./interface/IAdam.sol";
+contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
     using BytesLib for bytes;
 
     string public constant override NAME = "Transfer ERC20 Budget Approval";
 
+    bool public allowAllAddresses;
+    mapping(address => bool) public addressesMapping;
+    address[] public tokens;
+    mapping(address => bool) public tokensMapping;
+    bool public allowAnyAmount;
+    uint256 public totalAmount;
+    uint8 public amountPercentage;
+
     function initialize(InitializeParams calldata params) public initializer {
         __BudgetApproval_init(params);
-    }
+        allowAllAddresses = params.allowAllAddresses;
+        for(uint i = 0; i < params.addresses.length; i++) {
+            addressesMapping[params.addresses[i]] = true;
+            emit AllowAddress(params.addresses[i]);
+        }
 
-    function checkValid(
-        address _token,
-        address _recipient,
-        uint256 _amount,
-        bool executed
-    )
-        public
-        view
-        returns(bool valid)
-    {
-        return checkAddressValid(_recipient) && 
-               checkTokenValid(_token) && 
-               checkAmountValid(_amount) && 
-               checkAmountPercentageValid(_amount, executed) &&
-               checkUsageCountValid();
+        tokens = params.tokens;
+        for(uint i = 0; i < params.tokens.length; i++) {
+            tokensMapping[params.tokens[i]] = true;
+            emit AllowToken(params.tokens[i]);
+        }
+
+        allowAnyAmount = params.allowAnyAmount;
+        totalAmount = params.totalAmount;
+        emit AllowAmount(totalAmount);
+        amountPercentage = params.amountPercentage;
+
+        __PriceResolver_init(IAdam(IDao(dao).adam()).feedRegistry());
     }
 
     function executeMultiple(
@@ -55,9 +65,18 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     ) public override onlySelf {
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
         (address _token, address _recipient, uint256 _amount) = decode(to, data, value);
+        uint256 ethAmount = assetEthPrice(_token, _amount);
 
-        require(checkValid(_token, _recipient, _amount, true), "transaction not allowed");
-        _updateTotalAmount(_amount);
+        require(allowAllAddresses || addressesMapping[_recipient], "invalid recipient");
+        require(tokensMapping[_token], "invalid token");
+        require(allowAnyAmount || ethAmount <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(ethAmount), "invalid amount");
+        require(checkUsageCountValid(), "usage exceeded");
+
+
+        if(!allowAnyAmount) {
+            totalAmount -= ethAmount;
+        }
         _updateUsageCount();
     }
 
@@ -86,27 +105,23 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return (to, recipient, amount);
     }
 
-    function encodeInitializeData(InitializeParams calldata params) public pure returns (bytes memory data) {
-        return abi.encodeWithSelector(
-            this.initialize.selector,
-            params
-        );
-    }
+    function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {
+        if (amountPercentage == 100) return true;
 
-    function decodeInitializeData(bytes memory _data) public pure returns (InitializeParams memory result) {
+        uint256 _totalAmount = amount;
 
-        if(_data.toBytes4(0) != this.initialize.selector) {
-            revert("unexpected function");
+        for (uint i = 0; i < tokens.length; i++) {
+            if (tokens[i] == ETH_ADDRESS) {
+                _totalAmount += executee.balance;
+            } else {
+                _totalAmount += assetEthPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
+            }
         }
 
-        return abi.decode(_data.slice(4, _data.length - 4), (InitializeParams));
+        if (_totalAmount == 0) return false;
+
+        return amount <= _totalAmount * amountPercentage / 100;
     }
 
-    function encodeMultipleTransactionData(
-        address[] calldata _to,
-        bytes[] calldata _data,
-        uint256[] calldata _amount
-    ) public pure returns (bytes memory) {
-        return abi.encodeWithSelector(this.executeMultiple.selector, _to, _data, _amount);
-    }
+
 }
