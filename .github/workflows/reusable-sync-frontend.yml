@@ -45,7 +45,7 @@ jobs:
         with:
           cmd: |
             yq -i '
-              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS) |
+              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS)
             ' .github/workflows/deploy.${{ env.DEPLOY_ENV }}.yml
       
       - name: Make Pull Request
