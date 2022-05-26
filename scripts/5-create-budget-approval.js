@@ -27,6 +27,7 @@ async function main () {
       '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
       // approvers
       [],
+      0,
       // text
       'Transfer ERC20',
       // transaction type
@@ -51,7 +52,7 @@ async function main () {
   ]);
 
   const uniswapBudgetApproval = await hre.ethers.getContractAt('UniswapBudgetApproval', uniswapBudetApprovalAddress);
-  const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize((address,address,address[],string,string,bool,address[],address[],bool,uint256,uint8,uint256,uint256,bool,uint256),bool,address[])',
+  const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize',
     [
       // common params
       [
@@ -61,32 +62,28 @@ async function main () {
         '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
         // approvers
         [],
+        0,
         // text
         'Uniswap',
         // transaction type
         'swap',
-        // allow all addresses,
-        false,
-        // allowed addresses (use when above = false)
-        ['0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45'],
-        // allowed token (use when above = false)
-        [hre.ethers.constants.AddressZero],
-        // allow any amount
-        true,
-        // allowed total amount
-        hre.ethers.utils.parseEther('0'),
-        // allowed amount percentage
-        '100',
         Math.round(Date.now() / 1000) - 86400, // startTime
         Math.round(Date.now() / 1000) + 86400, // endTime
         true, // allow unlimited usage count
         0, // usage count
       ],
-      // extra params
-      // allow all to tokens,
+      // allowed addresses (use when above = false)
+      ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
+      // allow all addresses,
+      false,
+      // allowed token (use when above = false)
+      [ETHAddress, DAIAddress],
+      // allow any amount
       true,
-      // allowed to token (use when above = false)
-      [],
+      // allowed total amount
+      hre.ethers.utils.parseEther('0'),
+      // allowed amount percentage
+      '100',
     ]);
 
   const tx1 = await dao.createBudgetApprovals(
