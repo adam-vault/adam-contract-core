@@ -8,7 +8,7 @@ const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferERC20BudgetApproval.sol', function () {
-  let transferERC20BAImplementation, budgetApproval;
+  let transferERC20BAImplementation, budgetApproval, dao;
   let executor, approver, receiver;
   let tokenA, executee, TransferERC20BudgetApproval;
 
@@ -19,6 +19,9 @@ describe('TransferERC20BudgetApproval.sol', function () {
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
     transferERC20BAImplementation = await TransferERC20BudgetApproval.deploy();
+    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
+
+    dao = await MockLPDao.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
@@ -123,7 +126,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
         [
-          executee.address, // dao addressc
+          dao.address, // dao addressc
           executor.address, // executor
           [approver.address], // approvers
           1, // minApproval
@@ -407,7 +410,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       it('should revert', async function () {
         const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize', [
           [
-            executee.address, // dao address
+            dao.address, // dao address
             executor.address, // executor
             [], // approvers
             0, // minApproval

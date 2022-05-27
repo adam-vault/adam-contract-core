@@ -9,7 +9,6 @@ const transferERC20BudgetApprovalAddress = deploymentResult.addresses.transferEr
 const uniswapBudetApprovalAddress = deploymentResult.addresses.uniswapBudgetApproval;
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
-const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 const budgetApprovalAddresses = [];
 
@@ -68,28 +67,23 @@ async function main () {
         'Uniswap',
         // transaction type
         'swap',
-        // allow all addresses,
-        false,
-        // allowed addresses (use when above = false)
-        ['0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45'],
-        // allowed token (use when above = false)
-        [ETHAddress, DAIAddress],
-        // allow any amount
-        true,
-        // allowed total amount
-        hre.ethers.utils.parseEther('0'),
-        // allowed amount percentage
-        '100',
         Math.round(Date.now() / 1000) - 86400, // startTime
         Math.round(Date.now() / 1000) + 86400, // endTime
         true, // allow unlimited usage count
         0, // usage count
       ],
-      // extra params
-      // allow all to tokens,
+      // allowed addresses (use when above = false)
+      [ETHAddress, DAIAddress],
+      // allow all addresses,
+      false,
+      // allowed token (use when above = false)
+      [ETHAddress, DAIAddress],
+      // allow any amount
       true,
-      // allowed to token (use when above = false)
-      [],
+      // allowed total amount
+      hre.ethers.utils.parseEther('0'),
+      // allowed amount percentage
+      '100',
     ]);
 
   const tx1 = await dao.createBudgetApprovals(

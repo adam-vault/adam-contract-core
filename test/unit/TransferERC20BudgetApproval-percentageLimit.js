@@ -3,16 +3,16 @@ const { ethers } = require('hardhat');
 const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
 
-const { createTokens, createAdam, createFeedRegistry, createBudgetApprovals } = require('../utils/createContract');
+const { createTokens } = require('../utils/createContract');
 
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', function () {
-  let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
+  let transferERC20BAImplementation, budgetApproval, dao;
   let executor, executee, approver, receiver;
-  let tokenA, feedRegistry, budgetApprovalAddresses;
+  let tokenA, feedRegistry;
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
@@ -20,8 +20,12 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
     ({ tokenA } = await createTokens());
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     const TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
+    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
+
     transferERC20BAImplementation = await TransferERC20BudgetApproval.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
+    dao = await MockLPDao.deploy();
+
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
@@ -35,7 +39,7 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
     const endTime = Math.round(Date.now() / 1000) + 86400;
     const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
       [
-        executee.address, // dao addressc
+        dao.address, // dao addressc
         executor.address, // executor
         [approver.address], // approvers
         1, // minApproval

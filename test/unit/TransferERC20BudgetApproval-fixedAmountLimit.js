@@ -1,18 +1,17 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
 
-const { createTokens, createAdam, createFeedRegistry, createBudgetApprovals } = require('../utils/createContract');
+const { createTokens } = require('../utils/createContract');
 
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', function () {
-  let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
-  let executor, executee, approver, receiver;
-  let tokenA, feedRegistry, budgetApprovalAddresses;
+  let transferERC20BAImplementation, budgetApproval;
+  let executor, executee, approver, receiver, dao;
+  let tokenA, feedRegistry;
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
@@ -20,6 +19,9 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', f
     ({ tokenA } = await createTokens());
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     const TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
+    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
+
+    dao = await MockLPDao.deploy();
     transferERC20BAImplementation = await TransferERC20BudgetApproval.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
@@ -35,7 +37,7 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', f
     const endTime = Math.round(Date.now() / 1000) + 86400;
     const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
       [
-        executee.address, // dao addressc
+        dao.address, // dao addressc
         executor.address, // executor
         [approver.address], // approvers
         1, // minApproval

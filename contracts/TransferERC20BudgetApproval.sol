@@ -61,6 +61,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         bytes memory data
     ) internal override {
         (address token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
+        uint256 ethAmount;
 
         if (token == ETH_ADDRESS) {
             IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, "", value);
@@ -68,7 +69,12 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
             bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
             IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
         }
-        uint256 ethAmount = assetEthPrice(token, value);
+        
+        if(IDao(dao).memberToken() == token){
+            ethAmount = value;
+        }else{
+            ethAmount = assetEthPrice(token, value);
+        }
         require(allowAllAddresses || addressesMapping[to], "invalid recipient");
         require(tokensMapping[token], "invalid token");
         require(allowAnyAmount || ethAmount <= totalAmount, "invalid amount");
@@ -87,7 +93,9 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i] == ETH_ADDRESS) {
                 _totalAmount += executee.balance;
-            } else {
+            }else if(tokens[i] == IDao(dao).memberToken() ){
+                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
+            }else {
                 _totalAmount += assetEthPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
             }
         }
