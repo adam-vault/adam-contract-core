@@ -18,6 +18,7 @@ function getCreateDaoParams ({
   admissionToken = ethers.constants.AddressZero,
   depositTokens = [],
   mintMemberToken = false,
+  baseCurrency = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
 }) {
   return Object.entries({
     name,
@@ -34,6 +35,7 @@ function getCreateDaoParams ({
     admissionToken,
     depositTokens,
     mintMemberToken,
+    baseCurrency,
   }).map(([key, value]) => {
     return value;
   });

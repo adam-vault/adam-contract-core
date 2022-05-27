@@ -40,10 +40,10 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
         require(msg.sender == address(dao), "not dao");
         _;
     }
-    function initialize(address owner, address feedRegistry, address[] memory depositTokens) public initializer {
+    function initialize(address owner, address feedRegistry, address[] memory depositTokens, address baseCurrency) public initializer {
         __ERC1155_init("");
+        __PriceResolver_init(baseCurrency);
         dao = IDao(payable(owner));
-        _addAsset(Denominations.ETH);
         _addAssets(depositTokens);
     }
 
@@ -94,7 +94,7 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
         require(msg.value > 0, "cannot be 0");
         totalSupply[Denominations.ETH] += msg.value;
         _mint(msg.sender, idOf[Denominations.ETH], msg.value, "");
-        _afterDeposit(msg.sender, msg.value);
+        _afterDeposit(msg.sender, assetBaseCurrencyPrice(Denominations.ETH ,msg.value));
     }
 
     function depositToken(address asset, uint256 amount) public {
@@ -102,7 +102,7 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
         IERC20(asset).transferFrom(msg.sender, address(this), amount);
         totalSupply[asset] += amount;
         _mint(msg.sender, idOf[asset], amount, "");
-        _afterDeposit(msg.sender, assetEthPrice(asset, amount));
+        _afterDeposit(msg.sender, assetBaseCurrencyPrice(asset, amount));
     }
 
     function withdraw(address asset, uint256 amount) public {
@@ -111,10 +111,14 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
         _burn(msg.sender, idOf[asset], amount);
         totalSupply[asset] -= amount;
 
-        if (asset == Denominations.ETH) {
-            payable(msg.sender).transfer(amount);
+        _transferAsset(msg.sender, asset, amount);
+    }
+
+    function _transferAsset(address target, address asset, uint256 amount) internal {
+        if(asset == Denominations.ETH) {
+            payable(target).transfer(amount);
         } else {
-            IERC20(asset).transfer(msg.sender, amount);
+            IERC20Metadata(asset).transfer(target, amount);
         }
     }
 
@@ -141,13 +145,13 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
         emit AllowDepositToken(idOf[asset], asset);
     }
 
-    function _afterDeposit(address account, uint256 eth) private {
+    function _afterDeposit(address account, uint256 amount) private {
         if (dao.isOptInPool(account))
             return;
         if (dao.firstDepositTime(account) == 0) {
             dao.setFirstDepositTime(account);
 
-            require(eth >= dao.minDepositAmount(), "deposit amount not enough");
+            require(amount >= dao.minDepositAmount(), "deposit amount not enough");
             
             if (dao.isMember(account)) {
                 return;

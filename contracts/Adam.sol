@@ -29,6 +29,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address admissionToken;
         address[] depositTokens;
         bool mintMemberToken;
+        address baseCurrency;
     }
 
     address public feedRegistry;
@@ -116,12 +117,14 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         ILiquidPool(payable(address(_liquidPool))).initialize(
             address(_dao),
             feedRegistry,
-            params.depositTokens
+            params.depositTokens,
+            params.baseCurrency
         );
         IDepositPool(payable(address(_depositPool))).initialize(
             address(_dao),
             feedRegistry,
-            params.depositTokens
+            params.depositTokens,
+            params.baseCurrency
         );
         IDao(payable(address(_dao))).initialize(
             IDao.InitializeParams(
