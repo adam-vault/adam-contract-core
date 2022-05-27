@@ -199,7 +199,7 @@ describe('Integration - Create DAO', function () {
     beforeEach(async function () {
       const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
         lockTime: 1000,
-        depositTokens: [token.address], // depositTokens
+        depositTokens: [ETH, token.address], // depositTokens
       }),
       );
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');

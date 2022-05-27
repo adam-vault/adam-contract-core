@@ -4,6 +4,8 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens, createAdam, createBudgetApprovals, createFeedRegistry } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
 
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
 describe('Govern.sol', function () {
   let adam, dao, governFactory, lp;
   let creator, owner1, owner2;
@@ -18,7 +20,7 @@ describe('Govern.sol', function () {
   };
 
   function createDao () {
-    return adam.createDao(paramsStruct.getCreateDaoParams({ mintMemberToken: true }));
+    return adam.createDao(paramsStruct.getCreateDaoParams({ mintMemberToken: true, depositTokens: [ETH] }));
   }
 
   beforeEach(async function () {
@@ -143,6 +145,7 @@ describe('Govern.sol', function () {
           general: [13, 3000, 5000, 0], // general,
           daoSettingApproval: [13, 3000, 5000, 1], // daoSetting,
           mintMemberToken: true,
+          depositTokens: [ETH]
         }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -201,6 +204,7 @@ describe('Govern.sol', function () {
           general: [13, 3000, 5000, 0], // general,
           daoSettingApproval: [13, 3000, 5000, 1], // daoSetting
           mintMemberToken: true,
+          depositTokens: [ETH],
         }),
         );
 
