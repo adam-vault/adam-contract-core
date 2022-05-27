@@ -93,7 +93,9 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i] == ETH_ADDRESS) {
                 _totalAmount += executee.balance;
-            } else {
+            }else if(tokens[i] == IDao(dao).memberToken() ){
+                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
+            }else {
                 _totalAmount += assetEthPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
             }
         }
