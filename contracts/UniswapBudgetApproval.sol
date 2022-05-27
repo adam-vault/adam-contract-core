@@ -52,6 +52,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
+        __PriceResolver_init(Denominations.ETH);
     }
 
     function afterInitialized() external override onlyExecutee {
@@ -88,18 +89,18 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             bool estimatedOut
         ) = UniswapSwapper.decodeUniswapDataAfterSwap(to, data, value, result);
 
-        uint256 ethAmountIn = assetEthPrice(tokenIn, amountIn);
+        uint256 amountInBaseCurrency = assetBaseCurrencyPrice(tokenIn, amountIn);
 
         require(!estimatedIn && !estimatedOut, "unexpected result");
 
         require(fromTokensMapping[tokenIn], "invalid token");
         require(allowAllToTokens || toTokensMapping[tokenOut], "invalid to token");
-        require(allowAnyAmount || ethAmountIn <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(ethAmountIn), "invalid amount");
+        require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(amountInBaseCurrency), "invalid amount");
 
 
         if(!allowAnyAmount) {
-            totalAmount -= ethAmountIn;
+            totalAmount -= amountInBaseCurrency;
         }
     }
 
@@ -109,10 +110,10 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         uint256 _totalAmount = amount;
 
         for (uint i = 0; i < fromTokens.length; i++) {
-            if (fromTokens[i] == ETH_ADDRESS) {
-                _totalAmount += executee.balance;
+            if (fromTokens[i] == Denominations.ETH) {
+                _totalAmount += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
             } else {
-                _totalAmount += assetEthPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee));
+                _totalAmount += assetBaseCurrencyPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee));
             }
         }
 

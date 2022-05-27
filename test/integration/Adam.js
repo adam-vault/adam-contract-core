@@ -47,7 +47,8 @@ describe('Integration - Create DAO', function () {
         0,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
-        [token.address], // depositTokens
+        [ETH, token.address], // depositTokens
+        ETH,
       ],
     );
   }
@@ -230,7 +231,8 @@ describe('Integration - Create DAO', function () {
           0,
           0, // minDepositAmount
           0, // minMemberTokenToJoin
-          [token.address], // depositTokens
+          [ETH, token.address], // depositTokens
+          ETH,
         ],
       );
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');

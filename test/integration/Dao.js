@@ -4,6 +4,8 @@ const findEventArgs = require('../../utils/findEventArgs');
 
 const { createAdam, createTokens } = require('../utils/createContract.js');
 
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
 describe('Integration - Dao', function () {
   let adam, dao, tokenC721, tokenA, lp;
   let creator, member;
@@ -26,7 +28,8 @@ describe('Integration - Dao', function () {
         0,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
-        [],
+        [ETH],
+        ETH,
       ]);
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
       dao = await ethers.getContractAt('MockDaoV2', daoAddr);
@@ -87,7 +90,8 @@ describe('Integration - Dao', function () {
           100,
           0, // minDepositAmount
           1, // minMemberTokenToJoin
-          [],
+          [ETH],
+          ETH,
         ]);
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
         dao = await ethers.getContractAt('MockDaoV2', daoAddr);
@@ -131,7 +135,8 @@ describe('Integration - Dao', function () {
           100,
           0, // minDepositAmount
           1, // minMemberTokenToJoin
-          [],
+          [ETH],
+          ETH,
         ];
         await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('Not ERC 721 standard');
       });
@@ -151,7 +156,8 @@ describe('Integration - Dao', function () {
           100,
           0, // minDepositAmount
           1, // minMemberTokenToJoin
-          [],
+          [ETH],
+          ETH,
         ];
         await expect(adam.createDao(initParaWithIncorrectAddress)).to.revertedWith('');
       });
@@ -174,7 +180,8 @@ describe('Integration - Dao', function () {
           100,
           0, // minDepositAmount
           50, // minMemberTokenToJoin
-          [],
+          [ETH],
+          ETH,
         ]);
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
@@ -223,7 +230,8 @@ describe('Integration - Dao', function () {
           100,
           50, // minDepositAmount
           0, // minMemberTokenToJoin
-          [],
+          [ETH],
+          ETH,
         ]);
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 

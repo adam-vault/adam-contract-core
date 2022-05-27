@@ -5,6 +5,7 @@ const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 const findEventArgs = require('../utils/findEventArgs');
 
 // rinkeby
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const DAI = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 const USDC = '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b';
 const USDT = '0xD9BA894E0097f8cC2BBc9D24D308b98e36dc6D02';
@@ -38,7 +39,8 @@ async function main () {
       100,
       0,
       0,
-      [DAI, USDC, USDT],
+      [ETH, DAI, USDC, USDT],
+      ETH,
     ]);
     const { dao } = await findEventArgs(tx, 'CreateDao');
     daoAddresses.push({ address: dao, description });

@@ -44,11 +44,13 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     function initialize(
         address owner,
         address feedRegistry,
-        address[] memory depositTokens
+        address[] memory depositTokens,
+        address baseCurrency
     )
         public initializer
     {
         __ERC20_init("LiquidPool", "LP");
+        __PriceResolver_init(baseCurrency);
         dao = IDao(payable(owner));
         _addAssets(depositTokens); // todo
     }
@@ -58,18 +60,12 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         require(isAssetSupported[asset], "Asset not support");
         if (totalSupply() == 0) return 0;
 
-        return IERC20Metadata(asset).balanceOf(address(this)) * amount / totalSupply();
+        return _assetBalance(asset) * amount / totalSupply();
     }
 
-    function ethShares(uint256 amount) public view returns (uint256) {
-        require(amount <= totalSupply(), "gt totalSupply");
-        if (totalSupply() == 0) return 0;
-        return address(this).balance * amount / totalSupply();
-    }
-
-    function quote(uint256 eth) public view returns (uint256) {
-        if (totalSupply() == 0) return eth;
-        return (eth * 10 ** 18) / (totalPrice() * 10 ** 18 / totalSupply());
+    function quote(uint256 amount) public view returns (uint256) {
+        if (totalSupply() == 0) return amount;
+        return (amount * 10 ** baseCurrencyDecimals()) / (totalPrice() * 10 ** baseCurrencyDecimals() / totalSupply());
     }
 
     function canAddAsset(address asset) public view returns (bool) {
@@ -77,28 +73,32 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     }
 
     function totalPrice() public view returns (uint256) {
-        return _assetsPrice() + address(this).balance;
+        uint256 total;
+        for (uint256 i = 0; i < assets.length; i++) {
+            total += assetBaseCurrencyPrice(assets[i],  _assetBalance(assets[i]));
+        }
+        return total;
     }
 
     function deposit() public payable {
+        require(isAssetSupported[Denominations.ETH], "asset not support");
         if (totalSupply() == 0) {
-            _mint(msg.sender, msg.value);
-            _afterDeposit(msg.sender, msg.value);
+            _mint(msg.sender, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
+            _afterDeposit(msg.sender, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
             return;
         }
-        uint256 total = address(this).balance - msg.value + _assetsPrice();
-        _mint(msg.sender, (msg.value * 10**18) / (total * 10**18 / totalSupply()));
+        uint256 total = totalPrice() - assetBaseCurrencyPrice(Denominations.ETH, msg.value);
+        _mint(msg.sender, (assetBaseCurrencyPrice(Denominations.ETH, msg.value) * 10 ** baseCurrencyDecimals()) / (total * 10 ** baseCurrencyDecimals() / totalSupply()));
 
-        _afterDeposit(msg.sender, msg.value);
+        _afterDeposit(msg.sender, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
     }
 
     function redeem(uint256 amount) public {
         require(balanceOf(msg.sender) >= amount, "not enough balance");
         require(dao.firstDepositTime(msg.sender) + dao.locktime() <= block.timestamp, "lockup time");
 
-        payable(msg.sender).transfer(ethShares(amount));
         for (uint256 i = 0; i < assets.length; i++) {
-            IERC20Metadata(assets[i]).transfer(msg.sender, assetsShares(assets[i], amount));
+            _transferAsset(msg.sender, assets[i], assetsShares(assets[i], amount));
         }
         _burn(msg.sender, amount);
     }
@@ -107,9 +107,9 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         require(isAssetSupported[asset], "Asset not support");
         require(IERC20Metadata(asset).allowance(msg.sender, address(this)) >= amount, "not approve");
 
-        _mint(msg.sender, quote(assetEthPrice(asset, amount)));
+        _mint(msg.sender, quote(assetBaseCurrencyPrice(asset, amount)));
         IERC20Metadata(asset).transferFrom(msg.sender, address(this), amount);
-        _afterDeposit(msg.sender, assetEthPrice(asset, amount));
+        _afterDeposit(msg.sender, assetBaseCurrencyPrice(asset, amount));
     }
 
     function addAssets(address[] calldata erc20s) public onlyGovern("DaoSetting") {
@@ -120,26 +120,34 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         require(dao.canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
 
-    function _assetsPrice() internal view returns (uint256) {
-        uint256 total;
-        for (uint256 i = 0; i < assets.length; i++) {
-            total += assetEthPrice(assets[i],  IERC20Metadata(assets[i]).balanceOf(address(this)));
+    function _assetBalance(address asset) internal view returns (uint256) {
+        if(asset == Denominations.ETH) {
+            return address(this).balance;
         }
-        return total;
+        
+        return IERC20Metadata(asset).balanceOf(address(this));
+    }
+
+    function _transferAsset(address target, address asset, uint256 amount) internal {
+        if(asset == Denominations.ETH) {
+            payable(target).transfer(amount);
+        } else {
+            IERC20Metadata(asset).transfer(target, amount);
+        }
     }
     
-    function _afterDeposit(address account, uint256 eth) private {
+    function _afterDeposit(address account, uint256 amount) private {
         if (dao.firstDepositTime(account) == 0) {
             dao.setFirstDepositTime(account);
 
-            require(eth >= dao.minDepositAmount(), "deposit amount not enough");
+            require(amount >= dao.minDepositAmount(), "deposit amount not enough");
             if (!dao.isMember(account)) {
                 require(dao.memberToken() == address(0x0) || IERC20(dao.memberToken()).balanceOf(account) >= dao.minMemberTokenToJoin(), "member token not enough");
                 dao.mintMember(account);
             }
         }
-
     }
+
     function _addAssets(address[] memory erc20s) internal {
         for (uint256 i = 0; i < erc20s.length; i++) {
             _addAsset(erc20s[i]);

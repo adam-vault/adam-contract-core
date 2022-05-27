@@ -47,6 +47,8 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
+
+        __PriceResolver_init(Denominations.ETH);
     }
 
     function executeParams() public pure override returns (string[] memory) {
@@ -68,14 +70,14 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
             bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
             IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
         }
-        uint256 ethAmount = assetEthPrice(token, value);
+        uint256 amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
         require(allowAllAddresses || addressesMapping[to], "invalid recipient");
         require(tokensMapping[token], "invalid token");
-        require(allowAnyAmount || ethAmount <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(ethAmount), "invalid amount");
+        require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(amountInBaseCurrency), "invalid amount");
 
         if(!allowAnyAmount) {
-            totalAmount -= ethAmount;
+            totalAmount -= amountInBaseCurrency;
         }
     }
 
@@ -85,10 +87,12 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         uint256 _totalAmount = amount;
 
         for (uint i = 0; i < tokens.length; i++) {
-            if (tokens[i] == ETH_ADDRESS) {
-                _totalAmount += executee.balance;
-            } else {
-                _totalAmount += assetEthPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
+            if (tokens[i] == Denominations.ETH) {
+                _totalAmount += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
+            }else if(tokens[i] == IDao(dao).memberToken() ){
+                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
+            }else {
+                _totalAmount += assetBaseCurrencyPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
             }
         }
 

@@ -3,6 +3,8 @@ const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens, createAdam, createBudgetApprovals, createFeedRegistry } = require('../utils/createContract');
 
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
 describe('Govern.sol', function () {
   let adam, dao, governFactory, lp;
   let creator, owner1, owner2;
@@ -32,7 +34,8 @@ describe('Govern.sol', function () {
         1,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
-        [],
+        [ETH],
+        ETH,
       ],
     );
   }
@@ -169,7 +172,8 @@ describe('Govern.sol', function () {
             1,
             0, // minDepositAmount
             0, // minMemberTokenToJoin
-            [],
+            [ETH],
+            ETH,
           ],
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -238,7 +242,8 @@ describe('Govern.sol', function () {
             1,
             0, // minDepositAmount
             0, // minMemberTokenToJoin
-            [],
+            [ETH],
+            ETH,
           ],
         );
 

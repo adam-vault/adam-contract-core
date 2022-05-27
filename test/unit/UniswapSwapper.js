@@ -48,7 +48,8 @@ describe('UniswapSwapper.sol', () => {
         0,
         0, // minDepositAmount
         0, // minMemberTokenToJoin
-        [],
+        [ETHAddress],
+        ETHAddress,
       ],
     );
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');

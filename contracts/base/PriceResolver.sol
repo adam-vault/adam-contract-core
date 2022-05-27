@@ -12,8 +12,14 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "../lib/Constant.sol";
 
 contract PriceResolver is Initializable {
-    function assetEthPrice(address asset, uint256 amount) public view returns (uint256) {
-        if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
+    address public baseCurrency;
+
+    function __PriceResolver_init(address _baseCurrency) internal onlyInitializing {
+        baseCurrency = _baseCurrency;
+    }
+
+    function assetBaseCurrencyPrice(address asset, uint256 amount) public view returns (uint256) {
+        if (asset == baseCurrency)
             return amount;
 
         (, int price,,,) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
@@ -22,6 +28,16 @@ contract PriceResolver is Initializable {
         }
         return 0;
     }
+
+    function baseCurrencyDecimals() public view returns (uint8) {
+        if (baseCurrency == Denominations.ETH) return 18;
+        try IERC20Metadata(baseCurrency).decimals() returns (uint8 _decimals) {
+            return _decimals;
+        } catch {
+            return 0;
+        }
+    }
+
     function canResolvePrice(address asset) public view returns (bool) {
         if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
             return true;
