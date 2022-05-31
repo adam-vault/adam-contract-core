@@ -4,7 +4,12 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "../interface/ICommonBudgetApproval.sol";
 
+import "../lib/RevertMsg.sol";
+import "../lib/Concat.sol";
+
 contract BudgetApprovalExecutee {
+    using Concat for string;
+
     mapping(address => bool) public budgetApprovals;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
@@ -16,7 +21,7 @@ contract BudgetApprovalExecutee {
 
     function executeByBudgetApproval(address _to, bytes memory _data, uint256 _value) external onlyBudgetApproval returns (bytes memory) {
         (bool success, bytes memory result) = _to.call{ value: _value }(_data);
-        require(success, "execution failed");
+        require(success, string("BudgetApprovalExecutee: execution failed - ").concat(RevertMsg.ToString(result)));
 
         return result;
     }
