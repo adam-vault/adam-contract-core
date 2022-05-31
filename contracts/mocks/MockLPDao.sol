@@ -5,7 +5,7 @@ contract MockLPDao {
     uint256 public locktime;
     uint256 public minMemberTokenToJoin;
     uint256 public minDepositAmount;
-    uint256 public minTokenToAdmission;
+    uint256 public minTokenToAdmit;
     address public memberToken;
     address public admissionToken;
     mapping(address => uint256) public firstDepositTime;
@@ -33,8 +33,8 @@ contract MockLPDao {
     function setFirstDepositTime(address account) public {
         firstDepositTime[account] = block.timestamp;
     } 
-    function setMinTokenToAdmission(uint256 amount) public {
-        minTokenToAdmission = amount;
+    function setMinTokenToAdmit(uint256 amount) public {
+        minTokenToAdmit = amount;
     }
     function canCreateBudgetApproval(address) public pure returns (bool) {
         return true;

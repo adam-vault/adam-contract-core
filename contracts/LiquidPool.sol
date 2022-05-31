@@ -133,13 +133,13 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
             dao.setFirstDepositTime(account);
 
             require(eth >= dao.minDepositAmount(), "deposit amount not enough");
-            if (!dao.isMember(account)) {if(dao.minTokenToAdmission() > 0 ){
+            if (!dao.isMember(account)) {if(dao.minTokenToAdmit() > 0 ){
                     bytes4 sector = bytes4(keccak256("balanceOf(address)"));
                     bytes memory data = abi.encodeWithSelector(sector, account);
                     (, bytes memory result) = address(dao.admissionToken()).call(data);
                     
                     uint256 balance = abi.decode(result,(uint256));
-                    require( balance >= dao.minTokenToAdmission(), "member token not enough");
+                    require( balance >= dao.minTokenToAdmit(), "member token not enough");
                 }
                 dao.mintMember(account);
             }

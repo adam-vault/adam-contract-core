@@ -25,7 +25,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string[] tokenInfo;
         uint256 tokenAmount;
         uint256 minDepositAmount;
-        uint256 minTokenToAdmission;
+        uint256 minTokenToAdmit;
         address admissionToken;
         address[] depositTokens;
         bool mintMemberToken;
@@ -141,7 +141,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 params.tokenAmount,
                 IDao.DaoSetting(
                     params.minDepositAmount,
-                    params.minTokenToAdmission
+                    params.minTokenToAdmit
                 ),
                 params.depositTokens,
                 params.mintMemberToken

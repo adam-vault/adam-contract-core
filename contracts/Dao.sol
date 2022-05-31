@@ -47,7 +47,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     struct DaoSetting {
         uint256 minDepositAmount;
-        uint256 minTokenToAdmission;
+        uint256 minTokenToAdmit;
     }
 
     enum VoteType {
@@ -70,7 +70,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     string public name;
     uint256 public locktime;
     uint256 public minDepositAmount;
-    uint256 public minTokenToAdmission;
+    uint256 public minTokenToAdmit;
     
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
@@ -93,7 +93,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         memberTokenImplementation = params._memberTokenImplementation;
         optInPoolImplementation = params._optInPoolImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
-        minTokenToAdmission = params.daoSetting.minTokenToAdmission;
+        minTokenToAdmit = params.daoSetting.minTokenToAdmit;
 
         if (params.mintMemberToken) {
             // tokenInfo: [name, symbol]
@@ -243,7 +243,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("DaoSetting") {
         minDepositAmount = _setting.minDepositAmount;
-        minTokenToAdmission = _setting.minTokenToAdmission;
+        minTokenToAdmit = _setting.minTokenToAdmit;
     }
 
     function createGovern(

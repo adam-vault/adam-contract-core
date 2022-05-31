@@ -65,7 +65,7 @@ describe('Integration - Dao', function () {
         tokenC721 = (await createTokens()).tokenC721;
         const tx1 = await adam.createDao(
           paramsStruct.getCreateDaoParams({
-            minTokenToAdmission: 1,
+            minTokenToAdmit: 1,
             admissionToken: tokenC721.address,
           }),
         );
@@ -100,7 +100,7 @@ describe('Integration - Dao', function () {
         adam = await createAdam();
         const tx1 = await adam.createDao(
           paramsStruct.getCreateDaoParams({
-            minTokenToAdmission: 50,
+            minTokenToAdmit: 50,
             mintMemberToken: true,
           }),
         );
