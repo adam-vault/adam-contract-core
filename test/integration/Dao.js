@@ -122,7 +122,7 @@ describe('Integration - Dao', function () {
     });
 
     it('should be able to deposit when enough Admission Token', async function () {
-      await tokenC721.mint(member.getAddress());
+      await tokenC721.mint(member.getAddress(), 1);
       await expect(lp.connect(member).deposit({ value: 1 })).to.not.be.reverted;
       expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
     });
