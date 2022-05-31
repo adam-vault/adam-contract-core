@@ -18,7 +18,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string _name;
         string _description;
         uint256 _locktime;
-        address admissionToken;
         uint256[4] budgetApproval;
         uint256[4] revokeBudgetApproval;
         uint256[4] general;
@@ -27,6 +26,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 tokenAmount;
         uint256 minDepositAmount;
         uint256 minTokenToAdmission;
+        address admissionToken;
         address[] depositTokens;
         bool mintMemberToken;
     }
