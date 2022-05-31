@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 contract MockLPDao {
     uint256 public locktime;
-    uint256 public minMemberTokenToJoin;
     uint256 public minDepositAmount;
     uint256 public minTokenToAdmit;
     address public memberToken;
