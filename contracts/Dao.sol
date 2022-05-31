@@ -7,7 +7,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgra
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
 
@@ -57,11 +56,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         Other
     }
 
-    enum AdmissionTokenType {
-        ERC20,
-        ERC721,
-        Other
-    }
 
     address public memberToken;
     address public creator;
@@ -74,7 +68,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public memberTokenImplementation;
     address public optInPoolImplementation;
     string public name;
-    AdmissionTokenType public admissionTokenType;
     uint256 public locktime;
     uint256 public minDepositAmount;
     uint256 public minTokenToAdmission;
