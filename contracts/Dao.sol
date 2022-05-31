@@ -111,7 +111,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             admissionToken = memberToken;
         }else{
             bytes4 sector = bytes4(keccak256("balanceOf(address)"));
-            bytes memory data = abi.encodeWithSelector(sector, address(0));
+            bytes memory data = abi.encodeWithSelector(sector, msg.sender);
             (bool success,) = address(params._admissionToken).call(data);
             if(success){
                 admissionToken = params._admissionToken;

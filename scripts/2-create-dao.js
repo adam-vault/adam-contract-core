@@ -1,45 +1,33 @@
 const hre = require('hardhat');
-const { faker } = require('@faker-js/faker');
 const fileReader = require('../utils/fileReader');
+const paramsStruct = require('../utils/paramsStruct');
 const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 const findEventArgs = require('../utils/findEventArgs');
+
+console.log(deploymentResult);
+const adamAddress = deploymentResult.addresses.adam;
 
 // rinkeby
 const DAI = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 const USDC = '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b';
 const USDT = '0xD9BA894E0097f8cC2BBc9D24D308b98e36dc6D02';
-console.log(deploymentResult);
-const adamAddress = deploymentResult.addresses.adam;
 
 const daoAddresses = [];
 const testingDataSet = [
-  { lockup: 0, memberTokenType: 0, memberToken: hre.ethers.constants.AddressZero, description: '0 lockup, No MT' },
-  { lockup: 100, memberTokenType: 0, memberToken: hre.ethers.constants.AddressZero, description: '100 lockup, No MT' },
-  { lockup: 100, memberTokenType: 1, memberToken: hre.ethers.constants.AddressZero, description: '100 lockup, mint ERC20 MT' },
-  { lockup: 100, memberTokenType: 2, memberToken: '0x81D3352bDb18A8484aCe25A6d51D1D12c10552C6', description: '100 lockup, ERC721 MT' },
+  { lockTime: 0, mintMemberToken: true, admissionToken: hre.ethers.constants.AddressZero, description: '0 lockup, Mint Member Token, No Admission' },
+  { lockTime: 100, mintMemberToken: false, admissionToken: hre.ethers.constants.AddressZero, description: '100 lockup, No Member Token, No Admission' },
+  { lockTime: 100, mintMemberToken: false, admissionToken: '0x81D3352bDb18A8484aCe25A6d51D1D12c10552C6', description: '100 lockup, No Member Token, ERC721 MT' },
 ];
 
 async function main () {
   const adam = await hre.ethers.getContractAt('Adam', adamAddress);
 
-  await testingDataSet.reduce(async (p, { lockup, memberTokenType, memberToken, description }) => {
+  await testingDataSet.reduce(async (p, { lockTime, mintMemberToken, admissionToken, description }) => {
     await p;
-    const tx = await adam.createDao([
-      faker.company.companyName(),
-      faker.commerce.productDescription(),
-      lockup,
-      memberTokenType,
-      memberToken,
-      [300, 3000, 5000, 0],
-      [300, 3000, 5000, 0],
-      [300, 3000, 5000, 0],
-      [300, 3000, 5000, 0],
-      [`${faker.company.companyName()}Token`, 'MT'],
-      100,
-      0,
-      0,
-      [DAI, USDC, USDT],
-    ]);
+    const tx = await adam.createDao(paramsStruct.getCreateDaoParams({
+      mintMemberToken, admissionToken, lockTime, depositTokens: [DAI, USDC, USDT],
+    }));
+
     const { dao } = await findEventArgs(tx, 'CreateDao');
     daoAddresses.push({ address: dao, description });
   }, Promise.resolve());
