@@ -7,6 +7,7 @@ contract MockLPDao {
     uint256 public minDepositAmount;
     uint256 public minTokenToAdmission;
     address public memberToken;
+    address public admissionToken;
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isMember;
     mapping(address => bool) public isOptInPool;
@@ -22,6 +23,9 @@ contract MockLPDao {
     } 
     function setMemberToken(address mt) public {
         memberToken = mt;
+    }
+    function setAdmissionToken(address at) public {
+        admissionToken = at;
     }
     function setMinDepositAmount(uint256 amount) public {
         minDepositAmount = amount;

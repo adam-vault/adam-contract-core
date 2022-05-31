@@ -36,6 +36,7 @@ describe('DepositPool.sol', function () {
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
+    await dao.setAdmissionToken(memberToken.address);
     await dao.setMinTokenToAdmission(0);
 
     dp = await upgrades.deployProxy(DepositPool, [dao.address, feedRegistry.address, [token.address]], { kind: 'uups' });
