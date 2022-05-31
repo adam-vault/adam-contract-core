@@ -160,7 +160,7 @@ describe('DepositPool.sol', function () {
       await dao.setMinTokenToAdmit(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('1'));
       await memberToken.mint(signer1.address, parseEther('0.99'));
-      await expect(dpAsSigner1.deposit({ value: parseEther('1') })).to.be.revertedWith('member token not enough');
+      await expect(dpAsSigner1.deposit({ value: parseEther('1') })).to.be.revertedWith('Admission token not enough');
     });
   });
 

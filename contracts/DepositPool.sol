@@ -155,7 +155,7 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
                     (, bytes memory result) = address(dao.admissionToken()).call(data);
                     
                     uint256 balance = abi.decode(result,(uint256));
-                    require( balance >= dao.minTokenToAdmit(), "member token not enough");
+                    require( balance >= dao.minTokenToAdmit(), "Admission token not enough");
                 }
                 dao.mintMember(account);
             }

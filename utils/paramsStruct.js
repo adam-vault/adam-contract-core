@@ -1,8 +1,6 @@
 
 const { faker } = require('@faker-js/faker');
-
-// rinkeby
-const DAI = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
+const { ethers } = require('hardhat');
 
 function getCreateDaoParams ({
   // defaut Dao Setting
@@ -17,7 +15,7 @@ function getCreateDaoParams ({
   tokenAmount = 100,
   minDepositAmount = 0,
   minTokenToAdmit = 0,
-  admissionToken = DAI,
+  admissionToken = ethers.constants.AddressZero,
   depositTokens = [],
   mintMemberToken = false,
 }) {

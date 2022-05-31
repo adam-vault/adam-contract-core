@@ -115,7 +115,7 @@ describe('LiquidPool.sol', function () {
       await dao.setMinTokenToAdmit(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('1'));
       await memberToken.mint(signer1.address, parseEther('0.99'));
-      await expect(lpAsSigner1.deposit({ value: parseEther('1') })).to.be.revertedWith('member token not enough');
+      await expect(lpAsSigner1.deposit({ value: parseEther('1') })).to.be.revertedWith('Admission token not enough');
     });
   });
 
@@ -312,7 +312,7 @@ describe('LiquidPool.sol', function () {
       await dao.setMinDepositAmount(parseEther('0.0046'));
       await memberToken.mint(signer1.address, parseEther('0.99'));
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
-      await expect(lpAsSigner1.depositToken(token.address, parseEther('1'))).to.be.revertedWith('member token not enough');
+      await expect(lpAsSigner1.depositToken(token.address, parseEther('1'))).to.be.revertedWith('Admission token not enough');
     });
   });
 

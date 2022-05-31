@@ -16,7 +16,8 @@ const daoAddresses = [];
 const testingDataSet = [
   { lockTime: 0, mintMemberToken: true, admissionToken: hre.ethers.constants.AddressZero, description: '0 lockup, Mint Member Token, No Admission' },
   { lockTime: 100, mintMemberToken: false, admissionToken: hre.ethers.constants.AddressZero, description: '100 lockup, No Member Token, No Admission' },
-  { lockTime: 100, mintMemberToken: false, admissionToken: '0x81D3352bDb18A8484aCe25A6d51D1D12c10552C6', description: '100 lockup, No Member Token, ERC721 MT' },
+  { lockTime: 100, mintMemberToken: false, admissionToken: '0xf9559a051478c6a01f20b3c92438023921de51df', description: '100 lockup, No Member Token, ERC721 MT' },
+  { lockTime: 100, mintMemberToken: false, admissionToken: '0xD9BA894E0097f8cC2BBc9D24D308b98e36dc6D02', description: '100 lockup, No Member Token, ERC20 MT' },
 ];
 
 async function main () {

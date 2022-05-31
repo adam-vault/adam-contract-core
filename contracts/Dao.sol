@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -102,6 +103,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
         if(params._admissionToken == address(0)){
             admissionToken = memberToken;
+        }else if(!Address.isContract(params._admissionToken)){
+            revert("Admission Token not Support!");
         }else{
             bytes4 sector = bytes4(keccak256("balanceOf(address)"));
             bytes memory data = abi.encodeWithSelector(sector, msg.sender);
