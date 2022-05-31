@@ -28,14 +28,13 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address _membership;
         address _liquidPool;
         address _depositPool;
+        address _admissionToken;
         address _governFactory;
         address _memberTokenImplementation;
         address _optInPoolImplementation;
-        address _admissionToken;
         string _name;
         string _description;
         uint256 _locktime;
-        address memberToken;
         uint256[4] budgetApproval;
         uint256[4] revokeBudgetApproval;
         uint256[4] general;
@@ -58,6 +57,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         Other
     }
 
+    enum AdmissionTokenType {
+        ERC20,
+        ERC721,
+        Other
+    }
+
     address public memberToken;
     address public creator;
     address public adam;
@@ -69,6 +74,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public memberTokenImplementation;
     address public optInPoolImplementation;
     string public name;
+    AdmissionTokenType public admissionTokenType;
     uint256 public locktime;
     uint256 public minDepositAmount;
     uint256 public minTokenToAdmission;
@@ -104,7 +110,14 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         if(params._admissionToken == address(0)){
             admissionToken = memberToken;
         }else{
-            admissionToken = params._admissionToken;
+            bytes4 sector = bytes4(keccak256("balanceOf(address)"));
+            bytes memory data = abi.encodeWithSelector(sector, address(0));
+            (bool success,) = address(params._admissionToken).call(data);
+            if(success){
+                admissionToken = params._admissionToken;
+            }else{
+                revert("Admission Token not Support!");
+            }
         }
 
         uint256[] memory w = new uint256[](1);
