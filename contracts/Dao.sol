@@ -22,7 +22,8 @@ import "./lib/Concat.sol";
 
 contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
-
+    using Address for address;
+    
     struct InitializeParams {
         address _creator;
         address _membership;
@@ -103,17 +104,13 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
         if(params._admissionToken == address(0)){
             admissionToken = memberToken;
-        }else if(!Address.isContract(params._admissionToken)){
-            revert("Admission Token not Support!");
         }else{
+            require(params._admissionToken.isContract(), "Admission Token not Support!");
             bytes4 sector = bytes4(keccak256("balanceOf(address)"));
             bytes memory data = abi.encodeWithSelector(sector, msg.sender);
-            (bool success,) = address(params._admissionToken).call(data);
-            if(success){
-                admissionToken = params._admissionToken;
-            }else{
-                revert("Admission Token not Support!");
-            }
+            (bool success,) = params._admissionToken.call(data);
+            require(success, "Admission Token not Support!");
+            admissionToken = params._admissionToken;
         }
 
         uint256[] memory w = new uint256[](1);
