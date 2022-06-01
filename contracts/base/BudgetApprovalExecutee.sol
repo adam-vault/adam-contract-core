@@ -21,7 +21,9 @@ contract BudgetApprovalExecutee {
 
     function executeByBudgetApproval(address _to, bytes memory _data, uint256 _value) external onlyBudgetApproval returns (bytes memory) {
         (bool success, bytes memory result) = _to.call{ value: _value }(_data);
-        require(success, string("BudgetApprovalExecutee: execution failed - ").concat(RevertMsg.ToString(result)));
+        if(!success) {
+            revert(string("BudgetApprovalExecutee: execution failed - ").concat(RevertMsg.ToString(result)));
+        }
 
         return result;
     }
