@@ -148,17 +148,19 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
             dao.setFirstDepositTime(account);
 
             require(eth >= dao.minDepositAmount(), "deposit amount not enough");
-            if (!dao.isMember(account)) {
-                if(dao.minTokenToAdmit() > 0 ){
-                    bytes4 sector = bytes4(keccak256("balanceOf(address)"));
-                    bytes memory data = abi.encodeWithSelector(sector, account);
-                    (, bytes memory result) = address(dao.admissionToken()).call(data);
-                    
-                    uint256 balance = abi.decode(result,(uint256));
-                    require(balance >= dao.minTokenToAdmit(), "Admission token not enough");
-                }
-                dao.mintMember(account);
+            
+            if (dao.isMember(account)) {
+                return;
             }
+            if(dao.minTokenToAdmit() > 0 ){
+                bytes4 sector = bytes4(keccak256("balanceOf(address)"));
+                bytes memory data = abi.encodeWithSelector(sector, account);
+                (, bytes memory result) = address(dao.admissionToken()).call(data);
+                
+                uint256 balance = abi.decode(result,(uint256));
+                require(balance >= dao.minTokenToAdmit(), "Admission token not enough");
+            }
+            dao.mintMember(account);
         }
     }
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
