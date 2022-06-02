@@ -185,12 +185,24 @@ describe('TransferERC721BudgetApproval.sol', function () {
         receiver.address,
         37752,
       ]);
-      const tx = await budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await budgetApproval.connect(approver).approveTransaction(id);
 
       await expect(budgetApproval.connect(approver).executeTransaction(id))
+        .to.be.revertedWith('access denied');
+    });
+
+    it('should revert if not created by executor', async function () {
+      await tokenC721.mint(executee.address, 37752);
+      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+        tokenC721.address,
+        receiver.address,
+        37752,
+      ]);
+
+      await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false))
         .to.be.revertedWith('access denied');
     });
 
