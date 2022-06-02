@@ -246,11 +246,23 @@ describe('TransferERC20BudgetApproval.sol', function () {
           receiver.address,
           parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(approver).approveTransaction(id);
         await expect(budgetApproval.connect(approver).executeTransaction(id))
+          .to.be.revertedWith('access denied');
+      });
+    });
+
+    context('not created by executor', () => {
+      it('should revert', async function () {
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          ETHAddress,
+          receiver.address,
+          parseEther('10'),
+        ]);
+        await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false))
           .to.be.revertedWith('access denied');
       });
     });

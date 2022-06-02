@@ -151,7 +151,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit ExecuteTransaction(id, transactions[id].data);
     }
 
-    function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute) external returns (uint256) {
+    function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute) external onlyExecutor returns (uint256) {
         _transactionIds.increment();
         uint256 id = _transactionIds.current();
 
