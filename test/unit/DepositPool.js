@@ -20,7 +20,13 @@ describe('DepositPool.sol', function () {
 
     const DepositPool = await ethers.getContractFactory('DepositPool', { signer: creator });
 
-    feedRegistry = await MockFeedRegistry.deploy();
+    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
+    await ethers.provider.send('hardhat_setCode', [
+      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      feedRegistryArticfact.deployedBytecode,
+    ]);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+
     dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
@@ -30,7 +36,8 @@ describe('DepositPool.sol', function () {
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
-
+    await dao.setAdmissionToken(memberToken.address);
+    await dao.setMinTokenToAdmit(0);
     dp = await upgrades.deployProxy(DepositPool, [dao.address, feedRegistry.address, [token.address]], { kind: 'uups' });
 
     dpAsSigner1 = dp.connect(signer1);
@@ -68,11 +75,11 @@ describe('DepositPool.sol', function () {
 
   describe('uri()', function () {
     it('return ETH if 0xeeee', async function () {
-      const jsonResponse = decodeBase64(await dp.uri(await dpAsSigner1.id(ETH)));
+      const jsonResponse = decodeBase64(await dp.uri(await dpAsSigner1.idOf(ETH)));
       expect(jsonResponse.name).to.equal('ETH');
     });
     it('return token name', async function () {
-      const jsonResponse = decodeBase64(await dp.uri(await dpAsSigner1.id(token.address)));
+      const jsonResponse = decodeBase64(await dp.uri(await dpAsSigner1.idOf(token.address)));
       expect(jsonResponse.name).to.equal('TokenA');
     });
   });
@@ -107,14 +114,14 @@ describe('DepositPool.sol', function () {
   describe('deposit()', function () {
     it('mint 1 dp if deposit 1 eth (price: 0; totalSupply: 0)', async function () {
       await dpAsSigner1.deposit({ value: parseEther('1') });
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.id(ETH))).to.eq(parseEther('1'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(ETH))).to.eq(parseEther('1'));
     });
 
     it('mint 1.9 dp for 1.9 eth (price: 1.9; totalSupply: 1.9)', async function () {
       await dpAsSigner1.deposit({ value: parseEther('0.1') });
       await dpAsSigner2.deposit({ value: parseEther('1.9') });
 
-      expect(await dp.balanceOf(signer2.address, await dpAsSigner1.id(ETH))).to.eq(parseEther('1.9'));
+      expect(await dp.balanceOf(signer2.address, await dpAsSigner1.idOf(ETH))).to.eq(parseEther('1.9'));
     });
 
     it('can deposit twice if not deposit before', async function () {
@@ -138,22 +145,22 @@ describe('DepositPool.sol', function () {
     });
 
     it('can deposit if meet minDeposit amount & minTokenToJoin', async function () {
-      await dao.setMinMemberTokenToJoin(parseEther('1'));
+      await dao.setMinTokenToAdmit(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('1'));
       await memberToken.mint(signer1.address, parseEther('1'));
       await expect(dpAsSigner1.deposit({ value: parseEther('1') })).to.not.be.reverted;
     });
     it('can not deposit if not meet minDeposit amount', async function () {
-      await dao.setMinMemberTokenToJoin(parseEther('1'));
+      await dao.setMinTokenToAdmit(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('1'));
       await memberToken.mint(signer1.address, parseEther('1'));
       await expect(dpAsSigner1.deposit({ value: parseEther('0.99') })).to.be.revertedWith('deposit amount not enough');
     });
-    it('can not deposit if not meet minMemberTokenToJoin amount', async function () {
-      await dao.setMinMemberTokenToJoin(parseEther('1'));
+    it('can not deposit if not meet minTokenToAdmit amount', async function () {
+      await dao.setMinTokenToAdmit(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('1'));
       await memberToken.mint(signer1.address, parseEther('0.99'));
-      await expect(dpAsSigner1.deposit({ value: parseEther('1') })).to.be.revertedWith('member token not enough');
+      await expect(dpAsSigner1.deposit({ value: parseEther('1') })).to.be.revertedWith('Admission token not enough');
     });
   });
 
@@ -161,7 +168,7 @@ describe('DepositPool.sol', function () {
     it('mint 1 dp if deposit 1 TOKEN (price: 0; totalSupply: 0)', async function () {
       await tokenAsSigner1.approve(dp.address, parseEther('1'));
       await dpAsSigner1.depositToken(token.address, parseEther('1'));
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.id(token.address))).to.eq(parseEther('1'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('1'));
     });
 
     it('mint 1.9 dp for 1.9 TOKEN (price: 0.0046; totalSupply: 0.0046)', async function () {
@@ -170,7 +177,7 @@ describe('DepositPool.sol', function () {
 
       await tokenAsSigner2.approve(dp.address, parseEther('1.9'));
       await dpAsSigner2.depositToken(token.address, parseEther('1.9'));
-      expect(await dp.balanceOf(signer2.address, await dpAsSigner1.id(token.address))).to.eq(parseEther('1.9'));
+      expect(await dp.balanceOf(signer2.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('1.9'));
     });
   });
   describe('withdraw()', function () {
@@ -179,12 +186,12 @@ describe('DepositPool.sol', function () {
 
       expect(await ethers.provider.getBalance(dp.address)).to.eq(parseEther('1'));
       expect((await ethers.provider.getBalance(signer1.address)).lte(parseEther('999'))).to.eq(true);
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.id(ETH))).to.eq(parseEther('1'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(ETH))).to.eq(parseEther('1'));
 
       await dpAsSigner1.withdraw(ETH, parseEther('1'));
       expect(await ethers.provider.getBalance(dp.address)).to.eq(parseEther('0'));
       expect((await ethers.provider.getBalance(signer1.address)).gte(parseEther('999'))).to.eq(true);
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.id(token.address))).to.eq(parseEther('0'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('0'));
     });
 
     it('burn 0.5 dp and withdraw 1 eth + .5 token (totalSupply: 1)', async function () {
@@ -192,10 +199,10 @@ describe('DepositPool.sol', function () {
       await dpAsSigner1.depositToken(token.address, parseEther('1'));
 
       expect(await token.balanceOf(dp.address)).to.eq(parseEther('1'));
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.id(token.address))).to.eq(parseEther('1'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('1'));
 
       await dpAsSigner1.withdraw(token.address, parseEther('0.5'));
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.id(token.address))).to.eq(parseEther('0.5'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('0.5'));
       expect(await token.balanceOf(dp.address)).to.eq(parseEther('0.5'));
     });
   });

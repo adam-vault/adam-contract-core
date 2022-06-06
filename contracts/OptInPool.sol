@@ -13,7 +13,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpg
 
 import "./base/BudgetApprovalExecutee.sol";
 
-import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./lib/Concat.sol";
@@ -23,7 +22,6 @@ import "./interface/IDepositPool.sol";
 contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetApprovalExecutee, ERC721HolderUpgradeable, ERC1155HolderUpgradeable {
     using Concat for string;
     
-    FeedRegistryInterface public registry;
     IDepositPool public depositPool;
     address public depositToken;
     address[] public redeemTokens;
@@ -52,10 +50,10 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
         depositDeadline = _depositDeadline;
         redeemTime = _redeemTime;
 
-        require(depositPool.id(depositToken) != 0, "Token not supported");
+        require(depositPool.idOf(depositToken) != 0, "Token not supported");
 
         for (uint256 i = 0; i < _redeemTokens.length; i++) {
-            require(depositPool.id(_redeemTokens[i]) != 0, "Token not supported");
+            require(depositPool.idOf(_redeemTokens[i]) != 0, "Token not supported");
             require(!isRedeemTokens[_redeemTokens[i]], "Token duplicated");
             redeemTokens.push(_redeemTokens[i]);
             isRedeemTokens[_redeemTokens[i]] = true;
@@ -80,7 +78,7 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
 
     function join(uint256 amount) public {
         require(block.timestamp < depositDeadline, "depositDeadline passed");
-        depositPool.safeTransferFrom(msg.sender, address(this), depositPool.id(depositToken), amount, "");
+        depositPool.safeTransferFrom(msg.sender, address(this), depositPool.idOf(depositToken), amount, "");
         depositPool.withdraw(depositToken, amount);
 
         _mint(msg.sender, amount);
@@ -106,7 +104,7 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
                     assetAmount = assetsShares(redeemTokens[j], amount);
                 }
                 _depositToDP(redeemTokens[j], assetAmount);
-                depositPool.safeTransferFrom(address(this), accounts[i], depositPool.id(redeemTokens[j]), assetAmount, "");
+                depositPool.safeTransferFrom(address(this), accounts[i], depositPool.idOf(redeemTokens[j]), assetAmount, "");
             }
             _burn(accounts[i], amount);
         }
@@ -128,7 +126,7 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
         require(balance > 0, "not in list");
         _burn(account, balance);
         _depositToDP(depositToken, balance);
-        depositPool.safeTransferFrom(address(this), account, depositPool.id(depositToken), balance, "");
+        depositPool.safeTransferFrom(address(this), account, depositPool.idOf(depositToken), balance, "");
         recevied -= balance;
     }
 
