@@ -15,22 +15,22 @@ import "hardhat/console.sol";
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     /** 
-        @notice params for creating dao
-        @param _name name of dao
-        @param _description description of dao
-        @param _locktime length of locktime
-        @param budgetApproval budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
-        @param revokeBudgetApproval revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
-        @param general general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
-        @param daoSettingApproval dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
-        @param tokenInfo [0]token name, [1]token symbol
-        @param tokenAmount mint member token amount
-        @param minDepositAmount minimum deposit amount to join dao
-        @param minTokenToAdmit minimum amount of admission token to join dao
-        @param admissionToken address of admission token
-        @param depositTokens addresses of tokens which are able to deposit
-        @param mintMemberToken mint member token when create dao or not
-    */
+     * @notice params for creating dao
+     * @param _name name of dao
+     * @param _description description of dao
+     * @param _locktime length of locktime
+     * @param budgetApproval budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+     * @param revokeBudgetApproval revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+     * @param general general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+     * @param daoSettingApproval dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+     * @param tokenInfo [0]token name, [1]token symbol
+     * @param tokenAmount mint member token amount
+     * @param minDepositAmount minimum deposit amount to join dao
+     * @param minTokenToAdmit minimum amount of admission token to join dao
+     * @param admissionToken address of admission token
+     * @param depositTokens addresses of tokens which are able to deposit
+     * @param mintMemberToken mint member token when create dao or not
+     */
     struct CreateDaoParams {
         string _name;
         string _description;
@@ -115,22 +115,24 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    /** 
-        @dev    [0] _name: name of dao \
-                [1] _description: description of dao \
-                [2] _locktime: length of locktime \
-                [3] memberTokenType: enum MemberTokenTypeOption \
-                [4] memberToken: address of memberToken \
-                [5] budgetApproval: budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-                [6] revokeBudgetApproval: revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-                [7] general: general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-                [8] daoSettingApproval: dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-                [9] tokenInfo: [0]token name, [1]token symbol \
-               [10] tokenAmount: mint member token amount \
-               [11] minDepositAmount: minimum deposit amount to join dao \
-               [12] minMemberTokenToJoin: minimum amount of member token to join dao \
-               [13] depositTokens: address of tokens which is able to deposit \
-    */
+    /**
+     * @notice create a Dao
+     * @dev [0] _name: name of dao \
+     *      [1] _description: description of dao \
+     *      [2] _locktime: length of locktime \
+     *      [3] memberTokenType: enum MemberTokenTypeOption \
+     *      [4] memberToken: address of memberToken \
+     *      [5] budgetApproval: budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     *      [6] revokeBudgetApproval: revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     *      [7] general: general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     *      [8] daoSettingApproval: dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     *      [9] tokenInfo: [0]token name, [1]token symbol \
+     *      [10] tokenAmount: mint member token amount \
+     *      [11] minDepositAmount: minimum deposit amount to join dao \
+     *      [12] minMemberTokenToJoin: minimum amount of member token to join dao \
+     *      [13] depositTokens: address of tokens which is able to deposit
+     * @param params see above
+     */
     function createDao(CreateDaoParams calldata params) public returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");

@@ -149,20 +149,26 @@ function whitelistBudgetApprovals(address[] _budgetApprovals) public
 function createDao(struct Adam.CreateDaoParams params) public returns (address)
 ```
 
+create a Dao
+
 _[0] _name: name of dao \
-                [1] _description: description of dao \
-                [2] _locktime: length of locktime \
-                [3] memberTokenType: enum MemberTokenTypeOption \
-                [4] memberToken: address of memberToken \
-                [5] budgetApproval: budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-                [6] revokeBudgetApproval: revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-                [7] general: general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-                [8] daoSettingApproval: dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-                [9] tokenInfo: [0]token name, [1]token symbol \
-               [10] tokenAmount: mint member token amount \
-               [11] minDepositAmount: minimum deposit amount to join dao \
-               [12] minMemberTokenToJoin: minimum amount of member token to join dao \
-               [13] depositTokens: address of tokens which is able to deposit \_
+     [1] _description: description of dao \
+     [2] _locktime: length of locktime \
+     [3] memberTokenType: enum MemberTokenTypeOption \
+     [4] memberToken: address of memberToken \
+     [5] budgetApproval: budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     [6] revokeBudgetApproval: revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     [7] general: general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     [8] daoSettingApproval: dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     [9] tokenInfo: [0]token name, [1]token symbol \
+     [10] tokenAmount: mint member token amount \
+     [11] minDepositAmount: minimum deposit amount to join dao \
+     [12] minMemberTokenToJoin: minimum amount of member token to join dao \
+     [13] depositTokens: address of tokens which is able to deposit_
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| params | struct Adam.CreateDaoParams | see above |
 
 ### _authorizeUpgrade
 
