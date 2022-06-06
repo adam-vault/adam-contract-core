@@ -31,10 +31,6 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 		_;
 	}
 
-	function initialize() public initializer {
-		__ERC1155_init("");
-	}
-
 	function addTeam(string memory name, address minter, address[] memory members, string memory description) public returns (uint256) {
 		_tokenIds.increment();
 		creatorList[_tokenIds.current()] = msg.sender;
