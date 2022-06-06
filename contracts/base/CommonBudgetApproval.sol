@@ -99,6 +99,19 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         _;
     }
 
+    /**
+     * @notice config for creating a budget approval 
+     * @param dao address of dao
+     * @param executor address of EOA
+     * @param approvers address of approvers
+     * @param minApproval minimum approval needed to execute
+     * @param text name of budget approval
+     * @param transactionType type of budget approval
+     * @param startTime not able to use budget approval before startTime
+     * @param endTime not able to use budget approval after endTime
+     * @param allowUnlimitedUsageCount allow unlimited usage count
+     * @param usageCount number of usage count 
+     */
     struct InitializeParams {
         address dao;
         address executor;
@@ -112,6 +125,23 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         uint256 usageCount;
     }
 
+    /**
+     * @dev [0] dao: address of dao \
+     *      [1] executor: address of EOA \
+     *      [2] approvers: address of approvers \
+     *      [3] text: name of budget approval \
+     *      [4] transactionType: type of budget approval \
+     *      [5] allowAllAddresses: allow all receipent address \
+     *      [6] addresses: allowed address of receipents \
+     *      [7] tokens: allowed address of using tokens \
+     *      [8] allowAnyAmount: allow any amount \
+     *      [9] totalAmount: allowed amount \
+     *      [10] amountPercentage: percentage of allowed amount \
+     *      [11] startTime: not able to use budget approval before startTime \
+     *      [12] endTime: not able to use budget approval after endTime \
+     *      [13] allowUnlimitedUsageCount: allow unlimited usage count \
+     *      [14] usageCount: number of usage count 
+     */
     function __BudgetApproval_init(
         InitializeParams calldata params
         ) internal onlyInitializing {
@@ -138,6 +168,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function afterInitialized() virtual external onlyExecutee {}
 
+    /**
+     * @notice execute transaction by executor
+     * @param id transaction id
+     */
     function executeTransaction(uint256 id) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
         for (uint i = 0; i < transactions[id].data.length; i++) {
             require(allowUnlimitedUsageCount || usageCount > 0, "usage exceeded");
@@ -151,6 +185,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit ExecuteTransaction(id, transactions[id].data);
     }
 
+    /**
+     * @notice create transaction by executor
+     * @param _data encoded bytes of transaction
+     * @param _deadline not able to execute after deadline (timestamp of second)
+     * @param _isExecute execute immediately after created
+     */
     function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute) external onlyExecutor returns (uint256) {
         _transactionIds.increment();
         uint256 id = _transactionIds.current();
@@ -176,6 +216,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         return id;
     }
 
+    /** 
+     * @notice approve transaction by approver
+     * @param id transaction id
+     */
     function approveTransaction(uint256 id) external onlyApprover {
         require(transactions[id].status == Status.Pending
             || transactions[id].status == Status.Approved,
@@ -192,6 +236,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit ApproveTransaction(id, msg.sender);
     }
 
+    /**
+     * @notice revoke transaction by approver
+     * @param id transaction id
+     */
     function revokeTransaction(uint256 id) external onlyExecutor {
         require(transactions[id].status != Status.Completed, "transaction already completed");
         transactions[id].status = Status.Cancelled;
@@ -199,17 +247,39 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit RevokeTransaction(id);
     }
 
+    /**
+     * @notice check status of transaction
+     * @param id transaction id
+     * @return status of transaction
+     */
     function statusOf(uint256 id) public view returns (Status) {
         return transactions[id].status;
     }
+
+    /**
+     * @notice check approved count of transaction
+     * @param id transaction id
+     * @return number of approved count
+     */
     function approvedCountOf(uint256 id) public view returns (uint256) {
         return transactions[id].approvedCount;
     }
+
+    /**
+     * @notice check deadline of transaction
+     * @param id transaction id
+     * @return deadline of transaction
+     */
     function deadlineOf(uint256 id) public view returns (uint256) {
         return transactions[id].deadline;
     }
 
     function _execute(bytes memory) internal virtual;
+
+    /**
+     * @notice check params of execute function
+     * @return string array of params
+     */
     function executeParams() public pure virtual returns (string[] memory);
     function name() external virtual returns (string memory);
 

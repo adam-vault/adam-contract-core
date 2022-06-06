@@ -24,6 +24,27 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     using Concat for string;
     using Address for address;
     
+    /** 
+        @notice initialize config of dao
+        @param _creator address creator of dao
+        @param _membership address of membership
+        @param _liquidPool address of liquidPool
+        @param _governFactory address of govern factory
+        @param _memberTokenImplementation address of member token implementation
+        @param _name name of dao
+        @param _description description of dao
+        @param _locktime length of locktime
+        @param memberTokenType enum MemberTokenTypeOption
+        @param memberToken address of memberToken
+        @param budgetApproval budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+        @param revokeBudgetApproval revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+        @param general general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+        @param daoSettingApproval dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+        @param tokenInfo [0]token name, [1]token symbol
+        @param tokenAmount mint member token amount
+        @param daoSetting updatable dao config
+        @param depositTokens address of tokens which is able to deposit
+    */
     struct InitializeParams {
         address _creator;
         address _membership;
@@ -47,6 +68,11 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         bool mintMemberToken;
     }
 
+    /** 
+        @notice updatable dao config
+        @param minDepositAmount minimum deposit amount to join the dao
+        @param minMemberTokenToJoin minimum amount of member token to join the dao
+    */
     struct DaoSetting {
         uint256 minDepositAmount;
         uint256 minTokenToAdmit;
@@ -83,6 +109,26 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event CreateMemberToken(address creator, address token);
     event SetFirstDepositTime(address owner, uint256 time);
 
+    /** 
+        @dev    [0] _creator: address creator of dao \
+                [1] _membership: address of membership \
+                [2] _liquidPool: address of liquidPool \
+                [3] _governFactory: address of govern factory \
+                [4] _memberTokenImplementation: address of member token implementation \
+                [5] _name: name of dao \
+                [6] _description: description of dao \
+                [7] _locktime: length of locktime \
+                [8] memberTokenType: enum MemberTokenTypeOption \
+                [9] memberToken: address of memberToken \
+               [10] budgetApproval: budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+               [11] revokeBudgetApproval: revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+               [12] general: general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+               [13] daoSettingApproval: dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+               [14] tokenInfo: [0]token name, [1]token symbol \
+               [15] tokenAmount: mint member token amount \
+               [16] daoSetting: updatable dao config \
+               [17] depositTokens: address of tokens which is able to deposit
+    */
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
         creator = params._creator;
