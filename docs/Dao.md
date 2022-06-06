@@ -181,23 +181,29 @@ function initialize(struct Dao.InitializeParams params) public
 ```
 
 _[0] _creator: address creator of dao \
-                [1] _membership: address of membership \
-                [2] _liquidPool: address of liquidPool \
-                [3] _governFactory: address of govern factory \
-                [4] _memberTokenImplementation: address of member token implementation \
-                [5] _name: name of dao \
-                [6] _description: description of dao \
-                [7] _locktime: length of locktime \
-                [8] memberTokenType: enum MemberTokenTypeOption \
-                [9] memberToken: address of memberToken \
-               [10] budgetApproval: budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-               [11] revokeBudgetApproval: revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-               [12] general: general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-               [13] daoSettingApproval: dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-               [14] tokenInfo: [0]token name, [1]token symbol \
-               [15] tokenAmount: mint member token amount \
-               [16] daoSetting: updatable dao config \
-               [17] depositTokens: address of tokens which is able to deposit_
+     [1] _membership: address of membership \
+     [2] _liquidPool: address of liquidPool \
+     [3] _depositPool: address of depositPool \
+     [4] _admissionToken: address of admission token \
+     [5] _governFactory: address of govern factory \
+     [6] _memberTokenImplementation: address of member token implementation \
+     [7] _optInPoolImplementation: address of opt in pool implementation \
+     [8] _name: name of dao \
+     [9] _description: description of dao \
+     [10] _locktime: length of locktime \
+     [11] budgetApproval: budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     [12] revokeBudgetApproval: revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     [13] general: general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     [14] daoSettingApproval: dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     [15] tokenInfo: [0]token name, [1]token symbol \
+     [16] tokenAmount: mint member token amount \
+     [17] daoSetting: updatable dao config \
+     [18] depositTokens: address of tokens which is able to deposit \
+     [19] mintMemberToken: to mint member token_
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| params | struct Dao.InitializeParams | see above |
 
 ### onlyGovern
 
@@ -234,6 +240,14 @@ function transferMemberToken(address to, uint256 amount) public
 ```solidity
 function createMultiExecuteeBudgetApprovals(address[] executee, address[] budgetApprovals, bytes[] data) public
 ```
+
+create budget approvals for multiple executee (dao and liquid pool)
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| executee | address[] | addresses of executee (dao/liquid pool) |
+| budgetApprovals | address[] | addresses of budget approval templates |
+| data | bytes[] | bytes of initialize data |
 
 ### _beforeCreateBudgetApproval
 
@@ -282,6 +296,17 @@ function updateDaoSetting(struct Dao.DaoSetting _setting) public
 ```solidity
 function createGovern(string _name, uint256 duration, uint256 quorum, uint256 passThreshold, uint256[] voteWeights, uint256 voteToken) public
 ```
+
+create a govern for proposal
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _name | string | govern name |
+| duration | uint256 | how long the proposal last |
+| quorum | uint256 | minimum percentage of total vote to pass the proposal |
+| passThreshold | uint256 | minimum percentage of for vote to pass the proposal |
+| voteWeights | uint256[] | weights of token |
+| voteToken | uint256 | token to vote |
 
 ### getVoteTypeValues
 

@@ -25,26 +25,28 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     using Address for address;
     
     /** 
-        @notice initialize config of dao
-        @param _creator address creator of dao
-        @param _membership address of membership
-        @param _liquidPool address of liquidPool
-        @param _governFactory address of govern factory
-        @param _memberTokenImplementation address of member token implementation
-        @param _name name of dao
-        @param _description description of dao
-        @param _locktime length of locktime
-        @param memberTokenType enum MemberTokenTypeOption
-        @param memberToken address of memberToken
-        @param budgetApproval budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
-        @param revokeBudgetApproval revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
-        @param general general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
-        @param daoSettingApproval dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
-        @param tokenInfo [0]token name, [1]token symbol
-        @param tokenAmount mint member token amount
-        @param daoSetting updatable dao config
-        @param depositTokens address of tokens which is able to deposit
-    */
+     * @notice initialize config of dao
+     * @param _creator address creator of dao
+     * @param _membership address of membership
+     * @param _liquidPool address of liquidPool
+     * @param _depositPool address of depositPool
+     * @param _admissionToken address of admission token
+     * @param _governFactory address of govern factory
+     * @param _memberTokenImplementation address of member token implementation
+     * @param _optInPoolImplementation address of opt in pool implementation
+     * @param _name name of dao
+     * @param _description description of dao
+     * @param _locktime length of locktime
+     * @param budgetApproval budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+     * @param revokeBudgetApproval revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+     * @param general general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+     * @param daoSettingApproval dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken
+     * @param tokenInfo [0]token name, [1]token symbol
+     * @param tokenAmount mint member token amount
+     * @param daoSetting updatable dao config
+     * @param depositTokens address of tokens which is able to deposit
+     * @param mintMemberToken to mint member token
+     */
     struct InitializeParams {
         address _creator;
         address _membership;
@@ -110,25 +112,28 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event SetFirstDepositTime(address owner, uint256 time);
 
     /** 
-        @dev    [0] _creator: address creator of dao \
-                [1] _membership: address of membership \
-                [2] _liquidPool: address of liquidPool \
-                [3] _governFactory: address of govern factory \
-                [4] _memberTokenImplementation: address of member token implementation \
-                [5] _name: name of dao \
-                [6] _description: description of dao \
-                [7] _locktime: length of locktime \
-                [8] memberTokenType: enum MemberTokenTypeOption \
-                [9] memberToken: address of memberToken \
-               [10] budgetApproval: budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-               [11] revokeBudgetApproval: revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-               [12] general: general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-               [13] daoSettingApproval: dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
-               [14] tokenInfo: [0]token name, [1]token symbol \
-               [15] tokenAmount: mint member token amount \
-               [16] daoSetting: updatable dao config \
-               [17] depositTokens: address of tokens which is able to deposit
-    */
+     * @dev [0] _creator: address creator of dao \
+     *      [1] _membership: address of membership \
+     *      [2] _liquidPool: address of liquidPool \
+     *      [3] _depositPool: address of depositPool \
+     *      [4] _admissionToken: address of admission token \
+     *      [5] _governFactory: address of govern factory \
+     *      [6] _memberTokenImplementation: address of member token implementation \
+     *      [7] _optInPoolImplementation: address of opt in pool implementation \
+     *      [8] _name: name of dao \
+     *      [9] _description: description of dao \
+     *      [10] _locktime: length of locktime \
+     *      [11] budgetApproval: budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     *      [12] revokeBudgetApproval: revoke budget approval govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     *      [13] general: general govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     *      [14] daoSettingApproval: dao setting govern config [0]duration, [1]quorum, [2]passThreshold, [3]voteToken \
+     *      [15] tokenInfo: [0]token name, [1]token symbol \
+     *      [16] tokenAmount: mint member token amount \
+     *      [17] daoSetting: updatable dao config \
+     *      [18] depositTokens: address of tokens which is able to deposit \
+     *      [19] mintMemberToken: to mint member token
+     * @param params see above
+     */
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
         creator = params._creator;
@@ -229,6 +234,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _transferMemberToken(to, amount);
     }
 
+    /**
+     * @notice create budget approvals for multiple executee (dao and liquid pool)
+     * @param executee addresses of executee (dao/liquid pool)
+     * @param budgetApprovals addresses of budget approval templates
+     * @param data bytes of initialize data
+     */
     function createMultiExecuteeBudgetApprovals(address[] calldata executee, address[] calldata budgetApprovals, bytes[] calldata data) public onlyGovern("BudgetApproval") {
         require(executee.length == data.length, "input invalid");
         require(budgetApprovals.length == data.length, "input invalid");
@@ -292,6 +303,15 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         minTokenToAdmit = _setting.minTokenToAdmit;
     }
 
+    /**
+     * @notice create a govern for proposal
+     * @param _name govern name
+     * @param duration how long the proposal last
+     * @param quorum minimum percentage of total vote to pass the proposal
+     * @param passThreshold minimum percentage of for vote to pass the proposal
+     * @param voteWeights weights of token
+     * @param voteToken token to vote
+     */
     function createGovern(
         string calldata _name,
         uint duration,
