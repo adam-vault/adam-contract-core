@@ -44,6 +44,12 @@ function initialize(address _dao, string _name) public
 function createMember(address to) public
 ```
 
+create member
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| to | address | address of new member |
+
 ### tokenURI
 
 ```solidity

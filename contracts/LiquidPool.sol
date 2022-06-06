@@ -53,6 +53,12 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _addAssets(depositTokens); // todo
     }
 
+    /**
+     * @notice check LP token convert to asset
+     * @param asset address of asset
+     * @param amount amount of asset
+     * @return amount in asset
+     */
     function assetsShares(address asset, uint256 amount) public view returns (uint256) {
         require(amount <= totalSupply(), "gt totalSupply");
         require(isAssetSupported[asset], "Asset not support");
@@ -61,25 +67,43 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         return IERC20Metadata(asset).balanceOf(address(this)) * amount / totalSupply();
     }
 
+    /**
+     * @notice check LP token convert to eth
+     * @param amount amount of LP token
+     * @return amount of ETH
+     */
     function ethShares(uint256 amount) public view returns (uint256) {
         require(amount <= totalSupply(), "gt totalSupply");
         if (totalSupply() == 0) return 0;
         return address(this).balance * amount / totalSupply();
     }
 
+    /**
+     * @notice check eth convert to LP token
+     * @param eth eth amount
+     * @return amount of LP token
+     */
     function quote(uint256 eth) public view returns (uint256) {
         if (totalSupply() == 0) return eth;
         return (eth * 10 ** 18) / (totalPrice() * 10 ** 18 / totalSupply());
     }
 
+
     function canAddAsset(address asset) public view returns (bool) {
         return canResolvePrice(asset);
     }
 
+    /**
+     * @notice get total ETH price of liquid pool assets
+     * @return value in eth
+     */
     function totalPrice() public view returns (uint256) {
         return _assetsPrice() + address(this).balance;
     }
 
+    /**
+     * @notice deposit ETH
+     */
     function deposit() public payable {
         if (totalSupply() == 0) {
             _mint(msg.sender, msg.value);
@@ -92,6 +116,10 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _afterDeposit(msg.sender, msg.value);
     }
 
+    /**
+     * @notice redeem amount in LP token
+     * @param amount amount of LP token
+     */
     function redeem(uint256 amount) public {
         require(balanceOf(msg.sender) >= amount, "not enough balance");
         require(dao.firstDepositTime(msg.sender) + dao.locktime() <= block.timestamp, "lockup time");
@@ -103,6 +131,11 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _burn(msg.sender, amount);
     }
 
+    /**
+     * @notice deposit token to liquid pool
+     * @param asset address of asset
+     * @param amount amount of token
+     */
     function depositToken(address asset, uint256 amount) public {
         require(isAssetSupported[asset], "Asset not support");
         require(IERC20Metadata(asset).allowance(msg.sender, address(this)) >= amount, "not approve");
@@ -112,6 +145,10 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _afterDeposit(msg.sender, assetEthPrice(asset, amount));
     }
 
+    /**
+     * @notice add assets to liquid pool
+     * @param erc20s addresses of ERC20s
+     */
     function addAssets(address[] calldata erc20s) public onlyGovern("DaoSetting") {
         _addAssets(erc20s);
     }

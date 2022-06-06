@@ -34,6 +34,10 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         dao = payable(_dao);
     }
 
+    /**
+     * @notice create member
+     * @param to address of new member
+     */
     function createMember(address to) public {
         require(msg.sender == dao, "access denied");
 
