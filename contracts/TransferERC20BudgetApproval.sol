@@ -107,7 +107,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
 
     function _addToken(address token) internal {
         require(!tokensMapping[token], "duplicate token");
-        require(canResolvePrice(token), "token price cannot be resolve");
+        require( token == IDao(dao).memberToken() || canResolvePrice(token) , "token price cannot be resolve");
 
         tokens.push(token);
         tokensMapping[token] = true;
