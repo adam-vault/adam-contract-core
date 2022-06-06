@@ -38,6 +38,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public depositPoolImplementation;
     address public optInPoolImplementation;
     address public governFactory;
+    address public team;
     address public governImplementation;
     address public memberTokenImplementation;
     address public constantState;
@@ -57,7 +58,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
         address _constantState,
-        address _feedRegistry
+        address _feedRegistry,
+        address _team
     )
         public initializer
     {
@@ -73,6 +75,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         governFactory = _governFactory;
         constantState = _constantState;
         feedRegistry = _feedRegistry;
+        team = _team;
     }
 
     function setDaoImplementation(address _daoImplementation) public {
@@ -127,6 +130,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 address(_liquidPool),
                 address(_depositPool),
                 address(governFactory),
+                address(team),
                 address(memberTokenImplementation),
                 address(optInPoolImplementation),
                 params._name,
