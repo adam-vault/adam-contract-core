@@ -14,20 +14,20 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 	using ToString for address;
 	using Base64 for bytes;
 
-	event AddTeam(string name, address minter, address[] members, uint256 tokenId);
+	event AddTeam(string name, address minter, address[] members, string description, uint256 tokenId);
 	event AddMembers(address[] members, uint256 tokenId);
 	event RemoveMembers(address[] members, uint256 tokenId);
 	event EditDescription(string description, uint256 tokenId);
 
 	mapping(uint256 => address) public creatorList;
-	mapping(uint256 => address) public teamMinters;
-	mapping(uint256 => string) public teamList;
+	mapping(uint256 => address) public minterList;
+	mapping(uint256 => string) public nameList;
 	mapping(uint256 => string) public descriptions;
 
 	Counters.Counter private _tokenIds;
 
 	modifier onlyTeamMinter(uint256 id, address minter) {
-		require(teamMinters[id] == minter, "Team: only selected minter");
+		require(minterList[id] == minter, "Team: only selected minter");
 		_;
 	}
 
@@ -38,8 +38,8 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 	function addTeam(string memory name, address minter, address[] memory members, string memory description) public returns (uint256) {
 		_tokenIds.increment();
 		creatorList[_tokenIds.current()] = msg.sender;
-		teamMinters[_tokenIds.current()] = minter;
-		teamList[_tokenIds.current()] = name;
+		minterList[_tokenIds.current()] = minter;
+		nameList[_tokenIds.current()] = name;
 		descriptions[_tokenIds.current()] = description;
 
 		for(uint i = 0; i < members.length ; i++) {
@@ -51,7 +51,7 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 			);
 		}
 
-		emit AddTeam(name, minter, members, _tokenIds.current());
+		emit AddTeam(name, minter, members, description, _tokenIds.current());
 
 		return _tokenIds.current();
 	}
@@ -85,13 +85,13 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
  	function uri(uint256 _id) public view override returns (string memory) {
 		string memory metadata = string(abi.encodePacked(
 			"{\"name\": \"",
-			teamList[_id],
+			nameList[_id],
 			"\", \"creator\": \"",
 			creatorList[_id].toString(),
 			"\", \"minter\": \"",
-			teamMinters[_id].toString(),
+			minterList[_id].toString(),
 			"\", \"description\": \"",
-			descriptions[_id],
+			descriptions[_id], "\"",
 			"}"
 		));
 
@@ -109,7 +109,7 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 				bytes memory data
 		) public override pure {
 		// transfer of team membership is abandoned
-		return;
+		revert("Transfer is abandoned");
 	}
 
 	function safeBatchTransferFrom(
@@ -119,7 +119,7 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 				uint256[] memory amounts,
 				bytes memory data
 		) public override pure {
-				return;
+				revert("Transfer is abandoned");
 		}
 
 	function _authorizeUpgrade(address newImplementation) internal override initializer {}

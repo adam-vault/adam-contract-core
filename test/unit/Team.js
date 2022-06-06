@@ -16,20 +16,20 @@ describe('Team.sol', function () {
     it('should add a team', async function () {
       const teamName = 'Testing01';
 
-      expect(await team.addTeam(teamName, member1.address, [member1.address, member2.address])).to.emit('AddTeam');
-      expect(await team.creatorList(0)).to.eq(creator.address);
-      expect(await team.teamMinters(0)).to.eq(member1.address);
-      expect(await team.teamList(0)).to.eq(teamName);
-
-      await team.addTeam(teamName, member1.address, [member1.address, member2.address]);
+      expect(await team.addTeam(teamName, member1.address, [member1.address, member2.address], 'Hello')).to.emit('AddTeam');
+      expect(await team.creatorList(1)).to.eq(creator.address);
+      expect(await team.teamMinters(1)).to.eq(member1.address);
       expect(await team.teamList(1)).to.eq(teamName);
+
+      await team.addTeam(teamName, member1.address, [member1.address, member2.address], 'Hello');
+      expect(await team.teamList(2)).to.eq(teamName);
     });
   });
 
   describe('uri()', function () {
     it('should return a correct uri', async function () {
-      await team.addTeam('TTT', member1.address, [member1.address, member2.address]);
-      const uri = await team.uri(0);
+      await team.addTeam('TTT', member1.address, [member1.address, member2.address], 'Hello');
+      const uri = await team.uri(1);
       const res = decodeBase64(uri);
 
       expect(res.name).to.eq('TTT');
@@ -40,33 +40,33 @@ describe('Team.sol', function () {
 
   describe('addMembers()', function () {
     it('should be able to add members', async function () {
-      expect(await team.balanceOf(member3.address, 0)).to.eq(0);
+      expect(await team.balanceOf(member3.address, 1)).to.eq(0);
 
-      await team.addTeam('TTT', member1.address, [member1.address, member2.address]);
+      await team.addTeam('TTT', member1.address, [member1.address, member2.address], 'Hello');
 
-      await team.connect(member1).addMembers([member3.address], 0);
-      expect(await team.balanceOf(member3.address, 0)).to.eq(1);
+      await team.connect(member1).addMembers([member3.address], 1);
+      expect(await team.balanceOf(member3.address, 1)).to.eq(1);
     });
 
     it('could only be execute by minter', async function () {
-      await team.addTeam('TTT', member1.address, [member1.address, member2.address]);
+      await team.addTeam('TTT', member1.address, [member1.address, member2.address], 'Hello');
 
-      await expect(team.connect(member2).addMembers([member3.address], 0)).to.revertedWith('Team: only selected minter');
+      await expect(team.connect(member2).addMembers([member3.address], 1)).to.revertedWith('Team: only selected minter');
     });
   });
 
   describe('removeMembers()', function () {
     it('should be able to remove members', async function () {
-      await team.addTeam('TTT', member1.address, [member1.address, member2.address]);
+      await team.addTeam('TTT', member1.address, [member1.address, member2.address], 'Hello');
 
-      await team.connect(member1).removeMembers([member1.address], 0);
-      expect(await team.balanceOf(member1.address, 0)).to.eq(0);
+      await team.connect(member1).removeMembers([member1.address], 1);
+      expect(await team.balanceOf(member1.address, 1)).to.eq(0);
     });
 
     it('could only be execute by minter', async function () {
-      await team.addTeam('TTT', member1.address, [member1.address, member2.address]);
+      await team.addTeam('TTT', member1.address, [member1.address, member2.address], 'Hello');
 
-      await expect(team.connect(member2).removeMembers([member3.address], 0)).to.revertedWith('Team: only selected minter');
+      await expect(team.connect(member2).removeMembers([member3.address], 1)).to.revertedWith('Team: only selected minter');
     });
   });
 });

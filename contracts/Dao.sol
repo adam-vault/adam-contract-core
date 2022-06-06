@@ -89,6 +89,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
     event SetFirstDepositTime(address owner, uint256 time);
+    event CreateTeam(string name, address minter, address[] members, string description, uint256 tokenId);
 
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
@@ -312,6 +313,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("DaoSetting") {
       uint256 id = ITeam(team).addTeam(title, minter, members, description);
       teamWhitelist[id] = true;
+
+      emit CreateTeam(title, minter, members, description, id);
     }
 
     function _createMemberToken(string[] calldata tokenInfo, uint tokenAmount) internal {
