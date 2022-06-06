@@ -25,6 +25,25 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
     uint256 public totalAmount;
     uint8 public amountPercentage;
 
+    /**
+     * @dev [0] dao: address of dao \
+     *      [1] executor: address of EOA \
+     *      [2] approvers: address of approvers \
+     *      [3] minApproval: minimum approval needed to execute \
+     *      [4] text: name of budget approval \
+     *      [5] transactionType: type of budget approval \
+     *      [6] startTime: not able to use budget approval before startTime \
+     *      [7] endTime: not able to use budget approval after endTime \
+     *      [8] allowUnlimitedUsageCount: allow unlimited usage count \
+     *      [9] usageCount: number of usage count
+     * @param params see above
+     * @param _allowAllAddresses allow all receipent address
+     * @param _toAddresses allowed address of receipents
+     * @param _tokens allowed address of using tokens
+     * @param _allowAnyAmount allow any amount
+     * @param _totalAmount allowed amount
+     * @param _amountPercentage percentage of allowed amount
+     */
     function initialize(
         InitializeParams calldata params,
         bool _allowAllAddresses,
@@ -49,6 +68,9 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         amountPercentage = _amountPercentage;
     }
 
+    /**
+     * @inheritdoc CommonBudgetApproval
+     */
     function executeParams() public pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address token";

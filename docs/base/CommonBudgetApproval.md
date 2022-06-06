@@ -221,18 +221,13 @@ function __BudgetApproval_init(struct CommonBudgetApproval.InitializeParams para
 _[0] dao: address of dao \
      [1] executor: address of EOA \
      [2] approvers: address of approvers \
-     [3] text: name of budget approval \
-     [4] transactionType: type of budget approval \
-     [5] allowAllAddresses: allow all receipent address \
-     [6] addresses: allowed address of receipents \
-     [7] tokens: allowed address of using tokens \
-     [8] allowAnyAmount: allow any amount \
-     [9] totalAmount: allowed amount \
-     [10] amountPercentage: percentage of allowed amount \
-     [11] startTime: not able to use budget approval before startTime \
-     [12] endTime: not able to use budget approval after endTime \
-     [13] allowUnlimitedUsageCount: allow unlimited usage count \
-     [14] usageCount: number of usage count_
+     [3] minApproval: minimum approval needed to execute \
+     [4] text: name of budget approval \
+     [5] transactionType: type of budget approval \
+     [6] startTime: not able to use budget approval before startTime \
+     [7] endTime: not able to use budget approval after endTime \
+     [8] allowUnlimitedUsageCount: allow unlimited usage count \
+     [9] usageCount: number of usage count_
 
 ### afterInitialized
 

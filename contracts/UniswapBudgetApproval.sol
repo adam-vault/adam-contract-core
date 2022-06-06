@@ -29,6 +29,25 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     bool public allowAllToTokens;
     mapping(address => bool) public toTokensMapping;
 
+    /**
+     * @dev [0] dao: address of dao \
+     *      [1] executor: address of EOA \
+     *      [2] approvers: address of approvers \
+     *      [3] minApproval: minimum approval needed to execute \
+     *      [4] text: name of budget approval \
+     *      [5] transactionType: type of budget approval \
+     *      [6] startTime: not able to use budget approval before startTime \
+     *      [7] endTime: not able to use budget approval after endTime \
+     *      [8] allowUnlimitedUsageCount: allow unlimited usage count \
+     *      [9] usageCount: number of usage count
+     * @param params see above
+     * @param _fromTokens allowed token swap from
+     * @param _allowAllToTokens allowed any token swap to
+     * @param _toTokens allowed token swap to
+     * @param _allowAnyAmount allow any amount
+     * @param _totalAmount allowed amount
+     * @param _amountPercentage percentage of allowed amount
+     */
     function initialize(
         InitializeParams calldata params,
         address[] memory _fromTokens,
@@ -63,6 +82,9 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         }
     }
 
+    /**
+     * @inheritdoc CommonBudgetApproval
+     */
     function executeParams() public pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address to";
