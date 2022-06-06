@@ -30,6 +30,11 @@ contract BudgetApprovalExecutee {
 
     function _beforeCreateBudgetApproval(address) virtual internal {}
 
+    /**
+     * @notice create budget approvals
+     * @param _budgetApprovals addresses of budget approval templates
+     * @param data bytes of initialize data
+     */
     function createBudgetApprovals(address[] memory _budgetApprovals, bytes[] memory data) public {
         require(_budgetApprovals.length == data.length, "input invalid");
 

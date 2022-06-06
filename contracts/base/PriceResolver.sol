@@ -12,6 +12,12 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "../lib/Constant.sol";
 
 contract PriceResolver is Initializable {
+    /**
+     * @notice get value in ETH of asset
+     * @param asset address of token
+     * @param amount amount of token
+     * @return ETH value
+     */
     function assetEthPrice(address asset, uint256 amount) public view returns (uint256) {
         if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
             return amount;

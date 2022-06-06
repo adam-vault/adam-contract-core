@@ -38,3 +38,10 @@ function _beforeCreateBudgetApproval(address) internal virtual
 function createBudgetApprovals(address[] _budgetApprovals, bytes[] data) public
 ```
 
+create budget approvals
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _budgetApprovals | address[] | addresses of budget approval templates |
+| data | bytes[] | bytes of initialize data |
+
