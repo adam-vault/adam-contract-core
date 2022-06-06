@@ -63,9 +63,14 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         bytes memory data,
         uint256 value
     ) public override onlySelf {
+        uint256 ethAmount ;
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, data, value);
         (address _token, address _recipient, uint256 _amount) = decode(to, data, value);
-        uint256 ethAmount = assetEthPrice(_token, _amount);
+        if(IDao(dao).memberToken() == _token){
+            ethAmount = _amount;
+        }else{
+            ethAmount = assetEthPrice(_token, _amount);
+        }
 
         require(allowAllAddresses || addressesMapping[_recipient], "invalid recipient");
         require(tokensMapping[_token], "invalid token");
@@ -113,7 +118,9 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i] == ETH_ADDRESS) {
                 _totalAmount += executee.balance;
-            } else {
+            }else if(tokens[i] == IDao(dao).memberToken() ){
+                _totalAmount += IERC20(tokens[i]).balanceOf(executee);
+            }else {
                 _totalAmount += assetEthPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
             }
         }
