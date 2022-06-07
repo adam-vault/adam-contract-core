@@ -95,6 +95,10 @@ _[0] dao: address of dao \
 function afterInitialized() external
 ```
 
+action for budget approval after initalized
+
+_only executee can call_
+
 ### executeParams
 
 ```solidity

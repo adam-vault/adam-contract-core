@@ -8,11 +8,46 @@
 function decodeUniswapDataBeforeSwap(address to, bytes _data, uint256 amount) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut)
 ```
 
+decode uniswap bytes data without result
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| to | address | "to" field from uniswap |
+| _data | bytes | "data" field from uniswap |
+| amount | uint256 | "value" field from uniswap |
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| tokenIn | address | token used to swap |
+| tokenOut | address | token received from swap |
+| amountIn | uint256 | amount of tokenIn |
+| amountOut | uint256 | amount of tokenOut |
+| estimatedIn | bool | tokenIn amount is estimated |
+| estimatedOut | bool | tokenOut amount is estimated |
+
 ### decodeUniswapDataAfterSwap
 
 ```solidity
 function decodeUniswapDataAfterSwap(address to, bytes _data, uint256 amount, bytes swapResult) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut)
 ```
+
+decode uniswap bytes data without result
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| to | address | "to" field from uniswap |
+| _data | bytes | "data" field from uniswap |
+| amount | uint256 | "value" field from uniswap |
+| swapResult | bytes | execution result from uniswap |
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| tokenIn | address | token used to swap |
+| tokenOut | address | token received from swap |
+| amountIn | uint256 | amount of tokenIn |
+| amountOut | uint256 | amount of tokenOut |
+| estimatedIn | bool | tokenIn amount is estimated |
+| estimatedOut | bool | tokenOut amount is estimated |
 
 ### _decodeWETH9
 

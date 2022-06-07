@@ -235,6 +235,10 @@ _[0] dao: address of dao \
 function afterInitialized() external virtual
 ```
 
+action for budget approval after initalized
+
+_only executee can call_
+
 ### executeTransaction
 
 ```solidity

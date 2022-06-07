@@ -12,6 +12,18 @@ contract UniswapSwapper is Initializable {
 
     using BytesLib for bytes;
 
+    /** 
+     * @notice decode uniswap bytes data without result
+     * @param to "to" field from uniswap
+     * @param _data "data" field from uniswap
+     * @param amount "value" field from uniswap
+     * @return tokenIn token used to swap
+     * @return tokenOut token received from swap
+     * @return amountIn amount of tokenIn
+     * @return amountOut amount of tokenOut
+     * @return estimatedIn tokenIn amount is estimated
+     * @return estimatedOut tokenOut amount is estimated
+     */
     function decodeUniswapDataBeforeSwap(address to, bytes memory _data, uint256 amount) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         
         if(to == Constant.UNISWAP_ROUTER) {
@@ -25,6 +37,19 @@ contract UniswapSwapper is Initializable {
         }
     }
 
+    /**
+     * @notice decode uniswap bytes data without result
+     * @param to "to" field from uniswap
+     * @param _data "data" field from uniswap
+     * @param amount "value" field from uniswap
+     * @param swapResult execution result from uniswap
+     * @return tokenIn token used to swap
+     * @return tokenOut token received from swap
+     * @return amountIn amount of tokenIn
+     * @return amountOut amount of tokenOut
+     * @return estimatedIn tokenIn amount is estimated
+     * @return estimatedOut tokenOut amount is estimated
+     */
     function decodeUniswapDataAfterSwap(address to, bytes memory _data, uint256 amount, bytes memory swapResult) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         if(to == Constant.UNISWAP_ROUTER) {
             // Uniswap Swap Router

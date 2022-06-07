@@ -161,6 +161,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         usageCount = params.usageCount;
     }
 
+    /**
+     * @notice action for budget approval after initalized
+     * @dev only executee can call
+     */
     function afterInitialized() virtual external onlyExecutee {}
 
     /**

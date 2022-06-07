@@ -26,6 +26,18 @@ modifier onlyBudgetApproval()
 function executeByBudgetApproval(address _to, bytes _data, uint256 _value) external returns (bytes)
 ```
 
+execution called by budget approval
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _to | address | target address to call |
+| _data | bytes | call data |
+| _value | uint256 | eth value of call |
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| [0] | bytes | bytes result of call |
+
 ### _beforeCreateBudgetApproval
 
 ```solidity

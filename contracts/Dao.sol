@@ -71,10 +71,10 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     /** 
-        @notice updatable dao config
-        @param minDepositAmount minimum deposit amount to join the dao
-        @param minMemberTokenToJoin minimum amount of member token to join the dao
-    */
+     * @notice updatable dao config
+     * @param minDepositAmount minimum deposit amount to join the dao
+     * @param minMemberTokenToJoin minimum amount of member token to join the dao
+     */
     struct DaoSetting {
         uint256 minDepositAmount;
         uint256 minTokenToAdmit;

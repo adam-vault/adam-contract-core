@@ -19,6 +19,13 @@ contract BudgetApprovalExecutee {
         _;
     }
 
+    /**
+     * @notice execution called by budget approval
+     * @param _to target address to call
+     * @param _data call data
+     * @param _value eth value of call
+     * @return bytes result of call
+     */
     function executeByBudgetApproval(address _to, bytes memory _data, uint256 _value) external onlyBudgetApproval returns (bytes memory) {
         (bool success, bytes memory result) = _to.call{ value: _value }(_data);
         if(!success) {
