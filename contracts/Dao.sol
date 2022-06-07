@@ -307,8 +307,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
      * @notice create a govern for proposal
      * @param _name govern name
      * @param duration how long the proposal last
-     * @param quorum minimum percentage of total vote to pass the proposal
-     * @param passThreshold minimum percentage of for vote to pass the proposal
+     * @param quorum minimum percentage of total vote to pass the proposal (100% = 10000)
+     * @param passThreshold minimum percentage of for vote to pass the proposal (100% = 10000)
      * @param voteWeights weights of token
      * @param voteToken token to vote
      */

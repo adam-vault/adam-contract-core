@@ -42,7 +42,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
      * @param _tokens allowed address of using tokens
      * @param _allowAnyAmount allow any amount
      * @param _totalAmount allowed amount
-     * @param _amountPercentage percentage of allowed amount
+     * @param _amountPercentage percentage of allowed amount (100% = 100)
      */
     function initialize(
         InitializeParams calldata params,

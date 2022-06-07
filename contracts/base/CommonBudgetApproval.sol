@@ -107,8 +107,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
      * @param minApproval minimum approval needed to execute
      * @param text name of budget approval
      * @param transactionType type of budget approval
-     * @param startTime not able to use budget approval before startTime
-     * @param endTime not able to use budget approval after endTime
+     * @param startTime not able to use budget approval before startTime (timestamp in second) (0 = unlimited)
+     * @param endTime not able to use budget approval after endTime (timestamp in second) (0 = unlimited)
      * @param allowUnlimitedUsageCount allow unlimited usage count
      * @param usageCount number of usage count 
      */
@@ -132,8 +132,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
      *      [3] minApproval: minimum approval needed to execute \
      *      [4] text: name of budget approval \
      *      [5] transactionType: type of budget approval \
-     *      [6] startTime: not able to use budget approval before startTime \
-     *      [7] endTime: not able to use budget approval after endTime \
+     *      [6] startTime: not able to use budget approval before startTime (timestamp in second) (0 = unlimited) \
+     *      [7] endTime: not able to use budget approval after endTime (timestamp in second) (0 = unlimited) \
      *      [8] allowUnlimitedUsageCount: allow unlimited usage count \
      *      [9] usageCount: number of usage count 
      */
@@ -183,7 +183,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     /**
      * @notice create transaction by executor
      * @param _data encoded bytes of transaction
-     * @param _deadline not able to execute after deadline (timestamp of second)
+     * @param _deadline not able to execute after deadline (timestamp in second) (0 = unlimited)
      * @param _isExecute execute immediately after created
      */
     function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute) external onlyExecutor returns (uint256) {

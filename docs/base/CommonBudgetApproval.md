@@ -224,8 +224,8 @@ _[0] dao: address of dao \
      [3] minApproval: minimum approval needed to execute \
      [4] text: name of budget approval \
      [5] transactionType: type of budget approval \
-     [6] startTime: not able to use budget approval before startTime \
-     [7] endTime: not able to use budget approval after endTime \
+     [6] startTime: not able to use budget approval before startTime (timestamp in second) (0 = unlimited) \
+     [7] endTime: not able to use budget approval after endTime (timestamp in second) (0 = unlimited) \
      [8] allowUnlimitedUsageCount: allow unlimited usage count \
      [9] usageCount: number of usage count_
 
@@ -258,7 +258,7 @@ create transaction by executor
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | _data | bytes[] | encoded bytes of transaction |
-| _deadline | uint256 | not able to execute after deadline (timestamp of second) |
+| _deadline | uint256 | not able to execute after deadline (timestamp in second) (0 = unlimited) |
 | _isExecute | bool | execute immediately after created |
 
 ### approveTransaction

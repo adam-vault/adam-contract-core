@@ -303,8 +303,8 @@ create a govern for proposal
 | ---- | ---- | ----------- |
 | _name | string | govern name |
 | duration | uint256 | how long the proposal last |
-| quorum | uint256 | minimum percentage of total vote to pass the proposal |
-| passThreshold | uint256 | minimum percentage of for vote to pass the proposal |
+| quorum | uint256 | minimum percentage of total vote to pass the proposal (100% = 10000) |
+| passThreshold | uint256 | minimum percentage of for vote to pass the proposal (100% = 10000) |
 | voteWeights | uint256[] | weights of token |
 | voteToken | uint256 | token to vote |
 

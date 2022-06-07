@@ -8,6 +8,12 @@
 mapping(address => bool) budgetApprovals
 ```
 
+### memberToken
+
+```solidity
+address memberToken
+```
+
 ### CreateBudgetApproval
 
 ```solidity
@@ -30,6 +36,12 @@ function _beforeCreateBudgetApproval(address) internal
 
 ```solidity
 function createBudgetApprovals(address[] _budgetApprovals, bytes[] data) public
+```
+
+### setMemberToken
+
+```solidity
+function setMemberToken(address _memberToken) public
 ```
 
 ### receive

@@ -46,7 +46,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
      * @param _toTokens allowed token swap to
      * @param _allowAnyAmount allow any amount
      * @param _totalAmount allowed amount
-     * @param _amountPercentage percentage of allowed amount
+     * @param _amountPercentage percentage of allowed amount (100% = 100)
      */
     function initialize(
         InitializeParams calldata params,

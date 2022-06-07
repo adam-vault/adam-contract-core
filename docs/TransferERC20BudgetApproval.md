@@ -75,7 +75,7 @@ _[0] dao: address of dao \
 | _tokens | address[] | allowed address of using tokens |
 | _allowAnyAmount | bool | allow any amount |
 | _totalAmount | uint256 | allowed amount |
-| _amountPercentage | uint8 | percentage of allowed amount |
+| _amountPercentage | uint8 | percentage of allowed amount (100% = 100) |
 
 ### executeParams
 
