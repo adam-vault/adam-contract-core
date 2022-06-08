@@ -89,7 +89,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
     event SetFirstDepositTime(address owner, uint256 time);
-    event CreateTeam(string name, address minter, address[] members, string description, uint256 tokenId);
+    event CreateTeam(string title, address minter, address[] members, string description, uint256 tokenId);
 
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
