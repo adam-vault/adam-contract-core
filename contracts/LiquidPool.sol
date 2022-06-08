@@ -64,7 +64,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     }
 
     function quote(uint256 amount) public view returns (uint256) {
-        if (totalSupply() == 0) return eth;
+        if (totalSupply() == 0) return amount;
         return (amount * 10 ** baseCurrencyDecimals()) / (totalPrice() * 10 ** baseCurrencyDecimals() / totalSupply());
     }
 
