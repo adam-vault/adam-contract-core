@@ -2,6 +2,8 @@
 const { faker } = require('@faker-js/faker');
 const { ethers } = require('hardhat');
 
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
 function getCreateDaoParams ({
   // defaut Dao Setting
   name = faker.company.companyName(),
@@ -16,9 +18,9 @@ function getCreateDaoParams ({
   minDepositAmount = 0,
   minTokenToAdmit = 0,
   admissionToken = ethers.constants.AddressZero,
-  depositTokens = [],
+  depositTokens = [ETH],
   mintMemberToken = false,
-  baseCurrency = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+  baseCurrency = ETH,
 }) {
   return Object.entries({
     name,

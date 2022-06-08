@@ -217,13 +217,17 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
 
   beforeEach(async function () {
     [creator, signer1, signer2] = await ethers.getSigners();
-    const MockFeedRegistry = await ethers.getContractFactory('MockFeedRegistry', { signer: creator });
     const MockToken = await ethers.getContractFactory('MockToken', { signer: creator });
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: creator });
 
     const DepositPool = await ethers.getContractFactory('DepositPool', { signer: creator });
 
-    feedRegistry = await MockFeedRegistry.deploy();
+    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
+    await ethers.provider.send('hardhat_setCode', [
+      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      feedRegistryArticfact.deployedBytecode,
+    ]);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
     dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
@@ -265,7 +269,7 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
 
   describe('uri()', function () {
     it('return token name', async function () {
-      const jsonResponse = decodeBase64(await dp.uri(await dpAsSigner1.id(token.address)));
+      const jsonResponse = decodeBase64(await dp.uri(await dpAsSigner1.idOf(token.address)));
       expect(jsonResponse.name).to.equal('TokenA');
     });
   });
@@ -282,7 +286,7 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
     it('mint 1 dp if deposit 1 TOKEN (price: 0; totalSupply: 0)', async function () {
       await tokenAsSigner1.approve(dp.address, parseEther('1'));
       await dpAsSigner1.depositToken(token.address, parseEther('1'));
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.id(token.address))).to.eq(parseEther('1'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('1'));
     });
 
     it('mint 1.9 dp for 1.9 TOKEN (price: 1.9; totalSupply: 1.9)', async function () {
@@ -291,7 +295,7 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
 
       await tokenAsSigner2.approve(dp.address, parseEther('1.9'));
       await dpAsSigner2.depositToken(token.address, parseEther('1.9'));
-      expect(await dp.balanceOf(signer2.address, await dpAsSigner1.id(token.address))).to.eq(parseEther('1.9'));
+      expect(await dp.balanceOf(signer2.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('1.9'));
     });
   });
 
@@ -300,7 +304,7 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
       await tokenAsSigner1.approve(dp.address, parseEther('1'));
       await dpAsSigner1.depositToken(token.address, parseEther('1'));
 
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.id(token.address))).to.eq(parseEther('1'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('1'));
 
       await dpAsSigner1.withdraw(token.address, parseEther('1'));
       expect(await token.balanceOf(dp.address)).to.eq(parseEther('0'));
