@@ -1,12 +1,18 @@
 const hre = require('hardhat');
 const _ = require('lodash');
 const fileReader = require('../utils/fileReader');
+const {
+  getCreateTransferErc20TokenBAParams,
+  getCreateUniswapBAParams,
+  getCreateTransferUnregisteredERC20BAParams,
+} = require('../utils/paramsStruct');
 const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 
 // rinkeby
 const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
 const transferERC20BudgetApprovalAddress = deploymentResult.addresses.transferErc20BudgetApproval;
 const uniswapBudetApprovalAddress = deploymentResult.addresses.uniswapBudgetApproval;
+const transferUnregisteredErc20BudgetApprovalAddress = deploymentResult.addresses.transferUnregisteredErc20BudgetApproval;
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 
@@ -19,76 +25,49 @@ async function main () {
   const lp = await hre.ethers.getContractAt('LiquidPool', lpAddress);
 
   const transferERC20BudgetApproval = await hre.ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BudgetApprovalAddress);
-  const dataERC20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
-    [
-      // dao address
-      daoAddress,
-      // executor
-      '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
-      // approvers
-      [],
-      0,
-      // text
-      'Transfer ERC20',
-      // transaction type
-      'outflow',
-      Math.round(Date.now() / 1000) - 86400, // startTime
-      Math.round(Date.now() / 1000) + 86400, // endTime
-      true, // allow unlimited usage count
-      0, // usage count
-    ],
-    // allow all addresses,
-    false,
-    // allowed addresses (use when above = false)
-    ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
-    // allowed token (use when above = false)
-    [ETHAddress, DAIAddress],
-    // allow any amount
-    false,
-    // allowed total amount
-    hre.ethers.utils.parseEther('1000'),
-    // allowed amount percentage
-    '10',
-  ]);
+  const dataERC20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
+    getCreateTransferErc20TokenBAParams({
+      dao: daoAddress,
+      executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
+      allowUnlimitedUsageCount: true,
+      usageCount: 0,
+      toAddresses: ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
+      tokens: [ETHAddress, DAIAddress],
+      totalAmount: hre.ethers.utils.parseEther('1000'),
+    }),
+  );
 
   const uniswapBudgetApproval = await hre.ethers.getContractAt('UniswapBudgetApproval', uniswapBudetApprovalAddress);
   const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize',
-    [
-      // common params
-      [
-      // dao address
-        daoAddress,
-        // executor
-        '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
-        // approvers
-        [],
-        0,
-        // text
-        'Uniswap',
-        // transaction type
-        'swap',
-        Math.round(Date.now() / 1000) - 86400, // startTime
-        Math.round(Date.now() / 1000) + 86400, // endTime
-        true, // allow unlimited usage count
-        0, // usage count
-      ],
-      // allowed addresses (use when above = false)
-      [ETHAddress, DAIAddress],
-      // allow all addresses,
-      false,
-      // allowed token (use when above = false)
-      [ETHAddress, DAIAddress],
-      // allow any amount
-      true,
-      // allowed total amount
-      hre.ethers.utils.parseEther('0'),
-      // allowed amount percentage
-      '100',
-    ]);
+    getCreateUniswapBAParams({
+      dao: daoAddress,
+      executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
+      allowUnlimitedUsageCount: true,
+      usageCount: 0,
+      fromTokens: [ETHAddress, DAIAddress],
+      toTokens: [ETHAddress, DAIAddress],
+      allowAnyAmount: true,
+      totalAmount: hre.ethers.utils.parseEther('0'),
+      amountPercentage: '100',
+    }),
+  );
+
+  const transferUnregisteredErc20BudgetApproval = await hre.ethers.getContractAt('TransferUnregisteredERC20BudgetApproval', transferUnregisteredErc20BudgetApprovalAddress);
+  const dataUnregisteredErc20 = transferUnregisteredErc20BudgetApproval.interface.encodeFunctionData('initialize',
+    getCreateTransferUnregisteredERC20BAParams({
+      dao: daoAddress,
+      executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
+      allowUnlimitedUsageCount: true,
+      usageCount: 0,
+      toAddresses: ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
+      token: DAIAddress,
+      totalAmount: '1000',
+    }),
+  );
 
   const tx1 = await dao.createBudgetApprovals(
-    [transferERC20BudgetApprovalAddress, uniswapBudetApprovalAddress],
-    [dataERC20, dataUniswap]);
+    [transferUnregisteredErc20BudgetApprovalAddress],
+    [dataUnregisteredErc20]);
   const receipt1 = await tx1.wait();
   const creationEventLogs1 = _.filter(receipt1.events, { event: 'CreateBudgetApproval' });
   creationEventLogs1.forEach(({ args }) => {

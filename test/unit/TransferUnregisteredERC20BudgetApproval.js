@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
-const { getCreateTransferIlliquidTokenBAParams } = require('../../utils/paramsStruct');
+const { getCreateTransferUnregisteredERC20BAParams } = require('../../utils/paramsStruct');
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
@@ -29,7 +29,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = TransferUnregisteredERC20BudgetApproval.interface.encodeFunctionData('initialize',
-        getCreateTransferIlliquidTokenBAParams({
+        getCreateTransferUnregisteredERC20BAParams({
           dao: executee.address,
           executor: executor.address,
           approvers: [approver.address],
@@ -69,7 +69,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
 
     it('should fail if minApproval larger than approvers length', async function () {
       const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferIlliquidTokenBAParams({
+        getCreateTransferUnregisteredERC20BAParams({
           dao: executee.address,
           executor: executor.address,
           approvers: [approver.address],
@@ -92,7 +92,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
     beforeEach(async function () {
       await tokenA.mint(executee.address, '200');
       const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferIlliquidTokenBAParams({
+        getCreateTransferUnregisteredERC20BAParams({
           dao: executee.address,
           executor: executor.address,
           approvers: [approver.address],
@@ -237,7 +237,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
     context('execute before startTime', () => {
       it('should revert', async function () {
         const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferIlliquidTokenBAParams({
+          getCreateTransferUnregisteredERC20BAParams({
             dao: executee.address,
             executor: executor.address,
             approvers: [],
@@ -280,7 +280,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
     context('execute after endTime', () => {
       it('should revert', async function () {
         const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferIlliquidTokenBAParams({
+          getCreateTransferUnregisteredERC20BAParams({
             dao: executee.address,
             executor: executor.address,
             approvers: [],
@@ -324,7 +324,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
     context('execute if not enough usage count', () => {
       it('should revert', async function () {
         const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferIlliquidTokenBAParams({
+          getCreateTransferUnregisteredERC20BAParams({
             dao: dao.address,
             executor: executor.address,
             approvers: [],
