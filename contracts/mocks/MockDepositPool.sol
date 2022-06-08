@@ -5,12 +5,12 @@ pragma solidity ^0.8.0;
 
 contract MockDepositPool is ERC1155 {
     bool public canCreateBudgetApproval;
-    mapping(address => uint256) public id;
+    mapping(address => uint256) public idOf;
 
     constructor() ERC1155("") {}
 
     function setId(address token, uint256 tokenId) public {
-        id[token] = tokenId;
+        idOf[token] = tokenId;
     }
 
     function mint(address addr, uint256 tokenId, uint256 amount) public {

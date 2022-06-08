@@ -19,8 +19,8 @@ async function main () {
   const lp = await hre.ethers.getContractAt('LiquidPool', lpAddress);
 
   const transferERC20BudgetApproval = await hre.ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BudgetApprovalAddress);
-  const dataERC20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
-    [[
+  const dataERC20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
+    [
       // dao address
       daoAddress,
       // executor
@@ -32,23 +32,24 @@ async function main () {
       'Transfer ERC20',
       // transaction type
       'outflow',
-      // allow all addresses,
-      false,
-      // allowed addresses (use when above = false)
-      ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
-      // allowed token (use when above = false)
-      [ETHAddress, DAIAddress],
-      // allow any amount
-      false,
-      // allowed total amount
-      hre.ethers.utils.parseEther('1000'),
-      // allowed amount percentage
-      '10',
       Math.round(Date.now() / 1000) - 86400, // startTime
       Math.round(Date.now() / 1000) + 86400, // endTime
       true, // allow unlimited usage count
       0, // usage count
-    ]]);
+    ],
+    // allow all addresses,
+    false,
+    // allowed addresses (use when above = false)
+    ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
+    // allowed token (use when above = false)
+    [ETHAddress, DAIAddress],
+    // allow any amount
+    false,
+    // allowed total amount
+    hre.ethers.utils.parseEther('1000'),
+    // allowed amount percentage
+    '10',
+  ]);
 
   const uniswapBudgetApproval = await hre.ethers.getContractAt('UniswapBudgetApproval', uniswapBudetApprovalAddress);
   const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize',
@@ -66,28 +67,23 @@ async function main () {
         'Uniswap',
         // transaction type
         'swap',
-        // allow all addresses,
-        false,
-        // allowed addresses (use when above = false)
-        ['0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45'],
-        // allowed token (use when above = false)
-        [ETHAddress, DAIAddress],
-        // allow any amount
-        true,
-        // allowed total amount
-        hre.ethers.utils.parseEther('0'),
-        // allowed amount percentage
-        '100',
         Math.round(Date.now() / 1000) - 86400, // startTime
         Math.round(Date.now() / 1000) + 86400, // endTime
         true, // allow unlimited usage count
         0, // usage count
       ],
-      // extra params
-      // allow all to tokens,
+      // allowed addresses (use when above = false)
+      [ETHAddress, DAIAddress],
+      // allow all addresses,
+      false,
+      // allowed token (use when above = false)
+      [ETHAddress, DAIAddress],
+      // allow any amount
       true,
-      // allowed to token (use when above = false)
-      [],
+      // allowed total amount
+      hre.ethers.utils.parseEther('0'),
+      // allowed amount percentage
+      '100',
     ]);
 
   const tx1 = await dao.createBudgetApprovals(

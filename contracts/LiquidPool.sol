@@ -49,22 +49,20 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         public initializer
     {
         __ERC20_init("LiquidPool", "LP");
-        __PriceResolver_init(feedRegistry);
         dao = IDao(payable(owner));
-        registry = FeedRegistryInterface(feedRegistry);
         _addAssets(depositTokens); // todo
     }
 
     function assetsShares(address asset, uint256 amount) public view returns (uint256) {
         require(amount <= totalSupply(), "gt totalSupply");
-        require(isAssetSupported[asset], "Asset not support");        
+        require(isAssetSupported[asset], "Asset not support");
         if (totalSupply() == 0) return 0;
 
         return IERC20Metadata(asset).balanceOf(address(this)) * amount / totalSupply();
     }
 
     function ethShares(uint256 amount) public view returns (uint256) {
-        require(amount <= totalSupply(), "gt totalSupply");        
+        require(amount <= totalSupply(), "gt totalSupply");
         if (totalSupply() == 0) return 0;
         return address(this).balance * amount / totalSupply();
     }
@@ -135,11 +133,20 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
             dao.setFirstDepositTime(account);
 
             require(eth >= dao.minDepositAmount(), "deposit amount not enough");
-            if (!dao.isMember(account)) {
-                require(dao.memberToken() == address(0x0) || IERC20(dao.memberToken()).balanceOf(account) >= dao.minMemberTokenToJoin(), "member token not enough");
-                dao.mintMember(account);
+
+            if (dao.isMember(account)) {
+                return;
             }
-        }
+            if(dao.minTokenToAdmit() > 0 ){
+                bytes4 sector = bytes4(keccak256("balanceOf(address)"));
+                bytes memory data = abi.encodeWithSelector(sector, account);
+                (, bytes memory result) = address(dao.admissionToken()).call(data);
+                
+                uint256 balance = abi.decode(result,(uint256));
+                require(balance >= dao.minTokenToAdmit(), "Admission token not enough");
+            }
+            dao.mintMember(account);
+    }
 
     }
     function _addAssets(address[] memory erc20s) internal {

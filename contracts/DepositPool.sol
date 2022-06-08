@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "hardhat/console.sol";
 
 import "./interface/IDao.sol";
 import "./base/PriceResolver.sol";
@@ -27,7 +28,7 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
     IDao public dao;
     Counters.Counter private _tokenIds;
     mapping(uint256 => address) public contractAddress;
-    mapping(address => uint256) public id;
+    mapping(address => uint256) public idOf;
     mapping(address => uint256) public totalSupply;
     mapping(address => bool) public isAssetSupported;
 
@@ -41,7 +42,6 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
     }
     function initialize(address owner, address feedRegistry, address[] memory depositTokens) public initializer {
         __ERC1155_init("");
-        __PriceResolver_init(feedRegistry);
         dao = IDao(payable(owner));
         _addAsset(Denominations.ETH);
         _addAssets(depositTokens);
@@ -93,7 +93,7 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
         require(isAssetSupported[Denominations.ETH], "asset not support");
         require(msg.value > 0, "cannot be 0");
         totalSupply[Denominations.ETH] += msg.value;
-        _mint(msg.sender, id[Denominations.ETH], msg.value, "");
+        _mint(msg.sender, idOf[Denominations.ETH], msg.value, "");
         _afterDeposit(msg.sender, msg.value);
     }
 
@@ -101,14 +101,14 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
         require(isAssetSupported[asset], "asset not support");
         IERC20(asset).transferFrom(msg.sender, address(this), amount);
         totalSupply[asset] += amount;
-        _mint(msg.sender, id[asset], amount, "");
+        _mint(msg.sender, idOf[asset], amount, "");
         _afterDeposit(msg.sender, assetEthPrice(asset, amount));
     }
 
     function withdraw(address asset, uint256 amount) public {
-        require(amount <= balanceOf(msg.sender, id[asset]), "not enough balance");
+        require(amount <= balanceOf(msg.sender, idOf[asset]), "not enough balance");
         require(dao.firstDepositTime(msg.sender) + dao.locktime() <= block.timestamp, "lockup time");
-        _burn(msg.sender, id[asset], amount);
+        _burn(msg.sender, idOf[asset], amount);
         totalSupply[asset] -= amount;
 
         if (asset == Denominations.ETH) {
@@ -130,15 +130,15 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
 
     function _addAsset(address asset) internal {
         require(canAddAsset(asset) && !isAssetSupported[asset], "Asset not support");
-        if (id[asset] == 0) {
+        if (idOf[asset] == 0) {
             _tokenIds.increment();
-            id[asset] = _tokenIds.current();
+            idOf[asset] = _tokenIds.current();
             contractAddress[_tokenIds.current()] = asset;
             emit CreateToken(_tokenIds.current(), asset);
         }
 
         isAssetSupported[asset] = true;
-        emit AllowDepositToken(id[asset], asset);
+        emit AllowDepositToken(idOf[asset], asset);
     }
 
     function _afterDeposit(address account, uint256 eth) private {
@@ -148,10 +148,19 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
             dao.setFirstDepositTime(account);
 
             require(eth >= dao.minDepositAmount(), "deposit amount not enough");
-            if (!dao.isMember(account)) {
-                require(dao.memberToken() == address(0x0) || IERC20(dao.memberToken()).balanceOf(account) >= dao.minMemberTokenToJoin(), "member token not enough");
-                dao.mintMember(account);
+            
+            if (dao.isMember(account)) {
+                return;
             }
+            if(dao.minTokenToAdmit() > 0 ){
+                bytes4 sector = bytes4(keccak256("balanceOf(address)"));
+                bytes memory data = abi.encodeWithSelector(sector, account);
+                (, bytes memory result) = address(dao.admissionToken()).call(data);
+                
+                uint256 balance = abi.decode(result,(uint256));
+                require(balance >= dao.minTokenToAdmit(), "Admission token not enough");
+            }
+            dao.mintMember(account);
         }
     }
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
