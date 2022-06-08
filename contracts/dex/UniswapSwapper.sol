@@ -3,30 +3,21 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "../lib/BytesLib.sol";
-import "../interface/IConstant.sol";
+import "../lib/Constant.sol";
 
 contract UniswapSwapper is Initializable {
 
     using BytesLib for bytes;
 
-    address public UNISWAP_ROUTER;
-    address public ETH_TOKEN_ADDRESS;
-    address public WETH_TOKEN_ADDRESS;
-
-    function setParams(address _constantState) internal initializer {
-        UNISWAP_ROUTER = IConstant(_constantState).UNISWAP_ROUTER();
-        ETH_TOKEN_ADDRESS = IConstant(_constantState).ETH_ADDRESS();
-        WETH_TOKEN_ADDRESS = IConstant(_constantState).WETH_ADDRESS();
-    }
-
     function decodeUniswapDataBeforeSwap(address to, bytes memory _data, uint256 amount) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
         
-        if(to == UNISWAP_ROUTER) {
+        if(to == Constant.UNISWAP_ROUTER) {
             // Uniswap Swap Router
             (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, amount);
-        } else if (to == WETH_TOKEN_ADDRESS) {
+        } else if (to == Constant.WETH_ADDRESS) {
             // WETH9
             (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
         } else {
@@ -35,12 +26,12 @@ contract UniswapSwapper is Initializable {
     }
 
     function decodeUniswapDataAfterSwap(address to, bytes memory _data, uint256 amount, bytes memory swapResult) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
-        if(to == UNISWAP_ROUTER) {
+        if(to == Constant.UNISWAP_ROUTER) {
             // Uniswap Swap Router
             (bytes[] memory byteResults) = abi.decode(swapResult, (bytes[]));
 
             (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, amount, byteResults);
-        } else if (to == WETH_TOKEN_ADDRESS) {
+        } else if (to == Constant.WETH_ADDRESS) {
             // WETH9
             (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
         } else {
@@ -48,15 +39,15 @@ contract UniswapSwapper is Initializable {
         }
     }
 
-    function _decodeWETH9(bytes memory _data, uint256 amount) internal view returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) {
+    function _decodeWETH9(bytes memory _data, uint256 amount) internal pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) {
 
         if(_data.toBytes4(0) == 0xd0e30db0) {
             // deposit()
-            return (ETH_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS, amount, amount);
+            return (Denominations.ETH, Constant.WETH_ADDRESS, amount, amount);
         } else if (_data.toBytes4(0) == 0x2e1a7d4d) {
             // withdraw(uint256)
             uint256 _amount = abi.decode(_data.slice(4, _data.length - 4), (uint256));
-            return (WETH_TOKEN_ADDRESS, ETH_TOKEN_ADDRESS, _amount, _amount);
+            return (Constant.WETH_ADDRESS, Denominations.ETH, _amount, _amount);
         }
 
         revert("Unexpected");
@@ -73,8 +64,8 @@ contract UniswapSwapper is Initializable {
 
             // unwrapWETH9(uint256,address)
             if (multicallBytesArray[i].toBytes4(0) == 0x49404b7c) {
-                if (tokenOut == WETH_TOKEN_ADDRESS && i == multicallBytesArray.length - 1) {
-                    tokenOut = ETH_TOKEN_ADDRESS;
+                if (tokenOut == Constant.WETH_ADDRESS && i == multicallBytesArray.length - 1) {
+                    tokenOut = Denominations.ETH;
                 } else {
                     revert("Unexpected");
                 }
@@ -95,8 +86,8 @@ contract UniswapSwapper is Initializable {
         }
 
         // Uniswap treat ETH as WETH
-        if(tokenIn == WETH_TOKEN_ADDRESS && amount >= amountIn) {
-            tokenIn = ETH_TOKEN_ADDRESS;
+        if(tokenIn == Constant.WETH_ADDRESS && amount >= amountIn) {
+            tokenIn = Denominations.ETH;
         }
     }
 
@@ -110,8 +101,8 @@ contract UniswapSwapper is Initializable {
 
             // unwrapWETH9(uint256,address)
             if (multicallBytesArray[i].toBytes4(0) == 0x49404b7c) {
-                if (tokenOut == WETH_TOKEN_ADDRESS && i == multicallBytesArray.length - 1) {
-                    tokenOut = ETH_TOKEN_ADDRESS;
+                if (tokenOut == Constant.WETH_ADDRESS && i == multicallBytesArray.length - 1) {
+                    tokenOut = Denominations.ETH;
                 } else {
                     revert("Unexpected");
                 }
@@ -136,8 +127,8 @@ contract UniswapSwapper is Initializable {
         }
 
         // Uniswap treat ETH as WETH
-        if(tokenIn == WETH_TOKEN_ADDRESS && amount >= amountIn) {
-            tokenIn = ETH_TOKEN_ADDRESS;
+        if(tokenIn == Constant.WETH_ADDRESS && amount >= amountIn) {
+            tokenIn = Denominations.ETH;
         }
 
         estimatedIn = false;

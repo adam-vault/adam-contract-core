@@ -12,11 +12,11 @@ interface IUniswapBudgetApproval {
     event BeaconUpgraded(address indexed beacon);
     event CreateTransaction(
         uint256 id,
-        bytes data,
+        bytes[] data,
         uint256 deadline,
         uint8 status
     );
-    event ExecuteTransaction(uint256 id, bytes data);
+    event ExecuteTransaction(uint256 id, bytes[] data);
     event RevokeTransaction(uint256 id);
     event SetApprover(address approver);
     event Upgraded(address indexed implementation);
@@ -25,13 +25,9 @@ interface IUniswapBudgetApproval {
 
     function ETH_TOKEN_ADDRESS() external view returns (address);
 
-    function NAME() external view returns (string memory);
-
     function UNISWAP_ROUTER() external view returns (address);
 
     function WETH_TOKEN_ADDRESS() external view returns (address);
-
-    function addressesMapping(address) external view returns (bool);
 
     function afterInitialized() external;
 
@@ -47,6 +43,8 @@ interface IUniswapBudgetApproval {
 
     function approveTransaction(uint256 id) external;
 
+    function approvedCountOf(uint256 id) external view returns (uint256);
+
     function approversMapping(address) external view returns (bool);
 
     function assetEthPrice(address asset, uint256 amount)
@@ -56,15 +54,15 @@ interface IUniswapBudgetApproval {
 
     function canResolvePrice(address asset) external view returns (bool);
 
-    function checkUsageCountValid() external view returns (bool);
-
     function createTransaction(
-        bytes memory _data,
+        bytes[] memory _data,
         uint256 _deadline,
-        bool _execute
-    ) external;
+        bool _isExecute
+    ) external returns (uint256);
 
     function dao() external view returns (address);
+
+    function deadlineOf(uint256 id) external view returns (uint256);
 
     function decodeUniswapDataAfterSwap(
         address to,
@@ -153,25 +151,31 @@ interface IUniswapBudgetApproval {
             bool
         );
 
-    function execute(
-        address to,
-        bytes memory data,
-        uint256 value
-    ) external;
+    function executeParams() external pure returns (string[] memory);
 
-    function executeTransaction(uint256 _transactionId) external;
+    function executeTransaction(uint256 id) external;
 
     function executee() external view returns (address);
 
     function executor() external view returns (address);
 
+    function fromTokens(uint256) external view returns (address);
+
+    function fromTokensMapping(address) external view returns (bool);
+
     function initialize(
         ICommonBudgetApproval.InitializeParams memory params,
+        address[] memory _fromTokens,
         bool _allowAllToTokens,
-        address[] memory _toTokens
+        address[] memory _toTokens,
+        bool _allowAnyAmount,
+        uint256 _totalAmount,
+        uint8 _amountPercentage
     ) external;
 
     function minApproval() external view returns (uint256);
+
+    function name() external view returns (string memory);
 
     function proxiableUUID() external view returns (bytes32);
 
@@ -180,6 +184,8 @@ interface IUniswapBudgetApproval {
     function revokeTransaction(uint256 id) external;
 
     function startTime() external view returns (uint256);
+
+    function statusOf(uint256 id) external view returns (uint8);
 
     function swapExactTokensForTokens(
         uint256 amountIn,
@@ -219,10 +225,6 @@ interface IUniswapBudgetApproval {
 
     function toTokensMapping(address) external view returns (bool);
 
-    function tokens(uint256) external view returns (address);
-
-    function tokensMapping(address) external view returns (bool);
-
     function totalAmount() external view returns (uint256);
 
     function transactionType() external view returns (string memory);
@@ -232,7 +234,6 @@ interface IUniswapBudgetApproval {
         view
         returns (
             uint256 id,
-            bytes memory data,
             uint8 status,
             uint256 deadline,
             uint256 approvedCount,
@@ -275,12 +276,6 @@ interface ICommonBudgetApproval {
         uint256 minApproval;
         string text;
         string transactionType;
-        bool allowAllAddresses;
-        address[] addresses;
-        address[] tokens;
-        bool allowAnyAmount;
-        uint256 totalAmount;
-        uint8 amountPercentage;
         uint256 startTime;
         uint256 endTime;
         bool allowUnlimitedUsageCount;

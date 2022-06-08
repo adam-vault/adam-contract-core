@@ -7,8 +7,6 @@ interface IAdam {
         string _name;
         string _description;
         uint256 _locktime;
-        uint8 memberTokenType;
-        address memberToken;
         uint256[4] budgetApproval;
         uint256[4] revokeBudgetApproval;
         uint256[4] general;
@@ -16,8 +14,10 @@ interface IAdam {
         string[] tokenInfo;
         uint256 tokenAmount;
         uint256 minDepositAmount;
-        uint256 minMemberTokenToJoin;
+        uint256 minTokenToAdmit;
+        address admissionToken;
         address[] depositTokens;
+        bool mintMemberToken;
     }
 
     event AdminChanged(address previousAdmin, address newAdmin);

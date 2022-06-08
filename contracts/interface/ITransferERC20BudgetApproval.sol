@@ -11,18 +11,16 @@ interface ITransferERC20BudgetApproval {
     event BeaconUpgraded(address indexed beacon);
     event CreateTransaction(
         uint256 id,
-        bytes data,
+        bytes[] data,
         uint256 deadline,
         uint8 status
     );
-    event ExecuteTransaction(uint256 id, bytes data);
+    event ExecuteTransaction(uint256 id, bytes[] data);
     event RevokeTransaction(uint256 id);
     event SetApprover(address approver);
     event Upgraded(address indexed implementation);
 
     function ETH_ADDRESS() external view returns (address);
-
-    function NAME() external view returns (string memory);
 
     function addressesMapping(address) external view returns (bool);
 
@@ -38,6 +36,8 @@ interface ITransferERC20BudgetApproval {
 
     function approveTransaction(uint256 id) external;
 
+    function approvedCountOf(uint256 id) external view returns (uint256);
+
     function approversMapping(address) external view returns (bool);
 
     function assetEthPrice(address asset, uint256 amount)
@@ -47,53 +47,39 @@ interface ITransferERC20BudgetApproval {
 
     function canResolvePrice(address asset) external view returns (bool);
 
-    function checkUsageCountValid() external view returns (bool);
-
     function createTransaction(
-        bytes memory _data,
+        bytes[] memory _data,
         uint256 _deadline,
-        bool _execute
-    ) external;
+        bool _isExecute
+    ) external returns (uint256);
 
     function dao() external view returns (address);
 
-    function decode(
-        address to,
-        bytes memory data,
-        uint256 value
-    )
-        external
-        pure
-        returns (
-            address,
-            address,
-            uint256
-        );
+    function deadlineOf(uint256 id) external view returns (uint256);
 
     function endTime() external view returns (uint256);
 
-    function execute(
-        address to,
-        bytes memory data,
-        uint256 value
-    ) external;
+    function executeParams() external pure returns (string[] memory);
 
-    function executeMultiple(
-        address[] memory to,
-        bytes[] memory data,
-        uint256[] memory value
-    ) external;
-
-    function executeTransaction(uint256 _transactionId) external;
+    function executeTransaction(uint256 id) external;
 
     function executee() external view returns (address);
 
     function executor() external view returns (address);
 
-    function initialize(ICommonBudgetApproval.InitializeParams memory params)
-        external;
+    function initialize(
+        ICommonBudgetApproval.InitializeParams memory params,
+        bool _allowAllAddresses,
+        address[] memory _toAddresses,
+        address[] memory _tokens,
+        bool _allowAnyAmount,
+        uint256 _totalAmount,
+        uint8 _amountPercentage
+    ) external;
 
     function minApproval() external view returns (uint256);
+
+    function name() external view returns (string memory);
 
     function proxiableUUID() external view returns (bytes32);
 
@@ -102,6 +88,8 @@ interface ITransferERC20BudgetApproval {
     function revokeTransaction(uint256 id) external;
 
     function startTime() external view returns (uint256);
+
+    function statusOf(uint256 id) external view returns (uint8);
 
     function text() external view returns (string memory);
 
@@ -118,7 +106,6 @@ interface ITransferERC20BudgetApproval {
         view
         returns (
             uint256 id,
-            bytes memory data,
             uint8 status,
             uint256 deadline,
             uint256 approvedCount,
@@ -142,12 +129,6 @@ interface ICommonBudgetApproval {
         uint256 minApproval;
         string text;
         string transactionType;
-        bool allowAllAddresses;
-        address[] addresses;
-        address[] tokens;
-        bool allowAnyAmount;
-        uint256 totalAmount;
-        uint8 amountPercentage;
         uint256 startTime;
         uint256 endTime;
         bool allowUnlimitedUsageCount;

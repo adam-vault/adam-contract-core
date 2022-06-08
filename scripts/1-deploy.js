@@ -29,7 +29,12 @@ const deployBudgetApprovals = async () => {
   await uniswapBudgetApproval.deployed();
   console.log(`Deployed UniswapBudgetApproval ${uniswapBudgetApproval.address}`);
 
-  return [transferERC20BudgetApproval.address, uniswapBudgetApproval.address];
+  const TransferERC721BudgetApproval = await hre.ethers.getContractFactory('TransferERC721BudgetApproval');
+  const transferERC721BudgetApproval = await TransferERC721BudgetApproval.deploy();
+  await transferERC721BudgetApproval.deployed();
+  console.log(`Deployed TransferERC721BudgetApproval ${transferERC721BudgetApproval.address}`);
+
+  return [transferERC20BudgetApproval.address, uniswapBudgetApproval.address, transferERC721BudgetApproval.address];
 };
 
 const deployGovernFactory = async () => {

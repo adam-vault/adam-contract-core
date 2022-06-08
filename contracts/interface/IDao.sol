@@ -8,6 +8,7 @@ interface IDao {
         address _membership;
         address _liquidPool;
         address _depositPool;
+        address _admissionToken;
         address _governFactory;
         address _team;
         address _memberTokenImplementation;
@@ -15,8 +16,6 @@ interface IDao {
         string _name;
         string _description;
         uint256 _locktime;
-        uint8 memberTokenType;
-        address memberToken;
         uint256[4] budgetApproval;
         uint256[4] revokeBudgetApproval;
         uint256[4] general;
@@ -25,11 +24,12 @@ interface IDao {
         uint256 tokenAmount;
         DaoSetting daoSetting;
         address[] depositTokens;
+        bool mintMemberToken;
     }
 
     struct DaoSetting {
         uint256 minDepositAmount;
-        uint256 minMemberTokenToJoin;
+        uint256 minTokenToAdmit;
     }
 
     event AdminChanged(address previousAdmin, address newAdmin);
@@ -51,6 +51,8 @@ interface IDao {
     function adam() external view returns (address);
 
     function addAssets(address[] memory erc20s) external;
+
+    function admissionToken() external view returns (address);
 
     function budgetApprovals(address) external view returns (bool);
 
@@ -130,13 +132,11 @@ interface IDao {
 
     function memberTokenImplementation() external view returns (address);
 
-    function memberTokenType() external view returns (uint8);
-
     function membership() external view returns (address);
 
     function minDepositAmount() external view returns (uint256);
 
-    function minMemberTokenToJoin() external view returns (uint256);
+    function minTokenToAdmit() external view returns (uint256);
 
     function mintMember(address owner) external;
 

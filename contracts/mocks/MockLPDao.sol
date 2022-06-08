@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 
 contract MockLPDao {
     uint256 public locktime;
-    uint256 public minMemberTokenToJoin;
     uint256 public minDepositAmount;
+    uint256 public minTokenToAdmit;
     address public memberToken;
+    address public admissionToken;
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isMember;
     mapping(address => bool) public isOptInPool;
@@ -22,19 +23,22 @@ contract MockLPDao {
     function setMemberToken(address mt) public {
         memberToken = mt;
     }
-    function setMinMemberTokenToJoin(uint256 amount) public {
-        minMemberTokenToJoin = amount;
+    function setAdmissionToken(address at) public {
+        admissionToken = at;
     }
     function setMinDepositAmount(uint256 amount) public {
         minDepositAmount = amount;
+    }
+    function setFirstDepositTime(address account) public {
+        firstDepositTime[account] = block.timestamp;
+    } 
+    function setMinTokenToAdmit(uint256 amount) public {
+        minTokenToAdmit = amount;
     }
     function canCreateBudgetApproval(address) public pure returns (bool) {
         return true;
     } 
     function mintMember(address account) public {
         isMember[account] = true;
-    } 
-    function setFirstDepositTime(address account) public {
-        firstDepositTime[account] = block.timestamp;
     } 
 }

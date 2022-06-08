@@ -7,9 +7,8 @@ contract TokenC721 is ERC721 {
     uint256 total = 100000;
     constructor() ERC721("TokenC721", "C721") {}
 
-    function mint(address account) public
-    {
-        _mint(account, 0);
+    function mint(address account, uint256 id) public {
+        _mint(account, id);
     }
 
 }
