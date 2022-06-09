@@ -122,7 +122,7 @@ async function main () {
     govern: governInfo[1],
     transferErc20BudgetApproval: budgetApprovalsAddress[0],
     uniswapBudgetApproval: budgetApprovalsAddress[1],
-    team: team.address,
+    team,
   };
   console.log('Contract Addresses', contractAddresses);
 
