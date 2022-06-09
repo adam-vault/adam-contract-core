@@ -80,6 +80,14 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         return total;
     }
 
+    function totalPriceInEth() public view returns (uint256) {
+        uint256 total;
+        for (uint256 i = 0; i < assets.length; i++) {
+            total += assetEthPrice(assets[i],  _assetBalance(assets[i]));
+        }
+        return total;
+    }
+
     function deposit() public payable {
         require(isAssetSupported[Denominations.ETH], "asset not support");
         if (totalSupply() == 0) {

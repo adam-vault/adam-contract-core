@@ -24,7 +24,7 @@ contract PriceResolver is Initializable {
             return amount;
         
         if(baseCurrency == Denominations.ETH || baseCurrency == Constant.WETH_ADDRESS) {
-            return assetETHPrice(asset, amount);
+            return assetEthPrice(asset, amount);
         }
 
         address assetETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH));
@@ -36,7 +36,7 @@ contract PriceResolver is Initializable {
         return 0;
     }
 
-    function assetETHPrice(address asset, uint256 amount) public view returns (uint256) {
+    function assetEthPrice(address asset, uint256 amount) public view returns (uint256) {
         if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
             return amount;
 
