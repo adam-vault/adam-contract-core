@@ -17,6 +17,7 @@ import "./interface/IOptInPool.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IMemberToken.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
+import "./interface/ITeam.sol";
 
 import "./lib/Concat.sol";
 
@@ -31,6 +32,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address _depositPool;
         address _admissionToken;
         address _governFactory;
+        address _team;
         address _memberTokenImplementation;
         address _optInPoolImplementation;
         string _name;
@@ -66,6 +68,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public liquidPool;
     address public depositPool;
     address public governFactory;
+    address public team;
     address public admissionToken;
     address public memberTokenImplementation;
     address public optInPoolImplementation;
@@ -77,11 +80,13 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
     mapping(address => bool) public isOptInPool;
+    mapping(uint256 => bool) public teamWhitelist;
 
     event CreateOptInPool(address optInPool);
     event AllowDepositToken(address token);
     event CreateMemberToken(address creator, address token);
     event SetFirstDepositTime(address owner, uint256 time);
+    event WhitelistTeam(uint256 tokenId);
 
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
@@ -92,6 +97,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         name = params._name;
         locktime = params._locktime;
         governFactory = params._governFactory;
+        team = params._team;
         memberTokenImplementation = params._memberTokenImplementation;
         optInPoolImplementation = params._optInPoolImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
@@ -298,6 +304,13 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     function mintMember(address owner) public {
         require(msg.sender == liquidPool || msg.sender == depositPool, "only LP or DP");
         _mintMember(owner);
+    }
+
+    function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("DaoSetting") {
+      uint256 id = ITeam(team).addTeam(title, minter, members, description);
+      teamWhitelist[id] = true;
+
+      emit WhitelistTeam(id);
     }
 
     function _createMemberToken(string[] calldata tokenInfo, uint tokenAmount) internal {

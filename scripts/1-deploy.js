@@ -52,6 +52,14 @@ const deployGovernFactory = async () => {
   return [governFactory.address, govern.address];
 };
 
+const deployTeam = async () => {
+  const Team = await hre.ethers.getContractFactory('Team');
+  const team = await hre.upgrades.deployProxy(Team, { kind: 'uups' });
+  console.log(`Deployed Team ${team.address}`);
+
+  return team.address;
+};
+
 async function main () {
   // Gather Current Block Number
   const blockNumber = await hre.ethers.provider.getBlockNumber();
@@ -60,6 +68,7 @@ async function main () {
   const constantState = await deployConstantState();
   const budgetApprovalsAddress = await deployBudgetApprovals();
   const governInfo = await deployGovernFactory();
+  const team = await deployTeam();
 
   const Dao = await hre.ethers.getContractFactory('Dao');
   const Membership = await hre.ethers.getContractFactory('Membership');
@@ -98,7 +107,8 @@ async function main () {
     depositPool.address,
     optInPool.address,
     budgetApprovalsAddress, governInfo[0], constantState,
-    FEED_REGISTRY, // rinkeby
+    FEED_REGISTRY, // rinkeby,
+    team,
   ], { kind: 'uups' });
   await adam.deployed();
   console.log(`Deployed Adam ${adam.address}`);
@@ -112,6 +122,7 @@ async function main () {
     govern: governInfo[1],
     transferErc20BudgetApproval: budgetApprovalsAddress[0],
     uniswapBudgetApproval: budgetApprovalsAddress[1],
+    team,
   };
   console.log('Contract Addresses', contractAddresses);
 
