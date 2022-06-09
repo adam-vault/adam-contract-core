@@ -53,6 +53,7 @@ jobs:
             artifacts/contracts/TransferERC20BudgetApproval.sol/TransferERC20BudgetApproval.json\
             artifacts/contracts/UniswapBudgetApproval.sol/UniswapBudgetApproval.json\
             artifacts/contracts/LiquidPool.sol/LiquidPool.json\
+            artifacts/contracts/Team.sol/Team.json\
             abis/machine
 
       - name: Generate Human Readable ABIs
