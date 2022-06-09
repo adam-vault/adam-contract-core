@@ -28,29 +28,29 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 		_;
 	}
 
-  function _beforeTokenTransfer(
-      address operator,
-      address from,
-      address to,
-      uint256[] memory ids,
-      uint256[] memory amounts,
-      bytes memory data
-  ) internal override {
-    if (from == address(0)) { // mint
-      require(balanceOf(to, ids[0]) == 0, "Team: Member/Members already added");
-    }
+	function _beforeTokenTransfer(
+			address operator,
+			address from,
+			address to,
+			uint256[] memory ids,
+			uint256[] memory amounts,
+			bytes memory data
+	) internal override {
+		if (from == address(0)) { // mint
+			require(balanceOf(to, ids[0]) == 0, "Team: Member/Members already added");
+		}
 
-    if (to == address(0)) { // burn
-      require(balanceOf(to, ids[0]) > 0, "Team: Member/Members not exists");
-    }
+		if (to == address(0)) { // burn
+			require(balanceOf(from, ids[0]) > 0, "Team: Member/Members not exists");
+		}
 
-    if (from != address(0) && to != address(0)) {
-      revert("Team: Transfer of team ownership is aboundand");
-    } 
-  }
+		if (from != address(0) && to != address(0)) {
+			revert("Team: Transfer of team ownership is aboundand");
+		} 
+	}
 
-  function _mintTokens(address[] memory members, uint256 tokenId) private {
-    for(uint i = 0; i < members.length ; i++) {
+	function _mintTokens(address[] memory members, uint256 tokenId) private {
+		for(uint i = 0; i < members.length ; i++) {
 			_mint(
 				members[i],
 				tokenId,
@@ -58,13 +58,13 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 				""
 			);
 		}
-  }
+	}
 
-  function _burnTokens(address[] memory members, uint256 tokenId) private {
+	function _burnTokens(address[] memory members, uint256 tokenId) private {
 		for(uint i = 0; i < members.length; i++) {
 			_burn(members[i], tokenId, balanceOf(members[i], tokenId));
 		}
-  }
+	}
 
 	function addTeam(string memory name, address minter, address[] memory members, string memory description) public returns (uint256) {
 		_tokenIds.increment();
@@ -79,7 +79,7 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 	}
 
 	function addMembers(address[] memory members, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender) {
-    _mintTokens(members, tokenId);
+		_mintTokens(members, tokenId);
 	}
 
 	function removeMembers(address[] memory members, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender) {

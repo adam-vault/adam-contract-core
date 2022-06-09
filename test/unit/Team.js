@@ -17,12 +17,12 @@ describe('Team.sol', function () {
       const teamName = 'Testing01';
 
       expect(await team.addTeam(teamName, member1.address, [member1.address, member2.address], 'Hello')).to.emit('AddTeam');
-      expect(await team.creatorList(1)).to.eq(creator.address);
-      expect(await team.minterList(1)).to.eq(member1.address);
-      expect(await team.nameList(1)).to.eq(teamName);
+      expect(await team.creatorOf(1)).to.eq(creator.address);
+      expect(await team.minterOf(1)).to.eq(member1.address);
+      expect(await team.nameOf(1)).to.eq(teamName);
 
       await team.addTeam(teamName, member1.address, [member1.address, member2.address], 'Hello');
-      expect(await team.nameList(2)).to.eq(teamName);
+      expect(await team.nameOf(2)).to.eq(teamName);
     });
   });
 
