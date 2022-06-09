@@ -14,31 +14,43 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 	using ToString for address;
 	using Base64 for bytes;
 
-	event AddTeam(string name, address minter, address[] members, string description, uint256 tokenId);
-	event AddMembers(address[] members, uint256 tokenId);
-	event RemoveMembers(address[] members, uint256 tokenId);
 	event EditDescription(string description, uint256 tokenId);
 
-	mapping(uint256 => address) public creatorList;
-	mapping(uint256 => address) public minterList;
-	mapping(uint256 => string) public nameList;
-	mapping(uint256 => string) public descriptions;
+	mapping(uint256 => address) public creatorOf;
+	mapping(uint256 => address) public minterOf;
+	mapping(uint256 => string) public nameOf;
+	mapping(uint256 => string) public descriptionOf;
 
 	Counters.Counter private _tokenIds;
 
 	modifier onlyTeamMinter(uint256 id, address minter) {
-		require(minterList[id] == minter, "Team: only selected minter");
+		require(minterOf[id] == minter, "Team: only selected minter");
 		_;
 	}
 
-	function addTeam(string memory name, address minter, address[] memory members, string memory description) public returns (uint256) {
-		_tokenIds.increment();
-		creatorList[_tokenIds.current()] = msg.sender;
-		minterList[_tokenIds.current()] = minter;
-		nameList[_tokenIds.current()] = name;
-		descriptions[_tokenIds.current()] = description;
+  function _beforeTokenTransfer(
+      address operator,
+      address from,
+      address to,
+      uint256[] memory ids,
+      uint256[] memory amounts,
+      bytes memory data
+  ) internal override {
+    if (from == address(0)) { // mint
+      require(balanceOf(to, ids[0]) == 0, "Team: Member/Members already added");
+    }
 
-		for(uint i = 0; i < members.length ; i++) {
+    if (to == address(0)) { // burn
+      require(balanceOf(to, ids[0]) > 0, "Team: Member/Members not exists");
+    }
+
+    if (from != address(0) && to != address(0)) {
+      revert("Team: Transfer of team ownership is aboundand");
+    } 
+  }
+
+  function _mintTokens(address[] memory members) private {
+    for(uint i = 0; i < members.length ; i++) {
 			_mint(
 				members[i],
 				_tokenIds.current(),
@@ -46,34 +58,36 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 				""
 			);
 		}
+  }
 
-		emit AddTeam(name, minter, members, description, _tokenIds.current());
+  function _burnTokens(address[] memory members, uint256 tokenId) private {
+		for(uint i = 0; i < members.length; i++) {
+			_burn(members[i], tokenId, balanceOf(members[i], tokenId));
+		}
+  }
+
+	function addTeam(string memory name, address minter, address[] memory members, string memory description) public returns (uint256) {
+		_tokenIds.increment();
+		creatorOf[_tokenIds.current()] = msg.sender;
+		minterOf[_tokenIds.current()] = minter;
+		nameOf[_tokenIds.current()] = name;
+		descriptionOf[_tokenIds.current()] = description;
+
+		_mintTokens(members);
 
 		return _tokenIds.current();
 	}
 
 	function addMembers(address[] memory members, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender) {
-		for(uint i = 0; i < members.length; i++) {
-			address newComer = members[i];
-
-			if (balanceOf(newComer, tokenId) == 0) {
-				_mint(newComer, tokenId, 1, "");
-
-				emit AddMembers(members, tokenId);
-			}
-		}
+    _mintTokens(members);
 	}
 
 	function removeMembers(address[] memory members, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender) {
-		for(uint i = 0; i < members.length; i++) {
-			_burn(members[i], tokenId, balanceOf(members[i], tokenId));
-		}
-
-		emit RemoveMembers(members, tokenId);
+		_burnTokens(members, tokenId);
 	}
 
 	function setDescription(string memory description, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender){
-		descriptions[tokenId] = description;
+		descriptionOf[tokenId] = description;
 
 		emit EditDescription(description, tokenId);
 	}
@@ -81,13 +95,13 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
  	function uri(uint256 _id) public view override returns (string memory) {
 		string memory metadata = string(abi.encodePacked(
 			"{\"name\": \"",
-			nameList[_id],
+			nameOf[_id],
 			"\", \"creator\": \"",
-			creatorList[_id].toString(),
+			creatorOf[_id].toString(),
 			"\", \"minter\": \"",
-			minterList[_id].toString(),
+			minterOf[_id].toString(),
 			"\", \"description\": \"",
-			descriptions[_id], "\"",
+			descriptionOf[_id], "\"",
 			"}"
 		));
 
@@ -96,27 +110,6 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 			bytes(metadata).base64()
 		));
 	}
-
-	function safeTransferFrom(
-				address from,
-				address to,
-				uint256 id,
-				uint256 amount,
-				bytes memory data
-		) public override pure {
-		// transfer of team membership is abandoned
-		revert("Transfer is abandoned");
-	}
-
-	function safeBatchTransferFrom(
-				address from,
-				address to,
-				uint256[] memory ids,
-				uint256[] memory amounts,
-				bytes memory data
-		) public override pure {
-				revert("Transfer is abandoned");
-		}
 
 	function _authorizeUpgrade(address newImplementation) internal override initializer {}
 }
