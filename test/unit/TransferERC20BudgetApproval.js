@@ -6,18 +6,18 @@ const { getCreateTransferUnregisteredERC20BAParams } = require('../../utils/para
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
-  let transferIlliquidBAImplementation, budgetApproval, dao;
+describe('TransferERC20BudgetApproval.sol', function () {
+  let transferErc20BAImplementation, budgetApproval, dao;
   let executor, approver, receiver;
-  let tokenA, executee, TransferUnregisteredERC20BudgetApproval;
+  let tokenA, executee, TransferERC20BudgetApproval;
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
-    TransferUnregisteredERC20BudgetApproval = await ethers.getContractFactory('TransferUnregisteredERC20BudgetApproval', { signer: executor });
-    transferIlliquidBAImplementation = await TransferUnregisteredERC20BudgetApproval.deploy();
+    TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
+    transferErc20BAImplementation = await TransferERC20BudgetApproval.deploy();
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
 
     dao = await MockLPDao.deploy();
@@ -28,7 +28,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
     it('should success', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferUnregisteredERC20BudgetApproval.interface.encodeFunctionData('initialize',
+      const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize',
         getCreateTransferUnregisteredERC20BAParams({
           dao: executee.address,
           executor: executor.address,
@@ -41,10 +41,10 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
         }),
       );
 
-      const tx = await executee.createBudgetApprovals([transferIlliquidBAImplementation.address], [initData]);
+      const tx = await executee.createBudgetApprovals([transferErc20BAImplementation.address], [initData]);
       const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
-      budgetApproval = await ethers.getContractAt('TransferUnregisteredERC20BudgetApproval', budgetApprovalAddress);
+      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
 
       expect(await budgetApproval.dao()).to.eq(executee.address);
       expect(await budgetApproval.executor()).to.eq(executor.address);
@@ -68,7 +68,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
     });
 
     it('should fail if minApproval larger than approvers length', async function () {
-      const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
+      const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
         getCreateTransferUnregisteredERC20BAParams({
           dao: executee.address,
           executor: executor.address,
@@ -81,7 +81,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
 
       await expect(
         executee.createBudgetApprovals(
-          [transferIlliquidBAImplementation.address],
+          [transferErc20BAImplementation.address],
           [initData],
         ),
       ).to.be.revertedWith('minApproval invalid');
@@ -91,7 +91,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
   describe('Execute Transaction (Transfer illiquid token)', function () {
     beforeEach(async function () {
       await tokenA.mint(executee.address, '200');
-      const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
+      const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
         getCreateTransferUnregisteredERC20BAParams({
           dao: executee.address,
           executor: executor.address,
@@ -103,11 +103,11 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
       );
 
       const tx = await executee.createBudgetApprovals(
-        [transferIlliquidBAImplementation.address], [initData],
+        [transferErc20BAImplementation.address], [initData],
       );
       const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
-      budgetApproval = await ethers.getContractAt('TransferUnregisteredERC20BudgetApproval', budgetApprovalAddress);
+      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
     });
 
     context('ERC20 complete flow', () => {
@@ -236,7 +236,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
 
     context('execute before startTime', () => {
       it('should revert', async function () {
-        const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
+        const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
           getCreateTransferUnregisteredERC20BAParams({
             dao: executee.address,
             executor: executor.address,
@@ -251,13 +251,13 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
         );
 
         const tx = await executee.createBudgetApprovals(
-          [transferIlliquidBAImplementation.address],
+          [transferErc20BAImplementation.address],
           [initData],
         );
         const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
         const testBudgetApproval = await ethers.getContractAt(
-          'TransferUnregisteredERC20BudgetApproval',
+          'TransferERC20BudgetApproval',
           budgetApprovalAddress,
         );
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
@@ -279,7 +279,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
 
     context('execute after endTime', () => {
       it('should revert', async function () {
-        const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
+        const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
           getCreateTransferUnregisteredERC20BAParams({
             dao: executee.address,
             executor: executor.address,
@@ -294,13 +294,13 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
         );
 
         const tx = await executee.createBudgetApprovals(
-          [transferIlliquidBAImplementation.address],
+          [transferErc20BAImplementation.address],
           [initData],
         );
         const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
         const testBudgetApproval = await ethers.getContractAt(
-          'TransferUnregisteredERC20BudgetApproval',
+          'TransferERC20BudgetApproval',
           budgetApprovalAddress,
         );
 
@@ -323,7 +323,7 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
 
     context('execute if not enough usage count', () => {
       it('should revert', async function () {
-        const initData = transferIlliquidBAImplementation.interface.encodeFunctionData('initialize',
+        const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
           getCreateTransferUnregisteredERC20BAParams({
             dao: dao.address,
             executor: executor.address,
@@ -339,13 +339,13 @@ describe('TransferUnregisteredERC20BudgetApproval.sol', function () {
         );
 
         const tx = await executee.createBudgetApprovals(
-          [transferIlliquidBAImplementation.address],
+          [transferErc20BAImplementation.address],
           [initData],
         );
         const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
         const testBudgetApproval = await ethers.getContractAt(
-          'TransferUnregisteredERC20BudgetApproval',
+          'TransferERC20BudgetApproval',
           budgetApprovalAddress,
         );
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [

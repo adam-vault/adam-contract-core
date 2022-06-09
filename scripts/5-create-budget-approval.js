@@ -12,7 +12,7 @@ const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
 const transferLiquidERC20BudgetApprovalAddress = deploymentResult.addresses.transferLiquidERC20BudgetApproval;
 const uniswapBudetApprovalAddress = deploymentResult.addresses.uniswapBudgetApproval;
-const transferUnregisteredErc20BudgetApprovalAddress = deploymentResult.addresses.transferUnregisteredErc20BudgetApproval;
+const transferERC20BudgetApprovalAddress = deploymentResult.addresses.transferERC20BudgetApproval;
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 
@@ -52,8 +52,8 @@ async function main () {
     }),
   );
 
-  const transferUnregisteredErc20BudgetApproval = await hre.ethers.getContractAt('TransferUnregisteredERC20BudgetApproval', transferUnregisteredErc20BudgetApprovalAddress);
-  const dataUnregisteredErc20 = transferUnregisteredErc20BudgetApproval.interface.encodeFunctionData('initialize',
+  const transferERC20BudgetApproval = await hre.ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BudgetApprovalAddress);
+  const dataUnregisteredErc20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
     getCreateTransferUnregisteredERC20BAParams({
       dao: daoAddress,
       executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
@@ -66,7 +66,7 @@ async function main () {
   );
 
   const tx1 = await dao.createBudgetApprovals(
-    [transferUnregisteredErc20BudgetApprovalAddress],
+    [transferERC20BudgetApprovalAddress],
     [dataUnregisteredErc20]);
   const receipt1 = await tx1.wait();
   const creationEventLogs1 = _.filter(receipt1.events, { event: 'CreateBudgetApproval' });
