@@ -12,7 +12,7 @@ import "./interface/IDao.sol";
 import "./interface/IAdam.sol";
 import "hardhat/console.sol";
 
-contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
+contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
     using BytesLib for bytes;
 
     string public constant override name = "Transfer ERC20 Budget Approval";

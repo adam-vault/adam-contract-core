@@ -7,18 +7,18 @@ const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC20BudgetApproval.sol', function () {
+describe('TransferLiquidERC20BudgetApproval.sol', function () {
   let transferERC20BAImplementation, budgetApproval, dao;
   let executor, approver, receiver;
-  let tokenA, executee, TransferERC20BudgetApproval;
+  let tokenA, executee, TransferLiquidERC20BudgetApproval;
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
-    TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
-    transferERC20BAImplementation = await TransferERC20BudgetApproval.deploy();
+    TransferLiquidERC20BudgetApproval = await ethers.getContractFactory('TransferLiquidERC20BudgetApproval', { signer: executor });
+    transferERC20BAImplementation = await TransferLiquidERC20BudgetApproval.deploy();
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
 
     dao = await MockLPDao.deploy();
@@ -37,7 +37,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     it('should success', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
+      const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
         [
           executee.address, // dao addressc
           executor.address, // executor
@@ -61,7 +61,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       const tx = await executee.createBudgetApprovals([transferERC20BAImplementation.address], [initData]);
       const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
-      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
+      budgetApproval = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', budgetApprovalAddress);
 
       expect(await budgetApproval.dao()).to.eq(executee.address);
       expect(await budgetApproval.executor()).to.eq(executor.address);
@@ -124,7 +124,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
+      const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
         [
           dao.address, // dao addressc
           executor.address, // executor
@@ -150,7 +150,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       );
       const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
-      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
+      budgetApproval = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', budgetApprovalAddress);
     });
 
     context('ETH complete flow', () => {
@@ -347,7 +347,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
         const testBudgetApproval = await ethers.getContractAt(
-          'TransferERC20BudgetApproval',
+          'TransferLiquidERC20BudgetApproval',
           budgetApprovalAddress,
         );
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
@@ -397,7 +397,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
         const testBudgetApproval = await ethers.getContractAt(
-          'TransferERC20BudgetApproval',
+          'TransferLiquidERC20BudgetApproval',
           budgetApprovalAddress,
         );
 
@@ -448,7 +448,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
         const testBudgetApproval = await ethers.getContractAt(
-          'TransferERC20BudgetApproval',
+          'TransferLiquidERC20BudgetApproval',
           budgetApprovalAddress,
         );
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [

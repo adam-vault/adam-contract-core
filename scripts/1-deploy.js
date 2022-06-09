@@ -19,10 +19,10 @@ const deployConstantState = async (network = 'rinkeby') => {
 };
 
 const deployBudgetApprovals = async () => {
-  const TransferERC20BudgetApproval = await hre.ethers.getContractFactory('TransferERC20BudgetApproval');
-  const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
-  await transferERC20BudgetApproval.deployed();
-  console.log(`Deployed TransferERC20BudgetApproval ${transferERC20BudgetApproval.address}`);
+  const TransferLiquidERC20BudgetApproval = await hre.ethers.getContractFactory('TransferLiquidERC20BudgetApproval');
+  const transferLiquidERC20BudgetApproval = await TransferLiquidERC20BudgetApproval.deploy();
+  await transferLiquidERC20BudgetApproval.deployed();
+  console.log(`Deployed TransferLiquidERC20BudgetApproval ${transferLiquidERC20BudgetApproval.address}`);
 
   const UniswapBudgetApproval = await hre.ethers.getContractFactory('UniswapBudgetApproval');
   const uniswapBudgetApproval = await UniswapBudgetApproval.deploy();
@@ -39,7 +39,7 @@ const deployBudgetApprovals = async () => {
   await transferUnregisteredERC20BudgetApproval.deployed();
   console.log(`Deployed TransferUnregisteredERC20BudgetApproval ${transferUnregisteredERC20BudgetApproval.address}`);
 
-  return [transferERC20BudgetApproval.address, uniswapBudgetApproval.address, transferERC721BudgetApproval.address, transferUnregisteredERC20BudgetApproval.address];
+  return [transferLiquidERC20BudgetApproval.address, uniswapBudgetApproval.address, transferERC721BudgetApproval.address, transferUnregisteredERC20BudgetApproval.address];
 };
 
 const deployGovernFactory = async () => {
@@ -115,7 +115,7 @@ async function main () {
     membership: membership.address,
     governFactory: governInfo[0],
     govern: governInfo[1],
-    transferErc20BudgetApproval: budgetApprovalsAddress[0],
+    transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
     uniswapBudgetApproval: budgetApprovalsAddress[1],
     transferErc721BudgetApproval: budgetApprovalsAddress[2],
     transferUnregisteredErc20BudgetApproval: budgetApprovalsAddress[3],

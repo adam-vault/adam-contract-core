@@ -13,7 +13,7 @@ const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 async function main () {
   const budgetApproval = await hre.ethers.getContractAt(
-    'TransferERC20BudgetApproval',
+    'TransferLiquidERC20BudgetApproval',
     budgetApprovalAddress,
   );
 
