@@ -49,11 +49,11 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
     } 
   }
 
-  function _mintTokens(address[] memory members) private {
+  function _mintTokens(address[] memory members, uint256 tokenId) private {
     for(uint i = 0; i < members.length ; i++) {
 			_mint(
 				members[i],
-				_tokenIds.current(),
+				tokenId,
 				1,
 				""
 			);
@@ -73,13 +73,13 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 		nameOf[_tokenIds.current()] = name;
 		descriptionOf[_tokenIds.current()] = description;
 
-		_mintTokens(members);
+		_mintTokens(members, _tokenIds.current());
 
 		return _tokenIds.current();
 	}
 
 	function addMembers(address[] memory members, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender) {
-    _mintTokens(members);
+    _mintTokens(members, tokenId);
 	}
 
 	function removeMembers(address[] memory members, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender) {
