@@ -27,11 +27,27 @@ contract PriceResolver is Initializable {
             return assetEthPrice(asset, amount);
         }
 
-        address assetETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH));
+        if(asset == Denominations.ETH) {
+            return ethAssetPrice(asset, amount);
+        }
+
         address baseCurrencyETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(baseCurrency, Denominations.ETH));
+        address assetETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH));
         int price = getDerivedPrice(assetETHFeed, baseCurrencyETHFeed, baseCurrencyDecimals());
         if (price > 0) {
             return uint256(price) * amount / 10 ** IERC20Metadata(asset).decimals();
+        }
+        return 0;
+    }
+
+    function ethAssetPrice(address asset, uint256 amount)public view returns (uint256) {
+        if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
+            return amount;
+            
+        (, int price,,,) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
+
+        if (price > 0) {
+            return amount * 10 ** IERC20Metadata(asset).decimals() / uint256(price);
         }
         return 0;
     }
