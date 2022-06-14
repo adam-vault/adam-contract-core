@@ -38,7 +38,6 @@ describe('UniswapSwapper.sol', () => {
       revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
       general: [13, 3000, 5000, 0], // general,
       daoSettingApproval: [13, 3000, 5000, 0], // daoSetting
-      depositTokens: [ETHAddress],
     }));
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     const dao = await ethers.getContractAt('Dao', daoAddr);

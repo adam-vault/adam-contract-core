@@ -20,7 +20,7 @@ describe('Govern.sol', function () {
   };
 
   function createDao () {
-    return adam.createDao(paramsStruct.getCreateDaoParams({ mintMemberToken: true, depositTokens: [ETH] }));
+    return adam.createDao(paramsStruct.getCreateDaoParams({ mintMemberToken: true }));
   }
 
   beforeEach(async function () {
@@ -145,7 +145,6 @@ describe('Govern.sol', function () {
           general: [13, 3000, 5000, 0], // general,
           daoSettingApproval: [13, 3000, 5000, 1], // daoSetting,
           mintMemberToken: true,
-          depositTokens: [ETH]
         }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -204,7 +203,6 @@ describe('Govern.sol', function () {
           general: [13, 3000, 5000, 0], // general,
           daoSettingApproval: [13, 3000, 5000, 1], // daoSetting
           mintMemberToken: true,
-          depositTokens: [ETH],
         }),
         );
 
