@@ -4,6 +4,7 @@ const { parseEther } = ethers.utils;
 const decodeBase64 = require('../utils/decodeBase64');
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
 
 describe('DepositPool.sol', function () {
   let dp, dpAsSigner1, dpAsSigner2;
@@ -31,8 +32,8 @@ describe('DepositPool.sol', function () {
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
-    await feedRegistry.setPrice(parseEther('0.0046'));
-    await feedRegistry.setFeed(token.address, true);
+    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
@@ -91,22 +92,22 @@ describe('DepositPool.sol', function () {
       expect(await dp.assetBaseCurrencyPrice(token.address, parseEther('0.0001'))).to.eq(parseEther('0.00000046'));
     });
     it('return price: 0 if feedRegistry return 0', async function () {
-      await feedRegistry.setPrice(parseEther('0'));
+      await feedRegistry.setPrice(token.address, ETH, parseEther('0'));
       expect(await dp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
     });
     it('return price: 0 if feedRegistry return -1', async function () {
-      await feedRegistry.setPrice(parseEther('-1'));
+      await feedRegistry.setPrice(token.address, ETH, parseEther('-1'));
       expect(await dp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
     });
   });
 
   describe('canAddAsset()', function () {
     it('return true if asset can be resolve', async function () {
-      await feedRegistry.setFeed(token.address, true);
+      await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
       expect(await dp.canAddAsset(token.address)).to.eq(true);
     });
     it('return false if asset can be resolve', async function () {
-      await feedRegistry.setFeed(token.address, false);
+      await feedRegistry.setAggregator(token.address, ETH, ethers.constants.AddressZero);
       expect(await dp.canAddAsset(token.address)).to.eq(false);
     });
   });
@@ -232,8 +233,8 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
-    await feedRegistry.setPrice(parseEther('0.0046'));
-    await feedRegistry.setFeed(token.address, true);
+    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);

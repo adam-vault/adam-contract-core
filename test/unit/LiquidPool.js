@@ -3,6 +3,7 @@ const { ethers, upgrades } = require('hardhat');
 const { parseEther } = ethers.utils;
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
 
 describe('LiquidPool.sol', function () {
   let lp, lpAsSigner1, lpAsSigner2;
@@ -30,8 +31,8 @@ describe('LiquidPool.sol', function () {
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
-    await feedRegistry.setPrice(parseEther('0.0046'));
-    await feedRegistry.setFeed(token.address, true);
+    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
@@ -183,7 +184,7 @@ describe('LiquidPool.sol', function () {
     });
 
     it('return price: 2.0046', async function () {
-      await feedRegistry.setPrice(parseEther('0'));
+      await feedRegistry.setPrice(token.address, ETH, parseEther('0'));
       await lpAsSigner1.deposit({ value: parseEther('1') }); // 1 ETH
       await tokenAsSigner1.transfer(lp.address, parseEther('1')); // 0 ETH
       await lpAsSigner2.deposit({ value: parseEther('1.0046') }); // 1.0046 ETH
@@ -198,11 +199,11 @@ describe('LiquidPool.sol', function () {
       expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('0.0001'))).to.eq(parseEther('0.00000046'));
     });
     it('return price: 0 if feedRegistry return 0', async function () {
-      await feedRegistry.setPrice(parseEther('0'));
+      await feedRegistry.setPrice(token.address, ETH, parseEther('0'));
       expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
     });
     it('return price: 0 if feedRegistry return -1', async function () {
-      await feedRegistry.setPrice(parseEther('-1'));
+      await feedRegistry.setPrice(token.address, ETH, parseEther('-1'));
       expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
     });
   });
@@ -342,11 +343,11 @@ describe('LiquidPool.sol', function () {
 
   describe('canAddAsset()', function () {
     it('return true if asset can be resolve', async function () {
-      await feedRegistry.setFeed(token.address, true);
+      await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
       expect(await lp.canAddAsset(token.address)).to.eq(true);
     });
     it('return false if asset can be resolve', async function () {
-      await feedRegistry.setFeed(token.address, false);
+      await feedRegistry.setAggregator(token.address, ETH, ethers.constants.AddressZero);
       expect(await lp.canAddAsset(token.address)).to.eq(false);
     });
   });
@@ -399,8 +400,8 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
-    await feedRegistry.setPrice(parseEther('0.0046'));
-    await feedRegistry.setFeed(token.address, true);
+    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);

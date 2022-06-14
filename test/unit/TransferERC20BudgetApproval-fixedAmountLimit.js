@@ -5,6 +5,8 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
 
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
@@ -30,8 +32,8 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', f
       feedRegistryArticfact.deployedBytecode,
     ]);
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
-    await feedRegistry.setFeed(tokenA.address, true);
-    await feedRegistry.setPrice(parseEther('1'));
+    await feedRegistry.setAggregator(tokenA.address, ETHAddress, mockAggrgator);
+    await feedRegistry.setPrice(tokenA.address, ETHAddress, parseEther('1'));
 
     const startTime = Math.round(Date.now() / 1000) - 86400;
     const endTime = Math.round(Date.now() / 1000) + 86400;
@@ -100,7 +102,7 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', f
   });
 
   it('can send 10 Token', async function () {
-    await feedRegistry.setPrice(ethers.utils.parseEther('0.1'));
+    await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.1'));
     await tokenA.mint(executee.address, ethers.utils.parseEther('100'));
 
     const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
@@ -118,7 +120,7 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', f
     expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.utils.parseEther('10'));
   });
   it('cannot send 11 Token', async function () {
-    await feedRegistry.setPrice(ethers.utils.parseEther('0.1'));
+    await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.1'));
     await tokenA.mint(executee.address, ethers.utils.parseEther('100'));
 
     const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [

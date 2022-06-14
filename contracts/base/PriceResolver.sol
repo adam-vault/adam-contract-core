@@ -27,8 +27,8 @@ contract PriceResolver is Initializable {
             return assetEthPrice(asset, amount);
         }
 
-        if(asset == Denominations.ETH) {
-            return ethAssetPrice(asset, amount);
+        if(asset == Denominations.ETH || asset == Constant.WETH_ADDRESS) {
+            return ethAssetPrice(baseCurrency, amount);
         }
 
         address baseCurrencyETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(baseCurrency, Denominations.ETH));
@@ -40,15 +40,16 @@ contract PriceResolver is Initializable {
         return 0;
     }
 
-    function ethAssetPrice(address asset, uint256 amount)public view returns (uint256) {
+    function ethAssetPrice(address asset, uint256 ethAmount) public view returns (uint256) {
         if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
-            return amount;
-            
+            return ethAmount;
+
         (, int price,,,) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
 
         if (price > 0) {
-            return amount * 10 ** IERC20Metadata(asset).decimals() / uint256(price);
+            return ethAmount * (10 ** IERC20Metadata(asset).decimals()) / uint256(price);
         }
+
         return 0;
     }
 
@@ -66,7 +67,7 @@ contract PriceResolver is Initializable {
     }
 
     function getDerivedPrice(address _base, address _quote, uint8 _decimals)
-        public
+        internal
         view
         returns (int256)
     {

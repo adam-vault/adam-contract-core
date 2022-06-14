@@ -1,5 +1,8 @@
 const { ethers, upgrades } = require('hardhat');
 
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+
 const deployConstantState = async (signer, network = 'rinkeby') => {
   if (network === 'rinkeby') {
     const RinkebyConstant = await ethers.getContractFactory('RinkebyConstant', { signer });
@@ -28,8 +31,8 @@ const createBudgetApprovals = async (signer) => {
 const createFeedRegistry = async (token, signer) => {
   const FeedRegistry = await ethers.getContractFactory('MockFeedRegistry', { signer });
   const feedRegistry = await FeedRegistry.deploy();
-  await feedRegistry.setPrice(ethers.utils.parseEther('0.0046'));
-  await feedRegistry.setFeed(token.address, true);
+  await feedRegistry.setPrice(token.address, ETH, ethers.utils.parseEther('0.0046'));
+  await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
   return feedRegistry;
 };
 
