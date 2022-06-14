@@ -47,6 +47,8 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
+
+        __PriceResolver_init(Denominations.ETH);
     }
 
     function executeParams() public pure override returns (string[] memory) {
@@ -61,7 +63,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         bytes memory data
     ) internal override {
         (address token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
-        uint256 ethAmount;
+        uint256 amountInBaseCurrency;
 
         if (token == ETH_ADDRESS) {
             IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, "", value);
@@ -71,17 +73,17 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         }
         
         if(IDao(dao).memberToken() == token){
-            ethAmount = value;
+            amountInBaseCurrency = value;
         }else{
-            ethAmount = assetEthPrice(token, value);
+            amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
         }
         require(allowAllAddresses || addressesMapping[to], "invalid recipient");
         require(tokensMapping[token], "invalid token");
-        require(allowAnyAmount || ethAmount <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(ethAmount), "invalid amount");
+        require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "invalid amount");
+        require(checkAmountPercentageValid(amountInBaseCurrency), "invalid amount");
 
         if(!allowAnyAmount) {
-            totalAmount -= ethAmount;
+            totalAmount -= amountInBaseCurrency;
         }
     }
 
@@ -91,12 +93,12 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         uint256 _totalAmount = amount;
 
         for (uint i = 0; i < tokens.length; i++) {
-            if (tokens[i] == ETH_ADDRESS) {
-                _totalAmount += executee.balance;
+            if (tokens[i] == Denominations.ETH) {
+                _totalAmount += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
             }else if(tokens[i] == IDao(dao).memberToken() ){
                 _totalAmount += IERC20(tokens[i]).balanceOf(executee);
             }else {
-                _totalAmount += assetEthPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
+                _totalAmount += assetBaseCurrencyPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
             }
         }
 

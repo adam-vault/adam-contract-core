@@ -8,6 +8,7 @@ console.log(deploymentResult);
 const adamAddress = deploymentResult.addresses.adam;
 
 // rinkeby
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const DAI = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 const USDC = '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b';
 const USDT = '0xD9BA894E0097f8cC2BBc9D24D308b98e36dc6D02';
@@ -26,7 +27,11 @@ async function main () {
   await testingDataSet.reduce(async (p, { lockTime, mintMemberToken, admissionToken, description }) => {
     await p;
     const tx = await adam.createDao(paramsStruct.getCreateDaoParams({
-      mintMemberToken, admissionToken, lockTime, depositTokens: [DAI, USDC, USDT],
+      mintMemberToken,
+      admissionToken,
+      lockTime,
+      depositTokens: [ETH, DAI, USDC, USDT],
+      baseCurrency: ETH,
     }));
 
     const { dao } = await findEventArgs(tx, 'CreateDao');

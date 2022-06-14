@@ -4,6 +4,8 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
 
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
@@ -29,8 +31,8 @@ describe('TransferERC20BudgetApproval.sol', function () {
       feedRegistryArticfact.deployedBytecode,
     ]);
     const feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
-    await feedRegistry.setFeed(tokenA.address, true);
-    await feedRegistry.setPrice(parseEther('1'));
+    await feedRegistry.setAggregator(tokenA.address, ETHAddress, mockAggrgator);
+    await feedRegistry.setPrice(tokenA.address, ETHAddress, parseEther('1'));
   });
 
   describe('Create Budget Approval', function () {
