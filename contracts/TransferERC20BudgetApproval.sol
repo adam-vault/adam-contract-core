@@ -77,10 +77,10 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
         }else{
             amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
         }
-        require(allowAllAddresses || addressesMapping[to], "invalid recipient");
-        require(tokensMapping[token], "invalid token");
-        require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(amountInBaseCurrency), "invalid amount");
+        require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
+        require(tokensMapping[token], "Token not whitelisted in budget");
+        require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "Exceeded max budget transferable amount");
+        require(checkAmountPercentageValid(amountInBaseCurrency), "Exceeded max budget transferable percentage");
 
         if(!allowAnyAmount) {
             totalAmount -= amountInBaseCurrency;
@@ -108,8 +108,8 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
     }
 
     function _addToken(address token) internal {
-        require(!tokensMapping[token], "duplicate token");
-        require(token == IDao(dao).memberToken() || canResolvePrice(token), "token price cannot be resolve");
+        require(!tokensMapping[token], "Duplicated Item in source token list.");
+        require(token == IDao(dao).memberToken() || canResolvePrice(token), "Unresolvable token in target token list.");
 
         tokens.push(token);
         tokensMapping[token] = true;
@@ -117,7 +117,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
     }
 
     function _addToAddress(address to) internal {
-        require(!addressesMapping[to], "duplicate token");
+        require(!addressesMapping[to], "Duplicated address in target address list");
         addressesMapping[to] = true;
         emit AllowAddress(to);
 

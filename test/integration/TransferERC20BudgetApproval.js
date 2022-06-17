@@ -128,7 +128,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           [transferERC20BAImplementation.address],
           [initData],
         ),
-      ).to.be.revertedWith('minApproval invalid');
+      ).to.be.revertedWith('Invalid approver list');
     });
   });
 
@@ -253,7 +253,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
         await budgetApproval.connect(approver).approveTransaction(id);
         await expect(budgetApproval.connect(approver).executeTransaction(id))
-          .to.be.revertedWith('access denied');
+          .to.be.revertedWith('Executor not whitelisted in budget');
       });
     });
 
@@ -265,7 +265,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           parseEther('10'),
         ]);
         await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false))
-          .to.be.revertedWith('access denied');
+          .to.be.revertedWith('Executor not whitelisted in budget');
       });
     });
 
@@ -312,7 +312,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
         await budgetApproval.connect(approver).approveTransaction(id);
         await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('invalid recipient');
+          .to.be.revertedWith('Recipient not whitelisted in budget');
       });
     });
 
@@ -328,7 +328,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
         await budgetApproval.connect(approver).approveTransaction(id);
         await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('invalid amount');
+          .to.be.revertedWith('Exceeded max budget transferable amount');
       });
     });
 
@@ -344,7 +344,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
         await budgetApproval.connect(approver).approveTransaction(id);
         await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('invalid amount');
+          .to.be.revertedWith('Exceeded max budget transferable percentage');
       });
     });
 
@@ -394,7 +394,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
               Math.round(Date.now() / 1000) + 86400,
               true,
             ),
-        ).to.be.revertedWith('budget approval not yet started');
+        ).to.be.revertedWith('Budget usage period not started');
       });
     });
 
@@ -445,7 +445,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
               Math.round(Date.now() / 1000) + 86400,
               true,
             ),
-        ).to.be.revertedWith('budget approval ended');
+        ).to.be.revertedWith('Budget usage period has ended');
       });
     });
 
@@ -501,7 +501,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
               Math.round(Date.now() / 1000) + 86400,
               true,
             ),
-        ).to.be.revertedWith('usage exceeded');
+        ).to.be.revertedWith('Exceeded budget usage limit');
       });
     });
   });
