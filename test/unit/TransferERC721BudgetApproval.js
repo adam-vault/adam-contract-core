@@ -99,7 +99,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           [transferERC721BAImplementation.address],
           [initData],
         ),
-      ).to.be.revertedWith('minApproval invalid');
+      ).to.be.revertedWith('Invalid approver list');
     });
   });
 
@@ -191,7 +191,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
       await budgetApproval.connect(approver).approveTransaction(id);
 
       await expect(budgetApproval.connect(approver).executeTransaction(id))
-        .to.be.revertedWith('access denied');
+        .to.be.revertedWith('Executor not whitelisted in budget');
     });
 
     it('should revert if not created by executor', async function () {
@@ -203,7 +203,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
       ]);
 
       await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false))
-        .to.be.revertedWith('access denied');
+        .to.be.revertedWith('Executor not whitelisted in budget');
     });
 
     it('should revert if not approved by approver', async function () {
@@ -248,7 +248,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
       await budgetApproval.connect(approver).approveTransaction(id);
 
       await expect(budgetApproval.connect(executor).executeTransaction(id))
-        .to.be.revertedWith('invalid recipient');
+        .to.be.revertedWith('Recipient not whitelisted in budget');
     });
 
     it('should revert if exceed amount', async function () {
@@ -277,7 +277,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
       await budgetApproval.connect(approver).approveTransaction(id);
 
       await expect(budgetApproval.connect(executor).executeTransaction(id))
-        .to.be.revertedWith('invalid amount');
+        .to.be.revertedWith('Exceeded max budget transferable amount');
     });
 
     it('should revert if execute before startTime', async function () {
@@ -326,7 +326,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
             Math.round(Date.now() / 1000) + 86400,
             true,
           ),
-      ).to.be.revertedWith('budget approval not yet started');
+      ).to.be.revertedWith('Budget usage period not started');
     });
     it('should revert if execute after endTime', async function () {
       const initData = transferERC721BAImplementation.interface.encodeFunctionData('initialize', [
@@ -374,7 +374,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
             Math.round(Date.now() / 1000) + 86400,
             true,
           ),
-      ).to.be.revertedWith('budget approval ended');
+      ).to.be.revertedWith('Budget usage period has ended');
     });
 
     it('should revert if not enough usage count', async function () {
@@ -429,7 +429,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
             Math.round(Date.now() / 1000) + 86400,
             true,
           ),
-      ).to.be.revertedWith('usage exceeded');
+      ).to.be.revertedWith('Exceeded budget usage limit');
     });
   });
 });

@@ -162,16 +162,14 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     modifier onlyGovern(string memory category) {
         require(
-            byPassGovern(msg.sender) || msg.sender == govern(category),
-            string("Dao: only Govern ").concat(category));
+            byPassGovern(msg.sender) || msg.sender == govern(category), "Action not permitted");
         _;
     }
 
     // to be removed in future
     modifier onlyGovernOrSelf(string memory category) {
         require(
-            byPassGovern(msg.sender) || msg.sender == govern(category) || msg.sender == address(this),
-            string("Dao: only Govern ").concat(category));
+            byPassGovern(msg.sender) || msg.sender == govern(category) || msg.sender == address(this), "Action not permitted");
         _;
     }
 
@@ -190,8 +188,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     function createMultiExecuteeBudgetApprovals(address[] calldata executee, address[] calldata budgetApprovals, bytes[] calldata data) public onlyGovern("BudgetApproval") {
-        require(executee.length == data.length, "input invalid");
-        require(budgetApprovals.length == data.length, "input invalid");
+        require(executee.length == data.length, "Incorrect Calldata");
+        require(budgetApprovals.length == data.length, "Incorrect Calldata");
 
         for(uint i = 0; i < data.length; i++) {
             address[] memory currentBudgetApproval = new address[](1);
@@ -203,7 +201,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovernOrSelf("BudgetApproval") {
-        require(canCreateBudgetApproval(budgetApproval), "not whitelist");
+        require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
     }
 
     function createOptInPool(

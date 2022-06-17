@@ -108,7 +108,7 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
     await budgetApproval.connect(approver).approveTransaction(transactionId);
 
     await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
-      .to.be.revertedWith('invalid amount');
+      .to.be.revertedWith('Exceeded max budget transferable percentage');
   });
 
   it('can send 10 Token', async function () {
@@ -146,6 +146,6 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
 
     await budgetApproval.connect(approver).approveTransaction(id);
     await expect(budgetApproval.connect(executor).executeTransaction(id))
-      .to.be.revertedWith('invalid amount');
+      .to.be.revertedWith('Exceeded max budget transferable percentage');
   });
 });

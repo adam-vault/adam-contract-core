@@ -66,35 +66,30 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     uint256 public endTime;
 
     modifier onlyApprover () {
-        require(approversMapping[msg.sender], "access denied");
-        _;
-    }
-
-    modifier onlySelf() {
-        require(msg.sender == address(this), "access denied");
+        require(approversMapping[msg.sender], "Approver not whitelisted in budget");
         _;
     }
 
     modifier onlyExecutor() {
-        require(msg.sender == executor, "access denied");
+        require(msg.sender == executor, "Executor not whitelisted in budget");
         _;
     }
 
     modifier onlyExecutee() {
-        require(msg.sender == executee, "access denied");
+        require(msg.sender == executee, "Executee not whitelisted in budget");
         _;
     }
 
     modifier matchStatus(uint256 id, Status status) {
-        require(transactions[id].status == status, "status invalid");
+        require(transactions[id].status == status, "Transaction status invalid");
         _;
     }
 
     modifier checkTime(uint256 id) {
-        require(block.timestamp <= transactions[id].deadline, "transaction expired");
-        require(block.timestamp >= startTime, "budget approval not yet started");
+        require(block.timestamp <= transactions[id].deadline, "Transaction expired");
+        require(block.timestamp >= startTime, "Budget usage period not started");
         if(endTime != 0) {
-            require(block.timestamp < endTime, "budget approval ended");
+            require(block.timestamp < endTime, "Budget usage period has ended");
         }
         _;
     }
@@ -127,7 +122,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         }
 
         minApproval = params.minApproval;
-        require(minApproval <= params.approvers.length, "minApproval invalid");
+        require(minApproval <= params.approvers.length, "Invalid approver list");
 
         startTime = params.startTime;
         endTime = params.endTime;
@@ -140,7 +135,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     function executeTransaction(uint256 id) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
         for (uint i = 0; i < transactions[id].data.length; i++) {
-            require(allowUnlimitedUsageCount || usageCount > 0, "usage exceeded");
+            require(allowUnlimitedUsageCount || usageCount > 0, "Exceeded budget usage limit ");
             if (!allowUnlimitedUsageCount) {
                 usageCount--;
             }
@@ -179,8 +174,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function approveTransaction(uint256 id) external onlyApprover {
         require(transactions[id].status == Status.Pending
             || transactions[id].status == Status.Approved,
-            "tx cannot be approved");
-        require(!transactions[id].approved[msg.sender], "cannot approve twice");
+            "Unexpected transaction status");
+        require(!transactions[id].approved[msg.sender], "Transaction has been approved before");
 
         transactions[id].approved[msg.sender] = true;
         transactions[id].approvedCount++;
@@ -193,7 +188,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function revokeTransaction(uint256 id) external onlyExecutor {
-        require(transactions[id].status != Status.Completed, "transaction already completed");
+        require(transactions[id].status != Status.Completed, "Transaction has been completed before");
         transactions[id].status = Status.Cancelled;
 
         emit RevokeTransaction(id);
