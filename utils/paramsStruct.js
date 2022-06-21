@@ -43,6 +43,162 @@ function getCreateDaoParams ({
   });
 };
 
+function getCreateTransferUnregisteredERC20BAParams ({
+  dao,
+  executor,
+  approvers,
+  minApproval,
+  text = 'Transfer Illiquid Token',
+  transactionType = 'Outflow',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  allowAllAddresses = false,
+  toAddresses,
+  token,
+  allowAnyAmount = false,
+  totalAmount = '100',
+  amountPercentage = '10',
+}) {
+  return Object.entries({
+    params: getCreateCommonBudgetApprovalParams({
+      dao,
+      executor,
+      approvers,
+      minApproval,
+      text,
+      transactionType,
+      startTime,
+      endTime,
+      allowUnlimitedUsageCount,
+      usageCount,
+    }),
+    allowAllAddresses,
+    toAddresses,
+    token,
+    allowAnyAmount,
+    totalAmount,
+    amountPercentage,
+  }).map(([key, value]) => {
+    return value;
+  });
+}
+
+function getCreateTransferErc20TokenBAParams ({
+  dao,
+  executor,
+  approvers = [],
+  minApproval = 0,
+  text = 'Transfer ERC20 Token',
+  transactionType = 'Outflow',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  allowAllAddresses = false,
+  toAddresses,
+  tokens,
+  allowAnyAmount = false,
+  totalAmount = ethers.utils.parseEther('100'),
+  amountPercentage = '10',
+}) {
+  return Object.entries({
+    params: getCreateCommonBudgetApprovalParams({
+      dao,
+      executor,
+      approvers,
+      minApproval,
+      text,
+      transactionType,
+      startTime,
+      endTime,
+      allowUnlimitedUsageCount,
+      usageCount,
+    }),
+    allowAllAddresses,
+    toAddresses,
+    tokens,
+    allowAnyAmount,
+    totalAmount,
+    amountPercentage,
+  }).map(([key, value]) => {
+    return value;
+  });
+}
+
+function getCreateUniswapBAParams ({
+  dao,
+  executor,
+  approvers = [],
+  minApproval = 0,
+  text = 'Uniswap',
+  transactionType = 'swap',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  fromTokens,
+  allowAllToTokens = false,
+  toTokens,
+  allowAnyAmount = false,
+  totalAmount = ethers.utils.parseEther('100'),
+  amountPercentage = '10',
+}) {
+  return Object.entries({
+    params: getCreateCommonBudgetApprovalParams({
+      dao,
+      executor,
+      approvers,
+      minApproval,
+      text,
+      transactionType,
+      startTime,
+      endTime,
+      allowUnlimitedUsageCount,
+      usageCount,
+    }),
+    fromTokens,
+    allowAllToTokens,
+    toTokens,
+    allowAnyAmount,
+    totalAmount,
+    amountPercentage,
+  }).map(([key, value]) => {
+    return value;
+  });
+}
+
+function getCreateCommonBudgetApprovalParams ({
+  dao,
+  executor,
+  approvers = [],
+  minApproval = 0,
+  text,
+  transactionType,
+  startTime = Math.round(Date.now() / 1000) - 86400,
+  endTime = Math.round(Date.now() / 1000) + 86400,
+  allowUnlimitedUsageCount = false,
+  usageCount = 10,
+}) {
+  return Object.entries({
+    dao,
+    executor,
+    approvers,
+    minApproval,
+    text,
+    transactionType,
+    startTime,
+    endTime,
+    allowUnlimitedUsageCount,
+    usageCount,
+  }).map(([key, value]) => {
+    return value;
+  });
+}
 module.exports = {
   getCreateDaoParams,
+  getCreateTransferUnregisteredERC20BAParams,
+  getCreateTransferErc20TokenBAParams,
+  getCreateUniswapBAParams,
 };

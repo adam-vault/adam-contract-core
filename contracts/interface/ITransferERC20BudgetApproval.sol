@@ -105,9 +105,7 @@ interface ITransferERC20BudgetApproval {
 
     function text() external view returns (string memory);
 
-    function tokens(uint256) external view returns (address);
-
-    function tokensMapping(address) external view returns (bool);
+    function token() external view returns (address);
 
     function totalAmount() external view returns (uint256);
 

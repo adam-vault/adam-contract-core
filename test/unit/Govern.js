@@ -4,8 +4,6 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens, createAdam, createBudgetApprovals, createFeedRegistry } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
 
-const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-
 describe('Govern.sol', function () {
   let adam, dao, governFactory, lp;
   let creator, owner1, owner2;

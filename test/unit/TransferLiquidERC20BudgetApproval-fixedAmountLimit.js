@@ -1,6 +1,5 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
 
 const { createTokens } = require('../utils/createContract');
@@ -11,9 +10,9 @@ const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', function () {
-  let transferERC20BAImplementation, budgetApproval, dao;
-  let executor, executee, approver, receiver;
+describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price limit', function () {
+  let transferLiquidERC20BAImplementation, budgetApproval;
+  let executor, executee, approver, receiver, dao;
   let tokenA, feedRegistry;
 
   beforeEach(async function () {
@@ -21,13 +20,12 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
 
     ({ tokenA } = await createTokens());
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
-    const TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
+    const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory('TransferLiquidERC20BudgetApproval', { signer: executor });
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
 
-    transferERC20BAImplementation = await TransferERC20BudgetApproval.deploy();
-    executee = await MockBudgetApprovalExecutee.deploy();
     dao = await MockLPDao.deploy();
-
+    transferLiquidERC20BAImplementation = await TransferLiquidERC20BudgetApproval.deploy();
+    executee = await MockBudgetApprovalExecutee.deploy();
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
@@ -39,7 +37,7 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
 
     const startTime = Math.round(Date.now() / 1000) - 86400;
     const endTime = Math.round(Date.now() / 1000) + 86400;
-    const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
+    const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
       [
         dao.address, // dao addressc
         executor.address, // executor
@@ -55,23 +53,21 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
       false, // allow all addresses
       [receiver.address], // allowed addresses (use when above = false)
       [ETHAddress, tokenA.address], // allowed token
-      true, // allow any amount
-      0, // allowed total amount
-      '50', // allowed amount percentage
+      false, // allow any amount
+      ethers.utils.parseEther('1'), // allowed total amount
+      '100', // allowed amount percentage
     ]);
 
     const tx = await executee.createBudgetApprovals(
-      [transferERC20BAImplementation.address], [initData],
+      [transferLiquidERC20BAImplementation.address], [initData],
     );
     const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
-    budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
+    budgetApproval = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', budgetApprovalAddress);
   });
 
   it('can send 1 Eth', async function () {
-    await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.5'));
-    await tokenA.mint(executee.address, ethers.utils.parseEther('1'));
-    await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('1.5') });
+    await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('1') });
 
     const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
       ETHAddress,
@@ -89,9 +85,7 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
     expect(await receiver.getBalance()).to.eq(originalBalance.add(ethers.utils.parseEther('1')));
   });
   it('cannot send 1.1 Eth', async function () {
-    await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.5'));
-    await tokenA.mint(executee.address, ethers.utils.parseEther('1'));
-    await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('1.5') });
+    await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('1.1') });
 
     const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
       ETHAddress,
@@ -100,21 +94,16 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
     ]);
 
     const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-    const receipt = await tx.wait();
-    const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
+    const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-    const transactionId = creationEventLog.args.id;
-
-    await budgetApproval.connect(approver).approveTransaction(transactionId);
-
-    await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
-      .to.be.revertedWith('Exceeded max budget transferable percentage');
+    await budgetApproval.connect(approver).approveTransaction(id);
+    await expect(budgetApproval.connect(executor).executeTransaction(id))
+      .to.be.revertedWith('Exceeded max budget transferable amount');
   });
 
   it('can send 10 Token', async function () {
     await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.1'));
-    await tokenA.mint(executee.address, ethers.utils.parseEther('10'));
-    await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('1') });
+    await tokenA.mint(executee.address, ethers.utils.parseEther('100'));
 
     const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
       tokenA.address,
@@ -132,8 +121,7 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
   });
   it('cannot send 11 Token', async function () {
     await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.1'));
-    await tokenA.mint(executee.address, ethers.utils.parseEther('11'));
-    await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('0.9') });
+    await tokenA.mint(executee.address, ethers.utils.parseEther('100'));
 
     const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
       tokenA.address,
@@ -146,6 +134,6 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Percentage limit', fu
 
     await budgetApproval.connect(approver).approveTransaction(id);
     await expect(budgetApproval.connect(executor).executeTransaction(id))
-      .to.be.revertedWith('Exceeded max budget transferable percentage');
+      .to.be.revertedWith('Exceeded max budget transferable amount');
   });
 });
