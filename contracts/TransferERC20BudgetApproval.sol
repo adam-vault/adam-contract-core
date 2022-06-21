@@ -15,7 +15,7 @@ import "hardhat/console.sol";
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;
 
-    string public constant override name = "Transfer Unregistered ERC20 Budget Approval";
+    string public constant override name = "Transfer ERC20 Budget Approval";
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;

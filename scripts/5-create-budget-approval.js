@@ -26,7 +26,7 @@ async function main () {
   const lp = await hre.ethers.getContractAt('LiquidPool', lpAddress);
 
   const transferLiquidERC20BudgetApproval = await hre.ethers.getContractAt('TransferLiquidERC20BudgetApproval', transferLiquidERC20BudgetApprovalAddress);
-  const dataERC20 = transferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
+  const dataLiquidERC20 = transferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
     getCreateTransferLiquidErc20TokenBAParams({
       dao: daoAddress,
       executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
@@ -54,7 +54,7 @@ async function main () {
   );
 
   const transferERC20BudgetApproval = await hre.ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BudgetApprovalAddress);
-  const dataUnregisteredErc20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
+  const dataErc20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
     getCreateTransferERC20BAParams({
       dao: daoAddress,
       executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
@@ -68,7 +68,7 @@ async function main () {
 
   const tx1 = await dao.createBudgetApprovals(
     [transferERC20BudgetApprovalAddress],
-    [dataUnregisteredErc20]);
+    [dataErc20]);
   const receipt1 = await tx1.wait();
   const creationEventLogs1 = _.filter(receipt1.events, { event: 'CreateBudgetApproval' });
   creationEventLogs1.forEach(({ args }) => {
@@ -78,7 +78,7 @@ async function main () {
 
   const tx2 = await lp.createBudgetApprovals(
     [transferLiquidERC20BudgetApprovalAddress, uniswapBudetApprovalAddress],
-    [dataERC20, dataUniswap]);
+    [dataLiquidERC20, dataUniswap]);
   const receipt2 = await tx2.wait();
   const creationEventLogs2 = _.filter(receipt2.events, { event: 'CreateBudgetApproval' });
   creationEventLogs2.forEach(({ args }) => {
