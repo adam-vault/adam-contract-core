@@ -69,7 +69,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     it('should fail if minApproval larger than approvers length', async function () {
       const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-      getCreateTransferERC20BAParams({
+        getCreateTransferERC20BAParams({
           dao: executee.address,
           executor: executor.address,
           approvers: [approver.address],
@@ -92,7 +92,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     beforeEach(async function () {
       await tokenA.mint(executee.address, '200');
       const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-      getCreateTransferERC20BAParams({
+        getCreateTransferERC20BAParams({
           dao: executee.address,
           executor: executor.address,
           approvers: [approver.address],
@@ -237,7 +237,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('execute before startTime', () => {
       it('should revert', async function () {
         const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferERC20BAParams({
+          getCreateTransferERC20BAParams({
             dao: executee.address,
             executor: executor.address,
             approvers: [],
@@ -280,7 +280,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('execute after endTime', () => {
       it('should revert', async function () {
         const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferERC20BAParams({
+          getCreateTransferERC20BAParams({
             dao: executee.address,
             executor: executor.address,
             approvers: [],
@@ -324,7 +324,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('execute if not enough usage count', () => {
       it('should revert', async function () {
         const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferERC20BAParams({
+          getCreateTransferERC20BAParams({
             dao: dao.address,
             executor: executor.address,
             approvers: [],
