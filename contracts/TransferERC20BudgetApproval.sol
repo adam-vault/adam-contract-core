@@ -43,7 +43,6 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
-        emit AllowToken(token);
     }
 
     function executeParams() public pure override returns (string[] memory) {
@@ -58,19 +57,17 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         bytes memory data
     ) internal override {
         (address _token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
-        uint256 amount;
         bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
         
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
-        amount = value;
 
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(token == _token, "Token not whitelisted in budget");
-        require(allowAnyAmount || amount <= totalAmount, "Exceeded max budget transferable amount");
-        require(checkAmountPercentageValid(amount), "Exceeded max budget transferable percentage");
+        require(allowAnyAmount || value <= totalAmount, "Exceeded max budget transferable amount");
+        require(checkAmountPercentageValid(value), "Exceeded max budget transferable percentage");
 
         if(!allowAnyAmount) {
-            totalAmount -= amount;
+            totalAmount -= value;
         }
     }
 
