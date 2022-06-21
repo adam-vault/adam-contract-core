@@ -2,9 +2,9 @@ const hre = require('hardhat');
 const _ = require('lodash');
 const fileReader = require('../utils/fileReader');
 const {
-  getCreateTransferErc20TokenBAParams,
+  getCreateTransferLiquidErc20TokenBAParams,
   getCreateUniswapBAParams,
-  getCreateTransferUnregisteredERC20BAParams,
+  getCreateTransferERC20BAParams,
 } = require('../utils/paramsStruct');
 
 const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
@@ -27,7 +27,7 @@ async function main () {
 
   const transferLiquidERC20BudgetApproval = await hre.ethers.getContractAt('TransferLiquidERC20BudgetApproval', transferLiquidERC20BudgetApprovalAddress);
   const dataERC20 = transferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
-    getCreateTransferErc20TokenBAParams({
+    getCreateTransferLiquidErc20TokenBAParams({
       dao: daoAddress,
       executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
       allowUnlimitedUsageCount: true,
@@ -55,7 +55,7 @@ async function main () {
 
   const transferERC20BudgetApproval = await hre.ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BudgetApprovalAddress);
   const dataUnregisteredErc20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
-    getCreateTransferUnregisteredERC20BAParams({
+    getCreateTransferERC20BAParams({
       dao: daoAddress,
       executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
       allowUnlimitedUsageCount: true,

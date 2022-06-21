@@ -5,7 +5,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 const paramsStruct = require('../../utils/paramsStruct');
 
 const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
-const { getCreateTransferUnregisteredERC20BAParams } = require('../../utils/paramsStruct');
+const { getCreateTransferERC20BAParams } = require('../../utils/paramsStruct');
 
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
@@ -49,7 +49,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferUnregisteredERC20BAParams({
+        getCreateTransferERC20BAParams({
           dao: dao.address,
           executor: executor.address,
           approvers: [approver.address],
@@ -94,7 +94,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     it('should fail if minApproval larger than approvers length', async function () {
       const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferUnregisteredERC20BAParams({
+        getCreateTransferERC20BAParams({
           dao: dao.address,
           executor: executor.address,
           approvers: [approver.address],
@@ -117,7 +117,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
   describe('Create Multiple BudgetApprovals On Dao', function () {
     it('should success', async function () {
       const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferUnregisteredERC20BAParams({
+        getCreateTransferERC20BAParams({
           dao: dao.address,
           executor: executor.address,
           approvers: [approver.address],
@@ -291,7 +291,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('execute before startTime', () => {
       it('should revert', async function () {
         const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferUnregisteredERC20BAParams({
+          getCreateTransferERC20BAParams({
             dao: dao.address,
             executor: executor.address,
             approvers: [],
@@ -333,7 +333,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('execute after endTime', () => {
       it('should revert', async function () {
         const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferUnregisteredERC20BAParams({
+          getCreateTransferERC20BAParams({
             dao: dao.address,
             executor: executor.address,
             approvers: [],
@@ -375,7 +375,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('execute if not enough usage count', () => {
       it('should revert', async function () {
         const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferUnregisteredERC20BAParams({
+          getCreateTransferERC20BAParams({
             dao: dao.address,
             executor: executor.address,
             approvers: [],

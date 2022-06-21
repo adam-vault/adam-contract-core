@@ -43,7 +43,7 @@ function getCreateDaoParams ({
   });
 };
 
-function getCreateTransferUnregisteredERC20BAParams ({
+function getCreateTransferERC20BAParams ({
   dao,
   executor,
   approvers,
@@ -85,7 +85,7 @@ function getCreateTransferUnregisteredERC20BAParams ({
   });
 }
 
-function getCreateTransferErc20TokenBAParams ({
+function getCreateTransferLiquidErc20TokenBAParams ({
   dao,
   executor,
   approvers = [],
@@ -198,7 +198,7 @@ function getCreateCommonBudgetApprovalParams ({
 }
 module.exports = {
   getCreateDaoParams,
-  getCreateTransferUnregisteredERC20BAParams,
-  getCreateTransferErc20TokenBAParams,
+  getCreateTransferERC20BAParams,
+  getCreateTransferLiquidErc20TokenBAParams,
   getCreateUniswapBAParams,
 };
