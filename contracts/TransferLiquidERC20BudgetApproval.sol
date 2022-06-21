@@ -47,6 +47,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
+        __PriceResolver_init(Denominations.ETH);
     }
 
     function executeParams() public pure override returns (string[] memory) {
@@ -61,7 +62,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         bytes memory data
     ) internal override {
         (address token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
-        uint256 ethAmount;
+        uint256 amountInBaseCurrency;
 
         if (token == ETH_ADDRESS) {
             IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, "", value);
@@ -70,14 +71,14 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
             IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
         }
         
-        ethAmount = assetEthPrice(token, value);
+        amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(tokensMapping[token], "Token not whitelisted in budget");
-        require(allowAnyAmount || ethAmount <= totalAmount, "Exceeded max budget transferable amount");
-        require(checkAmountPercentageValid(ethAmount), "Exceeded max budget transferable percentage");
+        require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "Exceeded max budget transferable amount");
+        require(checkAmountPercentageValid(amountInBaseCurrency), "Exceeded max budget transferable percentage");
 
         if(!allowAnyAmount) {
-            totalAmount -= ethAmount;
+            totalAmount -= amountInBaseCurrency;
         }
     }
 
@@ -87,10 +88,10 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         uint256 _totalAmount = amount;
 
         for (uint i = 0; i < tokens.length; i++) {
-            if (tokens[i] == ETH_ADDRESS) {
-                _totalAmount += executee.balance;
+            if (tokens[i] == Denominations.ETH) {
+                _totalAmount += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
             }else {
-                _totalAmount += assetEthPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
+                _totalAmount += assetBaseCurrencyPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
             }
         }
 
@@ -100,19 +101,17 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
     }
 
     function _addToken(address token) internal {
-        require(!tokensMapping[token], "duplicate token");
-        require(canResolvePrice(token), "token price cannot be resolve");
+        require(!tokensMapping[token], "Duplicated Item in source token list.");
+        require(canResolvePrice(token), "Unresolvable token in target token list.");
 
         tokens.push(token);
         tokensMapping[token] = true;
-
         emit AllowToken(token);
     }
 
     function _addToAddress(address to) internal {
-        require(!addressesMapping[to], "duplicate token");
+        require(!addressesMapping[to], "Duplicated address in target address list");
         addressesMapping[to] = true;
-
         emit AllowAddress(to);
 
     }
