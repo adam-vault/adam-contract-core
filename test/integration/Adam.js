@@ -9,6 +9,7 @@ const decodeBase64 = require('../utils/decodeBase64');
 const paramsStruct = require('../../utils/paramsStruct');
 chai.use(smock.matchers);
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
 
 describe('Integration - Create DAO', function () {
   let creator, owner1, owner2;
@@ -27,7 +28,7 @@ describe('Integration - Create DAO', function () {
       feedRegistryArticfact.deployedBytecode,
     ]);
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
-    await feedRegistry.setFeed(token.address, true);
+    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
 
     adam = await createAdam(feedRegistry);
   });
@@ -199,7 +200,7 @@ describe('Integration - Create DAO', function () {
     beforeEach(async function () {
       const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
         lockTime: 1000,
-        depositTokens: [token.address], // depositTokens
+        depositTokens: [ETH, token.address], // depositTokens
       }),
       );
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');

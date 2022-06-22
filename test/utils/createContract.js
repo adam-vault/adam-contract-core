@@ -1,5 +1,8 @@
 const { ethers, upgrades } = require('hardhat');
 
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+
 const deployConstantState = async (signer, network = 'rinkeby') => {
   if (network === 'rinkeby') {
     const RinkebyConstant = await ethers.getContractFactory('RinkebyConstant', { signer });
@@ -28,8 +31,8 @@ const createBudgetApprovals = async (signer) => {
 const createFeedRegistry = async (token, signer) => {
   const FeedRegistry = await ethers.getContractFactory('MockFeedRegistry', { signer });
   const feedRegistry = await FeedRegistry.deploy();
-  await feedRegistry.setPrice(ethers.utils.parseEther('0.0046'));
-  await feedRegistry.setFeed(token.address, true);
+  await feedRegistry.setPrice(token.address, ETH, ethers.utils.parseEther('0.0046'));
+  await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
   return feedRegistry;
 };
 
@@ -46,6 +49,7 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
   const DepositPool = await ethers.getContractFactory('DepositPool', { signer: creator });
   const OptInPool = await ethers.getContractFactory('OptInPool', { signer: creator });
+  const Team = await ethers.getContractFactory('Team', { signer: creator });
 
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
 
@@ -63,6 +67,7 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   const liquidPool = await LiquidPool.deploy();
   const depositPool = await DepositPool.deploy();
   const optInPool = await OptInPool.deploy();
+  const team = await Team.deploy();
 
   const govern = await Govern.deploy();
   const memberToken = await MemberToken.deploy();
@@ -73,6 +78,7 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   await depositPool.deployed();
   await optInPool.deployed();
   await memberToken.deployed();
+  await team.deployed();
 
   const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
@@ -87,6 +93,7 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
     governFactory.address,
     constantState,
     feedRegistry.address,
+    team.address,
   ], { kind: 'uups' });
 
   await adam.deployed();

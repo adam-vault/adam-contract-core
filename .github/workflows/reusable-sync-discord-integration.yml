@@ -13,18 +13,17 @@ on:
 
 env:
   GIT_REF: ${{ inputs.GIT_REF }}
-  DEPLOY_ENV: ${{ inputs.DEPLOY_ENV }}
 
 jobs:
   sync-subgraph-repo:
-    name: Syncrhonize with Subgraph Repo
+    name: Syncrhonize with Discord Integration Repo
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout Subgraph Repo
+      - name: Checkout Discord Integration
         uses: actions/checkout@v3
         with:
-          repository: ${{ github.repository_owner }}/adam-subgraph
+          repository: ${{ github.repository_owner }}/adam-discord-integration
           token: ${{ secrets.GH_PAT }}      
       
       - name: Fetch Deployment Info
@@ -34,17 +33,11 @@ jobs:
           path: ${{ runner.temp }}/deployment
 
       - name: Replace ABIs
-        run: cp ${{ runner.temp }}/deployment/abis/machine/* ./abis
-
-      - name: Replace Subgraph Address
-        run: | 
-          jq -s '.[0].startBlock = .[1].block_number | 
-            .[0].addresses.adam = .[1].addresses.adam |
-            .[0].addresses.governFactory = .[1].addresses.governFactory |
-            .[0].addresses.team = .[1].addresses.team |
-            .[0]' \
-            config/${{ env.DEPLOY_ENV }}.json ${{ runner.temp }}/deployment/deploy/results.json > temp.json \
-            && mv temp.json config/${{ env.DEPLOY_ENV }}.json
+        run: |
+          cp ${{ runner.temp }}/deployment/abis/machine/GovernFactory.json \
+            ${{ runner.temp }}/deployment/abis/machine/Govern.json \
+            ${{ runner.temp }}/deployment/abis/machine/Dao.json \
+            ./src/abis
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
@@ -59,5 +52,4 @@ jobs:
 
           commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
           reviewers: |
-            ayame30
-            chikchoi6
+            eddy17c17c

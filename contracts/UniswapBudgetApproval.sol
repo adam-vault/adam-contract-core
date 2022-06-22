@@ -52,6 +52,9 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
+
+        __PriceResolver_init(Denominations.ETH);
+
     }
 
     function afterInitialized() external override onlyExecutee {
@@ -75,7 +78,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         bytes memory data
     ) internal override {
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
-        require(to == Constant.UNISWAP_ROUTER, "address not uniswap router");
+        require(to == Constant.UNISWAP_ROUTER, "Invalid Uniswap address");
 
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
 
@@ -88,18 +91,18 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             bool estimatedOut
         ) = UniswapSwapper.decodeUniswapDataAfterSwap(to, executeData, value, result);
 
-        uint256 ethAmountIn = assetEthPrice(tokenIn, amountIn);
+        uint256 amountInBaseCurrency = assetBaseCurrencyPrice(tokenIn, amountIn);
 
-        require(!estimatedIn && !estimatedOut, "unexpected result");
+        require(!estimatedIn && !estimatedOut, "Unexpected swap result from Uniswap");
 
-        require(fromTokensMapping[tokenIn], "invalid token");
-        require(allowAllToTokens || toTokensMapping[tokenOut], "invalid to token");
-        require(allowAnyAmount || ethAmountIn <= totalAmount, "invalid amount");
-        require(checkAmountPercentageValid(ethAmountIn), "invalid amount");
+        require(fromTokensMapping[tokenIn], "Source token not whitelisted in budget");
+        require(allowAllToTokens || toTokensMapping[tokenOut], "Target token not whitelisted in budget");
+        require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "Exceeded max budget transferable amount");
+        require(checkAmountPercentageValid(amountInBaseCurrency), "Exceeded max budget transferable percentage");
 
 
         if(!allowAnyAmount) {
-            totalAmount -= ethAmountIn;
+            totalAmount -= amountInBaseCurrency;
         }
     }
 
@@ -109,10 +112,10 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         uint256 _totalAmount = amount;
 
         for (uint i = 0; i < fromTokens.length; i++) {
-            if (fromTokens[i] == ETH_ADDRESS) {
-                _totalAmount += executee.balance;
+            if (fromTokens[i] == Denominations.ETH) {
+                _totalAmount += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
             } else {
-                _totalAmount += assetEthPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee));
+                _totalAmount += assetBaseCurrencyPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee));
             }
         }
 
@@ -122,15 +125,15 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     }
 
     function _addFromToken(address token) internal {
-        require(!fromTokensMapping[token], "duplicate from token");
-        require(canResolvePrice(token), "token price cannot be resolve");
+        require(!fromTokensMapping[token], "Duplicated Item in source token list.");
+        require(canResolvePrice(token), "Unresolvable token in source token list.");
         fromTokens.push(token);
         fromTokensMapping[token] = true;
         emit AllowToken(token);
     }
 
     function _addToToken(address token) internal {
-        require(!toTokensMapping[token], "duplicate to token");
+        require(!toTokensMapping[token], "Duplicated token in target token list");
         toTokensMapping[token] = true;
         emit AllowToToken(token);
     }

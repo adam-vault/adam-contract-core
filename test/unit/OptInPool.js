@@ -40,8 +40,8 @@ describe('OptInPool.sol', function () {
     dp = await MockDepositPool.deploy();
     token = await MockToken.deploy();
 
-    await feedRegistry.setPrice(parseEther('0.0046'));
-    await feedRegistry.setFeed(token.address, true);
+    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ETH, ethers.constants.AddressZero);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dp.setId(ETH, ETH_TOKEN_ID);

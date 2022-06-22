@@ -29,6 +29,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address admissionToken;
         address[] depositTokens;
         bool mintMemberToken;
+        address baseCurrency;
     }
 
     address public feedRegistry;
@@ -38,6 +39,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public depositPoolImplementation;
     address public optInPoolImplementation;
     address public governFactory;
+    address public team;
     address public governImplementation;
     address public memberTokenImplementation;
     address public constantState;
@@ -57,7 +59,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
         address _constantState,
-        address _feedRegistry
+        address _feedRegistry,
+        address _team
     )
         public initializer
     {
@@ -73,6 +76,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         governFactory = _governFactory;
         constantState = _constantState;
         feedRegistry = _feedRegistry;
+        team = _team;
     }
 
     function setDaoImplementation(address _daoImplementation) public {
@@ -113,12 +117,14 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         ILiquidPool(payable(address(_liquidPool))).initialize(
             address(_dao),
             feedRegistry,
-            params.depositTokens
+            params.depositTokens,
+            params.baseCurrency
         );
         IDepositPool(payable(address(_depositPool))).initialize(
             address(_dao),
             feedRegistry,
-            params.depositTokens
+            params.depositTokens,
+            params.baseCurrency
         );
         IDao(payable(address(_dao))).initialize(
             IDao.InitializeParams(
@@ -128,6 +134,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 address(_depositPool),
                 address(params.admissionToken),
                 address(governFactory),
+                address(team),
                 address(memberTokenImplementation),
                 address(optInPoolImplementation),
                 params._name,

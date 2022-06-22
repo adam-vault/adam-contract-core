@@ -7,6 +7,8 @@ const paramsStruct = require('../../utils/paramsStruct');
 const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
 
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
@@ -26,7 +28,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       feedRegistryArticfact.deployedBytecode,
     ]);
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
-    await feedRegistry.setFeed(tokenA.address, true);
+    await feedRegistry.setAggregator(tokenA.address, ETHAddress, mockAggrgator);
 
     budgetApprovalAddresses = await createBudgetApprovals(executor);
     adam = await createAdam(feedRegistry, budgetApprovalAddresses);
@@ -126,7 +128,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           [transferERC20BAImplementation.address],
           [initData],
         ),
-      ).to.be.revertedWith('minApproval invalid');
+      ).to.be.revertedWith('Invalid approver list');
     });
   });
 
@@ -251,7 +253,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
         await budgetApproval.connect(approver).approveTransaction(id);
         await expect(budgetApproval.connect(approver).executeTransaction(id))
-          .to.be.revertedWith('access denied');
+          .to.be.revertedWith('Executor not whitelisted in budget');
       });
     });
 
@@ -263,7 +265,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           parseEther('10'),
         ]);
         await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false))
-          .to.be.revertedWith('access denied');
+          .to.be.revertedWith('Executor not whitelisted in budget');
       });
     });
 
@@ -310,7 +312,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
         await budgetApproval.connect(approver).approveTransaction(id);
         await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('invalid recipient');
+          .to.be.revertedWith('Recipient not whitelisted in budget');
       });
     });
 
@@ -326,7 +328,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
         await budgetApproval.connect(approver).approveTransaction(id);
         await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('invalid amount');
+          .to.be.revertedWith('Exceeded max budget transferable amount');
       });
     });
 
@@ -342,7 +344,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
         await budgetApproval.connect(approver).approveTransaction(id);
         await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('invalid amount');
+          .to.be.revertedWith('Exceeded max budget transferable percentage');
       });
     });
 
@@ -392,7 +394,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
               Math.round(Date.now() / 1000) + 86400,
               true,
             ),
-        ).to.be.revertedWith('budget approval not yet started');
+        ).to.be.revertedWith('Budget usage period not started');
       });
     });
 
@@ -443,7 +445,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
               Math.round(Date.now() / 1000) + 86400,
               true,
             ),
-        ).to.be.revertedWith('budget approval ended');
+        ).to.be.revertedWith('Budget usage period has ended');
       });
     });
 
@@ -499,7 +501,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
               Math.round(Date.now() / 1000) + 86400,
               true,
             ),
-        ).to.be.revertedWith('usage exceeded');
+        ).to.be.revertedWith('Exceeded budget usage limit');
       });
     });
   });

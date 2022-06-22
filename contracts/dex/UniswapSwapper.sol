@@ -21,7 +21,7 @@ contract UniswapSwapper is Initializable {
             // WETH9
             (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
         } else {
-            revert("Unexpected");
+            revert("Failed to decode Uniswap bytecode");
         }
     }
 
@@ -35,7 +35,7 @@ contract UniswapSwapper is Initializable {
             // WETH9
             (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
         } else {
-            revert("Unexpected");
+            revert("Failed to decode Uniswap result bytecode");
         }
     }
 
@@ -50,13 +50,13 @@ contract UniswapSwapper is Initializable {
             return (Constant.WETH_ADDRESS, Denominations.ETH, _amount, _amount);
         }
 
-        revert("Unexpected");
+        revert("Failed to decode Uniswap bytecode");
     }
 
     function _decodeUniswapRouter(bytes memory _data, uint256 amount) internal view returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
 
         // Uniswap multicall(uint256,bytes[])
-        require(_data.toBytes4(0) == 0x5ae401dc, "Unexpected");
+        require(_data.toBytes4(0) == 0x5ae401dc, "Failed to decode Uniswap bytecode");
 
         (, bytes[] memory multicallBytesArray) = abi.decode(_data.slice(4, _data.length - 4), (uint256, bytes[]));
 
@@ -67,7 +67,7 @@ contract UniswapSwapper is Initializable {
                 if (tokenOut == Constant.WETH_ADDRESS && i == multicallBytesArray.length - 1) {
                     tokenOut = Denominations.ETH;
                 } else {
-                    revert("Unexpected");
+                    revert("Failed to decode Uniswap bytecode");
                 }
             }
             // refundETH() 
@@ -94,7 +94,7 @@ contract UniswapSwapper is Initializable {
     function _decodeUniswapRouter(bytes memory _data, uint256 amount, bytes[] memory decodedResults) internal view returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
 
         // Uniswap multicall(uint256,bytes[])
-        require(_data.toBytes4(0) == 0x5ae401dc, "Unexpected");
+        require(_data.toBytes4(0) == 0x5ae401dc, "Failed to decode Uniswap bytecode");
         (, bytes[] memory multicallBytesArray) = abi.decode(_data.slice(4, _data.length - 4), (uint256, bytes[]));
 
         for(uint i=0; i < multicallBytesArray.length; i++) {
@@ -104,7 +104,7 @@ contract UniswapSwapper is Initializable {
                 if (tokenOut == Constant.WETH_ADDRESS && i == multicallBytesArray.length - 1) {
                     tokenOut = Denominations.ETH;
                 } else {
-                    revert("Unexpected");
+                    revert("Failed to decode Uniswap bytecode");
                 }
             }
             // refundETH() 

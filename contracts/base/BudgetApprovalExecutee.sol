@@ -22,7 +22,7 @@ contract BudgetApprovalExecutee {
     function executeByBudgetApproval(address _to, bytes memory _data, uint256 _value) external onlyBudgetApproval returns (bytes memory) {
         (bool success, bytes memory result) = _to.call{ value: _value }(_data);
         if(!success) {
-            revert(string("BudgetApprovalExecutee: execution failed - ").concat(RevertMsg.ToString(result)));
+            revert(string("Reverted by external contract").concat(RevertMsg.ToString(result)));
         }
 
         return result;
@@ -31,7 +31,7 @@ contract BudgetApprovalExecutee {
     function _beforeCreateBudgetApproval(address) virtual internal {}
 
     function createBudgetApprovals(address[] memory _budgetApprovals, bytes[] memory data) public {
-        require(_budgetApprovals.length == data.length, "input invalid");
+        require(_budgetApprovals.length == data.length, "Incorrect Calldata");
 
         for(uint i = 0; i < _budgetApprovals.length; i++) {
             _beforeCreateBudgetApproval(_budgetApprovals[i]);

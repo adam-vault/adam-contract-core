@@ -15,11 +15,11 @@ describe('UniswapSwapper.sol', () => {
   const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
   const UNIAddress = '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984';
   const UniswapRouter = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45';
+  const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
 
-  before(async () => {
+  beforeEach(async () => {
     ({ tokenA } = await createTokens());
     [executor] = await ethers.getSigners();
-
     feedRegistry = await createFeedRegistry(tokenA, executor);
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
@@ -27,13 +27,12 @@ describe('UniswapSwapper.sol', () => {
       feedRegistryArticfact.deployedBytecode,
     ]);
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
-    await feedRegistry.setFeed(DAIAddress, true);
-    await feedRegistry.setFeed(UNIAddress, true);
-    await feedRegistry.setPrice(parseEther('1'));
-
+    await feedRegistry.setAggregator(DAIAddress, ETHAddress, mockAggrgator);
+    await feedRegistry.setAggregator(UNIAddress, ETHAddress, mockAggrgator);
+    await feedRegistry.setPrice(DAIAddress, ETHAddress, parseEther('1'));
+    await feedRegistry.setPrice(UNIAddress, ETHAddress, parseEther('1'));
     budgetApprovalAddresses = await createBudgetApprovals(executor);
     adam = await createAdam(feedRegistry, budgetApprovalAddresses);
-
     const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
       budgetApproval: [13, 3000, 5000, 0], // budgetApproval
       revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval

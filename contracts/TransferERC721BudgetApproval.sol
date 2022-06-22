@@ -59,23 +59,23 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         bytes memory executeData = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", executee, to, tokenId);
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
 
-        require(allowAllAddresses || addressesMapping[to], "invalid recipient");
-        require(tokensMapping[token], "invalid token");
-        require(allowAnyAmount || 1 <= totalAmount, "invalid amount");
+        require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
+        require(tokensMapping[token], "Token not whitelisted in budget");
+        require(allowAnyAmount || 1 <= totalAmount, "Exceeded max budget transferable amount");
 
         if(!allowAnyAmount) {
             totalAmount -= 1;
         }
     }
     function _addToken(address token) internal {
-        require(!tokensMapping[token], "duplicate token");
+        require(!tokensMapping[token], "Duplicated Item in source token list.");
         tokens.push(token);
         tokensMapping[token] = true;
         emit AllowToken(token);
     }
 
     function _addToAddress(address to) internal {
-        require(!addressesMapping[to], "duplicate token");
+        require(!addressesMapping[to], "Duplicated address in target address list");
         addressesMapping[to] = true;
         emit AllowAddress(to);
     }
