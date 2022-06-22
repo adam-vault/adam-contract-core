@@ -44,7 +44,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price lim
         [approver.address], // approvers
         1, // minApproval
         'Transfer ERC20', // text
-        'Outflow', // transaction type
+        'outflow liquid', // transaction type
         startTime, // startTime
         endTime, // endTime
         false, // allow unlimited usage

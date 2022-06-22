@@ -91,7 +91,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   approvers = [],
   minApproval = 0,
   text = 'Transfer ERC20 Token',
-  transactionType = 'Outflow',
+  transactionType = 'outflow liquid',
   startTime,
   endTime,
   allowUnlimitedUsageCount,
