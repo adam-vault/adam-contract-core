@@ -62,6 +62,16 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         ));
     }
 
+    function _beforeTokenTransfer(
+      address from,
+      address to,
+      uint256 tokenId
+    ) internal override {
+      if (from != address(0) && to != address(0)) {
+			  revert("Membership: Transfer of membership is aboundand");
+		  } 
+    }
+
     function _afterTokenTransfer(
         address from,
         address to,
