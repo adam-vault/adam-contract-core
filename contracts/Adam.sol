@@ -18,10 +18,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string _name;
         string _description;
         uint256 _locktime;
-        uint256[4] budgetApproval;
-        uint256[4] revokeBudgetApproval;
-        uint256[4] general;
-        uint256[4] daoSettingApproval;
+        uint256[4] generalGovernSetting;
         string[] tokenInfo;
         uint256 tokenAmount;
         uint256 minDepositAmount;
@@ -140,10 +137,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 params._name,
                 params._description,
                 params._locktime,
-                params.budgetApproval,
-                params.revokeBudgetApproval,
-                params.general,
-                params.daoSettingApproval,
+                params.generalGovernSetting,
                 params.tokenInfo,
                 params.tokenAmount,
                 IDao.DaoSetting(

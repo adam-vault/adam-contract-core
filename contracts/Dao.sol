@@ -38,10 +38,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         string _name;
         string _description;
         uint256 _locktime;
-        uint256[4] budgetApproval;
-        uint256[4] revokeBudgetApproval;
-        uint256[4] general;
-        uint256[4] daoSettingApproval;
+        uint256[4] generalGovernSetting;
         string[] tokenInfo;
         uint256 tokenAmount;
         DaoSetting daoSetting;
@@ -123,36 +120,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         w[0] = 1;
         // CAUTION: if later on support create govern with multi token, also need to add VoteType
         _createGovern(
-            "BudgetApproval",
-            params.budgetApproval[0],
-            params.budgetApproval[1],
-            params.budgetApproval[2],
-            w,
-            params.budgetApproval[3]
-        );
-        _createGovern(
-            "RevokeBudgetApproval",
-            params.revokeBudgetApproval[0],
-            params.revokeBudgetApproval[1],
-            params.revokeBudgetApproval[2],
-            w,
-            params.revokeBudgetApproval[3]
-        );
-        _createGovern(
             "General",
-            params.general[0],
-            params.general[1],
-            params.general[2],
+            params.generalGovernSetting[0],
+            params.generalGovernSetting[1],
+            params.generalGovernSetting[2],
             w,
-            params.revokeBudgetApproval[3]
-        );
-        _createGovern(
-            "DaoSetting",
-            params.daoSettingApproval[0],
-            params.daoSettingApproval[1],
-            params.daoSettingApproval[2],
-            w,
-            params.daoSettingApproval[3]
+            params.generalGovernSetting[3]
         );
 
         _mintMember(creator);
