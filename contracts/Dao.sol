@@ -148,15 +148,15 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         emit SetFirstDepositTime(owner, block.timestamp);
     }
 
-    function mintMemberToken(uint amount) public onlyGovern("BudgetApproval") {
+    function mintMemberToken(uint amount) public onlyGovern("General") {
         _mintMemberToken(amount);
     }
 
-    function transferMemberToken(address to, uint amount) public onlyGovern("BudgetApproval") {
+    function transferMemberToken(address to, uint amount) public onlyGovern("General") {
         _transferMemberToken(to, amount);
     }
 
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("BudgetApproval") {
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {
         require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
     }
 
@@ -201,7 +201,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         return IMembership(membership).isMember(account);
     }
 
-    function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("DaoSetting") {
+    function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("General") {
         minDepositAmount = _setting.minDepositAmount;
         minTokenToAdmit = _setting.minTokenToAdmit;
     }
@@ -252,7 +252,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         revert("Unsupported Token type");
     }
 
-    function addAssets(address[] calldata erc20s) public onlyGovern("DaoSetting") {
+    function addAssets(address[] calldata erc20s) public onlyGovern("General") {
         _addAssets(erc20s);
     }
     function mintMember(address owner) public {
@@ -260,7 +260,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _mintMember(owner);
     }
 
-    function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("DaoSetting") {
+    function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("General") {
       uint256 id = ITeam(team).addTeam(title, minter, members, description);
       teamWhitelist[id] = true;
 
