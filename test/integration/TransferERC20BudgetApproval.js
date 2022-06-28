@@ -141,7 +141,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     });
   });
 
-  describe('Execute Transaction (Transfer ERC20)', function () {
+  describe('Execute Transaction (Transfer Liquid ERC20)', function () {
     context('ERC20 complete flow', () => {
       it('should success', async function () {
         await tokenA.mint(lp.address, parseEther('200'));
