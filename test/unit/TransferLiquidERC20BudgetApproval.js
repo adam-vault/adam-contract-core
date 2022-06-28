@@ -45,8 +45,8 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           executor.address, // executor
           [approver.address], // approvers
           1, // minApproval
-          'Transfer ERC20', // text
-          'outflow liquid', // transaction type
+          'Transfer Liquid ERC20', // text
+          'outflowLiquid', // transaction type
           startTime, // startTime
           endTime, // endTime
           false, // allow unlimited usage
@@ -96,8 +96,8 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           executor.address, // executor
           [approver.address], // approvers
           2, // minApproval
-          'Transfer ERC20', // text
-          'outflow liquid', // transaction type
+          'Transfer Liquid ERC20', // text
+          'outflowLiquid', // transaction type
           Math.round(Date.now() / 1000) - 86400, // startTime
           Math.round(Date.now() / 1000) + 86400, // endTime
           false, // allow unlimited usage
@@ -132,8 +132,8 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           executor.address, // executor
           [approver.address], // approvers
           1, // minApproval
-          'Transfer ERC20', // text
-          'outflow liquid', // transaction type
+          'Transfer Liquid ERC20', // text
+          'outflowLiquid', // transaction type
           startTime, // startTime
           endTime, // endTime
           false, // allow unlimited usage
@@ -194,7 +194,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       });
     });
 
-    context('multiple outflow liquid', () => {
+    context('multiple outflowLiquid', () => {
       it('should success', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ETHAddress,
@@ -327,8 +327,8 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
             executor.address, // executor
             [], // approvers
             0, // minApproval
-            'Transfer ERC20', // text
-            'outflow liquid', // transaction type
+            'Transfer Liquid ERC20', // text
+            'outflowLiquid', // transaction type
             Math.round(Date.now() / 1000) + 86400, // startTime
             0, // endTime
             false, // allow unlimited usage
@@ -377,8 +377,8 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
             executor.address, // executor
             [], // approvers
             0, // minApproval
-            'Transfer ERC20', // text
-            'outflow liquid', // transaction type
+            'Transfer Liquid ERC20', // text
+            'outflowLiquid', // transaction type
             0, // startTime
             Math.round(Date.now() / 1000) - 86400, // endTime
             false, // allow unlimited usage
@@ -428,8 +428,8 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
             executor.address, // executor
             [], // approvers
             0, // minApproval
-            'Transfer ERC20', // text
-            'outflow liquid', // transaction type
+            'Transfer Liquid ERC20', // text
+            'outflowLiquid', // transaction type
             0, // startTime
             0, // endTime
             false, // allow unlimited usage

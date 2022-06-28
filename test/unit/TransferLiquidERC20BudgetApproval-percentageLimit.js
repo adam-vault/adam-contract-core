@@ -45,8 +45,8 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
         executor.address, // executor
         [approver.address], // approvers
         1, // minApproval
-        'Transfer ERC20', // text
-        'outflow liquid', // transaction type
+        'Transfer Liquid ERC20', // text
+        'outflowLiquid', // transaction type
         startTime, // startTime
         endTime, // endTime
         false, // allow unlimited usage
