@@ -46,7 +46,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
 
-    event CreateDao(address dao, string name, string description, address creator);
+    event CreateDao(address indexed dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
 
     function initialize(
