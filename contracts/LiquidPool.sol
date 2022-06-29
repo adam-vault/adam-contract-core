@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
 
-import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./base/PriceResolver.sol";
@@ -43,7 +42,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
 
     function initialize(
         address owner,
-        address feedRegistry,
         address[] memory depositTokens,
         address baseCurrency
     )

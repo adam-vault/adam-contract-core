@@ -47,6 +47,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         DaoSetting daoSetting;
         address[] depositTokens;
         bool mintMemberToken;
+        address baseCurrency;
     }
 
     struct DaoSetting {
@@ -76,6 +77,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     uint256 public locktime;
     uint256 public minDepositAmount;
     uint256 public minTokenToAdmit;
+    address public baseCurrency;
     
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
@@ -102,6 +104,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         optInPoolImplementation = params._optInPoolImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
         minTokenToAdmit = params.daoSetting.minTokenToAdmit;
+        baseCurrency = params.baseCurrency;
 
         if (params.mintMemberToken) {
             // tokenInfo: [name, symbol]
