@@ -149,7 +149,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                     params.minTokenToAdmit
                 ),
                 params.depositTokens,
-                params.mintMemberToken
+                params.mintMemberToken,
+                params.baseCurrency
             )
         );
 
