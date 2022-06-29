@@ -32,14 +32,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _;
     }
 
-    // to be removed in future
-    modifier onlyGovernOrDao(string memory category) {
-        require(
-            (dao.byPassGovern(msg.sender)) || msg.sender == dao.govern(category) || msg.sender == address(dao),
-            string("Dao: only Govern").concat(category));
-        _;
-    }
-
     function initialize(
         address owner,
         address[] memory depositTokens,
@@ -122,7 +114,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _addAssets(erc20s);
     }
 
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovernOrDao("BudgetApproval") {
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("BudgetApproval") {
         require(dao.canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
 
