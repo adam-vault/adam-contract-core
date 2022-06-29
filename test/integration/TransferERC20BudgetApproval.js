@@ -114,33 +114,6 @@ describe('TransferERC20BudgetApproval.sol', function () {
     });
   });
 
-  describe('Create Multiple BudgetApprovals On Dao', function () {
-    it('should success', async function () {
-      const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferERC20BAParams({
-          dao: dao.address,
-          executor: executor.address,
-          approvers: [approver.address],
-          toAddresses: [receiver.address],
-          token: tokenA.address,
-          minApproval: 1,
-          totalAmount: parseEther('100'),
-          amountPercentage: 100,
-        }),
-      );
-
-      const tx = await dao.createMultiExecuteeBudgetApprovals(
-        [dao.address, lp.address], [transferERC20BAImplementation.address, transferERC20BAImplementation.address], [initData, initData],
-      );
-
-      const receipt = await tx.wait();
-      const creationEventLog = _.filter(receipt.events, { event: 'CreateBudgetApproval' });
-
-      expect(await dao.budgetApprovals(creationEventLog[0].args.budgetApproval)).to.eq(true);
-      expect(await lp.budgetApprovals(creationEventLog[1].args.budgetApproval)).to.eq(true);
-    });
-  });
-
   describe('Execute Transaction (Transfer Liquid ERC20)', function () {
     context('ERC20 complete flow', () => {
       it('should success', async function () {

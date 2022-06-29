@@ -139,13 +139,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _;
     }
 
-    // to be removed in future
-    modifier onlyGovernOrSelf(string memory category) {
-        require(
-            byPassGovern(msg.sender) || msg.sender == govern(category) || msg.sender == address(this), "Action not permitted");
-        _;
-    }
-
     function setFirstDepositTime(address owner) public {
         require(msg.sender == liquidPool || msg.sender == depositPool, "only LP or DP");
         firstDepositTime[owner] = block.timestamp;
@@ -160,20 +153,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _transferMemberToken(to, amount);
     }
 
-    function createMultiExecuteeBudgetApprovals(address[] calldata executee, address[] calldata budgetApprovals, bytes[] calldata data) public onlyGovern("General") {
-        require(executee.length == data.length, "Incorrect Calldata");
-        require(budgetApprovals.length == data.length, "Incorrect Calldata");
-
-        for(uint i = 0; i < data.length; i++) {
-            address[] memory currentBudgetApproval = new address[](1);
-            bytes[] memory currentData = new bytes[](1);
-            currentBudgetApproval[0] = budgetApprovals[i];
-            currentData[0] = data[i];
-            IBudgetApprovalExecutee(executee[i]).createBudgetApprovals(currentBudgetApproval, currentData);
-        }
-    }
-
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovernOrSelf("General") {
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {
         require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
     }
 
