@@ -116,13 +116,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         );
         ILiquidPool(payable(address(_liquidPool))).initialize(
             address(_dao),
-            feedRegistry,
             params.depositTokens,
             params.baseCurrency
         );
         IDepositPool(payable(address(_depositPool))).initialize(
             address(_dao),
-            feedRegistry,
             params.depositTokens,
             params.baseCurrency
         );

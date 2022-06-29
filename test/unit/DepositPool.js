@@ -39,7 +39,7 @@ describe('DepositPool.sol', function () {
     await dao.setMemberToken(memberToken.address);
     await dao.setAdmissionToken(memberToken.address);
     await dao.setMinTokenToAdmit(0);
-    dp = await upgrades.deployProxy(DepositPool, [dao.address, feedRegistry.address, [token.address, ETH], ETH], { kind: 'uups' });
+    dp = await upgrades.deployProxy(DepositPool, [dao.address, [token.address, ETH], ETH], { kind: 'uups' });
 
     dpAsSigner1 = dp.connect(signer1);
     dpAsSigner2 = dp.connect(signer2);
@@ -239,7 +239,7 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
 
-    dp = await upgrades.deployProxy(DepositPool, [dao.address, feedRegistry.address, [token.address], token.address], { kind: 'uups' });
+    dp = await upgrades.deployProxy(DepositPool, [dao.address, [token.address], token.address], { kind: 'uups' });
 
     dpAsSigner1 = dp.connect(signer1);
     dpAsSigner2 = dp.connect(signer2);

@@ -39,7 +39,7 @@ describe('LiquidPool.sol', function () {
     await dao.setAdmissionToken(memberToken.address);
     await dao.setMinTokenToAdmit(0);
 
-    lp = await upgrades.deployProxy(LiquidPool, [dao.address, feedRegistry.address, [ETH, token.address], ETH], { kind: 'uups' });
+    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [ETH, token.address], ETH], { kind: 'uups' });
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);
@@ -408,7 +408,7 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     await dao.setAdmissionToken(memberToken.address);
     await dao.setMinTokenToAdmit(0);
 
-    lp = await upgrades.deployProxy(LiquidPool, [dao.address, feedRegistry.address, [token.address], token.address], { kind: 'uups' });
+    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [token.address], token.address], { kind: 'uups' });
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);

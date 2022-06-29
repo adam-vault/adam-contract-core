@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -40,7 +39,7 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
         require(msg.sender == address(dao), "not dao");
         _;
     }
-    function initialize(address owner, address feedRegistry, address[] memory depositTokens, address baseCurrency) public initializer {
+    function initialize(address owner, address[] memory depositTokens, address baseCurrency) public initializer {
         __ERC1155_init("");
         __PriceResolver_init(baseCurrency);
         dao = IDao(payable(owner));
