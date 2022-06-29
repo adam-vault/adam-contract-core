@@ -132,53 +132,6 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
   });
 
-  describe('Create Multiple Excuetee BudgetApprovals On Dao', function () {
-    it('should success', async function () {
-      const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
-        [
-          // dao address
-          dao.address,
-          // executor
-          executor.address,
-          // approvers
-          [approver.address],
-          // minApproval
-          1,
-          // text
-          'Transfer Liquid ERC20',
-          // transaction type
-          'outflowLiquid',
-          0, // startTime
-          0, // endTime
-          false, // allow unlimited usage
-          10, // usage count
-        ],
-        // allow all addresses,
-        false,
-        // allowed addresses (use when above = false)
-        [receiver.address],
-        // allowed token
-        [ETHAddress, tokenA.address],
-        // allow any amount
-        false,
-        // allowed total amount
-        parseEther('100'),
-        // allowed amount percentage
-        '10',
-      ]);
-
-      const tx = await dao.createMultiExecuteeBudgetApprovals(
-        [dao.address, lp.address], [transferLiquidERC20BAImplementation.address, transferLiquidERC20BAImplementation.address], [initData, initData],
-      );
-
-      const receipt = await tx.wait();
-      const creationEventLog = _.filter(receipt.events, { event: 'CreateBudgetApproval' });
-
-      expect(await dao.budgetApprovals(creationEventLog[0].args.budgetApproval)).to.eq(true);
-      expect(await lp.budgetApprovals(creationEventLog[1].args.budgetApproval)).to.eq(true);
-    });
-  });
-
   describe('Execute Transaction (Transfer ETH)', function () {
     before(async function () {
       await lp.connect(executor).deposit({ value: parseEther('200') });
