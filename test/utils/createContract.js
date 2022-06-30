@@ -1,7 +1,9 @@
 const { ethers, upgrades } = require('hardhat');
 
-const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+const {
+  ADDRESS_ETH,
+  ADDRESS_MOCK_AGGRGATOR,
+} = require('../utils/constants');
 
 const deployConstantState = async (signer, network = 'rinkeby') => {
   if (network === 'rinkeby') {
@@ -29,15 +31,14 @@ const createBudgetApprovals = async (signer) => {
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
   await transferERC20BudgetApproval.deployed();
 
-
   return [transferLiquidERC20BudgetApproval.address, uniswapBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address];
 };
 
 const createFeedRegistry = async (token, signer) => {
   const FeedRegistry = await ethers.getContractFactory('MockFeedRegistry', { signer });
   const feedRegistry = await FeedRegistry.deploy();
-  await feedRegistry.setPrice(token.address, ETH, ethers.utils.parseEther('0.0046'));
-  await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
+  await feedRegistry.setPrice(token.address, ADDRESS_ETH, ethers.utils.parseEther('0.0046'));
+  await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
   return feedRegistry;
 };
 

@@ -7,8 +7,11 @@ const paramsStruct = require('../../utils/paramsStruct');
 const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
 const { getCreateTransferERC20BAParams } = require('../../utils/paramsStruct');
 
-const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+const {
+  ADDRESS_ETH,
+  ADDRESS_MOCK_AGGRGATOR,
+  ADDRESS_MOCK_FEED_REGISTRY,
+} = require('../utils/constants');
 
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
@@ -25,11 +28,11 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
-      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
-    await feedRegistry.setAggregator(tokenA.address, ETHAddress, mockAggrgator);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
+    await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
     budgetApprovalAddresses = await createBudgetApprovals(executor);
     adam = await createAdam(feedRegistry, budgetApprovalAddresses);
@@ -287,7 +290,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           budgetApprovalAddress,
         );
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('101'),
         ]);
@@ -329,7 +332,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         );
 
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('101'),
         ]);
