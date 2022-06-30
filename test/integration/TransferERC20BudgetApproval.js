@@ -1,6 +1,5 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
 const paramsStruct = require('../../utils/paramsStruct');
 
@@ -44,8 +43,9 @@ describe('TransferERC20BudgetApproval.sol', function () {
     transferERC20BAImplementation = await ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BAImplementationAddr);
   });
 
-  describe('Create Budget Approval', function () {
-    it('should success', async function () {
+  describe('On Liquid Pool', function () {
+    let budgetApprovalAddress;
+    beforeEach(async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
@@ -65,34 +65,57 @@ describe('TransferERC20BudgetApproval.sol', function () {
       const tx = await lp.createBudgetApprovals(
         [transferERC20BAImplementation.address], [initData],
       );
-      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
+      budgetApprovalAddress = (await findEventArgs(tx, 'CreateBudgetApproval')).budgetApproval;
       budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
-
-      expect(await lp.budgetApprovals(budgetApprovalAddress)).to.eq(true);
-
-      expect(await budgetApproval.dao()).to.eq(dao.address);
-      expect(await budgetApproval.executor()).to.eq(executor.address);
-      expect(await budgetApproval.approversMapping(approver.address)).to.eq(true);
-      expect(await budgetApproval.minApproval()).to.eq(1);
-
-      expect(await budgetApproval.allowAllAddresses()).to.eq(false);
-      expect(await budgetApproval.addressesMapping(receiver.address)).to.eq(true);
-
-      expect(await budgetApproval.token()).to.eq(tokenA.address);
-
-      expect(await budgetApproval.allowAnyAmount()).to.eq(false);
-      expect(await budgetApproval.totalAmount()).to.eq(parseEther('100'));
-      expect(await budgetApproval.amountPercentage()).to.eq(10);
-
-      expect(await budgetApproval.startTime()).to.eq(startTime);
-      expect(await budgetApproval.endTime()).to.eq(endTime);
-
-      expect(await budgetApproval.allowUnlimitedUsageCount()).to.eq(false);
-      expect(await budgetApproval.usageCount()).to.eq(10);
     });
 
-    it('should fail if minApproval larger than approvers length', async function () {
+    it('create ERC 20 BA should success', async function () {
+      expect(await lp.budgetApprovals(budgetApprovalAddress)).to.eq(true);
+      expect(await budgetApproval.dao()).to.eq(dao.address);
+    });
+
+    it('transfer ERC20 Token should success', async function () {
+      await tokenA.mint(lp.address, parseEther('200'));
+      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+        tokenA.address,
+        receiver.address,
+        parseEther('10'),
+      ]);
+
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
+      const orgReceiverBalance = await tokenA.balanceOf(receiver.address);
+
+      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(executor).executeTransaction(id);
+
+      expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('190'));
+      expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('10').add(orgReceiverBalance));
+    });
+
+    it('transfer multiple ERC20 should success', async function () {
+      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+        tokenA.address,
+        receiver.address,
+        parseEther('10'),
+      ]);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData], Date.now() + 86400, false);
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
+
+      const originalBalance = await tokenA.balanceOf(receiver.address);
+      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(executor).executeTransaction(id);
+
+      expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('170'));
+      expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('20').add(originalBalance));
+    });
+  });
+
+  describe('On Treasury', function () {
+    let budgetApprovalAddress;
+    beforeEach(async function () {
+      const startTime = Math.round(Date.now() / 1000) - 86400;
+      const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
         getCreateTransferERC20BAParams({
           dao: dao.address,
@@ -100,298 +123,60 @@ describe('TransferERC20BudgetApproval.sol', function () {
           approvers: [approver.address],
           toAddresses: [receiver.address],
           token: tokenA.address,
-          minApproval: 2,
-          amountPercentage: 100,
+          startTime,
+          endTime,
+          minApproval: 1,
+          totalAmount: parseEther('100'),
         }),
       );
 
-      await expect(
-        dao.createBudgetApprovals(
-          [transferERC20BAImplementation.address],
-          [initData],
-        ),
-      ).to.be.revertedWith('Invalid approver list');
-    });
-  });
+      const tx = await dao.createBudgetApprovals(
+        [transferERC20BAImplementation.address], [initData],
+      );
+      budgetApprovalAddress = (await findEventArgs(tx, 'CreateBudgetApproval')).budgetApproval;
 
-  describe('Execute Transaction (Transfer Liquid ERC20)', function () {
-    context('ERC20 complete flow', () => {
-      it('should success', async function () {
-        await tokenA.mint(lp.address, parseEther('200'));
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          parseEther('10'),
-        ]);
-
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await budgetApproval.connect(executor).executeTransaction(id);
-
-        expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('190'));
-        expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('10'));
-      });
+      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
     });
 
-    context('multiple outflow', () => {
-      it('should success', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          parseEther('10'),
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        const originalBalance = await tokenA.balanceOf(receiver.address);
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await budgetApproval.connect(executor).executeTransaction(id);
-
-        expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('170'));
-        expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('20').add(originalBalance));
-      });
+    it('create ERC 20 BA should success', async function () {
+      expect(await dao.budgetApprovals(budgetApprovalAddress)).to.eq(true);
+      expect(await budgetApproval.dao()).to.eq(dao.address);
     });
 
-    context('not executed by executor', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          parseEther('10'),
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
+    it('transfer ERC20 Token should success', async function () {
+      await tokenA.mint(dao.address, parseEther('200'));
+      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+        tokenA.address,
+        receiver.address,
+        parseEther('10'),
+      ]);
 
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(approver).executeTransaction(id))
-          .to.be.revertedWith('Executor not whitelisted in budget');
-      });
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
+      const orgReceiverBalance = await tokenA.balanceOf(receiver.address);
+
+      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(executor).executeTransaction(id);
+
+      expect(await tokenA.balanceOf(dao.address)).to.eq(parseEther('190'));
+      expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('10').add(orgReceiverBalance));
     });
 
-    context('not created by executor', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          parseEther('10'),
-        ]);
-        await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false))
-          .to.be.revertedWith('Executor not whitelisted in budget');
-      });
-    });
+    it('transfer multiple ERC20 should success', async function () {
+      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+        tokenA.address,
+        receiver.address,
+        parseEther('10'),
+      ]);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData], Date.now() + 86400, false);
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-    context('not approved by approver', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          parseEther('10'),
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
+      const originalBalance = await tokenA.balanceOf(receiver.address);
+      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(executor).executeTransaction(id);
 
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('status invalid');
-      });
-    });
-
-    context('revoked by executor', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          parseEther('10'),
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(executor).revokeTransaction(id);
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('status invalid');
-      });
-    });
-
-    context('not allowed address', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          executor.address,
-          parseEther('10'),
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('Recipient not whitelisted in budget');
-      });
-    });
-
-    context('exceed amount', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          parseEther('101'),
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('Exceeded max budget transferable amount');
-      });
-    });
-
-    context('exceed amount percentage', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          parseEther('21'),
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('Exceeded max budget transferable percentage');
-      });
-    });
-
-    context('execute before startTime', () => {
-      it('should revert', async function () {
-        const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferERC20BAParams({
-            dao: dao.address,
-            executor: executor.address,
-            approvers: [],
-            toAddresses: [receiver.address],
-            token: tokenA.address,
-            minApproval: 0,
-            totalAmount: parseEther('100'),
-            startTime: Math.round(Date.now() / 1000) + 86400,
-          }),
-        );
-
-        const tx = await lp.createBudgetApprovals(
-          [transferERC20BAImplementation.address],
-          [initData],
-        );
-        const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-        const testBudgetApproval = await ethers.getContractAt(
-          'TransferERC20BudgetApproval',
-          budgetApprovalAddress,
-        );
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
-          receiver.address,
-          parseEther('101'),
-        ]);
-        await expect(
-          testBudgetApproval
-            .connect(executor)
-            .createTransaction(
-              [transactionData],
-              Math.round(Date.now() / 1000) + 86400,
-              true,
-            ),
-        ).to.be.revertedWith('Budget usage period not started');
-      });
-    });
-
-    context('execute after endTime', () => {
-      it('should revert', async function () {
-        const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferERC20BAParams({
-            dao: dao.address,
-            executor: executor.address,
-            approvers: [],
-            toAddresses: [receiver.address],
-            token: tokenA.address,
-            minApproval: 0,
-            endTime: Math.round(Date.now() / 1000) - 86400,
-          }),
-        );
-
-        const tx = await lp.createBudgetApprovals(
-          [transferERC20BAImplementation.address],
-          [initData],
-        );
-        const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-        const testBudgetApproval = await ethers.getContractAt(
-          'TransferERC20BudgetApproval',
-          budgetApprovalAddress,
-        );
-
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
-          receiver.address,
-          parseEther('101'),
-        ]);
-        await expect(
-          testBudgetApproval
-            .connect(executor)
-            .createTransaction(
-              [transactionData],
-              Math.round(Date.now() / 1000) + 86400,
-              true,
-            ),
-        ).to.be.revertedWith('Budget usage period has ended');
-      });
-    });
-
-    context('execute if not enough usage count', () => {
-      it('should revert', async function () {
-        const initData = transferERC20BAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferERC20BAParams({
-            dao: dao.address,
-            executor: executor.address,
-            approvers: [],
-            toAddresses: [receiver.address],
-            token: tokenA.address,
-            minApproval: 0,
-            usageCount: 1,
-            allowUnlimitedUsageCount: false,
-            totalAmount: parseEther('100'),
-          }),
-        );
-
-        const tx = await lp.createBudgetApprovals(
-          [transferERC20BAImplementation.address],
-          [initData],
-        );
-        const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-        const testBudgetApproval = await ethers.getContractAt(
-          'TransferERC20BudgetApproval',
-          budgetApprovalAddress,
-        );
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          parseEther('1'),
-        ]);
-        await testBudgetApproval.connect(executor).createTransaction(
-          [transactionData],
-          Math.round(Date.now() / 1000) + 86400,
-          true,
-        );
-
-        await expect(
-          testBudgetApproval
-            .connect(executor)
-            .createTransaction(
-              [transactionData],
-              Math.round(Date.now() / 1000) + 86400,
-              true,
-            ),
-        ).to.be.revertedWith('Exceeded budget usage limit');
-      });
+      expect(await tokenA.balanceOf(dao.address)).to.eq(parseEther('170'));
+      expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('20').add(originalBalance));
     });
   });
 });
