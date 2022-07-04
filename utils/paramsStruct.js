@@ -49,7 +49,7 @@ function getCreateTransferERC20BAParams ({
   approvers,
   minApproval,
   text = 'Transfer Illiquid Token',
-  transactionType = 'Outflow',
+  transactionType = 'outflow',
   startTime,
   endTime,
   allowUnlimitedUsageCount,
