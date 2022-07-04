@@ -32,7 +32,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           [approver.address], // approvers
           1, // minApproval
           'Transfer ERC721', // text
-          'outflow', // transaction type
+          'outflow721', // transaction type
           startTime, // startTime
           endTime, // endTime
           false, // allow unlimited usage
@@ -81,7 +81,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           [approver.address], // approvers
           2, // minApproval
           'Transfer ERC721', // text
-          'outflow', // transaction type
+          'outflow721', // transaction type
           Math.round(Date.now() / 1000) - 86400, // startTime
           Math.round(Date.now() / 1000) + 86400, // endTime
           false, // allow unlimited usage
@@ -116,7 +116,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           [approver.address], // approvers
           1, // minApproval
           'Transfer ERC721', // text
-          'outflow', // transaction type
+          'outflow721', // transaction type
           startTime, // startTime
           endTime, // endTime
           false, // allow unlimited usage
@@ -154,7 +154,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
       expect(await tokenC721.ownerOf(37752)).to.eq(receiver.address);
     });
 
-    it('should run multiple outflow', async function () {
+    it('should run multiple outflow721', async function () {
       await tokenC721.mint(executee.address, 37752);
       await tokenC721.mint(executee.address, 37753);
 
@@ -288,7 +288,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           [], // approvers
           0, // minApproval
           'Transfer ERC721', // text
-          'outflow', // transaction type
+          'outflow721', // transaction type
           Math.round(Date.now() / 1000) + 86400, // startTime
           0, // endTime
           false, // allow unlimited usage
@@ -336,7 +336,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           [], // approvers
           0, // minApproval
           'Transfer ERC721', // text
-          'outflow', // transaction type
+          'outflow721', // transaction type
           0, // startTime
           Math.round(Date.now() / 1000) - 86400, // endTime
           false, // allow unlimited usage
@@ -385,7 +385,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           [], // approvers
           0, // minApproval
           'Transfer ERC721', // text
-          'outflow', // transaction type
+          'outflow721', // transaction type
           0, // startTime
           0, // endTime
           false, // allow unlimited usage
