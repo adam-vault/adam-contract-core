@@ -39,7 +39,12 @@ const deployBudgetApprovals = async () => {
   await transferERC20BudgetApproval.deployed();
   console.log(`Deployed TransferERC20BudgetApproval ${transferERC20BudgetApproval.address}`);
 
-  return [transferLiquidERC20BudgetApproval.address, uniswapBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address];
+  const GenericBudgetApproval = await hre.ethers.getContractFactory('GenericBudgetApproval');
+  const genericBudgetApproval = await GenericBudgetApproval.deploy();
+  await genericBudgetApproval.deployed();
+  console.log(`Deployed GenericBudgetApproval ${genericBudgetApproval.address}`);
+
+  return [transferLiquidERC20BudgetApproval.address, uniswapBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address, genericBudgetApproval.address];
 };
 
 const deployGovernFactory = async () => {
@@ -129,6 +134,7 @@ async function main () {
     uniswapBudgetApproval: budgetApprovalsAddress[1],
     transferErc721BudgetApproval: budgetApprovalsAddress[2],
     transferERC20BudgetApproval: budgetApprovalsAddress[3],
+    genericBudgetApproval: budgetApprovalsAddress[4],
     team,
   };
   console.log('Contract Addresses', contractAddresses);

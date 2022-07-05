@@ -14,6 +14,7 @@ const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
 const transferLiquidERC20BudgetApprovalAddress = deploymentResult.addresses.transferLiquidERC20BudgetApproval;
 const uniswapBudetApprovalAddress = deploymentResult.addresses.uniswapBudgetApproval;
 const transferERC20BudgetApprovalAddress = deploymentResult.addresses.transferERC20BudgetApproval;
+const genericBudgetApprovalAddress = deploymentResult.addresses.genericBudgetApproval;
 const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 const DAIAddress = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
 
@@ -66,6 +67,27 @@ async function main () {
     }),
   );
 
+  const genericBudgetApproval = await hre.ethers.getContractAt('GenericBudgetApproval', genericBudgetApprovalAddress);
+  const dataGeneric = genericBudgetApproval.interface.encodeFunctionData('initialize', [
+    [
+      // dao address
+      daoAddress,
+      // executor
+      '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
+      // approvers
+      [],
+      0,
+      // text
+      'Generic Test',
+      // transaction type
+      'generic',
+      Math.round(Date.now() / 1000) - 86400, // startTime
+      Math.round(Date.now() / 1000) + 86400, // endTime
+      true, // allow unlimited usage count
+      0, // usage count
+    ],
+  ]);
+
   const tx1 = await dao.createBudgetApprovals(
     [transferERC20BudgetApprovalAddress],
     [dataErc20]);
@@ -77,8 +99,8 @@ async function main () {
   });
 
   const tx2 = await lp.createBudgetApprovals(
-    [transferLiquidERC20BudgetApprovalAddress, uniswapBudetApprovalAddress],
-    [dataLiquidERC20, dataUniswap]);
+    [transferLiquidERC20BudgetApprovalAddress, uniswapBudetApprovalAddress, genericBudgetApprovalAddress],
+    [dataLiquidERC20, dataUniswap, dataGeneric]);
   const receipt2 = await tx2.wait();
   const creationEventLogs2 = _.filter(receipt2.events, { event: 'CreateBudgetApproval' });
   creationEventLogs2.forEach(({ args }) => {
