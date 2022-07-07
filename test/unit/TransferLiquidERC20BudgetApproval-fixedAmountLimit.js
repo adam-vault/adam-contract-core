@@ -10,8 +10,8 @@ const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', function () {
-  let transferERC20BAImplementation, budgetApproval;
+describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price limit', function () {
+  let transferLiquidERC20BAImplementation, budgetApproval;
   let executor, executee, approver, receiver, dao;
   let tokenA, feedRegistry;
 
@@ -20,11 +20,11 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', f
 
     ({ tokenA } = await createTokens());
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
-    const TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
+    const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory('TransferLiquidERC20BudgetApproval', { signer: executor });
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
 
     dao = await MockLPDao.deploy();
-    transferERC20BAImplementation = await TransferERC20BudgetApproval.deploy();
+    transferLiquidERC20BAImplementation = await TransferLiquidERC20BudgetApproval.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
@@ -37,14 +37,14 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', f
 
     const startTime = Math.round(Date.now() / 1000) - 86400;
     const endTime = Math.round(Date.now() / 1000) + 86400;
-    const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', [
+    const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
       [
         dao.address, // dao addressc
         executor.address, // executor
         [approver.address], // approvers
         1, // minApproval
-        'Transfer ERC20', // text
-        'Outflow', // transaction type
+        'Transfer Liquid ERC20', // text
+        'outflowLiquid', // transaction type
         startTime, // startTime
         endTime, // endTime
         false, // allow unlimited usage
@@ -59,11 +59,11 @@ describe('TransferERC20BudgetApproval.sol - test Chainlink Fixed Price limit', f
     ]);
 
     const tx = await executee.createBudgetApprovals(
-      [transferERC20BAImplementation.address], [initData],
+      [transferLiquidERC20BAImplementation.address], [initData],
     );
     const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
-    budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
+    budgetApproval = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', budgetApprovalAddress);
   });
 
   it('can send 1 Eth', async function () {

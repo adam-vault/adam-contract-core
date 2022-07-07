@@ -46,7 +46,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
 
-    event CreateDao(address dao, string name, string description, address creator);
+    event CreateDao(address indexed dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
 
     function initialize(
@@ -116,13 +116,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         );
         ILiquidPool(payable(address(_liquidPool))).initialize(
             address(_dao),
-            feedRegistry,
             params.depositTokens,
             params.baseCurrency
         );
         IDepositPool(payable(address(_depositPool))).initialize(
             address(_dao),
-            feedRegistry,
             params.depositTokens,
             params.baseCurrency
         );
@@ -151,7 +149,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                     params.minTokenToAdmit
                 ),
                 params.depositTokens,
-                params.mintMemberToken
+                params.mintMemberToken,
+                params.baseCurrency
             )
         );
 

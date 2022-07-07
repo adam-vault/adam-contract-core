@@ -16,12 +16,12 @@ jobs:
       RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
 
-  sync-subgraph:
-    name: Sync Subgraph
-    needs: deploy-contracts
-    uses: ./.github/workflows/reusable-sync-subgraph.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-      DEPLOY_ENV: predev
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
+  # sync-subgraph:
+  #   name: Sync Subgraph
+  #   needs: deploy-contracts
+  #   uses: ./.github/workflows/reusable-sync-subgraph.yml
+  #   with:
+  #     GIT_REF: ${{ github.ref_name }}
+  #     DEPLOY_ENV: predev
+  #   secrets:
+  #     GH_PAT: ${{ secrets.GH_PAT }}

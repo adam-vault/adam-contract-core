@@ -2,8 +2,11 @@
 
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "../lib/RevertMsg.sol";
+import "../lib/Concat.sol";
 
 contract MockBudgetApprovalExecutee {
+    using Concat for string;
     mapping(address => bool) public budgetApprovals;
     address public memberToken; 
     //todo workaround for AS-834 , need to remove it when split memeber token outflow BA
@@ -11,7 +14,9 @@ contract MockBudgetApprovalExecutee {
 
     function executeByBudgetApproval(address _to, bytes memory _data, uint256 _value) external returns (bytes memory) {
         (bool success, bytes memory result) = _to.call{ value: _value }(_data);
-        require(success, "execution failed");
+        if(!success) {
+            revert(string("BudgetApprovalExecutee: execution failed - ").concat(RevertMsg.ToString(result)));
+        }
 
         return result;
     }
