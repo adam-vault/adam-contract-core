@@ -35,6 +35,7 @@ async function main () {
       toAddresses: ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
       tokens: [ETHAddress, DAIAddress],
       totalAmount: hre.ethers.utils.parseEther('1000'),
+      baseCurrency: DAIAddress,
     }),
   );
 
@@ -50,6 +51,7 @@ async function main () {
       allowAnyAmount: true,
       totalAmount: hre.ethers.utils.parseEther('0'),
       amountPercentage: '100',
+      baseCurrency: DAIAddress,
     }),
   );
 

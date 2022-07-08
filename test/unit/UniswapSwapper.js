@@ -74,6 +74,7 @@ describe('UniswapSwapper.sol', () => {
       parseEther('0'),
       // allowed amount percentage
       '100',
+      ADDRESS_ETH, // base currency
     ]);
     const tx = await dao.createBudgetApprovals(
       [uniswapBAImplementationAddr], [initData],

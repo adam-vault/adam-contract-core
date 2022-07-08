@@ -61,6 +61,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
       true, // allow any amount
       0, // allowed total amount
       '50', // allowed amount percentage
+      ADDRESS_ETH, // base currency
     ]);
 
     const tx = await executee.createBudgetApprovals(
