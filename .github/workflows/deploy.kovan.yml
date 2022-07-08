@@ -1,0 +1,48 @@
+name: Deploy Kovan
+on:
+  push:
+    tags:    
+      - 'v[0-9].[0-9]+.[0-9]+\-kovan'
+
+jobs:
+  deploy-contracts:
+    name: Deploy
+    uses: ./.github/workflows/reusable-deploy-contracts.yml
+    with:
+      GIT_REF: ${{ github.ref_name }}
+      CONTRACT_DEPLOY_NETWORK: kovan
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      RINKEBY_URL: ''
+      KOVAN_URL: ${{ secrets.KOVAN_URL }}
+      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+
+  # sync-subgraph:
+  #   name: Sync Subgraph
+  #   needs: deploy-contracts
+  #   uses: ./.github/workflows/reusable-sync-subgraph.yml
+  #   with:
+  #     GIT_REF: ${{ github.ref_name }}
+  #     DEPLOY_ENV: dev
+  #   secrets:
+  #     GH_PAT: ${{ secrets.GH_PAT }}
+
+  # sync-frontend:
+  #   name: Sync Frontend
+  #   needs: deploy-contracts
+  #   uses: ./.github/workflows/reusable-sync-frontend.yml
+  #   with:
+  #     GIT_REF: ${{ github.ref_name }}
+  #     DEPLOY_ENV: dev
+  #   secrets:
+  #     GH_PAT: ${{ secrets.GH_PAT }}
+
+  # sync-discord-integration:
+  #   name: Sync Discord Integration
+  #   needs: deploy-contracts
+  #   uses: ./.github/workflows/reusable-sync-discord-integration.yml
+  #   with:
+  #     GIT_REF: ${{ github.ref_name }}
+  #     DEPLOY_ENV: dev
+  #   secrets:
+  #     GH_PAT: ${{ secrets.GH_PAT }}
