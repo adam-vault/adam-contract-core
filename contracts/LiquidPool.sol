@@ -110,11 +110,11 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _afterDeposit(msg.sender, assetBaseCurrencyPrice(asset, amount));
     }
 
-    function addAssets(address[] calldata erc20s) public onlyGovern("DaoSetting") {
+    function addAssets(address[] calldata erc20s) public onlyGovern("General") {
         _addAssets(erc20s);
     }
 
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("BudgetApproval") {
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {
         require(dao.canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
 
