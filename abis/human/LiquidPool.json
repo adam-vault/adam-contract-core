@@ -28,7 +28,7 @@
   "function ethAssetPrice(address asset, uint256 ethAmount) view returns (uint256)",
   "function executeByBudgetApproval(address _to, bytes _data, uint256 _value) returns (bytes)",
   "function increaseAllowance(address spender, uint256 addedValue) returns (bool)",
-  "function initialize(address owner, address feedRegistry, address[] depositTokens, address baseCurrency)",
+  "function initialize(address owner, address[] depositTokens, address baseCurrency)",
   "function isAssetSupported(address) view returns (bool)",
   "function name() view returns (string)",
   "function proxiableUUID() view returns (bytes32)",
