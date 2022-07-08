@@ -66,6 +66,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         false, // allow any amount
         parseEther('100'), // allowed total amount
         '10', // allowed amount percentage
+        ETHAddress, // base currency
       ]);
 
       const tx = await lp.createBudgetApprovals(
@@ -121,6 +122,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         false, // allow any amount
         parseEther('100'), // allowed total amount
         100, // allowed amount percentage
+        ETHAddress, // base currency
       ]);
 
       await expect(
@@ -322,6 +324,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           false, // allow any amount
           parseEther('100'), // allowed total amount
           100, // allowed amount percentage
+          ETHAddress, // base currency
         ]);
 
         const tx = await lp.createBudgetApprovals(
@@ -372,6 +375,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           false, // allow any amount
           parseEther('100'), // allowed total amount
           100, // allowed amount percentage
+          ETHAddress, // base currency
         ]);
 
         const tx = await lp.createBudgetApprovals(
@@ -423,6 +427,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           false, // allow any amount
           parseEther('100'), // allowed total amount
           100, // allowed amount percentage
+          ETHAddress, // base currency
         ]);
 
         const tx = await lp.createBudgetApprovals(
