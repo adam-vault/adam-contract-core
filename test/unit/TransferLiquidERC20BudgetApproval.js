@@ -3,8 +3,11 @@ const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
 
-const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+const {
+  ADDRESS_ETH,
+  ADDRESS_MOCK_AGGRGATOR,
+  ADDRESS_MOCK_FEED_REGISTRY,
+} = require('../utils/constants');
 
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
@@ -27,12 +30,12 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     executee = await MockBudgetApprovalExecutee.deploy();
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
-      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
-    const feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
-    await feedRegistry.setAggregator(tokenA.address, ETHAddress, mockAggrgator);
-    await feedRegistry.setPrice(tokenA.address, ETHAddress, parseEther('1'));
+    const feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
+    await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
+    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, parseEther('1'));
   });
 
   describe('Create Budget Approval', function () {
@@ -54,7 +57,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
-        [ETHAddress, tokenA.address], // allowed token
+        [ADDRESS_ETH, tokenA.address], // allowed token
         false, // allow any amount
         parseEther('100'), // allowed total amount
         '10', // allowed amount percentage
@@ -73,9 +76,9 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       expect(await budgetApproval.allowAllAddresses()).to.eq(false);
       expect(await budgetApproval.addressesMapping(receiver.address)).to.eq(true);
 
-      expect(await budgetApproval.tokens(0)).to.eq(ETHAddress);
+      expect(await budgetApproval.tokens(0)).to.eq(ADDRESS_ETH);
       expect(await budgetApproval.tokens(1)).to.eq(tokenA.address);
-      expect(await budgetApproval.tokensMapping(ETHAddress)).to.eq(true);
+      expect(await budgetApproval.tokensMapping(ADDRESS_ETH)).to.eq(true);
       expect(await budgetApproval.tokensMapping(tokenA.address)).to.eq(true);
 
       expect(await budgetApproval.allowAnyAmount()).to.eq(false);
@@ -105,7 +108,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         ],
         false, // allow all addresses,
         [receiver.address], // allowed addresses (use when above = false)
-        [ETHAddress, tokenA.address], // allowed token (use when above = false)
+        [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
         false, // allow any amount
         parseEther('100'), // allowed total amount
         100, // allowed amount percentage
@@ -141,7 +144,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
-        [ETHAddress, tokenA.address], // allowed token
+        [ADDRESS_ETH, tokenA.address], // allowed token
         false, // allow any amount
         parseEther('100'), // allowed total amount
         '10', // allowed amount percentage
@@ -158,7 +161,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     context('ETH complete flow', () => {
       it('should success', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('10'),
         ]);
@@ -197,7 +200,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     context('multiple outflowLiquid', () => {
       it('should success', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('10'),
         ]);
@@ -215,7 +218,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     context('not executed by executor', () => {
       it('should revert', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('10'),
         ]);
@@ -231,7 +234,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     context('not created by executor', () => {
       it('should revert', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('10'),
         ]);
@@ -243,7 +246,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     context('not approved by approver', () => {
       it('should revert', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('10'),
         ]);
@@ -258,7 +261,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     context('revoked by executor', () => {
       it('should revert', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('10'),
         ]);
@@ -274,7 +277,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     context('not allowed address', () => {
       it('should revert', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           executor.address,
           parseEther('10'),
         ]);
@@ -290,7 +293,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     context('exceed amount', () => {
       it('should revert', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('101'),
         ]);
@@ -306,7 +309,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     context('exceed amount percentage', () => {
       it('should revert', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('21'),
         ]);
@@ -336,7 +339,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
-          [ETHAddress, tokenA.address], // allowed token (use when above = false)
+          [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           parseEther('100'), // allowed total amount
           100, // allowed amount percentage
@@ -353,7 +356,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           budgetApprovalAddress,
         );
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('101'),
         ]);
@@ -386,7 +389,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
-          [ETHAddress, tokenA.address], // allowed token (use when above = false)
+          [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           parseEther('100'), // allowed total amount
           100, // allowed amount percentage
@@ -404,7 +407,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         );
 
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('101'),
         ]);
@@ -437,7 +440,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
-          [ETHAddress, tokenA.address], // allowed token (use when above = false)
+          [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           parseEther('100'), // allowed total amount
           100, // allowed amount percentage
@@ -454,7 +457,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           budgetApprovalAddress,
         );
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          ETHAddress,
+          ADDRESS_ETH,
           receiver.address,
           parseEther('1'),
         ]);

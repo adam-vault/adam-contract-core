@@ -5,8 +5,11 @@ const findEventArgs = require('../../utils/findEventArgs');
 
 const { createTokens } = require('../utils/createContract');
 
-const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+const {
+  ADDRESS_ETH,
+  ADDRESS_MOCK_AGGRGATOR,
+  ADDRESS_MOCK_FEED_REGISTRY,
+} = require('../utils/constants');
 
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
@@ -30,12 +33,12 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
-      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
-    await feedRegistry.setAggregator(tokenA.address, ETHAddress, mockAggrgator);
-    await feedRegistry.setPrice(tokenA.address, ETHAddress, parseEther('1'));
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
+    await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
+    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, parseEther('1'));
 
     const startTime = Math.round(Date.now() / 1000) - 86400;
     const endTime = Math.round(Date.now() / 1000) + 86400;
@@ -54,7 +57,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
       ],
       false, // allow all addresses
       [receiver.address], // allowed addresses (use when above = false)
-      [ETHAddress, tokenA.address], // allowed token
+      [ADDRESS_ETH, tokenA.address], // allowed token
       true, // allow any amount
       0, // allowed total amount
       '50', // allowed amount percentage
@@ -69,12 +72,12 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
   });
 
   it('can send 1 Eth', async function () {
-    await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.5'));
+    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.5'));
     await tokenA.mint(executee.address, ethers.utils.parseEther('1'));
     await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('1.5') });
 
     const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-      ETHAddress,
+      ADDRESS_ETH,
       receiver.address,
       parseEther('1'),
     ]);
@@ -89,12 +92,12 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
     expect(await receiver.getBalance()).to.eq(originalBalance.add(ethers.utils.parseEther('1')));
   });
   it('cannot send 1.1 Eth', async function () {
-    await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.5'));
+    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.5'));
     await tokenA.mint(executee.address, ethers.utils.parseEther('1'));
     await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('1.5') });
 
     const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-      ETHAddress,
+      ADDRESS_ETH,
       receiver.address,
       parseEther('1.1'),
     ]);
@@ -112,7 +115,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
   });
 
   it('can send 10 Token', async function () {
-    await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.1'));
+    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.1'));
     await tokenA.mint(executee.address, ethers.utils.parseEther('10'));
     await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('1') });
 
@@ -131,7 +134,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
     expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.utils.parseEther('10'));
   });
   it('cannot send 11 Token', async function () {
-    await feedRegistry.setPrice(tokenA.address, ETHAddress, ethers.utils.parseEther('0.1'));
+    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.1'));
     await tokenA.mint(executee.address, ethers.utils.parseEther('11'));
     await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('0.9') });
 
