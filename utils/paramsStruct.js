@@ -21,6 +21,7 @@ function getCreateDaoParams ({
   depositTokens = [ETH],
   mintMemberToken = false,
   baseCurrency = ETH,
+  logoCID = '',
 }) {
   return Object.entries({
     name,
@@ -38,6 +39,7 @@ function getCreateDaoParams ({
     depositTokens,
     mintMemberToken,
     baseCurrency,
+    logoCID,
   }).map(([key, value]) => {
     return value;
   });

@@ -30,6 +30,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address[] depositTokens;
         bool mintMemberToken;
         address baseCurrency;
+        string logoCID;
     }
 
     address public feedRegistry;
@@ -150,7 +151,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 ),
                 params.depositTokens,
                 params.mintMemberToken,
-                params.baseCurrency
+                params.baseCurrency,
+                params.logoCID
             )
         );
 
