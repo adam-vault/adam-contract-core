@@ -47,6 +47,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         DaoSetting daoSetting;
         address[] depositTokens;
         bool mintMemberToken;
+        address baseCurrency;
     }
 
     struct DaoSetting {
@@ -76,6 +77,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     uint256 public locktime;
     uint256 public minDepositAmount;
     uint256 public minTokenToAdmit;
+    address public baseCurrency;
     
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
@@ -102,6 +104,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         optInPoolImplementation = params._optInPoolImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
         minTokenToAdmit = params.daoSetting.minTokenToAdmit;
+        baseCurrency = params.baseCurrency;
 
         if (params.mintMemberToken) {
             // tokenInfo: [name, symbol]
@@ -166,13 +169,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _;
     }
 
-    // to be removed in future
-    modifier onlyGovernOrSelf(string memory category) {
-        require(
-            byPassGovern(msg.sender) || msg.sender == govern(category) || msg.sender == address(this), "Action not permitted");
-        _;
-    }
-
     function setFirstDepositTime(address owner) public {
         require(msg.sender == liquidPool || msg.sender == depositPool, "only LP or DP");
         firstDepositTime[owner] = block.timestamp;
@@ -187,20 +183,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _transferMemberToken(to, amount);
     }
 
-    function createMultiExecuteeBudgetApprovals(address[] calldata executee, address[] calldata budgetApprovals, bytes[] calldata data) public onlyGovern("BudgetApproval") {
-        require(executee.length == data.length, "Incorrect Calldata");
-        require(budgetApprovals.length == data.length, "Incorrect Calldata");
-
-        for(uint i = 0; i < data.length; i++) {
-            address[] memory currentBudgetApproval = new address[](1);
-            bytes[] memory currentData = new bytes[](1);
-            currentBudgetApproval[0] = budgetApprovals[i];
-            currentData[0] = data[i];
-            IBudgetApprovalExecutee(executee[i]).createBudgetApprovals(currentBudgetApproval, currentData);
-        }
-    }
-
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovernOrSelf("BudgetApproval") {
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("BudgetApproval") {
         require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
     }
 

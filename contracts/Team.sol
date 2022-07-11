@@ -14,7 +14,7 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 	using ToString for address;
 	using Base64 for bytes;
 
-	event EditDescription(string description, uint256 tokenId);
+	event EditInfo(string name, string description, uint256 tokenId);
 
 	mapping(uint256 => address) public creatorOf;
 	mapping(uint256 => address) public minterOf;
@@ -86,10 +86,11 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 		_burnTokens(members, tokenId);
 	}
 
-	function setDescription(string memory description, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender){
+	function setInfo(string memory name, string memory description, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender){
+    nameOf[tokenId] = name;
 		descriptionOf[tokenId] = description;
 
-		emit EditDescription(description, tokenId);
+		emit EditInfo(name, description, tokenId);
 	}
  
  	function uri(uint256 _id) public view override returns (string memory) {

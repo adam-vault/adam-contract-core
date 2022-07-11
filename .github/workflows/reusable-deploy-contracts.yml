@@ -54,6 +54,7 @@ jobs:
             artifacts/contracts/GovernFactory.sol/GovernFactory.json\
             artifacts/contracts/Membership.sol/Membership.json\
             artifacts/contracts/TransferERC20BudgetApproval.sol/TransferERC20BudgetApproval.json\
+            artifacts/contracts/TransferLiquidERC20BudgetApproval.sol/TransferLiquidERC20BudgetApproval.json\
             artifacts/contracts/UniswapBudgetApproval.sol/UniswapBudgetApproval.json\
             artifacts/contracts/LiquidPool.sol/LiquidPool.json\
             artifacts/contracts/Team.sol/Team.json\

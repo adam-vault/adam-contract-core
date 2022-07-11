@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
 
-import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./base/PriceResolver.sol";
@@ -33,17 +32,8 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _;
     }
 
-    // to be removed in future
-    modifier onlyGovernOrDao(string memory category) {
-        require(
-            (dao.byPassGovern(msg.sender)) || msg.sender == dao.govern(category) || msg.sender == address(dao),
-            string("Dao: only Govern").concat(category));
-        _;
-    }
-
     function initialize(
         address owner,
-        address feedRegistry,
         address[] memory depositTokens,
         address baseCurrency
     )
@@ -124,7 +114,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _addAssets(erc20s);
     }
 
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovernOrDao("BudgetApproval") {
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("BudgetApproval") {
         require(dao.canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
 

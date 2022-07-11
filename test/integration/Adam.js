@@ -4,7 +4,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { smock } = require('@defi-wonderland/smock');
 const { ethers } = hre;
 const { expect } = chai;
-const { createAdam, createFeedRegistry, createTokens } = require('../utils/createContract');
+const { createAdam, createTokens } = require('../utils/createContract');
 const decodeBase64 = require('../utils/decodeBase64');
 const paramsStruct = require('../../utils/paramsStruct');
 chai.use(smock.matchers);
