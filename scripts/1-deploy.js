@@ -15,6 +15,12 @@ const deployConstantState = async (network = 'rinkeby') => {
     await rinkebyConstant.deployed();
     console.log(`Deployed RinkebyConstant ${rinkebyConstant.address}`);
     return rinkebyConstant.address;
+  } else if (network === 'kovan') {
+    const KovanConstant = await hre.ethers.getContractFactory('KovanConstant');
+    const kovanConstant = await KovanConstant.deploy();
+    await kovanConstant.deployed();
+    console.log(`Deployed KovanConstant ${kovanConstant.address}`);
+    return kovanConstant.address;
   }
 };
 
