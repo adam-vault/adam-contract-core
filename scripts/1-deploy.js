@@ -6,9 +6,13 @@
 const hre = require('hardhat');
 const fileReader = require('../utils/fileReader');
 
-const FEED_REGISTRY = '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF';
+const FEED_REGISTRIES = {
+  rinkeby: '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+  kovan: '0xAa7F6f7f507457a1EE157fE97F6c7DB2BEec5cD0',
+  mainnet: '0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf',
+};
 
-const deployConstantState = async (network = 'rinkeby') => {
+const deployConstantState = async (network) => {
   if (network === 'rinkeby') {
     const RinkebyConstant = await hre.ethers.getContractFactory('RinkebyConstant');
     const rinkebyConstant = await RinkebyConstant.deploy();
@@ -73,10 +77,13 @@ const deployTeam = async () => {
 
 async function main () {
   // Gather Current Block Number
+  console.log('Deploy contracts to ', hre.network.name);
+  const deployNetwork = hre.network.name ?? 'rinkeby';
+
   const blockNumber = await hre.ethers.provider.getBlockNumber();
   console.log('Current Block Number', blockNumber);
 
-  const constantState = await deployConstantState();
+  const constantState = await deployConstantState(deployNetwork);
   const budgetApprovalsAddress = await deployBudgetApprovals();
   const governInfo = await deployGovernFactory();
   const team = await deployTeam();
@@ -118,7 +125,7 @@ async function main () {
     depositPool.address,
     optInPool.address,
     budgetApprovalsAddress, governInfo[0], constantState,
-    FEED_REGISTRY, // rinkeby,
+    FEED_REGISTRIES[deployNetwork],
     team,
   ], { kind: 'uups' });
   await adam.deployed();
