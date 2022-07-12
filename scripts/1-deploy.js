@@ -6,28 +6,6 @@
 const hre = require('hardhat');
 const fileReader = require('../utils/fileReader');
 
-const FEED_REGISTRIES = {
-  rinkeby: '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
-  kovan: '0xAa7F6f7f507457a1EE157fE97F6c7DB2BEec5cD0',
-  mainnet: '0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf',
-};
-
-const deployConstantState = async (network) => {
-  if (network === 'rinkeby') {
-    const RinkebyConstant = await hre.ethers.getContractFactory('RinkebyConstant');
-    const rinkebyConstant = await RinkebyConstant.deploy();
-    await rinkebyConstant.deployed();
-    console.log(`Deployed RinkebyConstant ${rinkebyConstant.address}`);
-    return rinkebyConstant.address;
-  } else if (network === 'kovan') {
-    const KovanConstant = await hre.ethers.getContractFactory('KovanConstant');
-    const kovanConstant = await KovanConstant.deploy();
-    await kovanConstant.deployed();
-    console.log(`Deployed KovanConstant ${kovanConstant.address}`);
-    return kovanConstant.address;
-  }
-};
-
 const deployBudgetApprovals = async () => {
   const TransferLiquidERC20BudgetApproval = await hre.ethers.getContractFactory('TransferLiquidERC20BudgetApproval');
   const transferLiquidERC20BudgetApproval = await TransferLiquidERC20BudgetApproval.deploy();
@@ -83,7 +61,8 @@ async function main () {
   const blockNumber = await hre.ethers.provider.getBlockNumber();
   console.log('Current Block Number', blockNumber);
 
-  const constantState = await deployConstantState(deployNetwork);
+  const feedRegistryAddress = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
+
   const budgetApprovalsAddress = await deployBudgetApprovals();
   const governInfo = await deployGovernFactory();
   const team = await deployTeam();
@@ -124,8 +103,8 @@ async function main () {
     dao.address, membership.address, liquidPool.address, memberToken.address,
     depositPool.address,
     optInPool.address,
-    budgetApprovalsAddress, governInfo[0], constantState,
-    FEED_REGISTRIES[deployNetwork],
+    budgetApprovalsAddress, governInfo[0],
+    feedRegistryAddress,
     team,
   ], { kind: 'uups' });
   await adam.deployed();
