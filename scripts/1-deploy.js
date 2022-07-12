@@ -61,7 +61,7 @@ async function main () {
   const blockNumber = await hre.ethers.provider.getBlockNumber();
   console.log('Current Block Number', blockNumber);
 
-  const feedRegistryAddress = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
+  const NETWORK_CONSTANTS = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
 
   const budgetApprovalsAddress = await deployBudgetApprovals();
   const governInfo = await deployGovernFactory();
@@ -104,7 +104,7 @@ async function main () {
     depositPool.address,
     optInPool.address,
     budgetApprovalsAddress, governInfo[0],
-    feedRegistryAddress,
+    NETWORK_CONSTANTS.FEED_REGISTRY,
     team,
   ], { kind: 'uups' });
   await adam.deployed();
