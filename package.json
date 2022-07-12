@@ -1,8 +1,8 @@
 {
-  "name": "poc",
+  "name": "adam-contract-core",
   "scripts": {
     "test": "hardhat test",
-    "test-integration": "hardhat test test/integration/*.js --network ropsten",
+    "test-integration": "hardhat test test/integration/*.js --network rinkeby",
     "clean": "hardhat clean",
     "prepare:kovan": "mustache constant/kovan.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "prepare:rinkeby": "mustache constant/rinkeby.json constant/Constant.template.sol > contracts/lib/Constant.sol",
