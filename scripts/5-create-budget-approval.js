@@ -35,6 +35,18 @@ async function main () {
       toAddresses: ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
       tokens: [ETHAddress, DAIAddress],
       totalAmount: hre.ethers.utils.parseEther('1000'),
+    }),
+  );
+
+  const dataLiquidERC20BaseDai = transferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
+    getCreateTransferLiquidErc20TokenBAParams({
+      dao: daoAddress,
+      executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
+      allowUnlimitedUsageCount: true,
+      usageCount: 0,
+      toAddresses: ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
+      tokens: [ETHAddress, DAIAddress],
+      totalAmount: hre.ethers.utils.parseEther('1000'),
       baseCurrency: DAIAddress,
     }),
   );
@@ -51,7 +63,6 @@ async function main () {
       allowAnyAmount: true,
       totalAmount: hre.ethers.utils.parseEther('0'),
       amountPercentage: '100',
-      baseCurrency: DAIAddress,
     }),
   );
 
@@ -79,8 +90,8 @@ async function main () {
   });
 
   const tx2 = await lp.createBudgetApprovals(
-    [transferLiquidERC20BudgetApprovalAddress, uniswapBudetApprovalAddress],
-    [dataLiquidERC20, dataUniswap]);
+    [transferLiquidERC20BudgetApprovalAddress, uniswapBudetApprovalAddress, transferLiquidERC20BudgetApprovalAddress],
+    [dataLiquidERC20, dataUniswap, dataLiquidERC20BaseDai]);
   const receipt2 = await tx2.wait();
   const creationEventLogs2 = _.filter(receipt2.events, { event: 'CreateBudgetApproval' });
   creationEventLogs2.forEach(({ args }) => {
