@@ -96,6 +96,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   allowAnyAmount = false,
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
+  baseCurrency = ETH,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -116,6 +117,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     allowAnyAmount,
     totalAmount,
     amountPercentage,
+    baseCurrency,
   }).map(([key, value]) => {
     return value;
   });
@@ -138,6 +140,7 @@ function getCreateUniswapBAParams ({
   allowAnyAmount = false,
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
+  baseCurrency = ETH,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -158,6 +161,7 @@ function getCreateUniswapBAParams ({
     allowAnyAmount,
     totalAmount,
     amountPercentage,
+    baseCurrency,
   }).map(([key, value]) => {
     return value;
   });
