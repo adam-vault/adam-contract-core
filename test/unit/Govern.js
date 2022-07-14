@@ -48,7 +48,7 @@ describe('Govern.sol', function () {
         0, // membership,
       )).to.emit(governFactory, 'CreateGovern');
 
-      expect(await governFactory.governMap(dao.address, 'General')).to.be.exist;
+      expect(await governFactory.governMap(dao.address, 'BudgetApproval')).to.be.exist;
     });
   });
 
@@ -57,7 +57,7 @@ describe('Govern.sol', function () {
       it('should be able to propose a proposal and vote', async function () {
         await dao.exposedTransferMemberToken(creator.address, 1);
 
-        const governAddr = await governFactory.governMap(dao.address, 'General');
+        const governAddr = await governFactory.governMap(dao.address, 'BudgetApproval');
         const govern = await ethers.getContractAt('Govern', governAddr);
 
         const token = await ethers.getContractAt('ERC20', tokenA.address);
@@ -94,7 +94,7 @@ describe('Govern.sol', function () {
         const mt = await ethers.getContractAt('MemberToken', MT);
         expect(await mt.balanceOf(creator.address)).to.eq(1);
 
-        const governAddr = await governFactory.governMap(dao.address, 'General');
+        const governAddr = await governFactory.governMap(dao.address, 'DaoSetting');
         const govern = await ethers.getContractAt('Govern', governAddr);
         await hre.network.provider.send('hardhat_mine', ['0x2']);
         expect(await mt.getPastVotes(creator.address, await ethers.provider.getBlockNumber() - 1)).to.eq(1);
@@ -161,7 +161,7 @@ describe('Govern.sol', function () {
         expect(await membership.getVotes(owner1.address)).to.eq(1);
         expect(await membership.getVotes(owner2.address)).to.eq(1);
 
-        const governAddr = await governFactory.governMap(dao.address, 'General');
+        const governAddr = await governFactory.governMap(dao.address, 'BudgetApproval');
         const govern = await ethers.getContractAt('Govern', governAddr);
 
         const token = await ethers.getContractAt('ERC20', tokenA.address);
@@ -196,7 +196,10 @@ describe('Govern.sol', function () {
 
       it('should failed due to 51% pass threshold (1 against 1 for)', async function () {
         const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
-          generalGovernSetting: [300, 1000, 5100, 0],
+          budgetApproval: [300, 1000, 5100, 0], // budgetApproval
+          revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
+          general: [13, 3000, 5000, 0], // general,
+          daoSettingApproval: [13, 3000, 5000, 1], // daoSetting
           mintMemberToken: true,
         }),
         );
@@ -218,7 +221,7 @@ describe('Govern.sol', function () {
         expect(await membership.getVotes(owner1.address)).to.eq(1);
         expect(await membership.getVotes(owner2.address)).to.eq(1);
 
-        const governAddr = await governFactory.governMap(dao.address, 'General');
+        const governAddr = await governFactory.governMap(dao.address, 'BudgetApproval');
         const govern = await ethers.getContractAt('Govern', governAddr);
 
         const token = await ethers.getContractAt('ERC20', tokenA.address);
