@@ -5,7 +5,7 @@ const abiCoder = hre.ethers.utils.defaultAbiCoder;
 const { parseEther } = hre.ethers.utils;
 const _ = require('lodash');
 
-const deployNetwork = deploymentResult.deployNetwork;
+const deployNetwork = deploymentResult.network;
 const {
   ETH_ADDRESS,
 } = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');

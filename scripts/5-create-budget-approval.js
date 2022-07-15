@@ -8,7 +8,7 @@ const {
 } = require('../utils/paramsStruct');
 
 const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
-const deployNetwork = deploymentResult.deployNetwork;
+const deployNetwork = deploymentResult.network;
 const {
   ETH_ADDRESS, DAI_ADDRESS,
 } = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
