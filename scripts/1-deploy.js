@@ -56,7 +56,7 @@ const deployTeam = async () => {
 async function main () {
   // Gather Current Block Number
   console.log('Deploy contracts to ', hre.network.name);
-  const deployNetwork = hre.network.name ?? 'rinkeby';
+  const deployNetwork = hre.network.name ?? 'kovan';
 
   const blockNumber = await hre.ethers.provider.getBlockNumber();
   console.log('Current Block Number', blockNumber);
@@ -127,6 +127,7 @@ async function main () {
 
   // Output Deployment Info as file
   fileReader.save('deploy', 'results.json', {
+    network: deployNetwork,
     block_number: blockNumber,
     addresses: contractAddresses,
     initdata_addresses: {},
