@@ -4,7 +4,7 @@ const fileReader = require('../utils/fileReader');
 const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 
 const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
-const deployNetwork = deploymentResult.deployNetwork;
+const deployNetwork = deploymentResult.network;
 const {
   ETH_ADDRESS,
 } = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');

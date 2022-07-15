@@ -6,7 +6,7 @@ const findEventArgs = require('../utils/findEventArgs');
 
 console.log(deploymentResult);
 const adamAddress = deploymentResult.addresses.adam;
-const deployNetwork = deploymentResult.deployNetwork;
+const deployNetwork = deploymentResult.network;
 const {
   ETH_ADDRESS, DAI_ADDRESS, USDC_ADDRESS, USDT_ADDRESS,
 } = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');

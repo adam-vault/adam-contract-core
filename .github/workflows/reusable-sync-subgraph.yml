@@ -38,7 +38,8 @@ jobs:
 
       - name: Replace Subgraph Address
         run: | 
-          jq -s '.[0].startBlock = .[1].block_number | 
+          jq -s '.[0].network = .[1].network | 
+            .[0].startBlock = .[1].block_number | 
             .[0].addresses.adam = .[1].addresses.adam |
             .[0].addresses.governFactory = .[1].addresses.governFactory |
             .[0].addresses.team = .[1].addresses.team |
