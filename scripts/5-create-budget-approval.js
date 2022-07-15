@@ -8,12 +8,10 @@ const {
 } = require('../utils/paramsStruct');
 
 const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
-
 const deployNetwork = deploymentResult.deployNetwork;
 const {
   ETH_ADDRESS, DAI_ADDRESS,
 } = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
-
 
 // rinkeby
 const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
