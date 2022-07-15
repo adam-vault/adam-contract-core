@@ -42,7 +42,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public team;
     address public governImplementation;
     address public memberTokenImplementation;
-    address public constantState;
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
 
@@ -58,7 +57,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _optInPoolImplementation,
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
-        address _constantState,
         address _feedRegistry,
         address _team
     )
@@ -74,7 +72,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         optInPoolImplementation = _optInPoolImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
-        constantState = _constantState;
         feedRegistry = _feedRegistry;
         team = _team;
     }

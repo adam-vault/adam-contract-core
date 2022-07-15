@@ -6,18 +6,6 @@
 const hre = require('hardhat');
 const fileReader = require('../utils/fileReader');
 
-const FEED_REGISTRY = '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF';
-
-const deployConstantState = async (network = 'rinkeby') => {
-  if (network === 'rinkeby') {
-    const RinkebyConstant = await hre.ethers.getContractFactory('RinkebyConstant');
-    const rinkebyConstant = await RinkebyConstant.deploy();
-    await rinkebyConstant.deployed();
-    console.log(`Deployed RinkebyConstant ${rinkebyConstant.address}`);
-    return rinkebyConstant.address;
-  }
-};
-
 const deployBudgetApprovals = async () => {
   const TransferLiquidERC20BudgetApproval = await hre.ethers.getContractFactory('TransferLiquidERC20BudgetApproval');
   const transferLiquidERC20BudgetApproval = await TransferLiquidERC20BudgetApproval.deploy();
@@ -67,10 +55,14 @@ const deployTeam = async () => {
 
 async function main () {
   // Gather Current Block Number
+  console.log('Deploy contracts to ', hre.network.name);
+  const deployNetwork = hre.network.name ?? 'kovan';
+
   const blockNumber = await hre.ethers.provider.getBlockNumber();
   console.log('Current Block Number', blockNumber);
 
-  const constantState = await deployConstantState();
+  const NETWORK_CONSTANTS = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
+
   const budgetApprovalsAddress = await deployBudgetApprovals();
   const governInfo = await deployGovernFactory();
   const team = await deployTeam();
@@ -111,8 +103,8 @@ async function main () {
     dao.address, membership.address, liquidPool.address, memberToken.address,
     depositPool.address,
     optInPool.address,
-    budgetApprovalsAddress, governInfo[0], constantState,
-    FEED_REGISTRY, // rinkeby,
+    budgetApprovalsAddress, governInfo[0],
+    NETWORK_CONSTANTS.FEED_REGISTRY,
     team,
   ], { kind: 'uups' });
   await adam.deployed();
@@ -135,6 +127,7 @@ async function main () {
 
   // Output Deployment Info as file
   fileReader.save('deploy', 'results.json', {
+    network: deployNetwork,
     block_number: blockNumber,
     addresses: contractAddresses,
     initdata_addresses: {},

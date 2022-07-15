@@ -5,15 +5,6 @@ const {
   ADDRESS_MOCK_AGGRGATOR,
 } = require('../utils/constants');
 
-const deployConstantState = async (signer, network = 'rinkeby') => {
-  if (network === 'rinkeby') {
-    const RinkebyConstant = await ethers.getContractFactory('RinkebyConstant', { signer });
-    const rinkebyConstant = await RinkebyConstant.deploy();
-    await rinkebyConstant.deployed();
-    return rinkebyConstant.address;
-  }
-};
-
 const createBudgetApprovals = async (signer) => {
   const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory('TransferLiquidERC20BudgetApproval', { signer });
   const transferLiquidERC20BudgetApproval = await TransferLiquidERC20BudgetApproval.deploy();
@@ -45,7 +36,6 @@ const createFeedRegistry = async (token, signer) => {
 const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   const [creator] = await ethers.getSigners();
 
-  const constantState = await deployConstantState(creator);
   const Dao = await ethers.getContractFactory('MockDaoV2', { signer: creator });
 
   const Membership = await ethers.getContractFactory('Membership', { signer: creator });
@@ -97,7 +87,6 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
     optInPool.address,
     budgetApprovalAddresses,
     governFactory.address,
-    constantState,
     feedRegistry.address,
     team.address,
   ], { kind: 'uups' });
