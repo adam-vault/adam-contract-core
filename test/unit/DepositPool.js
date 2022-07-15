@@ -3,8 +3,11 @@ const { ethers, upgrades } = require('hardhat');
 const { parseEther } = ethers.utils;
 const decodeBase64 = require('../utils/decodeBase64');
 
-const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+const {
+  ADDRESS_ETH,
+  ADDRESS_MOCK_AGGRGATOR,
+  ADDRESS_MOCK_FEED_REGISTRY,
+} = require('../utils/constants');
 
 describe('DepositPool.sol', function () {
   let dp, dpAsSigner1, dpAsSigner2;
@@ -15,7 +18,6 @@ describe('DepositPool.sol', function () {
 
   beforeEach(async function () {
     [creator, signer1, signer2] = await ethers.getSigners();
-    const MockFeedRegistry = await ethers.getContractFactory('MockFeedRegistry', { signer: creator });
     const MockToken = await ethers.getContractFactory('MockToken', { signer: creator });
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: creator });
 
@@ -23,23 +25,23 @@ describe('DepositPool.sol', function () {
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
-      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
 
     dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
-    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
-    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
+    await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
     await dao.setAdmissionToken(memberToken.address);
     await dao.setMinTokenToAdmit(0);
-    dp = await upgrades.deployProxy(DepositPool, [dao.address, [token.address, ETH], ETH], { kind: 'uups' });
+    dp = await upgrades.deployProxy(DepositPool, [dao.address, [token.address, ADDRESS_ETH], ADDRESS_ETH], { kind: 'uups' });
 
     dpAsSigner1 = dp.connect(signer1);
     dpAsSigner2 = dp.connect(signer2);
@@ -58,7 +60,7 @@ describe('DepositPool.sol', function () {
 
   describe('name()', function () {
     it('return ETH if 0xeeee', async function () {
-      expect(await dp.name(ETH)).to.eq('ETH');
+      expect(await dp.name(ADDRESS_ETH)).to.eq('ETH');
     });
     it('return token name', async function () {
       expect(await dp.name(token.address)).to.eq('TokenA');
@@ -67,7 +69,7 @@ describe('DepositPool.sol', function () {
 
   describe('decimals()', function () {
     it('return ETH if 0xeeee', async function () {
-      expect(await dp.decimals(ETH)).to.eq(18);
+      expect(await dp.decimals(ADDRESS_ETH)).to.eq(18);
     });
     it('return token name', async function () {
       expect(await dp.decimals(token.address)).to.eq(18);
@@ -76,7 +78,7 @@ describe('DepositPool.sol', function () {
 
   describe('uri()', function () {
     it('return ETH if 0xeeee', async function () {
-      const jsonResponse = decodeBase64(await dp.uri(await dpAsSigner1.idOf(ETH)));
+      const jsonResponse = decodeBase64(await dp.uri(await dpAsSigner1.idOf(ADDRESS_ETH)));
       expect(jsonResponse.name).to.equal('ETH');
     });
     it('return token name', async function () {
@@ -92,22 +94,22 @@ describe('DepositPool.sol', function () {
       expect(await dp.assetBaseCurrencyPrice(token.address, parseEther('0.0001'))).to.eq(parseEther('0.00000046'));
     });
     it('return price: 0 if feedRegistry return 0', async function () {
-      await feedRegistry.setPrice(token.address, ETH, parseEther('0'));
+      await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0'));
       expect(await dp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
     });
     it('return price: 0 if feedRegistry return -1', async function () {
-      await feedRegistry.setPrice(token.address, ETH, parseEther('-1'));
+      await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('-1'));
       expect(await dp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
     });
   });
 
   describe('canAddAsset()', function () {
     it('return true if asset can be resolve', async function () {
-      await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
+      await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
       expect(await dp.canAddAsset(token.address)).to.eq(true);
     });
     it('return false if asset can be resolve', async function () {
-      await feedRegistry.setAggregator(token.address, ETH, ethers.constants.AddressZero);
+      await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ethers.constants.AddressZero);
       expect(await dp.canAddAsset(token.address)).to.eq(false);
     });
   });
@@ -115,14 +117,14 @@ describe('DepositPool.sol', function () {
   describe('deposit()', function () {
     it('mint 1 dp if deposit 1 eth (price: 0; totalSupply: 0)', async function () {
       await dpAsSigner1.deposit({ value: parseEther('1') });
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(ETH))).to.eq(parseEther('1'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(ADDRESS_ETH))).to.eq(parseEther('1'));
     });
 
     it('mint 1.9 dp for 1.9 eth (price: 1.9; totalSupply: 1.9)', async function () {
       await dpAsSigner1.deposit({ value: parseEther('0.1') });
       await dpAsSigner2.deposit({ value: parseEther('1.9') });
 
-      expect(await dp.balanceOf(signer2.address, await dpAsSigner1.idOf(ETH))).to.eq(parseEther('1.9'));
+      expect(await dp.balanceOf(signer2.address, await dpAsSigner1.idOf(ADDRESS_ETH))).to.eq(parseEther('1.9'));
     });
 
     it('can deposit twice if not deposit before', async function () {
@@ -187,9 +189,9 @@ describe('DepositPool.sol', function () {
 
       expect(await ethers.provider.getBalance(dp.address)).to.eq(parseEther('1'));
       expect((await ethers.provider.getBalance(signer1.address)).lte(parseEther('999'))).to.eq(true);
-      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(ETH))).to.eq(parseEther('1'));
+      expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(ADDRESS_ETH))).to.eq(parseEther('1'));
 
-      await dpAsSigner1.withdraw(ETH, parseEther('1'));
+      await dpAsSigner1.withdraw(ADDRESS_ETH, parseEther('1'));
       expect(await ethers.provider.getBalance(dp.address)).to.eq(parseEther('0'));
       expect((await ethers.provider.getBalance(signer1.address)).gte(parseEther('999'))).to.eq(true);
       expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('0'));
@@ -225,16 +227,16 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
-      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
-    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
-    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
+    await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);

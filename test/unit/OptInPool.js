@@ -2,7 +2,11 @@ const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const { parseEther } = ethers.utils;
 
-const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const {
+  ADDRESS_ETH,
+  ADDRESS_MOCK_FEED_REGISTRY,
+} = require('../utils/constants');
+
 const ETH_TOKEN_ID = 1;
 const FAKE_TOKEN_ID = 2;
 
@@ -15,10 +19,6 @@ describe('OptInPool.sol', function () {
 
   beforeEach(async function () {
     [creator, signer1, signer2] = await ethers.getSigners();
-    const MockFeedRegistry = await ethers.getContractFactory(
-      'MockFeedRegistry',
-      { signer: creator },
-    );
     const MockToken = await ethers.getContractFactory('MockToken', {
       signer: creator,
     });
@@ -32,19 +32,19 @@ describe('OptInPool.sol', function () {
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
-      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
 
     dp = await MockDepositPool.deploy();
     token = await MockToken.deploy();
 
-    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
-    await feedRegistry.setAggregator(token.address, ETH, ethers.constants.AddressZero);
+    await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ethers.constants.AddressZero);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
-    await dp.setId(ETH, ETH_TOKEN_ID);
+    await dp.setId(ADDRESS_ETH, ETH_TOKEN_ID);
     await dp.setId(token.address, FAKE_TOKEN_ID);
 
     const currentBlock = await ethers.provider.getBlock(await ethers.provider.getBlockNumber());
@@ -52,7 +52,7 @@ describe('OptInPool.sol', function () {
       OptInPool,
       [
         dp.address,
-        ETH,
+        ADDRESS_ETH,
         parseEther('100'),
         currentBlock.timestamp + 100,
         [token.address],
