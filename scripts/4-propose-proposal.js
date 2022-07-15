@@ -14,7 +14,7 @@ async function main () {
 
   const calldata = Dao.interface.encodeFunctionData('createGovern', ['New Proposal Cat', 3600, 1000, 10000, [1], 0]);
 
-  await govern.propose([daoAddress], [0], [calldata], faker.commerce.productDescription());
+  await govern.propose([daoAddress], [0], [calldata], '{"category":"Budget","subcategory":"budget_swap","title":"this is the title","description":"here for description"}');
 }
 
 // We recommend this pattern to be able to use async/await everywhere
