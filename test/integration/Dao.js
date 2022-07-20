@@ -81,13 +81,13 @@ describe('Integration - Dao', function () {
 
     it('owner should be able to deposit', async function () {
       const balance = await ethers.provider.getBalance(lp.address);
-      await lp.deposit({ value: 1 });
+      await lp.deposit(creator.address, { value: 1 });
       expect(await ethers.provider.getBalance(lp.address)).to.equal(balance.add(1));
     });
 
     it('new member should be able to deposit', async function () {
       const balance = await ethers.provider.getBalance(lp.address);
-      await lp.connect(member).deposit({ value: 1 });
+      await lp.connect(member).deposit(member.address, { value: 1 });
       expect(await ethers.provider.getBalance(lp.address)).to.equal(balance.add(1));
     });
   });
@@ -118,12 +118,12 @@ describe('Integration - Dao', function () {
     });
 
     it('should not able to deposit when not enough Admission Token', async function () {
-      await expect(lp.connect(member).deposit({ value: 1 })).to.be.revertedWith('Admission token not enough');
+      await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
     });
 
     it('should be able to deposit when enough Admission Token', async function () {
       await tokenC721.mint(member.getAddress(), 1);
-      await expect(lp.connect(member).deposit({ value: 1 })).to.not.be.reverted;
+      await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.not.be.reverted;
       expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
     });
   });
@@ -154,12 +154,12 @@ describe('Integration - Dao', function () {
     });
 
     it('should not able to deposit when not enough Admission Token', async function () {
-      await expect(lp.connect(member).deposit({ value: 1 })).to.be.revertedWith('Admission token not enough');
+      await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
     });
 
     it('should be able to deposit when enough Admission Token', async function () {
       await tokenA.mint(member.getAddress(), 1);
-      await expect(lp.connect(member).deposit({ value: 1 })).to.not.be.reverted;
+      await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.not.be.reverted;
       expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
     });
   });
@@ -194,12 +194,12 @@ describe('Integration - Dao', function () {
     });
 
     it('should not able to deposit when not enough Admission Token', async function () {
-      await expect(lp.connect(member).deposit({ value: 1 })).to.be.revertedWith('Admission token not enough');
+      await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
     });
 
     it('should be able to deposit when enough Admission Token', async function () {
       await dao.exposedTransferMemberToken(creator.address, 100);
-      await lp.deposit({ value: 1 });
+      await lp.deposit(creator.address, { value: 1 });
       expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
     });
   });
@@ -220,11 +220,11 @@ describe('Integration - Dao', function () {
     });
 
     it('should not be able to deposit when not enough', async function () { // todo: need to create another test case for non DAO creator
-      await expect(lp.deposit({ value: 1 })).to.revertedWith('deposit amount not enough');
+      await expect(lp.deposit(creator.address, { value: 1 })).to.revertedWith('deposit amount not enough');
     });
 
     it('should be able to deposit when enough', async function () {
-      await lp.deposit({ value: 100 });
+      await lp.deposit(creator.address, { value: 100 });
       expect(await ethers.provider.getBalance(lp.address)).to.equal(100);
     });
   });

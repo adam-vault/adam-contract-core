@@ -74,7 +74,7 @@ describe('Integration - Create DAO', function () {
     });
 
     it('create Membership when deposit()', async function () {
-      await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
+      await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
       expect(await membership.balanceOf(creator.address)).to.equal(1);
 
       const jsonResponse = decodeBase64(await membership.tokenURI(1));
@@ -83,7 +83,7 @@ describe('Integration - Create DAO', function () {
     });
 
     it('gives token uri with member address', async function () {
-      const tx = await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
+      const tx = await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
       await tx.wait();
 
       const jsonResponse = decodeBase64(await membership.tokenURI(1));
@@ -91,9 +91,9 @@ describe('Integration - Create DAO', function () {
     });
 
     it('should not recreate Member when deposit() again by same EOA', async function () {
-      await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
-      await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
-      await lp.deposit({ value: ethers.utils.parseEther('0.000123') });
+      await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
+      await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
+      await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
 
       expect(await membership.balanceOf(creator.address)).to.equal(1);
       expect(await ethers.provider.getBalance(lp.address)).to.equal(ethers.utils.parseEther('0.000369'));
@@ -214,7 +214,7 @@ describe('Integration - Create DAO', function () {
       const membershipAddr = await dao.membership();
       membership = await ethers.getContractAt('Membership', membershipAddr);
       lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-      await lp.deposit({ value: ethers.utils.parseEther('123') });
+      await lp.deposit(creator.address, { value: ethers.utils.parseEther('123') });
     });
 
     it('redeem and burn exact amount of eth', async function () {
