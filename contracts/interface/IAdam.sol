@@ -16,6 +16,7 @@ interface IAdam {
         address[] depositTokens;
         bool mintMemberToken;
         address baseCurrency;
+        string logoCID;
     }
 
     event AdminChanged(address previousAdmin, address newAdmin);

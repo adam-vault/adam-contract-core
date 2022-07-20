@@ -23,6 +23,7 @@ interface IDao {
         address[] depositTokens;
         bool mintMemberToken;
         address baseCurrency;
+        string logoCID;
     }
 
     struct DaoSetting {
@@ -115,6 +116,8 @@ interface IDao {
     function liquidPool() external view returns (address);
 
     function locktime() external view returns (uint256);
+
+    function logoCID() external view returns (string memory);
 
     function memberToken() external view returns (address);
 

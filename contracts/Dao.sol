@@ -45,6 +45,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address[] depositTokens;
         bool mintMemberToken;
         address baseCurrency;
+        string logoCID;
     }
 
     struct DaoSetting {
@@ -75,6 +76,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     uint256 public minDepositAmount;
     uint256 public minTokenToAdmit;
     address public baseCurrency;
+    string public logoCID;
     
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
@@ -102,6 +104,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         minDepositAmount = params.daoSetting.minDepositAmount;
         minTokenToAdmit = params.daoSetting.minTokenToAdmit;
         baseCurrency = params.baseCurrency;
+        logoCID = params.logoCID;
 
         if (params.mintMemberToken) {
             // tokenInfo: [name, symbol]
@@ -110,7 +113,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
         if(params._admissionToken == address(0)){
             admissionToken = memberToken;
-        }else{
+        } else {
             require(params._admissionToken.isContract(), "Admission Token not Support!");
             bytes4 sector = bytes4(keccak256("balanceOf(address)"));
             bytes memory data = abi.encodeWithSelector(sector, msg.sender);
