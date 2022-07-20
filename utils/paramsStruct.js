@@ -9,10 +9,7 @@ function getCreateDaoParams ({
   name = faker.company.companyName(),
   description = faker.commerce.productDescription(),
   lockTime = 0,
-  budgetApproval = [300, 3000, 5000, 0],
-  revokeBudgetApproval = [300, 3000, 5000, 0],
-  general = [300, 3000, 5000, 0],
-  daoSettingApproval = [300, 3000, 5000, 0],
+  generalGovernSetting = [300, 3000, 5000, 0],
   tokenInfo = [`${faker.company.companyName()}Token`, 'MT'],
   tokenAmount = 100,
   minDepositAmount = 0,
@@ -27,10 +24,7 @@ function getCreateDaoParams ({
     name,
     description,
     lockTime,
-    budgetApproval,
-    revokeBudgetApproval,
-    general,
-    daoSettingApproval,
+    generalGovernSetting,
     tokenInfo,
     tokenAmount,
     minDepositAmount,
@@ -104,6 +98,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   allowAnyAmount = false,
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
+  baseCurrency = ETH,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -124,6 +119,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     allowAnyAmount,
     totalAmount,
     amountPercentage,
+    baseCurrency,
   }).map(([key, value]) => {
     return value;
   });
@@ -146,6 +142,7 @@ function getCreateUniswapBAParams ({
   allowAnyAmount = false,
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
+  baseCurrency = ETH,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -166,6 +163,7 @@ function getCreateUniswapBAParams ({
     allowAnyAmount,
     totalAmount,
     amountPercentage,
+    baseCurrency,
   }).map(([key, value]) => {
     return value;
   });

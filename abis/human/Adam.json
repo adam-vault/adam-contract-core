@@ -1,7 +1,7 @@
 [
   "event AdminChanged(address previousAdmin, address newAdmin)",
   "event BeaconUpgraded(address indexed beacon)",
-  "event CreateDao(address dao, string name, string description, address creator)",
+  "event CreateDao(address indexed dao, string name, string description, address creator)",
   "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)",
   "event Upgraded(address indexed implementation)",
   "event WhitelistBudgetApproval(address budgetApproval)",

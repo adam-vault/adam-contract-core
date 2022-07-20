@@ -41,14 +41,16 @@ jobs:
 
       - name: Setup Address as Env Vars
         run: |
-          echo "REACT_APP_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)" >> $GITHUB_ENV
+          echo "REACT_APP_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy/results.json)" >> $GITHUB_ENV \
+          && echo "REACT_APP_NETWORK=$(jq -r .network ${{ runner.temp }}/deployment/deploy/results.json)" >> $GITHUB_ENV \
 
       - name: Replace Contract Address
         uses: mikefarah/yq@master
         with:
           cmd: |
             yq -i '
-              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS)
+              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS) |
+              .jobs.call-deploy-site.with.REACT_APP_NETWORK = strenv(REACT_APP_NETWORK)
             ' .github/workflows/deploy.${{ env.DEPLOY_ENV }}.yml
       
       - name: Make Pull Request

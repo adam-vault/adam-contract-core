@@ -32,7 +32,8 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         address[] memory _tokens,
         bool _allowAnyAmount,
         uint256 _totalAmount,
-        uint8 _amountPercentage
+        uint8 _amountPercentage,
+        address _baseCurrency
     ) public initializer {
         __BudgetApproval_init(params);
 
@@ -47,7 +48,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
-        __PriceResolver_init(Denominations.ETH);
+        __PriceResolver_init(_baseCurrency);
     }
 
     function executeParams() public pure override returns (string[] memory) {

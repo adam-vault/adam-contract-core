@@ -8,8 +8,11 @@ const { createAdam, createTokens } = require('../utils/createContract');
 const decodeBase64 = require('../utils/decodeBase64');
 const paramsStruct = require('../../utils/paramsStruct');
 chai.use(smock.matchers);
-const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+const {
+  ADDRESS_ETH,
+  ADDRESS_MOCK_AGGRGATOR,
+  ADDRESS_MOCK_FEED_REGISTRY,
+} = require('../utils/constants');
 
 describe('Integration - Create DAO', function () {
   let creator, owner1, owner2;
@@ -24,11 +27,11 @@ describe('Integration - Create DAO', function () {
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
-      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
-    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
+    await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
     adam = await createAdam(feedRegistry);
   });
@@ -147,10 +150,10 @@ describe('Integration - Create DAO', function () {
       dp = await ethers.getContractAt('DepositPool', await dao.depositPool());
       const currentBlock = await ethers.provider.getBlock(await ethers.provider.getBlockNumber());
       const tx2 = await dao.createOptInPool(
-        ETH,
+        ADDRESS_ETH,
         ethers.utils.parseEther('1'),
         currentBlock.timestamp + 100,
-        [ETH],
+        [ADDRESS_ETH],
         currentBlock.timestamp + 200,
         [],
         [],
@@ -200,7 +203,7 @@ describe('Integration - Create DAO', function () {
     beforeEach(async function () {
       const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
         lockTime: 1000,
-        depositTokens: [ETH, token.address], // depositTokens
+        depositTokens: [ADDRESS_ETH, token.address], // depositTokens
       }),
       );
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');

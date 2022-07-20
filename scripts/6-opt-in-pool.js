@@ -3,9 +3,11 @@ const _ = require('lodash');
 const fileReader = require('../utils/fileReader');
 const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
 
-// rinkeby
 const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
-const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+const deployNetwork = deploymentResult.network;
+const {
+  ETH_ADDRESS,
+} = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
 
 async function main () {
   const dao = await hre.ethers.getContractAt('Dao', daoAddress);
@@ -15,10 +17,10 @@ async function main () {
 
   const currentBlock = await hre.ethers.provider.getBlock(await hre.ethers.provider.getBlockNumber());
   const tx1 = await dao.createOptInPool(
-    ETH,
+    ETH_ADDRESS,
     hre.ethers.utils.parseEther('0.0000001'),
     currentBlock.timestamp + 1000,
-    [ETH],
+    [ETH_ADDRESS],
     currentBlock.timestamp + 2000,
     [],
     [],
@@ -34,10 +36,10 @@ async function main () {
 
   const currentBlock2 = await hre.ethers.provider.getBlock(await hre.ethers.provider.getBlockNumber());
   const tx2 = await dao.createOptInPool(
-    ETH,
+    ETH_ADDRESS,
     hre.ethers.utils.parseEther('0.0000001'),
     currentBlock2.timestamp + 1000,
-    [ETH],
+    [ETH_ADDRESS],
     currentBlock2.timestamp + 2000,
     [],
     [],

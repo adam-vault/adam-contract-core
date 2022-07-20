@@ -6,12 +6,10 @@ const findEventArgs = require('../utils/findEventArgs');
 
 console.log(deploymentResult);
 const adamAddress = deploymentResult.addresses.adam;
-
-// rinkeby
-const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const DAI = '0xc7AD46e0b8a400Bb3C915120d284AafbA8fc4735';
-const USDC = '0x4DBCdF9B62e891a7cec5A2568C3F4FAF9E8Abe2b';
-const USDT = '0xD9BA894E0097f8cC2BBc9D24D308b98e36dc6D02';
+const deployNetwork = deploymentResult.network;
+const {
+  ETH_ADDRESS, DAI_ADDRESS, USDC_ADDRESS, USDT_ADDRESS,
+} = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
 
 const daoAddresses = [];
 const testingDataSet = [
@@ -30,8 +28,8 @@ async function main () {
       mintMemberToken,
       admissionToken,
       lockTime,
-      depositTokens: [ETH, DAI, USDC, USDT],
-      baseCurrency: ETH,
+      depositTokens: [ETH_ADDRESS, DAI_ADDRESS, USDC_ADDRESS, USDT_ADDRESS],
+      baseCurrency: ETH_ADDRESS,
     }));
 
     const { dao } = await findEventArgs(tx, 'CreateDao');

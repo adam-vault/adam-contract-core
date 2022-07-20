@@ -36,7 +36,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         address[] calldata _toTokens,
         bool _allowAnyAmount,
         uint256 _totalAmount,
-        uint8 _amountPercentage
+        uint8 _amountPercentage,
+        address _baseCurrency
     ) public initializer {
         __BudgetApproval_init(params);
         
@@ -53,7 +54,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
 
-        __PriceResolver_init(Denominations.ETH);
+        __PriceResolver_init(_baseCurrency);
 
     }
 

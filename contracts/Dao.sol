@@ -38,10 +38,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         string _name;
         string _description;
         uint256 _locktime;
-        uint256[4] budgetApproval;
-        uint256[4] revokeBudgetApproval;
-        uint256[4] general;
-        uint256[4] daoSettingApproval;
+        uint256[4] generalGovernSetting;
         string[] tokenInfo;
         uint256 tokenAmount;
         DaoSetting daoSetting;
@@ -129,36 +126,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         w[0] = 1;
         // CAUTION: if later on support create govern with multi token, also need to add VoteType
         _createGovern(
-            "BudgetApproval",
-            params.budgetApproval[0],
-            params.budgetApproval[1],
-            params.budgetApproval[2],
-            w,
-            params.budgetApproval[3]
-        );
-        _createGovern(
-            "RevokeBudgetApproval",
-            params.revokeBudgetApproval[0],
-            params.revokeBudgetApproval[1],
-            params.revokeBudgetApproval[2],
-            w,
-            params.revokeBudgetApproval[3]
-        );
-        _createGovern(
             "General",
-            params.general[0],
-            params.general[1],
-            params.general[2],
+            params.generalGovernSetting[0],
+            params.generalGovernSetting[1],
+            params.generalGovernSetting[2],
             w,
-            params.revokeBudgetApproval[3]
-        );
-        _createGovern(
-            "DaoSetting",
-            params.daoSettingApproval[0],
-            params.daoSettingApproval[1],
-            params.daoSettingApproval[2],
-            w,
-            params.daoSettingApproval[3]
+            params.generalGovernSetting[3]
         );
 
         _mintMember(creator);
@@ -178,15 +151,15 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         emit SetFirstDepositTime(owner, block.timestamp);
     }
 
-    function mintMemberToken(uint amount) public onlyGovern("BudgetApproval") {
+    function mintMemberToken(uint amount) public onlyGovern("General") {
         _mintMemberToken(amount);
     }
 
-    function transferMemberToken(address to, uint amount) public onlyGovern("BudgetApproval") {
+    function transferMemberToken(address to, uint amount) public onlyGovern("General") {
         _transferMemberToken(to, amount);
     }
 
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("BudgetApproval") {
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {
         require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
     }
 
@@ -231,7 +204,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         return IMembership(membership).isMember(account);
     }
 
-    function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("DaoSetting") {
+    function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("General") {
         minDepositAmount = _setting.minDepositAmount;
         minTokenToAdmit = _setting.minTokenToAdmit;
     }
@@ -282,7 +255,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         revert("Unsupported Token type");
     }
 
-    function addAssets(address[] calldata erc20s) public onlyGovern("DaoSetting") {
+    function addAssets(address[] calldata erc20s) public onlyGovern("General") {
         _addAssets(erc20s);
     }
     function mintMember(address owner) public {
@@ -290,7 +263,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _mintMember(owner);
     }
 
-    function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("DaoSetting") {
+    function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("General") {
       uint256 id = ITeam(team).addTeam(title, minter, members, description);
       teamWhitelist[id] = true;
 

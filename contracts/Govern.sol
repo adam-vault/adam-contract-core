@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeabl
 import "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/TimersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
+import "./lib/Constant.sol";
 
 import "hardhat/console.sol";
 
@@ -81,7 +82,7 @@ contract Govern is
     }
 
     function votingPeriod() public view override returns (uint256) {
-        return duration / 13;
+        return duration / Constant.BLOCK_NUMBER_IN_SECOND;
     }
 
     function votingDelay() public pure override returns (uint256) {

@@ -1,9 +1,11 @@
 {
-  "name": "poc",
+  "name": "adam-contract-core",
   "scripts": {
     "test": "hardhat test",
-    "test-integration": "hardhat test test/integration/*.js --network ropsten",
+    "test-integration": "hardhat test test/integration/*.js --network rinkeby",
     "clean": "hardhat clean",
+    "prepare:kovan": "mustache constant/kovan.json constant/Constant.template.sol > contracts/lib/Constant.sol",
+    "prepare:rinkeby": "mustache constant/rinkeby.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "compile": "hardhat compile",
     "coverage": "hardhat coverage && COVERAGE=true npm run test",
     "size": "hardhat size-contracts",
@@ -31,6 +33,7 @@
     "ethers": "^5.5.3",
     "hardhat": "^2.8.2",
     "hardhat-gas-reporter": "^1.0.7",
+    "mustache": "^4.2.0",
     "prettier": "^2.5.1",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solhint": "^3.3.6",
