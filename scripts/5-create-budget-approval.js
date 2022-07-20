@@ -47,9 +47,9 @@ async function main () {
       allowUnlimitedUsageCount: true,
       usageCount: 0,
       toAddresses: ['0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A'],
-      tokens: [ETHAddress, DAIAddress],
+      tokens: [ETH_ADDRESS, DAI_ADDRESS],
       totalAmount: hre.ethers.utils.parseEther('1000'),
-      baseCurrency: DAIAddress,
+      baseCurrency: DAI_ADDRESS,
     }),
   );
 
