@@ -5,11 +5,14 @@ const abiCoder = hre.ethers.utils.defaultAbiCoder;
 const { parseEther } = hre.ethers.utils;
 const _ = require('lodash');
 
+const deployNetwork = deploymentResult.network;
+const {
+  ETH_ADDRESS,
+} = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
+
 // rinkeby
 const budgetApprovalAddress = deploymentResult.initdata_addresses.budgetApprovals[0].address;
 const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
-
-const ETHAddress = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 async function main () {
   const budgetApproval = await hre.ethers.getContractAt(
@@ -18,7 +21,7 @@ async function main () {
   );
 
   const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-    ETHAddress,
+    ETH_ADDRESS,
     daoAddress,
     parseEther('101'),
   ]);

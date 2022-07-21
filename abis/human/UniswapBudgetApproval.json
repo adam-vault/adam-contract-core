@@ -43,7 +43,7 @@
   "function executor() view returns (address)",
   "function fromTokens(uint256) view returns (address)",
   "function fromTokensMapping(address) view returns (bool)",
-  "function initialize(tuple(address dao, address executor, address[] approvers, uint256 minApproval, string text, string transactionType, uint256 startTime, uint256 endTime, bool allowUnlimitedUsageCount, uint256 usageCount) params, address[] _fromTokens, bool _allowAllToTokens, address[] _toTokens, bool _allowAnyAmount, uint256 _totalAmount, uint8 _amountPercentage)",
+  "function initialize(tuple(address dao, address executor, address[] approvers, uint256 minApproval, string text, string transactionType, uint256 startTime, uint256 endTime, bool allowUnlimitedUsageCount, uint256 usageCount) params, address[] _fromTokens, bool _allowAllToTokens, address[] _toTokens, bool _allowAnyAmount, uint256 _totalAmount, uint8 _amountPercentage, address _baseCurrency)",
   "function minApproval() view returns (uint256)",
   "function name() view returns (string)",
   "function proxiableUUID() view returns (bytes32)",

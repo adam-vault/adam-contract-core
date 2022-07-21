@@ -2,8 +2,11 @@ const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const { parseEther } = ethers.utils;
 
-const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-const mockAggrgator = '0x87A84931c876d5380352a32Ff474db13Fc1c11E5';
+const {
+  ADDRESS_ETH,
+  ADDRESS_MOCK_AGGRGATOR,
+  ADDRESS_MOCK_FEED_REGISTRY,
+} = require('../utils/constants');
 
 describe('LiquidPool.sol', function () {
   let lp, lpAsSigner1, lpAsSigner2;
@@ -14,7 +17,6 @@ describe('LiquidPool.sol', function () {
 
   beforeEach(async function () {
     [creator, signer1, signer2] = await ethers.getSigners();
-    const MockFeedRegistry = await ethers.getContractFactory('MockFeedRegistry', { signer: creator });
     const MockToken = await ethers.getContractFactory('MockToken', { signer: creator });
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: creator });
 
@@ -22,24 +24,24 @@ describe('LiquidPool.sol', function () {
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
-      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
 
     dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
-    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
-    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
+    await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
     await dao.setAdmissionToken(memberToken.address);
     await dao.setMinTokenToAdmit(0);
 
-    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [ETH, token.address], ETH], { kind: 'uups' });
+    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [ADDRESS_ETH, token.address], ADDRESS_ETH], { kind: 'uups' });
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);
@@ -184,7 +186,7 @@ describe('LiquidPool.sol', function () {
     });
 
     it('return price: 2.0046', async function () {
-      await feedRegistry.setPrice(token.address, ETH, parseEther('0'));
+      await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0'));
       await lpAsSigner1.deposit({ value: parseEther('1') }); // 1 ETH
       await tokenAsSigner1.transfer(lp.address, parseEther('1')); // 0 ETH
       await lpAsSigner2.deposit({ value: parseEther('1.0046') }); // 1.0046 ETH
@@ -199,11 +201,11 @@ describe('LiquidPool.sol', function () {
       expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('0.0001'))).to.eq(parseEther('0.00000046'));
     });
     it('return price: 0 if feedRegistry return 0', async function () {
-      await feedRegistry.setPrice(token.address, ETH, parseEther('0'));
+      await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0'));
       expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
     });
     it('return price: 0 if feedRegistry return -1', async function () {
-      await feedRegistry.setPrice(token.address, ETH, parseEther('-1'));
+      await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('-1'));
       expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
     });
   });
@@ -343,11 +345,11 @@ describe('LiquidPool.sol', function () {
 
   describe('canAddAsset()', function () {
     it('return true if asset can be resolve', async function () {
-      await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
+      await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
       expect(await lp.canAddAsset(token.address)).to.eq(true);
     });
     it('return false if asset can be resolve', async function () {
-      await feedRegistry.setAggregator(token.address, ETH, ethers.constants.AddressZero);
+      await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ethers.constants.AddressZero);
       expect(await lp.canAddAsset(token.address)).to.eq(false);
     });
   });
@@ -356,21 +358,21 @@ describe('LiquidPool.sol', function () {
     it('return token amount by ratio of dp balance / totalSupply (tokenA: 100, supply: 100)', async function () {
       await lpAsSigner1.deposit({ value: parseEther('100') });
 
-      expect(await lp.assetsShares(ETH, parseEther('0.00001'))).to.eq(parseEther('0.00001'));
-      expect(await lp.assetsShares(ETH, parseEther('1'))).to.eq(parseEther('1'));
-      expect(await lp.assetsShares(ETH, parseEther('2'))).to.eq(parseEther('2'));
-      expect(await lp.assetsShares(ETH, parseEther('10'))).to.eq(parseEther('10'));
-      expect(await lp.assetsShares(ETH, parseEther('100'))).to.eq(parseEther('100'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('0.00001'))).to.eq(parseEther('0.00001'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('1'))).to.eq(parseEther('1'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('2'))).to.eq(parseEther('2'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('10'))).to.eq(parseEther('10'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('100'))).to.eq(parseEther('100'));
     });
     it('return token amount by ratio of dp balance / totalSupply (eth: 120, supply: 100)', async function () {
       await lpAsSigner1.deposit({ value: parseEther('100') });
       await creator.sendTransaction({ to: lp.address, value: parseEther('20') });
 
-      expect(await lp.assetsShares(ETH, parseEther('0.00001'))).to.eq(parseEther('0.000012'));
-      expect(await lp.assetsShares(ETH, parseEther('1'))).to.eq(parseEther('1.2'));
-      expect(await lp.assetsShares(ETH, parseEther('2'))).to.eq(parseEther('2.4'));
-      expect(await lp.assetsShares(ETH, parseEther('10'))).to.eq(parseEther('12'));
-      expect(await lp.assetsShares(ETH, parseEther('100'))).to.eq(parseEther('120'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('0.00001'))).to.eq(parseEther('0.000012'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('1'))).to.eq(parseEther('1.2'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('2'))).to.eq(parseEther('2.4'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('10'))).to.eq(parseEther('12'));
+      expect(await lp.assetsShares(ADDRESS_ETH, parseEther('100'))).to.eq(parseEther('120'));
     });
   });
 });
@@ -391,17 +393,17 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
-      '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF',
+      ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', '0xf948fC3D6c2c2C866f622c79612bB4E8708883cF');
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
 
     dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
-    await feedRegistry.setPrice(token.address, ETH, parseEther('0.0046'));
-    await feedRegistry.setAggregator(token.address, ETH, mockAggrgator);
+    await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0.0046'));
+    await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);

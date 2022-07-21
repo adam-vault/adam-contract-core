@@ -12,14 +12,17 @@ on:
         required: true
       RINKEBY_URL:
         required: true
+      KOVAN_URL:
+        required: true
       PRIVATE_KEY:
         required: true
 
 env:
   GIT_REF: ${{ inputs.GIT_REF }}
   CONTRACT_DEPLOY_NETWORK: ${{ inputs.CONTRACT_DEPLOY_NETWORK }}
-  RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
   PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+  RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
+  KOVAN_URL: ${{ secrets.KOVAN_URL }}
 
 jobs:
   deploy-contracts:
@@ -39,6 +42,9 @@ jobs:
       - name: Install Dependencies
         run: npm install
       
+      - name: Prepare env constant 
+        run: npm run prepare:$CONTRACT_DEPLOY_NETWORK
+
       - name: Compile Contracts # This also copies Machine ABIs to "abis/machine"
         run: |
           npm run compile && mkdir -p abis/machine && cp \

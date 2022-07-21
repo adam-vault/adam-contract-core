@@ -26,7 +26,7 @@
   "function depositToken(address asset, uint256 amount)",
   "function ethAssetPrice(address asset, uint256 ethAmount) view returns (uint256)",
   "function idOf(address) view returns (uint256)",
-  "function initialize(address owner, address feedRegistry, address[] depositTokens, address baseCurrency)",
+  "function initialize(address owner, address[] depositTokens, address baseCurrency)",
   "function isApprovedForAll(address account, address operator) view returns (bool)",
   "function isAssetSupported(address) view returns (bool)",
   "function name(address asset) view returns (string)",

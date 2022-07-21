@@ -34,7 +34,7 @@
   "function executeTransaction(uint256 id)",
   "function executee() view returns (address)",
   "function executor() view returns (address)",
-  "function initialize(tuple(address dao, address executor, address[] approvers, uint256 minApproval, string text, string transactionType, uint256 startTime, uint256 endTime, bool allowUnlimitedUsageCount, uint256 usageCount) params, bool _allowAllAddresses, address[] _toAddresses, address[] _tokens, bool _allowAnyAmount, uint256 _totalAmount, uint8 _amountPercentage)",
+  "function initialize(tuple(address dao, address executor, address[] approvers, uint256 minApproval, string text, string transactionType, uint256 startTime, uint256 endTime, bool allowUnlimitedUsageCount, uint256 usageCount) params, bool _allowAllAddresses, address[] _toAddresses, address[] _tokens, bool _allowAnyAmount, uint256 _totalAmount, uint8 _amountPercentage, address _baseCurrency)",
   "function minApproval() view returns (uint256)",
   "function name() view returns (string)",
   "function proxiableUUID() view returns (bytes32)",

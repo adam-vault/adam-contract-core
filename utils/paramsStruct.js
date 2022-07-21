@@ -9,10 +9,7 @@ function getCreateDaoParams ({
   name = faker.company.companyName(),
   description = faker.commerce.productDescription(),
   lockTime = 0,
-  budgetApproval = [300, 3000, 5000, 0],
-  revokeBudgetApproval = [300, 3000, 5000, 0],
-  general = [300, 3000, 5000, 0],
-  daoSettingApproval = [300, 3000, 5000, 0],
+  generalGovernSetting = [300, 3000, 5000, 0],
   tokenInfo = [`${faker.company.companyName()}Token`, 'MT'],
   tokenAmount = 100,
   minDepositAmount = 0,
@@ -21,15 +18,13 @@ function getCreateDaoParams ({
   depositTokens = [ETH],
   mintMemberToken = false,
   baseCurrency = ETH,
+  logoCID = '',
 }) {
   return Object.entries({
     name,
     description,
     lockTime,
-    budgetApproval,
-    revokeBudgetApproval,
-    general,
-    daoSettingApproval,
+    generalGovernSetting,
     tokenInfo,
     tokenAmount,
     minDepositAmount,
@@ -38,6 +33,7 @@ function getCreateDaoParams ({
     depositTokens,
     mintMemberToken,
     baseCurrency,
+    logoCID,
   }).map(([key, value]) => {
     return value;
   });
@@ -97,11 +93,12 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   allowUnlimitedUsageCount,
   usageCount,
   allowAllAddresses = false,
-  toAddresses,
-  tokens,
+  toAddresses = [],
+  tokens = [],
   allowAnyAmount = false,
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
+  baseCurrency = ETH,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -122,6 +119,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     allowAnyAmount,
     totalAmount,
     amountPercentage,
+    baseCurrency,
   }).map(([key, value]) => {
     return value;
   });
@@ -144,6 +142,7 @@ function getCreateUniswapBAParams ({
   allowAnyAmount = false,
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
+  baseCurrency = ETH,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -164,6 +163,47 @@ function getCreateUniswapBAParams ({
     allowAnyAmount,
     totalAmount,
     amountPercentage,
+    baseCurrency,
+  }).map(([key, value]) => {
+    return value;
+  });
+}
+
+function getCreateTransferERC721BAParams ({
+  dao,
+  executor,
+  approvers = [],
+  minApproval = 0,
+  text = 'Transfer ERC721',
+  transactionType = '721outflow',
+  startTime = Math.round(Date.now() / 1000) - 86400,
+  endTime = Math.round(Date.now() / 1000) + 86400,
+  allowUnlimitedUsageCount = false,
+  usageCount = 10,
+  allowAllAddresses = false,
+  toAddresses = [],
+  tokens = [],
+  allowAnyAmount = false,
+  totalAmount = 10,
+}) {
+  return Object.entries({
+    params: getCreateCommonBudgetApprovalParams({
+      dao,
+      executor,
+      approvers,
+      minApproval,
+      text,
+      transactionType,
+      startTime,
+      endTime,
+      allowUnlimitedUsageCount,
+      usageCount,
+    }),
+    allowAllAddresses,
+    toAddresses,
+    tokens,
+    allowAnyAmount,
+    totalAmount,
   }).map(([key, value]) => {
     return value;
   });
@@ -201,4 +241,5 @@ module.exports = {
   getCreateTransferERC20BAParams,
   getCreateTransferLiquidErc20TokenBAParams,
   getCreateUniswapBAParams,
+  getCreateTransferERC721BAParams,
 };
