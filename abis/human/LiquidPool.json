@@ -35,6 +35,7 @@
   "function quote(uint256 amount) view returns (uint256)",
   "function redeem(uint256 amount)",
   "function symbol() view returns (string)",
+  "function team() view returns (address)",
   "function totalPrice() view returns (uint256)",
   "function totalPriceInEth() view returns (uint256)",
   "function totalSupply() view returns (uint256)",

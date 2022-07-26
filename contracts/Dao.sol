@@ -67,7 +67,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public liquidPool;
     address public depositPool;
     address public governFactory;
-    address public team;
     address public admissionToken;
     address public memberTokenImplementation;
     address public optInPoolImplementation;
@@ -170,7 +169,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address[] memory _redeemTokens,
         uint256 _redeemTime,
         address[] memory _budgetApprovals,
-        bytes[] memory _budgetApprovalsData
+        bytes[] memory _budgetApprovalsData,
+        address team
     ) public {
 
         ERC1967Proxy _optInPool = new ERC1967Proxy(optInPoolImplementation, "");
@@ -182,7 +182,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             _redeemTokens,
             _redeemTime,
             _budgetApprovals,
-            _budgetApprovalsData
+            _budgetApprovalsData,
+            team
         );
         isOptInPool[address(_optInPool)] = true;
         emit CreateOptInPool(address(_optInPool));
