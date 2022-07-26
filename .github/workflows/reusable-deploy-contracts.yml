@@ -53,6 +53,7 @@ jobs:
             artifacts/contracts/Dao.sol/Dao.json\
             artifacts/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol/IERC20Metadata.json\
             artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json\
+            artifacts/@openzeppelin/contracts/token/ERC1155/ERC1155.sol/ERC1155.json\
             artifacts/contracts/Govern.sol/Govern.json\
             artifacts/contracts/GovernFactory.sol/GovernFactory.json\
             artifacts/contracts/Membership.sol/Membership.json\
