@@ -13,7 +13,7 @@ describe('LiquidPool.sol', function () {
   let creator;
   let signer1, signer2;
   let token, tokenAsSigner1, tokenAsSigner2;
-  let feedRegistry, dao, memberToken;
+  let feedRegistry, dao, memberToken, team;
 
   beforeEach(async function () {
     [creator, signer1, signer2] = await ethers.getSigners();
@@ -29,6 +29,9 @@ describe('LiquidPool.sol', function () {
     ]);
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
 
+    const Team = await ethers.getContractFactory('Team', { signer: creator });
+
+    team = await Team.deploy();
     dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
@@ -40,6 +43,7 @@ describe('LiquidPool.sol', function () {
     await dao.setMemberToken(memberToken.address);
     await dao.setAdmissionToken(memberToken.address);
     await dao.setMinTokenToAdmit(0);
+    await dao.setTeam(team.address);
 
     lp = await upgrades.deployProxy(LiquidPool, [dao.address, [ADDRESS_ETH, token.address], ADDRESS_ETH], { kind: 'uups' });
 

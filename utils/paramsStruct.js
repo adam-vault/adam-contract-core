@@ -42,7 +42,9 @@ function getCreateDaoParams ({
 function getCreateTransferERC20BAParams ({
   dao,
   executor,
+  executorTeam,
   approvers,
+  approverTeam,
   minApproval,
   text = 'Transfer Illiquid Token',
   transactionType = 'outflow',
@@ -56,12 +58,15 @@ function getCreateTransferERC20BAParams ({
   allowAnyAmount = false,
   totalAmount = '100',
   amountPercentage = '10',
+  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
       dao,
       executor,
+      executorTeam,
       approvers,
+      approverTeam,
       minApproval,
       text,
       transactionType,
@@ -69,6 +74,7 @@ function getCreateTransferERC20BAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
+      team,
     }),
     allowAllAddresses,
     toAddresses,
@@ -84,7 +90,9 @@ function getCreateTransferERC20BAParams ({
 function getCreateTransferLiquidErc20TokenBAParams ({
   dao,
   executor,
+  executorTeam,
   approvers = [],
+  approverTeam,
   minApproval = 0,
   text = 'Transfer Liquid ERC20 Token',
   transactionType = 'outflowLiquid',
@@ -99,12 +107,15 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
   baseCurrency = ETH,
+  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
       dao,
       executor,
+      executorTeam,
       approvers,
+      approverTeam,
       minApproval,
       text,
       transactionType,
@@ -112,6 +123,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
+      team,
     }),
     allowAllAddresses,
     toAddresses,
@@ -128,7 +140,9 @@ function getCreateTransferLiquidErc20TokenBAParams ({
 function getCreateUniswapBAParams ({
   dao,
   executor,
+  executorTeam,
   approvers = [],
+  approverTeam,
   minApproval = 0,
   text = 'Uniswap',
   transactionType = 'swap',
@@ -143,12 +157,15 @@ function getCreateUniswapBAParams ({
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
   baseCurrency = ETH,
+  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
       dao,
       executor,
+      executorTeam,
       approvers,
+      approverTeam,
       minApproval,
       text,
       transactionType,
@@ -156,6 +173,7 @@ function getCreateUniswapBAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
+      team,
     }),
     fromTokens,
     allowAllToTokens,
@@ -172,7 +190,9 @@ function getCreateUniswapBAParams ({
 function getCreateTransferERC721BAParams ({
   dao,
   executor,
+  executorTeam,
   approvers = [],
+  approverTeam,
   minApproval = 0,
   text = 'Transfer ERC721',
   transactionType = '721outflow',
@@ -185,12 +205,15 @@ function getCreateTransferERC721BAParams ({
   tokens = [],
   allowAnyAmount = false,
   totalAmount = 10,
+  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
       dao,
       executor,
+      executorTeam,
       approvers,
+      approverTeam,
       minApproval,
       text,
       transactionType,
@@ -198,6 +221,7 @@ function getCreateTransferERC721BAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
+      team,
     }),
     allowAllAddresses,
     toAddresses,
@@ -211,8 +235,10 @@ function getCreateTransferERC721BAParams ({
 
 function getCreateCommonBudgetApprovalParams ({
   dao,
-  executor,
+  executor = ethers.constants.AddressZero,
+  executorTeam = 0,
   approvers = [],
+  approverTeam = 0,
   minApproval = 0,
   text,
   transactionType,
@@ -220,11 +246,14 @@ function getCreateCommonBudgetApprovalParams ({
   endTime = Math.round(Date.now() / 1000) + 86400,
   allowUnlimitedUsageCount = false,
   usageCount = 10,
+  team,
 }) {
   return Object.entries({
     dao,
     executor,
+    executorTeam,
     approvers,
+    approverTeam,
     minApproval,
     text,
     transactionType,
@@ -232,6 +261,7 @@ function getCreateCommonBudgetApprovalParams ({
     endTime,
     allowUnlimitedUsageCount,
     usageCount,
+    team,
   }).map(([key, value]) => {
     return value;
   });

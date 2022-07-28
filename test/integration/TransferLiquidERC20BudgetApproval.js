@@ -57,6 +57,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           toAddresses: [receiver.address],
           minApproval: 1,
           usageCount: 10,
+          team: await adam.team(),
         }),
       );
 

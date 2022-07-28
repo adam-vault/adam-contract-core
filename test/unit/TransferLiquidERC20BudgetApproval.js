@@ -13,7 +13,7 @@ const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferLiquidERC20BudgetApproval.sol', function () {
-  let transferLiquidERC20BAImplementation, budgetApproval, dao;
+  let transferLiquidERC20BAImplementation, budgetApproval, dao, team;
   let executor, approver, receiver;
   let tokenA, executee, TransferLiquidERC20BudgetApproval;
 
@@ -25,7 +25,9 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     TransferLiquidERC20BudgetApproval = await ethers.getContractFactory('TransferLiquidERC20BudgetApproval', { signer: executor });
     transferLiquidERC20BAImplementation = await TransferLiquidERC20BudgetApproval.deploy();
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
+    const Team = await ethers.getContractFactory('Team', { signer: executor });
 
+    team = await Team.deploy();
     dao = await MockLPDao.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
@@ -46,7 +48,9 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         [
           executee.address, // dao addressc
           executor.address, // executor
+          0, // executorTeam
           [approver.address], // approvers
+          0, // approverTeam
           1, // minApproval
           'Transfer Liquid ERC20', // text
           'outflowLiquid', // transaction type
@@ -54,6 +58,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           endTime, // endTime
           false, // allow unlimited usage
           10, // usage count
+          team.address, // team
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
@@ -98,7 +103,9 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         [
           executee.address, // dao address
           executor.address, // executor
+          0, // executorTeam
           [approver.address], // approvers
+          0, // approverTeam
           2, // minApproval
           'Transfer Liquid ERC20', // text
           'outflowLiquid', // transaction type
@@ -106,6 +113,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           Math.round(Date.now() / 1000) + 86400, // endTime
           false, // allow unlimited usage
           10, // usage count
+          team.address, // team
         ],
         false, // allow all addresses,
         [receiver.address], // allowed addresses (use when above = false)
@@ -135,7 +143,9 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         [
           dao.address, // dao addressc
           executor.address, // executor
+          0, // executorTeam
           [approver.address], // approvers
+          0, // approverTeam
           1, // minApproval
           'Transfer Liquid ERC20', // text
           'outflowLiquid', // transaction type
@@ -143,6 +153,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           endTime, // endTime
           false, // allow unlimited usage
           10, // usage count
+          team.address, // team
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
@@ -331,7 +342,9 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           [
             executee.address, // dao address
             executor.address, // executor
+            0, // executorTeam
             [], // approvers
+            0, // approverTeam
             0, // minApproval
             'Transfer Liquid ERC20', // text
             'outflowLiquid', // transaction type
@@ -339,6 +352,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
             0, // endTime
             false, // allow unlimited usage
             10, // usage count
+            team.address, // team
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
@@ -382,7 +396,9 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           [
             executee.address, // dao address
             executor.address, // executor
+            0, // executorTeam
             [], // approvers
+            0, // approverTeam
             0, // minApproval
             'Transfer Liquid ERC20', // text
             'outflowLiquid', // transaction type
@@ -390,6 +406,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
             Math.round(Date.now() / 1000) - 86400, // endTime
             false, // allow unlimited usage
             10, // usage count
+            team.address, // team
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
@@ -434,7 +451,9 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           [
             dao.address, // dao address
             executor.address, // executor
+            0, // executorTeam
             [], // approvers
+            0, // approverTeam
             0, // minApproval
             'Transfer Liquid ERC20', // text
             'outflowLiquid', // transaction type
@@ -442,6 +461,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
             0, // endTime
             false, // allow unlimited usage
             1, // usage count
+            team.address, // team
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
