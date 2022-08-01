@@ -22,20 +22,23 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
 
     address payable public dao;
     uint256 public totalSupply;
+    uint256 public maxMemberLimit;
 
     Counters.Counter private _tokenIds;
     mapping(address => bool) public isMember;
 
     event CreateMember(address to);
 
-    function initialize(address _dao, string memory _name) public initializer
+    function initialize(address _dao, string memory _name, uint256 _maxMemberLimit) public initializer
     {
         __ERC721_init(_name.concat(" Membership"), "MS");
         dao = payable(_dao);
+        maxMemberLimit = _maxMemberLimit;
     }
 
     function createMember(address to) public {
         require(msg.sender == dao, "access denied");
+        require(totalSupply < maxMemberLimit, "totalSupply exceed limit");
 
         _tokenIds.increment();
         uint256 newId = _tokenIds.current();
