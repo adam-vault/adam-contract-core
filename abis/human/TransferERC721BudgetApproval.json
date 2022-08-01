@@ -29,7 +29,7 @@
   "function executee() view returns (address)",
   "function executor() view returns (address)",
   "function executorTeam() view returns (uint256)",
-  "function initialize(tuple(address dao, address executor, address[] approvers, uint256 minApproval, string text, string transactionType, uint256 startTime, uint256 endTime, bool allowUnlimitedUsageCount, uint256 usageCount, address team) params, bool _allowAllAddresses, address[] _toAddresses, address[] _tokens, bool _allowAnyAmount, uint256 _totalAmount)",
+  "function initialize(tuple(address dao, address executor, uint256 executorTeam, address[] approvers, uint256 approverTeam, uint256 minApproval, string text, string transactionType, uint256 startTime, uint256 endTime, bool allowUnlimitedUsageCount, uint256 usageCount, address team) params, bool _allowAllAddresses, address[] _toAddresses, address[] _tokens, bool _allowAnyAmount, uint256 _totalAmount)",
   "function minApproval() view returns (uint256)",
   "function name() view returns (string)",
   "function proxiableUUID() view returns (bytes32)",
