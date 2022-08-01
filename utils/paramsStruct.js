@@ -19,6 +19,7 @@ function getCreateDaoParams ({
   mintMemberToken = false,
   baseCurrency = ETH,
   logoCID = '',
+  maxMemberLimit = ethers.constants.MaxUint256,
 }) {
   return Object.entries({
     name,
@@ -34,6 +35,7 @@ function getCreateDaoParams ({
     mintMemberToken,
     baseCurrency,
     logoCID,
+    maxMemberLimit,
   }).map(([key, value]) => {
     return value;
   });
