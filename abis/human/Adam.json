@@ -6,7 +6,7 @@
   "event Upgraded(address indexed implementation)",
   "event WhitelistBudgetApproval(address budgetApproval)",
   "function budgetApprovals(address) view returns (bool)",
-  "function createDao(tuple(string _name, string _description, uint256 _locktime, uint256[4] generalGovernSetting, string[] tokenInfo, uint256 tokenAmount, uint256 minDepositAmount, uint256 minTokenToAdmit, address admissionToken, address[] depositTokens, bool mintMemberToken, address baseCurrency, string logoCID) params) returns (address)",
+  "function createDao(tuple(string _name, string _description, uint256 _locktime, uint256[4] generalGovernSetting, string[] tokenInfo, uint256 tokenAmount, uint256 minDepositAmount, uint256 minTokenToAdmit, address admissionToken, address[] depositTokens, bool mintMemberToken, address baseCurrency, string logoCID, uint256 maxMemberLimit) params) returns (address)",
   "function daoImplementation() view returns (address)",
   "function daos(address) view returns (bool)",
   "function depositPoolImplementation() view returns (address)",
