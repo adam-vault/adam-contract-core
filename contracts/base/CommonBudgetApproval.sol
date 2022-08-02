@@ -136,7 +136,10 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         }
 
         minApproval = params.minApproval;
-        require(minApproval <= params.approvers.length, "Invalid approver list");
+        require(
+          approverTeam > 0 || (minApproval <= params.approvers.length),
+          "Invalid approver list"
+        );
 
         startTime = params.startTime;
         endTime = params.endTime;
