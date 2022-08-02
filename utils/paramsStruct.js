@@ -13,10 +13,9 @@ function getCreateDaoParams ({
   tokenInfo = [`${faker.company.companyName()}Token`, 'MT'],
   tokenAmount = 100,
   minDepositAmount = 0,
-  minTokenToAdmit = 0,
-  admissionToken = ethers.constants.AddressZero,
   depositTokens = [ETH],
   mintMemberToken = false,
+  admissionTokens = [ethers.address.zero, 0.1, 0, false],
   baseCurrency = ETH,
   logoCID = '',
 }) {
@@ -28,10 +27,9 @@ function getCreateDaoParams ({
     tokenInfo,
     tokenAmount,
     minDepositAmount,
-    minTokenToAdmit,
-    admissionToken,
     depositTokens,
     mintMemberToken,
+    admissionTokens,
     baseCurrency,
     logoCID,
   }).map(([key, value]) => {

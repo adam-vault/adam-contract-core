@@ -166,6 +166,14 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
             dao.mintMember(account);
         }
     }
+    function _isPassAdmissionToken(address account) private {
+        for (uint i = 0; i < dao.admissionTokens(); i++){
+            address token = dao.admissionTokens(i);
+            if(dao.admissionTokenSetting(token).minTokenToAdmit > 0){
+
+            }
+        }
+    }
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
 
 }

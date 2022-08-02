@@ -22,12 +22,18 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string[] tokenInfo;
         uint256 tokenAmount;
         uint256 minDepositAmount;
-        uint256 minTokenToAdmit;
-        address admissionToken;
         address[] depositTokens;
         bool mintMemberToken;
+        IDao.AdmissionToken[3] admissionTokens;
         address baseCurrency;
         string logoCID;
+    }
+
+    struct AdmissionToken {
+        address token;
+        uint256 minTokenToAdmit;
+        uint256 tokenId;
+        bool isMemberToken;
     }
 
     address public feedRegistry;
@@ -125,7 +131,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 address(_membership),
                 address(_liquidPool),
                 address(_depositPool),
-                address(params.admissionToken),
                 address(governFactory),
                 address(team),
                 address(memberTokenImplementation),
@@ -137,11 +142,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 params.tokenInfo,
                 params.tokenAmount,
                 IDao.DaoSetting(
-                    params.minDepositAmount,
-                    params.minTokenToAdmit
+                    params.minDepositAmount
                 ),
                 params.depositTokens,
                 params.mintMemberToken,
+                params.admissionTokens,
                 params.baseCurrency,
                 params.logoCID
             )
