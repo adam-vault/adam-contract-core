@@ -2,6 +2,8 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
+const { getCreateTransferERC721BAParams } = require('../../utils/paramsStruct');
+
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferERC721BudgetApproval.sol', function () {
@@ -25,25 +27,19 @@ describe('TransferERC721BudgetApproval.sol', function () {
     it('should success', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', [
-        [
-          executee.address, // dao addressc
-          executor.address, // executor
-          [approver.address], // approvers
-          1, // minApproval
-          'Transfer ERC721', // text
-          'outflow721', // transaction type
-          startTime, // startTime
-          endTime, // endTime
-          false, // allow unlimited usage
-          10, // usage count
-        ],
-        false, // allow all addresses
-        [receiver.address], // allowed addresses (use when above = false)
-        [tokenC721.address], // allowed token
-        false, // allow any amount
-        1,
-      ]);
+      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateTransferERC721BAParams({
+          dao: executee.address,
+          executor: executor.address,
+          approvers: [approver.address],
+          minApproval: 1,
+          toAddresses: [receiver.address],
+          tokens: [tokenC721.address],
+          totalAmount: 1,
+          startTime,
+          endTime,
+        }),
+      );
 
       const tx = await executee.createBudgetApprovals(
         [transferERC721BAImplementation.address], [initData],
@@ -74,25 +70,17 @@ describe('TransferERC721BudgetApproval.sol', function () {
     });
 
     it('should fail if minApproval larger than approvers length', async function () {
-      const initData = transferERC721BAImplementation.interface.encodeFunctionData('initialize', [
-        [
-          executee.address, // dao address
-          executor.address, // executor
-          [approver.address], // approvers
-          2, // minApproval
-          'Transfer ERC721', // text
-          'outflow721', // transaction type
-          Math.round(Date.now() / 1000) - 86400, // startTime
-          Math.round(Date.now() / 1000) + 86400, // endTime
-          false, // allow unlimited usage
-          10, // usage count
-        ],
-        false, // allow all addresses,
-        [receiver.address], // allowed addresses (use when above = false)
-        [tokenC721.address], // allowed token (use when above = false)
-        false, // allow any amount
-        1,
-      ]);
+      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateTransferERC721BAParams({
+          dao: executee.address,
+          executor: executor.address,
+          approvers: [approver.address],
+          minApproval: 2,
+          toAddresses: [receiver.address],
+          tokens: [tokenC721.address],
+          totalAmount: 1,
+        }),
+      );
 
       await expect(
         executee.createBudgetApprovals(
@@ -107,27 +95,17 @@ describe('TransferERC721BudgetApproval.sol', function () {
     beforeEach(async function () {
       ({ tokenC721 } = await createTokens());
 
-      const startTime = Math.round(Date.now() / 1000) - 86400;
-      const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', [
-        [
-          executee.address, // dao addressc
-          executor.address, // executor
-          [approver.address], // approvers
-          1, // minApproval
-          'Transfer ERC721', // text
-          'outflow721', // transaction type
-          startTime, // startTime
-          endTime, // endTime
-          false, // allow unlimited usage
-          10, // usage count
-        ],
-        false, // allow all addresses
-        [receiver.address], // allowed addresses (use when above = false)
-        [tokenC721.address], // allowed token
-        false, // allow any amount
-        2,
-      ]);
+      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateTransferERC721BAParams({
+          dao: executee.address,
+          executor: executor.address,
+          approvers: [approver.address],
+          minApproval: 1,
+          toAddresses: [receiver.address],
+          tokens: [tokenC721.address],
+          totalAmount: 2,
+        }),
+      );
 
       const tx = await executee.createBudgetApprovals(
         [transferERC721BAImplementation.address], [initData],
@@ -281,25 +259,16 @@ describe('TransferERC721BudgetApproval.sol', function () {
     });
 
     it('should revert if execute before startTime', async function () {
-      const initData = transferERC721BAImplementation.interface.encodeFunctionData('initialize', [
-        [
-          executee.address, // dao address
-          executor.address, // executor
-          [], // approvers
-          0, // minApproval
-          'Transfer ERC721', // text
-          'outflow721', // transaction type
-          Math.round(Date.now() / 1000) + 86400, // startTime
-          0, // endTime
-          false, // allow unlimited usage
-          10, // usage count
-        ],
-        false, // allow all addresses,
-        [receiver.address], // allowed addresses (use when above = false)
-        [tokenC721.address], // allowed token (use when above = false)
-        false, // allow any amount
-        1,
-      ]);
+      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateTransferERC721BAParams({
+          dao: executee.address,
+          executor: executor.address,
+          toAddresses: [receiver.address],
+          tokens: [tokenC721.address],
+          totalAmount: 1,
+          startTime: Math.round(Date.now() / 1000) + 86400,
+        }),
+      );
 
       const tx = await executee.createBudgetApprovals(
         [transferERC721BAImplementation.address],
@@ -329,25 +298,16 @@ describe('TransferERC721BudgetApproval.sol', function () {
       ).to.be.revertedWith('Budget usage period not started');
     });
     it('should revert if execute after endTime', async function () {
-      const initData = transferERC721BAImplementation.interface.encodeFunctionData('initialize', [
-        [
-          executee.address, // dao address
-          executor.address, // executor
-          [], // approvers
-          0, // minApproval
-          'Transfer ERC721', // text
-          'outflow721', // transaction type
-          0, // startTime
-          Math.round(Date.now() / 1000) - 86400, // endTime
-          false, // allow unlimited usage
-          10, // usage count
-        ],
-        false, // allow all addresses,
-        [receiver.address], // allowed addresses (use when above = false)
-        [tokenC721.address], // allowed token (use when above = false)
-        false, // allow any amount
-        1,
-      ]);
+      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateTransferERC721BAParams({
+          dao: executee.address,
+          executor: executor.address,
+          toAddresses: [receiver.address],
+          tokens: [tokenC721.address],
+          totalAmount: 1,
+          endTime: Math.round(Date.now() / 1000) - 86400,
+        }),
+      );
 
       const tx = await executee.createBudgetApprovals(
         [transferERC721BAImplementation.address],
@@ -378,25 +338,16 @@ describe('TransferERC721BudgetApproval.sol', function () {
     });
 
     it('should revert if not enough usage count', async function () {
-      const initData = transferERC721BAImplementation.interface.encodeFunctionData('initialize', [
-        [
-          executee.address, // dao address
-          executor.address, // executor
-          [], // approvers
-          0, // minApproval
-          'Transfer ERC721', // text
-          'outflow721', // transaction type
-          0, // startTime
-          0, // endTime
-          false, // allow unlimited usage
-          1, // usage count
-        ],
-        false, // allow all addresses,
-        [receiver.address], // allowed addresses (use when above = false)
-        [tokenC721.address], // allowed token (use when above = false)
-        false, // allow any amount
-        1,
-      ]);
+      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateTransferERC721BAParams({
+          dao: executee.address,
+          executor: executor.address,
+          toAddresses: [receiver.address],
+          tokens: [tokenC721.address],
+          usageCount: 1,
+          totalAmount: 1,
+        }),
+      );
 
       const tx = await executee.createBudgetApprovals(
         [transferERC721BAImplementation.address],
