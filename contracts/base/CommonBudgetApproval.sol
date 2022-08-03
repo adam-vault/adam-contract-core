@@ -52,12 +52,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     address constant public ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     address public executor;
-    uint256 public executorTeam;
+    uint256 public executorTeamId;
     address payable public dao;
     address public executee; // Must be BudgetApprovalExecutee
 
     mapping(address => bool) public approversMapping;
-    uint256 public approverTeam;
+    uint256 public approverTeamId;
     uint256 public minApproval;
 
     string public text;
@@ -74,14 +74,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     modifier onlyApprover() {
         require(
           approversMapping[msg.sender] ||
-          ITeam(team).balanceOf(msg.sender, approverTeam) > 0, "Approver not whitelisted in budget"
+          ITeam(team).balanceOf(msg.sender, approverTeamId) > 0, "Approver not whitelisted in budget"
         );
         _;
     }
 
     modifier onlyExecutor() {
         require(msg.sender == executor ||
-          ITeam(team).balanceOf(msg.sender, executorTeam) > 0, "Executor not whitelisted in budget"
+          ITeam(team).balanceOf(msg.sender, executorTeamId) > 0, "Executor not whitelisted in budget"
         );
         _;
     }
@@ -108,9 +108,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     struct InitializeParams {
         address dao;
         address executor;
-        uint256 executorTeam;
+        uint256 executorTeamId;
         address[] approvers;
-        uint256 approverTeam;
+        uint256 approverTeamId;
         uint256 minApproval;
         string text;
         string transactionType;
@@ -137,7 +137,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
         minApproval = params.minApproval;
         require(
-          approverTeam > 0 || (minApproval <= params.approvers.length),
+          params.approverTeamId > 0 || (minApproval <= params.approvers.length),
           "Invalid approver list"
         );
 
@@ -148,8 +148,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         usageCount = params.usageCount;
 
         team = params.team;
-        executorTeam = params.executorTeam;
-        approverTeam = params.approverTeam;
+        executorTeamId = params.executorTeamId;
+        approverTeamId = params.approverTeamId;
     }
 
     function afterInitialized() virtual external onlyExecutee {}
