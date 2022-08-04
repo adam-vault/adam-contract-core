@@ -7,7 +7,7 @@ const { createAdam, createTokens } = require('../utils/createContract.js');
 const paramsStruct = require('../../utils/paramsStruct');
 
 describe('Integration - Dao', function () {
-  let adam, dao, tokenC721, lp, tokenA;
+  let adam, dao, membership, tokenC721, lp, tokenA;
   let creator, member;
 
   describe('when set Admission token at dao creation', function () {
@@ -226,6 +226,33 @@ describe('Integration - Dao', function () {
     it('should be able to deposit when enough', async function () {
       await lp.deposit({ value: 100 });
       expect(await ethers.provider.getBalance(lp.address)).to.equal(100);
+    });
+  });
+
+  describe('when set maxMemberLimit at dao creation', function () {
+    beforeEach(async function () {
+      adam = await createAdam();
+      const tx1 = await adam.createDao(
+        paramsStruct.getCreateDaoParams({
+          maxMemberLimit: 1,
+        }),
+      );
+      const receipt = await tx1.wait();
+      const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
+      const daoAddr = creationEventLog.args.dao;
+      dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+      lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+      membership = await ethers.getContractAt('Membership', await dao.membership());
+    });
+
+    it('should be able to join dao when limit not exceed', async function () { // todo: need to create another test case for non DAO creator
+      await lp.deposit({ value: 100 });
+      expect(await membership.totalSupply()).to.equal(1);
+    });
+
+    it('should not be able to join dao when limit exceed', async function () {
+      await lp.deposit({ value: 100 });
+      await expect(lp.connect(member).deposit({ value: 1 })).to.revertedWith('member count exceed limit');
     });
   });
 });
