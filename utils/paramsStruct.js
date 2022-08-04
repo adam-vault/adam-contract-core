@@ -15,7 +15,7 @@ function getCreateDaoParams ({
   minDepositAmount = 0,
   depositTokens = [ETH],
   mintMemberToken = false,
-  admissionTokens = [ethers.address.zero, 0.1, 0, false],
+  admissionTokens = [],
   baseCurrency = ETH,
   logoCID = '',
 }) {

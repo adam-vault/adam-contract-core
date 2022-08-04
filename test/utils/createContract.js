@@ -108,7 +108,11 @@ const createTokens = async () => {
   const tokenC721 = await TokenC721.deploy();
   await tokenC721.deployed();
 
-  return { tokenA, tokenB, tokenC721 };
+  const TokenD1155 = await ethers.getContractFactory('TokenD1155');
+  const tokenD1155 = await TokenD1155.deploy();
+  await tokenD1155.deployed();
+
+  return { tokenA, tokenB, tokenC721, tokenD1155 };
 };
 
 const createGovern = async () => {
