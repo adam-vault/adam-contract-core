@@ -15,14 +15,16 @@ import "hardhat/console.sol";
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;
 
-    string public constant override name = "Transfer ERC20 Budget Approval";
-
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
     address public token;
     bool public allowAnyAmount;
     uint256 public totalAmount;
     uint8 public amountPercentage;
+
+    function name() public pure override returns (string memory) {
+        return "Transfer ERC20 Budget Approval";
+    }
 
     function initialize(
         InitializeParams calldata params,

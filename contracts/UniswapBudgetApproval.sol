@@ -18,8 +18,6 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
 
     event AllowToToken(address token);
 
-    string public constant override name = "Uniswap Budget Approval";
-
     bool public allowAllAddresses;
     address[] public fromTokens;
     mapping(address => bool) public fromTokensMapping;
@@ -28,6 +26,10 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     uint8 public amountPercentage;
     bool public allowAllToTokens;
     mapping(address => bool) public toTokensMapping;
+
+    function name() public pure override returns (string memory) {
+        return "Uniswap Budget Approval";
+    }
 
     function initialize(
         InitializeParams calldata params,

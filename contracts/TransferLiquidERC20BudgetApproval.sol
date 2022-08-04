@@ -15,8 +15,6 @@ import "hardhat/console.sol";
 contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
     using BytesLib for bytes;
 
-    string public constant override name = "Transfer Liquid ERC20 Budget Approval";
-
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
     address[] public tokens;
@@ -25,6 +23,10 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
     uint256 public totalAmount;
     uint8 public amountPercentage;
 
+    function name() public pure override returns (string memory) {
+        return "Transfer Liquid ERC20 Budget Approval";
+    }
+    
     function initialize(
         InitializeParams calldata params,
         bool _allowAllAddresses,

@@ -11,14 +11,16 @@ import "./interface/IBudgetApprovalExecutee.sol";
 contract TransferERC721BudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;
 
-    string public constant override name = "Transfer ERC721 Budget Approval";
-
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
     address[] public tokens;
     mapping(address => bool) public tokensMapping;
     bool public allowAnyAmount;
     uint256 public totalAmount;
+
+    function name() public pure override returns (string memory) {
+        return "Transfer ERC721 Budget Approval";
+    }
 
     function initialize(
         InitializeParams calldata params,
