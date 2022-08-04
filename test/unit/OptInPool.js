@@ -15,7 +15,7 @@ describe('OptInPool.sol', function () {
   let creator;
   let signer1, signer2;
   let token, tokenAsSigner1, tokenAsSigner2;
-  let feedRegistry, dao, memberToken;
+  let feedRegistry, team;
 
   beforeEach(async function () {
     [creator, signer1, signer2] = await ethers.getSigners();
@@ -30,6 +30,10 @@ describe('OptInPool.sol', function () {
       signer: creator,
     });
 
+    const Team = await ethers.getContractFactory('Team', {
+      signer: creator,
+    });
+
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
@@ -39,6 +43,7 @@ describe('OptInPool.sol', function () {
 
     dp = await MockDepositPool.deploy();
     token = await MockToken.deploy();
+    team = await Team.deploy();
 
     await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0.0046'));
     await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ethers.constants.AddressZero);
@@ -59,6 +64,7 @@ describe('OptInPool.sol', function () {
         currentBlock.timestamp + 200,
         [],
         [],
+        team.address,
       ],
       { kind: 'uups' },
     );

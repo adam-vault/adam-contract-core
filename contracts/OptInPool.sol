@@ -41,7 +41,8 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
         address[] memory _redeemTokens,
         uint256 _redeemTime,
         address[] memory _budgetApprovals,
-        bytes[] memory _budgetApprovalsData
+        bytes[] memory _budgetApprovalsData,
+        address _team
     ) public initializer {
         __ERC20_init("OptInPool", "OP");
         depositPool = IDepositPool(_depositPool);
@@ -49,6 +50,7 @@ contract OptInPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, BudgetAp
         depositThreshold = _depositThreshold;
         depositDeadline = _depositDeadline;
         redeemTime = _redeemTime;
+        team = _team;
 
         require(depositPool.idOf(depositToken) != 0, "Token not supported");
 

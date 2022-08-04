@@ -52,8 +52,10 @@ describe('UniswapSwapper.sol', () => {
         dao.address,
         // executor
         ethers.constants.AddressZero,
+        0, // executorTeam
         // approvers
         [],
+        0, // approverTeam
         // minApproval
         0,
         // text
@@ -64,6 +66,7 @@ describe('UniswapSwapper.sol', () => {
         Math.round(Date.now() / 1000) + 86400, // endTime,
         true,
         0,
+        await adam.team(), // team
       ],
       [ADDRESS_ETH, ADDRRESS_WETH, ADDRRESS_DAI, ADDRRESS_UNI],
       true,

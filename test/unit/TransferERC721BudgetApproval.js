@@ -7,15 +7,17 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 describe('TransferERC721BudgetApproval.sol', function () {
   let transferERC721BAImplementation, budgetApproval;
   let executor, approver, receiver;
-  let tokenC721, executee, TransferERC721BudgetApproval;
+  let tokenC721, executee, TransferERC721BudgetApproval, team;
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     TransferERC721BudgetApproval = await ethers.getContractFactory('TransferERC721BudgetApproval', { signer: executor });
+    const Team = await ethers.getContractFactory('Team', { signer: executor });
     transferERC721BAImplementation = await TransferERC721BudgetApproval.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
+    team = await Team.deploy();
   });
 
   describe('Create Budget Approval', function () {
@@ -29,7 +31,9 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [
           executee.address, // dao addressc
           executor.address, // executor
+          0, // executorTeam
           [approver.address], // approvers
+          0, // approverTeam
           1, // minApproval
           'Transfer ERC721', // text
           'outflow721', // transaction type
@@ -37,6 +41,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           endTime, // endTime
           false, // allow unlimited usage
           10, // usage count
+          ethers.constants.AddressZero, // team
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
@@ -78,7 +83,9 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [
           executee.address, // dao address
           executor.address, // executor
+          0, // executorTeam
           [approver.address], // approvers
+          0, // approverTeam
           2, // minApproval
           'Transfer ERC721', // text
           'outflow721', // transaction type
@@ -86,6 +93,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           Math.round(Date.now() / 1000) + 86400, // endTime
           false, // allow unlimited usage
           10, // usage count
+          ethers.constants.AddressZero, // team
         ],
         false, // allow all addresses,
         [receiver.address], // allowed addresses (use when above = false)
@@ -113,7 +121,9 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [
           executee.address, // dao addressc
           executor.address, // executor
+          0, // executorTeam
           [approver.address], // approvers
+          0, // approverTeam
           1, // minApproval
           'Transfer ERC721', // text
           'outflow721', // transaction type
@@ -121,6 +131,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           endTime, // endTime
           false, // allow unlimited usage
           10, // usage count
+          team.address, // team
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
@@ -285,7 +296,9 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [
           executee.address, // dao address
           executor.address, // executor
+          0, // executorTeam
           [], // approvers
+          0, // approverTeam
           0, // minApproval
           'Transfer ERC721', // text
           'outflow721', // transaction type
@@ -293,6 +306,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           0, // endTime
           false, // allow unlimited usage
           10, // usage count
+          ethers.constants.AddressZero, // team
         ],
         false, // allow all addresses,
         [receiver.address], // allowed addresses (use when above = false)
@@ -333,7 +347,9 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [
           executee.address, // dao address
           executor.address, // executor
+          0, // executorTeam
           [], // approvers
+          0, // approverTeam
           0, // minApproval
           'Transfer ERC721', // text
           'outflow721', // transaction type
@@ -341,6 +357,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           Math.round(Date.now() / 1000) - 86400, // endTime
           false, // allow unlimited usage
           10, // usage count
+          ethers.constants.AddressZero, // team
         ],
         false, // allow all addresses,
         [receiver.address], // allowed addresses (use when above = false)
@@ -382,7 +399,9 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [
           executee.address, // dao address
           executor.address, // executor
+          0, // executorTeam
           [], // approvers
+          0, // approverTeam
           0, // minApproval
           'Transfer ERC721', // text
           'outflow721', // transaction type
@@ -390,6 +409,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           0, // endTime
           false, // allow unlimited usage
           1, // usage count
+          ethers.constants.AddressZero, // team
         ],
         false, // allow all addresses,
         [receiver.address], // allowed addresses (use when above = false)

@@ -15,7 +15,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price limit', function () {
   let transferLiquidERC20BAImplementation, budgetApproval;
-  let executor, executee, approver, receiver, dao;
+  let executor, executee, approver, receiver, dao, team;
   let tokenA, feedRegistry;
 
   beforeEach(async function () {
@@ -25,7 +25,9 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price lim
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory('TransferLiquidERC20BudgetApproval', { signer: executor });
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
+    const Team = await ethers.getContractFactory('Team', { sign: executor });
 
+    team = await Team.deploy();
     dao = await MockLPDao.deploy();
     transferLiquidERC20BAImplementation = await TransferLiquidERC20BudgetApproval.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
@@ -44,7 +46,9 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price lim
       [
         dao.address, // dao addressc
         executor.address, // executor
+        0, // executorTeam
         [approver.address], // approvers
+        0, // approverTeam
         1, // minApproval
         'Transfer Liquid ERC20', // text
         'outflowLiquid', // transaction type
@@ -52,6 +56,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price lim
         endTime, // endTime
         false, // allow unlimited usage
         10, // usage count
+        team.address, // team
       ],
       false, // allow all addresses
       [receiver.address], // allowed addresses (use when above = false)

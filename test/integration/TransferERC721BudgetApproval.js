@@ -46,6 +46,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           endTime,
           toAddresses: [receiver.address],
           tokens: [tokenC721.address],
+          team: await adam.team(),
         }),
       );
 

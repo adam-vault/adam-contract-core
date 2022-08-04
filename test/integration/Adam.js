@@ -149,6 +149,7 @@ describe('Integration - Create DAO', function () {
       await ethers.getContractAt('Membership', membershipAddr);
       dp = await ethers.getContractAt('DepositPool', await dao.depositPool());
       const currentBlock = await ethers.provider.getBlock(await ethers.provider.getBlockNumber());
+      const team = await adam.team();
       const tx2 = await dao.createOptInPool(
         ADDRESS_ETH,
         ethers.utils.parseEther('1'),
@@ -157,6 +158,7 @@ describe('Integration - Create DAO', function () {
         currentBlock.timestamp + 200,
         [],
         [],
+        team,
       );
       const { optInPool: optInPoolAddr } = await findEventArgs(tx2, 'CreateOptInPool');
       optInPool = await ethers.getContractAt('OptInPool', optInPoolAddr);

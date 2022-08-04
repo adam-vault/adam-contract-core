@@ -11,6 +11,8 @@ import "../lib/BytesLib.sol";
 import "../lib/RevertMsg.sol";
 
 import "../interface/IMembership.sol";
+import "../interface/ITeam.sol";
+import "../interface/IBudgetApprovalExecutee.sol";
 
 abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
@@ -50,10 +52,12 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     address constant public ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     address public executor;
+    uint256 public executorTeamId;
     address payable public dao;
-    address public executee;
+    address public executee; // Must be BudgetApprovalExecutee
 
     mapping(address => bool) public approversMapping;
+    uint256 public approverTeamId;
     uint256 public minApproval;
 
     string public text;
@@ -65,13 +69,20 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     uint256 public startTime;
     uint256 public endTime;
 
-    modifier onlyApprover () {
-        require(approversMapping[msg.sender], "Approver not whitelisted in budget");
+    address public team;
+
+    modifier onlyApprover() {
+        require(
+          approversMapping[msg.sender] ||
+          ITeam(team).balanceOf(msg.sender, approverTeamId) > 0, "Approver not whitelisted in budget"
+        );
         _;
     }
 
     modifier onlyExecutor() {
-        require(msg.sender == executor, "Executor not whitelisted in budget");
+        require(msg.sender == executor ||
+          ITeam(team).balanceOf(msg.sender, executorTeamId) > 0, "Executor not whitelisted in budget"
+        );
         _;
     }
 
@@ -97,7 +108,9 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     struct InitializeParams {
         address dao;
         address executor;
+        uint256 executorTeamId;
         address[] approvers;
+        uint256 approverTeamId;
         uint256 minApproval;
         string text;
         string transactionType;
@@ -105,6 +118,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         uint256 endTime;
         bool allowUnlimitedUsageCount;
         uint256 usageCount;
+        address team; // TODO: Get team from IBudgetApprovalExecutee
     }
 
     function __BudgetApproval_init(
@@ -122,13 +136,20 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         }
 
         minApproval = params.minApproval;
-        require(minApproval <= params.approvers.length, "Invalid approver list");
+        require(
+          params.approverTeamId > 0 || (minApproval <= params.approvers.length),
+          "Invalid approver list"
+        );
 
         startTime = params.startTime;
         endTime = params.endTime;
 
         allowUnlimitedUsageCount = params.allowUnlimitedUsageCount;
         usageCount = params.usageCount;
+
+        team = params.team;
+        executorTeamId = params.executorTeamId;
+        approverTeamId = params.approverTeamId;
     }
 
     function afterInitialized() virtual external onlyExecutee {}
