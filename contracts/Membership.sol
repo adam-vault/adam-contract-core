@@ -38,7 +38,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
 
     function createMember(address to) public {
         require(msg.sender == dao, "access denied");
-        require(totalSupply < maxMemberLimit, "totalSupply exceed limit");
+        require(totalSupply < maxMemberLimit, "member count exceed limit");
 
         _tokenIds.increment();
         uint256 newId = _tokenIds.current();
