@@ -118,7 +118,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         uint256 endTime;
         bool allowUnlimitedUsageCount;
         uint256 usageCount;
-        address team;
+        address team; // TODO: Get team from IBudgetApprovalExecutee
     }
 
     function __BudgetApproval_init(

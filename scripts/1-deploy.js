@@ -56,7 +56,7 @@ const deployTeam = async () => {
 async function main () {
   // Gather Current Block Number
   console.log('Deploy contracts to ', hre.network.name);
-  const deployNetwork = 'kovan';
+  const deployNetwork = hre.network.name ?? 'kovan';
 
   const blockNumber = await hre.ethers.provider.getBlockNumber();
   console.log('Current Block Number', blockNumber);
