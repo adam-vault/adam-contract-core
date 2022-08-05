@@ -40,6 +40,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           totalAmount: 1,
           startTime,
           endTime,
+          team: team.address,
         }),
       );
 
@@ -81,6 +82,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           toAddresses: [receiver.address],
           tokens: [tokenC721.address],
           totalAmount: 1,
+          team: team.address,
         }),
       );
 
@@ -106,6 +108,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           toAddresses: [receiver.address],
           tokens: [tokenC721.address],
           totalAmount: 2,
+          team: team.address,
         }),
       );
 
@@ -269,6 +272,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           tokens: [tokenC721.address],
           totalAmount: 1,
           startTime: Math.round(Date.now() / 1000) + 86400,
+          team: team.address,
         }),
       );
 
@@ -308,6 +312,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           tokens: [tokenC721.address],
           totalAmount: 1,
           endTime: Math.round(Date.now() / 1000) - 86400,
+          team: team.address,
         }),
       );
 
@@ -348,6 +353,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           tokens: [tokenC721.address],
           usageCount: 1,
           totalAmount: 1,
+          team: team.address,
         }),
       );
 
