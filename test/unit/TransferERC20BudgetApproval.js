@@ -389,8 +389,8 @@ describe('TransferERC20BudgetApproval.sol', function () {
       const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
         getCreateTransferERC20BAParams({
           dao: executee.address,
-          executorTeam: 1,
-          approverTeam: 2,
+          executorTeamId: 1,
+          approverTeamId: 2,
           toAddresses: [receiver.address],
           token: tokenA.address,
           minApproval: 0,
