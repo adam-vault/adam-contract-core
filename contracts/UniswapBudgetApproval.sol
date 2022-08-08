@@ -17,6 +17,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     using BytesLib for bytes;
 
     event AllowToToken(address token);
+    event ExecuteUniswapTransaction(uint256 id, address tokenId, address tokenOut, uint256 amountIn);
 
     string public constant override name = "Uniswap Budget Approval";
 
@@ -76,6 +77,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     }
 
     function _execute(
+        uint256 transactionId, 
         bytes memory data
     ) internal override {
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
@@ -105,6 +107,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         if(!allowAnyAmount) {
             totalAmount -= amountInBaseCurrency;
         }
+
+        emit ExecuteUniswapTransaction(transactionId, tokenIn, tokenOut, amountIn);
     }
 
     function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {

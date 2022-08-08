@@ -38,7 +38,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status);
     event ApproveTransaction(uint256 id, address approver);
-    event ExecuteTransaction(uint256 id, bytes[] data);
+    event ExecuteTransaction(uint256 id, bytes[] data, address executor);
     event RevokeTransaction(uint256 id);
     event AllowAddress(address target);
     event AllowToken(address token);
@@ -160,11 +160,11 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             if (!allowUnlimitedUsageCount) {
                 usageCount--;
             }
-            _execute(transactions[id].data[i]);
+            _execute(id, transactions[id].data[i]);
         }
 
         transactions[id].status = Status.Completed;
-        emit ExecuteTransaction(id, transactions[id].data);
+        emit ExecuteTransaction(id, transactions[id].data, msg.sender);
     }
 
     function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute) external onlyExecutor returns (uint256) {
@@ -225,7 +225,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         return transactions[id].deadline;
     }
 
-    function _execute(bytes memory) internal virtual;
+    function _execute(uint256, bytes memory) internal virtual;
     function executeParams() public pure virtual returns (string[] memory);
     function name() external virtual returns (string memory);
 
