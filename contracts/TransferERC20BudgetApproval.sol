@@ -67,17 +67,17 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(allowAllTokens || token == _token, "Token not whitelisted in budget");
         require(allowAnyAmount || value <= totalAmount, "Exceeded max budget transferable amount");
-        require(checkAmountPercentageValid(value), "Exceeded max budget transferable percentage");
+        require(checkAmountPercentageValid(value, _token), "Exceeded max budget transferable percentage");
 
         if(!allowAnyAmount) {
             totalAmount -= value;
         }
     }
 
-    function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {
+    function checkAmountPercentageValid(uint256 amount, address _token) internal view returns (bool) {
         if (amountPercentage == 100) return true;
 
-        uint256 _totalAmount = amount + IERC20(token).balanceOf(executee);
+        uint256 _totalAmount = amount + IERC20(_token).balanceOf(executee);
         if (_totalAmount == 0) return false;
 
         return amount <= _totalAmount * amountPercentage / 100;
