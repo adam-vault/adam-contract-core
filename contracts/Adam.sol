@@ -28,6 +28,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         bool mintMemberToken;
         address baseCurrency;
         string logoCID;
+        uint256 maxMemberLimit;
     }
 
     address public feedRegistry;
@@ -107,7 +108,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         IMembership(address(_membership)).initialize(
             address(_dao),
-            params._name
+            params._name,
+            params.maxMemberLimit
         );
         ILiquidPool(payable(address(_liquidPool))).initialize(
             address(_dao),
