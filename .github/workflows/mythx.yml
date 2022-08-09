@@ -4,6 +4,9 @@ on:
     tags:    
       - 'mythx-*'
 
+env:
+  MYTHX_API_KEY: ${{ secrets.MYTHX_API_KEY }}
+
 jobs:
   mythx:
     name: MythX
