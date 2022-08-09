@@ -17,7 +17,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     using BytesLib for bytes;
 
     event AllowToToken(address token);
-    event ExecuteUniswapTransaction(uint256 id, address tokenId, address tokenOut, uint256 amountIn);
+    event ExecuteUniswapTransaction(uint256 id, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address toAddress);
 
     string public constant override name = "Uniswap Budget Approval";
 
@@ -89,7 +89,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             address tokenIn,
             address tokenOut,
             uint256 amountIn,
-            ,
+            uint256 amountOut,
             bool estimatedIn,
             bool estimatedOut
         ) = UniswapSwapper.decodeUniswapDataAfterSwap(to, executeData, value, result);
@@ -108,7 +108,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             totalAmount -= amountInBaseCurrency;
         }
 
-        emit ExecuteUniswapTransaction(transactionId, tokenIn, tokenOut, amountIn);
+        emit ExecuteUniswapTransaction(transactionId, tokenIn, tokenOut, amountIn, amountOut, Constant.UNISWAP_ROUTER);
     }
 
     function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {

@@ -24,6 +24,8 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     mapping(address => bool) public isAssetSupported;
 
     event AllowDepositToken(address token);
+    event CreateMember(address account, uint256 depositAmount);
+    event Deposit(address account, uint256 depositAmount);
 
     modifier onlyGovern(string memory category) {
         require(
@@ -153,8 +155,11 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
                 require(balance >= dao.minTokenToAdmit(), "Admission token not enough");
             }
             dao.mintMember(account);
-    }
 
+            emit CreateMember(account, amount);
+        }
+
+        emit Deposit(account, amount);
     }
 
     function _addAssets(address[] memory erc20s) internal {

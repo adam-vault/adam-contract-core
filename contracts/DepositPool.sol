@@ -34,6 +34,8 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
     event CreateToken(uint256 id, address contractAddress);
     event AllowDepositToken(uint256 id, address contractAddress);
     event DisallowDepositToken(uint256 id, address contractAddress);
+    event CreateMember(address account, uint256 depositAmount);
+    event DepositToken(address account, uint256 depositAmount);
 
     modifier onlyDao() {
         require(msg.sender == address(dao), "not dao");
@@ -164,7 +166,11 @@ contract DepositPool is Initializable, UUPSUpgradeable, ERC1155Upgradeable, Pric
                 require(balance >= dao.minTokenToAdmit(), "Admission token not enough");
             }
             dao.mintMember(account);
+
+            emit CreateMember(account, amount);
         }
+
+        emit DepositToken(account, amount);
     }
     function _authorizeUpgrade(address newImplementation) internal override initializer {}
 
