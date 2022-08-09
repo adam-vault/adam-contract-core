@@ -2,7 +2,7 @@ name: MythX Scan
 on:
   push:
     tags:    
-      - 'mythx-[0-9]'
+      - 'mythx-*'
 
 jobs:
   mythx:
