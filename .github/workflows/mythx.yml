@@ -1,0 +1,25 @@
+name: MythX Scan
+on:
+  push:
+    tags:    
+      - 'mythx-[0-9]'
+
+jobs:
+  mythx:
+    name: MythX
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3.0.0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip' # caching pip dependencies
+
+      - name: Install MythX
+        run: pip install mythx-cli
+
+      - name: Run MythX
+        run: mythx analyze --group-name AdamVault-${GITHUB_SHA::7}

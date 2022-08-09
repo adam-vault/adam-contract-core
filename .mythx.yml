@@ -1,0 +1,50 @@
+confirm: true
+
+analyze:
+    mode: standard
+    create-group: true
+    async: true
+    group-name: AdamVault
+    solc: 0.8.7
+    remappings:
+        - "@openzeppelin/=/app/node_modules/@openzeppelin/"
+        - "hardhat=/app/node_modules/hardhat"
+        - "@chainlink=/app/node_modules/@chainlink"
+    targets:
+        - /app/contracts/interface/ITransferERC721BudgetApproval.sol
+        - /app/contracts/interface/IAdam.sol
+        - /app/contracts/interface/IMembership.sol
+        - /app/contracts/interface/IDao.sol
+        - /app/contracts/interface/IGovernFactory.sol
+        - /app/contracts/interface/ITransferLiquidERC20BudgetApproval.sol
+        - /app/contracts/interface/ICommonBudgetApproval.sol
+        - /app/contracts/interface/IBudgetApprovalExecutee.sol
+        - /app/contracts/interface/ITransferERC20BudgetApproval.sol
+        - /app/contracts/interface/IUniswapBudgetApproval.sol
+        - /app/contracts/interface/IGovern.sol
+        - /app/contracts/interface/ITeam.sol
+        - /app/contracts/interface/IMemberToken.sol
+        - /app/contracts/interface/ILiquidPool.sol
+        - /app/contracts/Team.sol
+        - /app/contracts/LiquidPool.sol
+        - /app/contracts/Dao.sol
+        - /app/contracts/TransferLiquidERC20BudgetApproval.sol
+        - /app/contracts/TransferERC20BudgetApproval.sol
+        - /app/contracts/UniswapBudgetApproval.sol
+        - /app/contracts/MemberToken.sol
+        - /app/contracts/Membership.sol
+        - /app/contracts/lib/ToString.sol
+        - /app/contracts/lib/Constant.sol
+        - /app/contracts/lib/Concat.sol
+        - /app/contracts/lib/DSMath.sol
+        - /app/contracts/lib/RevertMsg.sol
+        - /app/contracts/lib/Base64.sol
+        - /app/contracts/lib/BytesLib.sol
+        - /app/contracts/dex/UniswapSwapper.sol
+        - /app/contracts/Govern.sol
+        - /app/contracts/Adam.sol
+        - /app/contracts/TransferERC721BudgetApproval.sol
+        - /app/contracts/base/PriceResolver.sol
+        - /app/contracts/base/BudgetApprovalExecutee.sol
+        - /app/contracts/base/CommonBudgetApproval.sol
+        - /app/contracts/GovernFactory.sol
