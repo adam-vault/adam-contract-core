@@ -7,9 +7,9 @@ analyze:
     group-name: AdamVault
     solc: 0.8.7
     remappings:
-        - "@openzeppelin/=/app/node_modules/@openzeppelin/"
-        - "hardhat=/app/node_modules/hardhat"
-        - "@chainlink=/app/node_modules/@chainlink"
+        - "@openzeppelin/=node_modules/@openzeppelin/"
+        - "hardhat=node_modules/hardhat"
+        - "@chainlink=node_modules/@chainlink"
     targets:
         - contracts/interface/ITransferERC721BudgetApproval.sol
         - contracts/interface/IAdam.sol
