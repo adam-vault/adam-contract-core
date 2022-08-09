@@ -25,7 +25,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
 
     event AllowDepositToken(address token);
     event CreateMember(address account, uint256 depositAmount);
-    event Deposit(address account, uint256 depositAmount);
+    event Deposit(address account, address token, uint256 depositAmount);
 
     modifier onlyGovern(string memory category) {
         require(
@@ -92,6 +92,8 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _mint(msg.sender, (assetBaseCurrencyPrice(Denominations.ETH, msg.value) * 10 ** baseCurrencyDecimals()) / (total * 10 ** baseCurrencyDecimals() / totalSupply()));
 
         _afterDeposit(msg.sender, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
+
+        emit Deposit(msg.sender, Denominations.ETH, msg.value);
     }
 
     function redeem(uint256 amount) public {
@@ -111,6 +113,8 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _mint(msg.sender, quote(assetBaseCurrencyPrice(asset, amount)));
         IERC20Metadata(asset).transferFrom(msg.sender, address(this), amount);
         _afterDeposit(msg.sender, assetBaseCurrencyPrice(asset, amount));
+
+        emit Deposit(msg.sender, asset, amount);
     }
 
     function addAssets(address[] calldata erc20s) public onlyGovern("General") {
@@ -158,8 +162,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
 
             emit CreateMember(account, amount);
         }
-
-        emit Deposit(account, amount);
     }
 
     function _addAssets(address[] memory erc20s) internal {
