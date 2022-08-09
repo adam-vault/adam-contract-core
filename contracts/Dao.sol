@@ -106,6 +106,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event CreateMemberToken(address creator, address token);
     event SetFirstDepositTime(address owner, uint256 time);
     event WhitelistTeam(uint256 tokenId);
+    event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
 
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
@@ -300,6 +301,13 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             admissionTokenSetting[tokenAddress] = AdmissionTokenSetting(
                 _admissionTokens[i].minTokenToAdmit,
                 _admissionTokens[i].tokenId
+            );
+
+            emit AddAdmissionToken(
+                _admissionTokens[i].token, 
+                _admissionTokens[i].minTokenToAdmit, 
+                _admissionTokens[i].tokenId, 
+                _admissionTokens[i].isMemberToken
             );
         }
     }
