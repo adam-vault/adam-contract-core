@@ -19,6 +19,7 @@ function getCreateDaoParams ({
   mintMemberToken = false,
   baseCurrency = ETH,
   logoCID = '',
+  maxMemberLimit = ethers.constants.MaxUint256,
 }) {
   return Object.entries({
     name,
@@ -34,6 +35,7 @@ function getCreateDaoParams ({
     mintMemberToken,
     baseCurrency,
     logoCID,
+    maxMemberLimit,
   }).map(([key, value]) => {
     return value;
   });
@@ -54,6 +56,7 @@ function getCreateTransferERC20BAParams ({
   usageCount,
   allowAllAddresses = false,
   toAddresses,
+  allowAllTokens = false,
   token,
   allowAnyAmount = false,
   totalAmount = '100',
@@ -78,6 +81,7 @@ function getCreateTransferERC20BAParams ({
     }),
     allowAllAddresses,
     toAddresses,
+    allowAllTokens,
     token,
     allowAnyAmount,
     totalAmount,
@@ -202,6 +206,7 @@ function getCreateTransferERC721BAParams ({
   usageCount = 10,
   allowAllAddresses = false,
   toAddresses = [],
+  allowAllTokens = false,
   tokens = [],
   allowAnyAmount = false,
   totalAmount = 10,
@@ -225,6 +230,7 @@ function getCreateTransferERC721BAParams ({
     }),
     allowAllAddresses,
     toAddresses,
+    allowAllTokens,
     tokens,
     allowAnyAmount,
     totalAmount,

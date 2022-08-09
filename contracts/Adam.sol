@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -28,6 +28,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         bool mintMemberToken;
         address baseCurrency;
         string logoCID;
+        uint256 maxMemberLimit;
     }
 
     address public feedRegistry;
@@ -107,7 +108,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         IMembership(address(_membership)).initialize(
             address(_dao),
-            params._name
+            params._name,
+            params.maxMemberLimit
         );
         ILiquidPool(payable(address(_liquidPool))).initialize(
             address(_dao),

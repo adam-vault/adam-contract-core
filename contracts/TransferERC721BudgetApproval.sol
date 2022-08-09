@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
@@ -15,6 +15,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
+    bool public allowAllTokens;
     address[] public tokens;
     mapping(address => bool) public tokensMapping;
     bool public allowAnyAmount;
@@ -24,6 +25,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         InitializeParams calldata params,
         bool _allowAllAddresses,
         address[] memory _toAddresses,
+        bool _allowAllTokens,
         address[] memory _tokens,
         bool _allowAnyAmount,
         uint256 _totalAmount
@@ -35,6 +37,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
             _addToAddress(_toAddresses[i]);
         }
 
+        allowAllTokens = _allowAllTokens;
         for(uint i = 0; i < _tokens.length; i++) {
             _addToken(_tokens[i]);
         }
@@ -61,7 +64,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
 
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
-        require(tokensMapping[token], "Token not whitelisted in budget");
+        require(allowAllTokens || tokensMapping[token], "Token not whitelisted in budget");
         require(allowAnyAmount || 1 <= totalAmount, "Exceeded max budget transferable amount");
 
         if(!allowAnyAmount) {
