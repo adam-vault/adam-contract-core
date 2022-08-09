@@ -40,7 +40,7 @@ task('deploy', 'Fast Deploy Contract', async (taskArgs, hre) => {
 module.exports = {
   defaultNetwork: 'hardhat',
   solidity: {
-    version: '0.8.4',
+    version: '0.8.7',
     settings: {
       outputSelection: {
         '*': {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/draft-ERC721VotesUpgradeable.sol";
@@ -68,7 +68,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     function _beforeTokenTransfer(
       address from,
       address to,
-      uint256 tokenId
+      uint256
     ) internal override {
       if (from != address(0) && to != address(0)) {
 			  revert("Membership: Transfer of membership is aboundand");
