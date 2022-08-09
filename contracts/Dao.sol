@@ -30,7 +30,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address _membership;
         address _liquidPool;
         address _depositPool;
-        address _admissionToken;
         address _governFactory;
         address _team;
         address _memberTokenImplementation;
@@ -44,13 +43,25 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         DaoSetting daoSetting;
         address[] depositTokens;
         bool mintMemberToken;
+        AdmissionToken[3] admissionTokens;
         address baseCurrency;
         string logoCID;
     }
 
+    struct AdmissionToken {
+        address token;
+        uint256 minTokenToAdmit;
+        uint256 tokenId;
+        bool isMemberToken;
+    }
+
+    struct AdmissionTokenSetting{
+        uint256 minTokenToAdmit;
+        uint256 tokenId;
+    }
+
     struct DaoSetting {
         uint256 minDepositAmount;
-        uint256 minTokenToAdmit;
     }
 
     enum VoteType {
@@ -67,20 +78,20 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public liquidPool;
     address public depositPool;
     address public governFactory;
-    address public admissionToken;
     address public memberTokenImplementation;
     address public optInPoolImplementation;
     string public name;
     uint256 public locktime;
     uint256 public minDepositAmount;
-    uint256 public minTokenToAdmit;
     address public baseCurrency;
     string public logoCID;
+    address[] public admissionTokens;
     
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
     mapping(address => bool) public isOptInPool;
     mapping(uint256 => bool) public teamWhitelist;
+    mapping(address => AdmissionTokenSetting) public admissionTokenSetting;
 
     event CreateOptInPool(address optInPool);
     event AllowDepositToken(address token);
@@ -101,24 +112,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         memberTokenImplementation = params._memberTokenImplementation;
         optInPoolImplementation = params._optInPoolImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
-        minTokenToAdmit = params.daoSetting.minTokenToAdmit;
         baseCurrency = params.baseCurrency;
         logoCID = params.logoCID;
 
         if (params.mintMemberToken) {
             // tokenInfo: [name, symbol]
             _createMemberToken(params.tokenInfo, params.tokenAmount);
-        }
-
-        if(params._admissionToken == address(0)){
-            admissionToken = memberToken;
-        } else {
-            require(params._admissionToken.isContract(), "Admission Token not Support!");
-            bytes4 sector = bytes4(keccak256("balanceOf(address)"));
-            bytes memory data = abi.encodeWithSelector(sector, msg.sender);
-            (bool success,) = params._admissionToken.call(data);
-            require(success, "Admission Token not Support!");
-            admissionToken = params._admissionToken;
         }
 
         uint256[] memory w = new uint256[](1);
@@ -133,6 +132,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             params.generalGovernSetting[3]
         );
 
+        _setAdmissionToken(params.admissionTokens);
         _mintMember(creator);
         _addAssets(params.depositTokens);
 
@@ -207,7 +207,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("General") {
         minDepositAmount = _setting.minDepositAmount;
-        minTokenToAdmit = _setting.minTokenToAdmit;
     }
 
     function createGovern(
@@ -282,6 +281,21 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         _mintMemberToken(tokenAmount);
 
         emit CreateMemberToken(msg.sender, memberToken);
+    }
+
+    function _setAdmissionToken( AdmissionToken[3] memory _admissionTokens) internal {
+        require(admissionTokens.length <= 3, "Admission Token length too long." );
+
+        for(uint i = 0 ; i < _admissionTokens.length ; i++){
+            address tokenAddress = _admissionTokens[i].isMemberToken ? memberToken : _admissionTokens[i].token;
+            require(tokenAddress.isContract(), "Admission Token not Support!");
+
+            admissionTokens.push(tokenAddress);
+            admissionTokenSetting[tokenAddress] = AdmissionTokenSetting(
+                _admissionTokens[i].minTokenToAdmit,
+                _admissionTokens[i].tokenId
+            );
+        }
     }
 
     function _createGovern(
