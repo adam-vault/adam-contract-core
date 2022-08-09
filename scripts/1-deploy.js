@@ -71,8 +71,6 @@ async function main () {
   const Membership = await hre.ethers.getContractFactory('Membership');
   const Adam = await hre.ethers.getContractFactory('Adam');
   const LiquidPool = await hre.ethers.getContractFactory('LiquidPool');
-  const DepositPool = await hre.ethers.getContractFactory('DepositPool');
-  const OptInPool = await hre.ethers.getContractFactory('OptInPool');
   const MemberToken = await hre.ethers.getContractFactory('MemberToken');
 
   const dao = await Dao.deploy();
@@ -87,22 +85,12 @@ async function main () {
   await liquidPool.deployed();
   console.log(`Deployed LiquidPool ${liquidPool.address}`);
 
-  const depositPool = await DepositPool.deploy();
-  await depositPool.deployed();
-  console.log(`Deployed DepositPool ${depositPool.address}`);
-
-  const optInPool = await OptInPool.deploy();
-  await optInPool.deployed();
-  console.log(`Deployed OptInPool ${optInPool.address}`);
-
   const memberToken = await MemberToken.deploy();
   await memberToken.deployed();
   console.log(`Deployed MemberToken ${memberToken.address}`);
 
   const adam = await hre.upgrades.deployProxy(Adam, [
     dao.address, membership.address, liquidPool.address, memberToken.address,
-    depositPool.address,
-    optInPool.address,
     budgetApprovalsAddress, governInfo[0],
     NETWORK_CONSTANTS.FEED_REGISTRY,
     team,
