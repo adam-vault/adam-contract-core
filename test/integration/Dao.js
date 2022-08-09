@@ -18,29 +18,18 @@ describe('Integration - Dao', function () {
     it('should not create Dao when set EOA address as admission token', async function () {
       await expect(adam.createDao(
         paramsStruct.getCreateDaoParams({
-          minTokenToAdmit: 50,
           mintMemberToken: true,
-          admissionToken: await creator.getAddress(),
+          admissionTokens: [[await creator.getAddress(), 50, 0, false]],
         }),
       )).to.be.revertedWith('Admission Token not Support!');
     });
     it('can create Dao when set zero address (member token) as admission token', async function () {
       await expect(adam.createDao(
         paramsStruct.getCreateDaoParams({
-          minTokenToAdmit: 50,
           mintMemberToken: true,
-          admissionToken: ethers.constants.AddressZero,
+          admissionTokens: [[ethers.constants.AddressZero, 50, 0, true]],
         }),
       )).to.not.be.reverted;
-    });
-    it('should not create Dao when set a contract without needed function as admission token', async function () {
-      await expect(adam.createDao(
-        paramsStruct.getCreateDaoParams({
-          minTokenToAdmit: 50,
-          mintMemberToken: true,
-          admissionToken: adam.address,
-        }),
-      )).to.be.revertedWith('Admission Token not Support!');
     });
   });
 
@@ -98,8 +87,7 @@ describe('Integration - Dao', function () {
       tokenC721 = (await createTokens()).tokenC721;
       const tx1 = await adam.createDao(
         paramsStruct.getCreateDaoParams({
-          minTokenToAdmit: 1,
-          admissionToken: tokenC721.address,
+          admissionTokens: [[tokenC721.address, 1, 0, false]],
         }),
       );
       const receipt = await tx1.wait();
@@ -134,8 +122,7 @@ describe('Integration - Dao', function () {
       tokenA = (await createTokens()).tokenA;
       const tx1 = await adam.createDao(
         paramsStruct.getCreateDaoParams({
-          minTokenToAdmit: 1,
-          admissionToken: tokenA.address,
+          admissionTokens: [[tokenA.address, 1, 0, false]],
         }),
       );
       const receipt = await tx1.wait();
@@ -169,9 +156,8 @@ describe('Integration - Dao', function () {
       adam = await createAdam();
       const tx1 = await adam.createDao(
         paramsStruct.getCreateDaoParams({
-          minTokenToAdmit: 50,
           mintMemberToken: true,
-          admissionToken: ethers.constants.AddressZero,
+          admissionTokens: [[ethers.constants.AddressZero, 50, 0, true]],
         }),
       );
 

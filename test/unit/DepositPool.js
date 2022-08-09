@@ -39,8 +39,7 @@ describe('DepositPool.sol', function () {
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
-    await dao.setAdmissionToken(memberToken.address);
-    await dao.setMinTokenToAdmit(0);
+    await dao.setIsPassAdmissionToken(true);
     dp = await upgrades.deployProxy(DepositPool, [dao.address, [token.address, ADDRESS_ETH], ADDRESS_ETH], { kind: 'uups' });
 
     dpAsSigner1 = dp.connect(signer1);
@@ -127,42 +126,16 @@ describe('DepositPool.sol', function () {
       expect(await dp.balanceOf(signer2.address, await dpAsSigner1.idOf(ADDRESS_ETH))).to.eq(parseEther('1.9'));
     });
 
-    it('can deposit twice if not deposit before', async function () {
-      expect(await dao.isMember(signer1.address)).to.eq(false);
-      expect(await dao.firstDepositTime(signer1.address)).to.eq(0);
-
-      await dpAsSigner1.deposit({ value: parseEther('1') });
-      await dpAsSigner1.deposit({ value: parseEther('1') });
-      expect(await dao.isMember(signer1.address)).to.eq(true);
-      expect(await dao.firstDepositTime(signer1.address)).to.not.eq(0);
-    });
-
-    it('can deposit if already is a member', async function () {
-      await dao.mintMember(signer1.address);
-      expect(await dao.isMember(signer1.address)).to.eq(true);
-      expect(await dao.firstDepositTime(signer1.address)).to.eq(0);
-
-      await dpAsSigner1.deposit({ value: parseEther('1') });
-      expect(await dao.isMember(signer1.address)).to.eq(true);
-      expect(await dao.firstDepositTime(signer1.address)).to.not.eq(0);
-    });
-
     it('can deposit if meet minDeposit amount & minTokenToJoin', async function () {
-      await dao.setMinTokenToAdmit(parseEther('1'));
       await dao.setMinDepositAmount(parseEther('1'));
-      await memberToken.mint(signer1.address, parseEther('1'));
       await expect(dpAsSigner1.deposit({ value: parseEther('1') })).to.not.be.reverted;
     });
     it('can not deposit if not meet minDeposit amount', async function () {
-      await dao.setMinTokenToAdmit(parseEther('1'));
-      await dao.setMinDepositAmount(parseEther('1'));
-      await memberToken.mint(signer1.address, parseEther('1'));
+      await dao.setIsPassDepositAmount(false);
       await expect(dpAsSigner1.deposit({ value: parseEther('0.99') })).to.be.revertedWith('deposit amount not enough');
     });
     it('can not deposit if not meet minTokenToAdmit amount', async function () {
-      await dao.setMinTokenToAdmit(parseEther('1'));
-      await dao.setMinDepositAmount(parseEther('1'));
-      await memberToken.mint(signer1.address, parseEther('0.99'));
+      await dao.setIsPassAdmissionToken(false);
       await expect(dpAsSigner1.deposit({ value: parseEther('1') })).to.be.revertedWith('Admission token not enough');
     });
   });
@@ -170,6 +143,7 @@ describe('DepositPool.sol', function () {
   describe('depositToken()', function () {
     it('mint 1 dp if deposit 1 TOKEN (price: 0; totalSupply: 0)', async function () {
       await tokenAsSigner1.approve(dp.address, parseEther('1'));
+      await dao.setIsPassAdmissionToken(true);
       await dpAsSigner1.depositToken(token.address, parseEther('1'));
       expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('1'));
     });
@@ -288,12 +262,14 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
   describe('depositToken()', function () {
     it('mint 1 dp if deposit 1 TOKEN (price: 0; totalSupply: 0)', async function () {
       await tokenAsSigner1.approve(dp.address, parseEther('1'));
+      await dao.setIsPassAdmissionToken(true);
       await dpAsSigner1.depositToken(token.address, parseEther('1'));
       expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('1'));
     });
 
     it('mint 1.9 dp for 1.9 TOKEN (price: 1.9; totalSupply: 1.9)', async function () {
       await tokenAsSigner1.approve(dp.address, parseEther('0.1'));
+      await dao.setIsPassAdmissionToken(true);
       await dpAsSigner1.depositToken(token.address, parseEther('0.1'));
 
       await tokenAsSigner2.approve(dp.address, parseEther('1.9'));
@@ -305,6 +281,7 @@ describe('DepositPool.sol - one ERC20 asset only', function () {
   describe('withdraw()', function () {
     it('burn 1 dp and withdraw 1 token (totalSupply: 1)', async function () {
       await tokenAsSigner1.approve(dp.address, parseEther('1'));
+      await dao.setIsPassAdmissionToken(true);
       await dpAsSigner1.depositToken(token.address, parseEther('1'));
 
       expect(await dp.balanceOf(signer1.address, await dpAsSigner1.idOf(token.address))).to.eq(parseEther('1'));
