@@ -1,7 +1,7 @@
 const hre = require('hardhat');
 const fileReader = require('../utils/fileReader');
 const paramsStruct = require('../utils/paramsStruct');
-const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
+const deploymentResult = fileReader.load('deploy-results/results.json', 'utf8');
 const findEventArgs = require('../utils/findEventArgs');
 
 console.log(deploymentResult);

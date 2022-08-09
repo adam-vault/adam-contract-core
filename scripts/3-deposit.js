@@ -1,6 +1,6 @@
 const hre = require('hardhat');
 const fileReader = require('../utils/fileReader');
-const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
+const deploymentResult = fileReader.load('deploy-results/results.json', 'utf8');
 
 // rinkeby
 const daoAddress = deploymentResult.initdata_addresses.daos[0].address;

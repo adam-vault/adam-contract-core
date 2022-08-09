@@ -24,4 +24,4 @@ build
 .openzeppelin
 
 #Deploy result
-deploy/*
+deploy-results/results.json

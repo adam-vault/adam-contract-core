@@ -7,7 +7,7 @@ const {
   getCreateTransferERC20BAParams,
 } = require('../utils/paramsStruct');
 
-const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
+const deploymentResult = fileReader.load('deploy-results/results.json', 'utf8');
 const deployNetwork = deploymentResult.network;
 const {
   ETH_ADDRESS, DAI_ADDRESS,
