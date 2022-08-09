@@ -21,7 +21,7 @@ interface IDao {
         DaoSetting daoSetting;
         address[] depositTokens;
         bool mintMemberToken;
-        AdmissionToken[3] admissionTokens;
+        AdmissionToken[] admissionTokens;
         address baseCurrency;
         string logoCID;
     }
@@ -57,6 +57,8 @@ interface IDao {
         returns (uint256 minTokenToAdmit, uint256 tokenId);
 
     function admissionTokens(uint256) external view returns (address);
+
+    function afterDeposit(address account, uint256 amount) external;
 
     function baseCurrency() external view returns (address);
 
@@ -124,6 +126,8 @@ interface IDao {
     function isMember(address account) external view returns (bool);
 
     function isOptInPool(address) external view returns (bool);
+
+    function isPassAdmissionToken(address account) external view returns (bool);
 
     function liquidPool() external view returns (address);
 

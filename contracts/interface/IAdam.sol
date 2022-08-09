@@ -13,7 +13,7 @@ interface IAdam {
         uint256 minDepositAmount;
         address[] depositTokens;
         bool mintMemberToken;
-        IIDao.AdmissionToken[3] admissionTokens;
+        IIDao.AdmissionToken[] admissionTokens;
         address baseCurrency;
         string logoCID;
         uint256 maxMemberLimit;

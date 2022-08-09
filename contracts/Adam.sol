@@ -24,7 +24,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 minDepositAmount;
         address[] depositTokens;
         bool mintMemberToken;
-        IDao.AdmissionToken[3] admissionTokens;
+        IDao.AdmissionToken[] admissionTokens;
         address baseCurrency;
         string logoCID;
         uint256 maxMemberLimit;
