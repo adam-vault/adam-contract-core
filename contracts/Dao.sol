@@ -100,6 +100,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event SetFirstDepositTime(address owner, uint256 time);
     event WhitelistTeam(uint256 tokenId);
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
+    event CreateMember(address account, uint256 depositAmount);
 
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
@@ -306,6 +307,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             }
             require(isPassAdmissionToken(account), "Admission token not enough");
             mintMember(account);
+
+            emit CreateMember(account, amount);
         }
     }
 

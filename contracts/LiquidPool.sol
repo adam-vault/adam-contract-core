@@ -24,6 +24,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     mapping(address => bool) public isAssetSupported;
 
     event AllowDepositToken(address token);
+    event Deposit(address account, address token, uint256 depositAmount);
 
     modifier onlyGovern(string memory category) {
         require(
@@ -89,7 +90,9 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         uint256 total = totalPrice() - assetBaseCurrencyPrice(Denominations.ETH, msg.value);
         _mint(receiver, (assetBaseCurrencyPrice(Denominations.ETH, msg.value) * 10 ** baseCurrencyDecimals()) / (total * 10 ** baseCurrencyDecimals() / totalSupply()));
 
-        _afterDeposit(receiver, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
+        _afterDeposit(msg.sender, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
+
+        emit Deposit(msg.sender, Denominations.ETH, msg.value);
     }
 
     function redeem(uint256 amount) public {
@@ -108,7 +111,9 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
 
         _mint(receiver, quote(assetBaseCurrencyPrice(asset, amount)));
         IERC20Metadata(asset).transferFrom(msg.sender, address(this), amount);
-        _afterDeposit(receiver, assetBaseCurrencyPrice(asset, amount));
+        _afterDeposit(msg.sender, assetBaseCurrencyPrice(asset, amount));
+
+        emit Deposit(msg.sender, asset, amount);
     }
 
     function addAssets(address[] calldata erc20s) public onlyGovern("General") {
@@ -136,7 +141,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     }
     
     function _afterDeposit(address account, uint256 amount) private {
-        dao.afterDeposit(account, amount);
+      dao.afterDeposit(account, amount);
     }
 
     function _addAssets(address[] memory erc20s) internal {
