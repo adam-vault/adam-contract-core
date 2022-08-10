@@ -81,7 +81,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         bytes memory data
     ) internal override {
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
-        require(to == Constant.UNISWAP_ROUTER, "Invalid Uniswap address");
+        require(to == Constant.UNISWAP_ROUTER || to == Constant.WETH_ADDRESS, "Invalid Uniswap address or WETH address");
 
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
 
