@@ -246,13 +246,13 @@ describe('Integration - Dao', function () {
     });
 
     it('should be able to join dao when limit not exceed', async function () { // todo: need to create another test case for non DAO creator
-      await lp.deposit({ value: 100 });
+      await lp.deposit(creator.address, { value: 100 });
       expect(await membership.totalSupply()).to.equal(1);
     });
 
     it('should not be able to join dao when limit exceed', async function () {
-      await lp.deposit({ value: 100 });
-      await expect(lp.connect(member).deposit({ value: 1 })).to.revertedWith('member count exceed limit');
+      await lp.deposit(creator.address, { value: 100 });
+      await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.revertedWith('member count exceed limit');
     });
   });
 });
