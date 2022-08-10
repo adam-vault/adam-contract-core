@@ -5,8 +5,12 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
@@ -19,11 +23,15 @@ import "./interface/IBudgetApprovalExecutee.sol";
 import "./interface/ITeam.sol";
 
 import "./lib/Concat.sol";
+import "./lib/InterfaceChecker.sol";
+
+import "hardhat/console.sol";
 
 contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
     using Address for address;
-    
+    using InterfaceChecker for address;
+
     struct InitializeParams {
         address _creator;
         address _membership;
@@ -40,7 +48,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         DaoSetting daoSetting;
         address[] depositTokens;
         bool mintMemberToken;
-        AdmissionToken[3] admissionTokens;
+        AdmissionToken[] admissionTokens;
         address baseCurrency;
         string logoCID;
     }
@@ -247,18 +255,49 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         emit CreateMemberToken(msg.sender, memberToken);
     }
 
-    function _setAdmissionToken( AdmissionToken[3] memory _admissionTokens) internal {
-        require(admissionTokens.length <= 3, "Admission Token length too long." );
-
+    function _setAdmissionToken( AdmissionToken[] memory _admissionTokens) internal {
+        require(_admissionTokens.length <= 3, "Admission Token length too long." );
         for(uint i = 0 ; i < _admissionTokens.length ; i++){
             address tokenAddress = _admissionTokens[i].isMemberToken ? memberToken : _admissionTokens[i].token;
             require(tokenAddress.isContract(), "Admission Token not Support!");
-
             admissionTokens.push(tokenAddress);
             admissionTokenSetting[tokenAddress] = AdmissionTokenSetting(
                 _admissionTokens[i].minTokenToAdmit,
                 _admissionTokens[i].tokenId
             );
+        }
+    }
+
+    function isPassAdmissionToken(address account) public view returns (bool){
+        for (uint i = 0; i < admissionTokens.length; i++){
+            address token = admissionTokens[i];
+            if(admissionTokenSetting[token].minTokenToAdmit > 0 ){
+                uint256 balance;
+                if(token.isERC721()){
+                    balance = IERC721(token).balanceOf(account);
+                }else if(token.isERC1155()){
+                    balance = IERC1155(token).balanceOf(account, admissionTokenSetting[token].tokenId);
+                }else if(token.isERC20()){
+                    balance = IERC20(token).balanceOf(account);
+                }
+                if(balance < admissionTokenSetting[token].minTokenToAdmit){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function afterDeposit(address account, uint256 amount) public {
+        if (firstDepositTime[account] == 0) {
+            setFirstDepositTime(account);
+            require(amount >= minDepositAmount, "deposit amount not enough");
+            
+            if (isMember(account)) {
+                return;
+            }
+            require(isPassAdmissionToken(account), "Admission token not enough");
+            mintMember(account);
         }
     }
 
