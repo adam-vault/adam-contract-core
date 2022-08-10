@@ -28,6 +28,10 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 		_;
 	}
 
+  function initialize() public initializer {
+    __ERC1155_init("");
+  }
+
 	function _beforeTokenTransfer(
 			address,
 			address from,
