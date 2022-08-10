@@ -8,7 +8,7 @@ function save (directory, fileName, results) {
   if (!fs.existsSync(directory)) {
     fs.mkdirSync(directory);
   }
-  fs.writeFileSync(`${directory}/${fileName}`, JSON.stringify(results));
+  fs.writeFileSync(`${directory}/${fileName}`, JSON.stringify(results, null, 2));
 };
 
 module.exports = {
