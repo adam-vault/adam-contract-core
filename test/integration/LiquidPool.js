@@ -115,7 +115,30 @@ describe('LiquidPool.sol', function () {
 
     it('deposit success if admission token enough', async function () {
       await tokenD1155.mint(signer.address, 0, 1, 0);
-      console.log(await tokenD1155.balanceOf(signer.address, 0));
+      await expect(lp.connect(signer).deposit(signer.address, { value: 1 })).to.not.be.reverted;
+    });
+  });
+
+  describe('Member Token As Single Admission Token Require ', function () {
+    beforeEach(async function () {
+      const tx1 = await adam.createDao(
+        paramsStruct.getCreateDaoParams({
+          admissionTokens: [[ethers.constants.AddressZero, 1, 0, true]],
+          mintMemberToken: true,
+        }),
+      );
+      const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
+      dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+      lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+    });
+
+    it('deposit fail if admission token not enough', async function () {
+      await expect(lp.connect(signer).deposit(signer.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+    });
+
+    it('deposit success if admission token enough', async function () {
+      await dao.exposedMintMemberToken(1);
+      await dao.exposedTransferMemberToken(signer.address, 1);
       await expect(lp.connect(signer).deposit(signer.address, { value: 1 })).to.not.be.reverted;
     });
   });
