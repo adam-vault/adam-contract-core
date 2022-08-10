@@ -250,7 +250,7 @@ function getCreateCommonBudgetApprovalParams ({
   endTime = Math.round(Date.now() / 1000) + 86400,
   allowUnlimitedUsageCount = false,
   usageCount = 10,
-  team,
+  team = ethers.constants.AddressZero,
 }) {
   return Object.entries({
     dao,
