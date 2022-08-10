@@ -144,8 +144,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
       dao.afterDeposit(account, amount);
     }
 
-    }
-
     function _addAssets(address[] memory erc20s) internal {
         for (uint256 i = 0; i < erc20s.length; i++) {
             _addAsset(erc20s[i]);
