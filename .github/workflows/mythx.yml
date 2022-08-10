@@ -1,0 +1,36 @@
+name: MythX Scan
+on:
+  push:
+    tags:    
+      - 'mythx-*'
+
+env:
+  MYTHX_API_KEY: ${{ secrets.MYTHX_API_KEY }}
+
+jobs:
+  mythx:
+    name: MythX
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3.0.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+      
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install MythX
+        run: pip install mythx-cli
+
+      - name: Run MythX
+        run: mythx analyze --group-name AdamVault-${GITHUB_SHA::7}
