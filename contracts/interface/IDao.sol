@@ -35,6 +35,12 @@ interface IDao {
         bool isMemberToken;
     }
 
+    event AddAdmissionToken(
+        address token,
+        uint256 minTokenToAdmit,
+        uint256 tokenId,
+        bool isMemberToken
+    );
     event AdminChanged(address previousAdmin, address newAdmin);
     event AllowDepositToken(address token);
     event BeaconUpgraded(address indexed beacon);
