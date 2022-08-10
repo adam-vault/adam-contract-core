@@ -154,8 +154,8 @@ describe('Govern.sol', function () {
         const membershipAddr = await dao.membership();
         const membership = await ethers.getContractAt('Membership', membershipAddr);
 
-        await (lp.connect(owner1)).deposit({ value: ethers.utils.parseEther('1') });
-        await (lp.connect(owner2)).deposit({ value: ethers.utils.parseEther('2') });
+        await (lp.connect(owner1)).deposit(owner1.address, { value: ethers.utils.parseEther('1') });
+        await (lp.connect(owner2)).deposit(owner2.address, { value: ethers.utils.parseEther('2') });
         expect(await membership.balanceOf(owner1.address)).to.eq(1);
 
         expect(await membership.getVotes(owner1.address)).to.eq(1);
@@ -211,9 +211,9 @@ describe('Govern.sol', function () {
         const membershipAddr = await dao.membership();
         const membership = await ethers.getContractAt('Membership', membershipAddr);
 
-        await lp.connect(owner1).deposit({ value: ethers.utils.parseEther('1') });
+        await lp.connect(owner1).deposit(owner1.address, { value: ethers.utils.parseEther('1') });
 
-        await lp.connect(owner2).deposit({ value: ethers.utils.parseEther('2') });
+        await lp.connect(owner2).deposit(owner2.address, { value: ethers.utils.parseEther('2') });
 
         expect(await membership.getVotes(owner1.address)).to.eq(1);
         expect(await membership.getVotes(owner2.address)).to.eq(1);

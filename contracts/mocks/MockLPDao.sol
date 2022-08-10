@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 
 contract MockLPDao {
     uint256 public locktime;
@@ -7,9 +7,11 @@ contract MockLPDao {
     uint256 public minTokenToAdmit;
     address public memberToken;
     address public admissionToken;
+    address public team;
+    bool public _isPassAdmissionToken = true;
+    bool public _isPassDepositAmount = true;
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isMember;
-    mapping(address => bool) public isOptInPool;
 
     function byPassGovern(address) public pure returns (bool) {
         return true;
@@ -23,8 +25,15 @@ contract MockLPDao {
     function setMemberToken(address mt) public {
         memberToken = mt;
     }
-    function setAdmissionToken(address at) public {
-        admissionToken = at;
+    function setIsPassAdmissionToken(bool ipat) public{
+        _isPassAdmissionToken = ipat;
+    }
+    function setIsPassDepositAmount(bool ipda) public{
+        _isPassDepositAmount = ipda;
+    }
+    function afterDeposit(address, uint256) public view {
+        require(_isPassAdmissionToken, "Admission token not enough");
+        require(_isPassDepositAmount, "deposit amount not enough");
     }
     function setMinDepositAmount(uint256 amount) public {
         minDepositAmount = amount;
@@ -32,13 +41,13 @@ contract MockLPDao {
     function setFirstDepositTime(address account) public {
         firstDepositTime[account] = block.timestamp;
     } 
-    function setMinTokenToAdmit(uint256 amount) public {
-        minTokenToAdmit = amount;
-    }
     function canCreateBudgetApproval(address) public pure returns (bool) {
         return true;
     } 
     function mintMember(address account) public {
         isMember[account] = true;
-    } 
+    }
+    function setTeam(address _team) public {
+      team = _team;
+    }
 }

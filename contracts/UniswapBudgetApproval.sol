@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
@@ -17,6 +17,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     using BytesLib for bytes;
 
     event AllowToToken(address token);
+    event ExecuteUniswapTransaction(uint256 id, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address toAddress);
 
     string public constant override name = "Uniswap Budget Approval";
 
@@ -76,10 +77,11 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     }
 
     function _execute(
+        uint256 transactionId, 
         bytes memory data
     ) internal override {
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
-        require(to == Constant.UNISWAP_ROUTER, "Invalid Uniswap address");
+        require(to == Constant.UNISWAP_ROUTER || to == Constant.WETH_ADDRESS, "Invalid Uniswap address or WETH address");
 
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
 
@@ -87,7 +89,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             address tokenIn,
             address tokenOut,
             uint256 amountIn,
-            ,
+            uint256 amountOut,
             bool estimatedIn,
             bool estimatedOut
         ) = UniswapSwapper.decodeUniswapDataAfterSwap(to, executeData, value, result);
@@ -105,6 +107,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         if(!allowAnyAmount) {
             totalAmount -= amountInBaseCurrency;
         }
+
+        emit ExecuteUniswapTransaction(transactionId, tokenIn, tokenOut, amountIn, amountOut, Constant.UNISWAP_ROUTER);
     }
 
     function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {

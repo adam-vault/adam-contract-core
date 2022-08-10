@@ -1,0 +1,50 @@
+confirm: true
+
+analyze:
+    mode: standard
+    create-group: true
+    async: true
+    group-name: AdamVault
+    solc: 0.8.7
+    remappings:
+        - "@openzeppelin/=node_modules/@openzeppelin/"
+        - "hardhat=node_modules/hardhat"
+        - "@chainlink=node_modules/@chainlink"
+    targets:
+        - contracts/interface/ITransferERC721BudgetApproval.sol
+        - contracts/interface/IAdam.sol
+        - contracts/interface/IMembership.sol
+        - contracts/interface/IDao.sol
+        - contracts/interface/IGovernFactory.sol
+        - contracts/interface/ITransferLiquidERC20BudgetApproval.sol
+        - contracts/interface/ICommonBudgetApproval.sol
+        - contracts/interface/IBudgetApprovalExecutee.sol
+        - contracts/interface/ITransferERC20BudgetApproval.sol
+        - contracts/interface/IUniswapBudgetApproval.sol
+        - contracts/interface/IGovern.sol
+        - contracts/interface/ITeam.sol
+        - contracts/interface/IMemberToken.sol
+        - contracts/interface/ILiquidPool.sol
+        - contracts/Team.sol
+        - contracts/LiquidPool.sol
+        - contracts/Dao.sol
+        - contracts/TransferLiquidERC20BudgetApproval.sol
+        - contracts/TransferERC20BudgetApproval.sol
+        - contracts/UniswapBudgetApproval.sol
+        - contracts/MemberToken.sol
+        - contracts/Membership.sol
+        - contracts/lib/ToString.sol
+        - contracts/lib/Constant.sol
+        - contracts/lib/Concat.sol
+        - contracts/lib/DSMath.sol
+        - contracts/lib/RevertMsg.sol
+        - contracts/lib/Base64.sol
+        - contracts/lib/BytesLib.sol
+        - contracts/dex/UniswapSwapper.sol
+        - contracts/Govern.sol
+        - contracts/Adam.sol
+        - contracts/TransferERC721BudgetApproval.sol
+        - contracts/base/PriceResolver.sol
+        - contracts/base/BudgetApprovalExecutee.sol
+        - contracts/base/CommonBudgetApproval.sol
+        - contracts/GovernFactory.sol

@@ -62,6 +62,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           endTime,
           minApproval: 1,
           totalAmount: parseEther('100'),
+          team: await adam.team(),
         }),
       );
 
@@ -130,6 +131,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           endTime,
           minApproval: 1,
           totalAmount: parseEther('100'),
+          team: await adam.team(),
         }),
       );
 

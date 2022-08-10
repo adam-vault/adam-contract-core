@@ -10,7 +10,7 @@ jobs:
     uses: ./.github/workflows/reusable-deploy-contracts.yml
     with:
       GIT_REF: ${{ github.ref_name }}
-      CONTRACT_DEPLOY_NETWORK: kovan
+      CONTRACT_DEPLOY_NETWORK: rinkeby
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       RINKEBY_URL: ${{ secrets.RINKEBY_URL }}

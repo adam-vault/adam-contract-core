@@ -13,6 +13,7 @@
   "function balanceOfBatch(address[] accounts, uint256[] ids) view returns (uint256[])",
   "function creatorOf(uint256) view returns (address)",
   "function descriptionOf(uint256) view returns (string)",
+  "function initialize()",
   "function isApprovedForAll(address account, address operator) view returns (bool)",
   "function minterOf(uint256) view returns (address)",
   "function nameOf(uint256) view returns (string)",

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 
 library Constant {
     address public constant WETH_ADDRESS = 0xc778417E063141139Fce010982780140Aa0cD5Ab;

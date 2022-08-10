@@ -13,12 +13,12 @@ function getCreateDaoParams ({
   tokenInfo = [`${faker.company.companyName()}Token`, 'MT'],
   tokenAmount = 100,
   minDepositAmount = 0,
-  minTokenToAdmit = 0,
-  admissionToken = ethers.constants.AddressZero,
   depositTokens = [ETH],
   mintMemberToken = false,
+  admissionTokens = [],
   baseCurrency = ETH,
   logoCID = '',
+  maxMemberLimit = ethers.constants.MaxUint256,
 }) {
   return Object.entries({
     name,
@@ -28,12 +28,12 @@ function getCreateDaoParams ({
     tokenInfo,
     tokenAmount,
     minDepositAmount,
-    minTokenToAdmit,
-    admissionToken,
     depositTokens,
     mintMemberToken,
+    admissionTokens,
     baseCurrency,
     logoCID,
+    maxMemberLimit,
   }).map(([key, value]) => {
     return value;
   });
@@ -42,7 +42,9 @@ function getCreateDaoParams ({
 function getCreateTransferERC20BAParams ({
   dao,
   executor,
+  executorTeamId,
   approvers,
+  approverTeamId,
   minApproval,
   text = 'Transfer Illiquid Token',
   transactionType = 'outflow',
@@ -52,16 +54,20 @@ function getCreateTransferERC20BAParams ({
   usageCount,
   allowAllAddresses = false,
   toAddresses,
+  allowAllTokens = false,
   token,
   allowAnyAmount = false,
   totalAmount = '100',
   amountPercentage = '10',
+  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
       dao,
       executor,
+      executorTeamId,
       approvers,
+      approverTeamId,
       minApproval,
       text,
       transactionType,
@@ -69,9 +75,11 @@ function getCreateTransferERC20BAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
+      team,
     }),
     allowAllAddresses,
     toAddresses,
+    allowAllTokens,
     token,
     allowAnyAmount,
     totalAmount,
@@ -84,7 +92,9 @@ function getCreateTransferERC20BAParams ({
 function getCreateTransferLiquidErc20TokenBAParams ({
   dao,
   executor,
+  executorTeamId,
   approvers = [],
+  approverTeamId,
   minApproval = 0,
   text = 'Transfer Liquid ERC20 Token',
   transactionType = 'outflowLiquid',
@@ -99,12 +109,15 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
   baseCurrency = ETH,
+  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
       dao,
       executor,
+      executorTeamId,
       approvers,
+      approverTeamId,
       minApproval,
       text,
       transactionType,
@@ -112,6 +125,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
+      team,
     }),
     allowAllAddresses,
     toAddresses,
@@ -128,7 +142,9 @@ function getCreateTransferLiquidErc20TokenBAParams ({
 function getCreateUniswapBAParams ({
   dao,
   executor,
+  executorTeamId,
   approvers = [],
+  approverTeamId,
   minApproval = 0,
   text = 'Uniswap',
   transactionType = 'swap',
@@ -143,12 +159,15 @@ function getCreateUniswapBAParams ({
   totalAmount = ethers.utils.parseEther('100'),
   amountPercentage = '10',
   baseCurrency = ETH,
+  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
       dao,
       executor,
+      executorTeamId,
       approvers,
+      approverTeamId,
       minApproval,
       text,
       transactionType,
@@ -156,6 +175,7 @@ function getCreateUniswapBAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
+      team,
     }),
     fromTokens,
     allowAllToTokens,
@@ -172,7 +192,9 @@ function getCreateUniswapBAParams ({
 function getCreateTransferERC721BAParams ({
   dao,
   executor,
+  executorTeamId,
   approvers = [],
+  approverTeamId,
   minApproval = 0,
   text = 'Transfer ERC721',
   transactionType = '721outflow',
@@ -182,15 +204,19 @@ function getCreateTransferERC721BAParams ({
   usageCount = 10,
   allowAllAddresses = false,
   toAddresses = [],
+  allowAllTokens = false,
   tokens = [],
   allowAnyAmount = false,
   totalAmount = 10,
+  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
       dao,
       executor,
+      executorTeamId,
       approvers,
+      approverTeamId,
       minApproval,
       text,
       transactionType,
@@ -198,9 +224,11 @@ function getCreateTransferERC721BAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
+      team,
     }),
     allowAllAddresses,
     toAddresses,
+    allowAllTokens,
     tokens,
     allowAnyAmount,
     totalAmount,
@@ -211,8 +239,10 @@ function getCreateTransferERC721BAParams ({
 
 function getCreateCommonBudgetApprovalParams ({
   dao,
-  executor,
+  executor = ethers.constants.AddressZero,
+  executorTeamId = 0,
   approvers = [],
+  approverTeamId = 0,
   minApproval = 0,
   text,
   transactionType,
@@ -220,11 +250,14 @@ function getCreateCommonBudgetApprovalParams ({
   endTime = Math.round(Date.now() / 1000) + 86400,
   allowUnlimitedUsageCount = false,
   usageCount = 10,
+  team = ethers.constants.AddressZero,
 }) {
   return Object.entries({
     dao,
     executor,
+    executorTeamId,
     approvers,
+    approverTeamId,
     minApproval,
     text,
     transactionType,
@@ -232,6 +265,7 @@ function getCreateCommonBudgetApprovalParams ({
     endTime,
     allowUnlimitedUsageCount,
     usageCount,
+    team,
   }).map(([key, value]) => {
     return value;
   });

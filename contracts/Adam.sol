@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
-import "./interface/IDepositPool.sol";
 import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
@@ -22,20 +21,25 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string[] tokenInfo;
         uint256 tokenAmount;
         uint256 minDepositAmount;
-        uint256 minTokenToAdmit;
-        address admissionToken;
         address[] depositTokens;
         bool mintMemberToken;
+        IDao.AdmissionToken[] admissionTokens;
         address baseCurrency;
         string logoCID;
+        uint256 maxMemberLimit;
+    }
+
+    struct AdmissionToken {
+        address token;
+        uint256 minTokenToAdmit;
+        uint256 tokenId;
+        bool isMemberToken;
     }
 
     address public feedRegistry;
     address public daoImplementation;
     address public membershipImplementation;
     address public liquidPoolImplementation;
-    address public depositPoolImplementation;
-    address public optInPoolImplementation;
     address public governFactory;
     address public team;
     address public governImplementation;
@@ -51,8 +55,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _membershipImplementation,
         address _liquidPoolImplementation,
         address _memberTokenImplementation,
-        address _depositPoolImplementation,
-        address _optInPoolImplementation,
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
         address _feedRegistry,
@@ -66,8 +68,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         membershipImplementation = _membershipImplementation;
         liquidPoolImplementation = _liquidPoolImplementation;
         memberTokenImplementation = _memberTokenImplementation;
-        depositPoolImplementation = _depositPoolImplementation;
-        optInPoolImplementation = _optInPoolImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
         feedRegistry = _feedRegistry;
@@ -80,13 +80,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function setMembershipImplementation(address _membershipImplementation) public {
         membershipImplementation = _membershipImplementation;
-    }
-    function setDepositPoolImplementation(address _depositPoolImplementation) public {
-        depositPoolImplementation = _depositPoolImplementation;
-    }
-
-    function setOptInPoolImplementation(address _optInPoolImplementation) public {
-        optInPoolImplementation = _optInPoolImplementation;
     }
 
     function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public {
@@ -101,20 +94,15 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
-        ERC1967Proxy _depositPool = new ERC1967Proxy(depositPoolImplementation, "");
 
         daos[address(_dao)] = true;
 
         IMembership(address(_membership)).initialize(
             address(_dao),
-            params._name
+            params._name,
+            params.maxMemberLimit
         );
         ILiquidPool(payable(address(_liquidPool))).initialize(
-            address(_dao),
-            params.depositTokens,
-            params.baseCurrency
-        );
-        IDepositPool(payable(address(_depositPool))).initialize(
             address(_dao),
             params.depositTokens,
             params.baseCurrency
@@ -124,12 +112,9 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 msg.sender,
                 address(_membership),
                 address(_liquidPool),
-                address(_depositPool),
-                address(params.admissionToken),
                 address(governFactory),
                 address(team),
                 address(memberTokenImplementation),
-                address(optInPoolImplementation),
                 params._name,
                 params._description,
                 params._locktime,
@@ -137,11 +122,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 params.tokenInfo,
                 params.tokenAmount,
                 IDao.DaoSetting(
-                    params.minDepositAmount,
-                    params.minTokenToAdmit
+                    params.minDepositAmount
                 ),
                 params.depositTokens,
                 params.mintMemberToken,
+                params.admissionTokens,
                 params.baseCurrency,
                 params.logoCID
             )

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/draft-ERC721VotesUpgradeable.sol";
@@ -22,20 +22,23 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
 
     address payable public dao;
     uint256 public totalSupply;
+    uint256 public maxMemberLimit;
 
     Counters.Counter private _tokenIds;
     mapping(address => bool) public isMember;
 
     event CreateMember(address to);
 
-    function initialize(address _dao, string memory _name) public initializer
+    function initialize(address _dao, string memory _name, uint256 _maxMemberLimit) public initializer
     {
         __ERC721_init(_name.concat(" Membership"), "MS");
         dao = payable(_dao);
+        maxMemberLimit = _maxMemberLimit;
     }
 
     function createMember(address to) public {
         require(msg.sender == dao, "access denied");
+        require(totalSupply < maxMemberLimit, "member count exceed limit");
 
         _tokenIds.increment();
         uint256 newId = _tokenIds.current();
@@ -65,7 +68,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     function _beforeTokenTransfer(
       address from,
       address to,
-      uint256 tokenId
+      uint256
     ) internal override {
       if (from != address(0) && to != address(0)) {
 			  revert("Membership: Transfer of membership is aboundand");

@@ -57,6 +57,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           toAddresses: [receiver.address],
           minApproval: 1,
           usageCount: 10,
+          team: await adam.team(),
         }),
       );
 
@@ -65,7 +66,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       );
       budgetApprovalAddress = (await findEventArgs(tx, 'CreateBudgetApproval')).budgetApproval;
       budgetApproval = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', budgetApprovalAddress);
-      await lp.connect(executor).deposit({ value: parseEther('200') });
+      await lp.connect(executor).deposit(executor.address, { value: parseEther('200') });
     });
 
     it('should success create Liquid ERC 20 BA', async function () {

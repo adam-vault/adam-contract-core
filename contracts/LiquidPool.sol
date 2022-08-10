@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -24,6 +24,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     mapping(address => bool) public isAssetSupported;
 
     event AllowDepositToken(address token);
+    event Deposit(address account, address token, uint256 depositAmount);
 
     modifier onlyGovern(string memory category) {
         require(
@@ -43,6 +44,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         __PriceResolver_init(baseCurrency);
         dao = IDao(payable(owner));
         _addAssets(depositTokens); // todo
+        team = dao.team();
     }
 
     function assetsShares(address asset, uint256 amount) public view returns (uint256) {
@@ -78,17 +80,19 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         return total;
     }
 
-    function deposit() public payable {
+    function deposit(address receiver) public payable {
         require(isAssetSupported[Denominations.ETH], "asset not support");
         if (totalSupply() == 0) {
-            _mint(msg.sender, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
-            _afterDeposit(msg.sender, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
+            _mint(receiver, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
+            _afterDeposit(receiver, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
             return;
         }
         uint256 total = totalPrice() - assetBaseCurrencyPrice(Denominations.ETH, msg.value);
-        _mint(msg.sender, (assetBaseCurrencyPrice(Denominations.ETH, msg.value) * 10 ** baseCurrencyDecimals()) / (total * 10 ** baseCurrencyDecimals() / totalSupply()));
+        _mint(receiver, (assetBaseCurrencyPrice(Denominations.ETH, msg.value) * 10 ** baseCurrencyDecimals()) / (total * 10 ** baseCurrencyDecimals() / totalSupply()));
 
         _afterDeposit(msg.sender, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
+
+        emit Deposit(msg.sender, Denominations.ETH, msg.value);
     }
 
     function redeem(uint256 amount) public {
@@ -101,13 +105,15 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _burn(msg.sender, amount);
     }
 
-    function depositToken(address asset, uint256 amount) public {
+    function depositToken(address receiver, address asset, uint256 amount) public {
         require(isAssetSupported[asset], "Asset not support");
         require(IERC20Metadata(asset).allowance(msg.sender, address(this)) >= amount, "not approve");
 
-        _mint(msg.sender, quote(assetBaseCurrencyPrice(asset, amount)));
+        _mint(receiver, quote(assetBaseCurrencyPrice(asset, amount)));
         IERC20Metadata(asset).transferFrom(msg.sender, address(this), amount);
         _afterDeposit(msg.sender, assetBaseCurrencyPrice(asset, amount));
+
+        emit Deposit(msg.sender, asset, amount);
     }
 
     function addAssets(address[] calldata erc20s) public onlyGovern("General") {
@@ -135,25 +141,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     }
     
     function _afterDeposit(address account, uint256 amount) private {
-        if (dao.firstDepositTime(account) == 0) {
-            dao.setFirstDepositTime(account);
-
-            require(amount >= dao.minDepositAmount(), "deposit amount not enough");
-
-            if (dao.isMember(account)) {
-                return;
-            }
-            if(dao.minTokenToAdmit() > 0 ){
-                bytes4 sector = bytes4(keccak256("balanceOf(address)"));
-                bytes memory data = abi.encodeWithSelector(sector, account);
-                (, bytes memory result) = address(dao.admissionToken()).call(data);
-                
-                uint256 balance = abi.decode(result,(uint256));
-                require(balance >= dao.minTokenToAdmit(), "Admission token not enough");
-            }
-            dao.mintMember(account);
-    }
-
+      dao.afterDeposit(account, amount);
     }
 
     function _addAssets(address[] memory erc20s) internal {

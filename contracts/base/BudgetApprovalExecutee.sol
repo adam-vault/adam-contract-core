@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "../interface/ICommonBudgetApproval.sol";
 
@@ -9,6 +9,8 @@ import "../lib/Concat.sol";
 
 contract BudgetApprovalExecutee {
     using Concat for string;
+
+    address public team;
 
     mapping(address => bool) public budgetApprovals;
 

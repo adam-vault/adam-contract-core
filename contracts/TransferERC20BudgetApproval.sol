@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
@@ -19,6 +19,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
+    bool public allowAllTokens;
     address public token;
     bool public allowAnyAmount;
     uint256 public totalAmount;
@@ -28,6 +29,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         InitializeParams calldata params,
         bool _allowAllAddresses,
         address[] memory _toAddresses,
+        bool _allowAllTokens,
         address _token,
         bool _allowAnyAmount,
         uint256 _totalAmount,
@@ -39,6 +41,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         for(uint i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
         }
+        allowAllTokens = _allowAllTokens;
         token = _token;
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
@@ -54,6 +57,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     }
 
     function _execute(
+        uint256 transactionId,
         bytes memory data
     ) internal override {
         (address _token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
@@ -62,19 +66,19 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
 
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
-        require(token == _token, "Token not whitelisted in budget");
+        require(allowAllTokens || token == _token, "Token not whitelisted in budget");
         require(allowAnyAmount || value <= totalAmount, "Exceeded max budget transferable amount");
-        require(checkAmountPercentageValid(value), "Exceeded max budget transferable percentage");
+        require(checkAmountPercentageValid(value, _token), "Exceeded max budget transferable percentage");
 
         if(!allowAnyAmount) {
             totalAmount -= value;
         }
     }
 
-    function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {
+    function checkAmountPercentageValid(uint256 amount, address _token) internal view returns (bool) {
         if (amountPercentage == 100) return true;
 
-        uint256 _totalAmount = amount + IERC20(token).balanceOf(executee);
+        uint256 _totalAmount = amount + IERC20(_token).balanceOf(executee);
         if (_totalAmount == 0) return false;
 
         return amount <= _totalAmount * amountPercentage / 100;

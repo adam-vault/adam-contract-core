@@ -43,8 +43,6 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   const GovernFactory = await ethers.getContractFactory('GovernFactory', { signer: creator });
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
   const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
-  const DepositPool = await ethers.getContractFactory('DepositPool', { signer: creator });
-  const OptInPool = await ethers.getContractFactory('OptInPool', { signer: creator });
   const Team = await ethers.getContractFactory('Team', { signer: creator });
 
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
@@ -61,8 +59,6 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   }
   const membership = await Membership.deploy();
   const liquidPool = await LiquidPool.deploy();
-  const depositPool = await DepositPool.deploy();
-  const optInPool = await OptInPool.deploy();
   const team = await Team.deploy();
 
   const govern = await Govern.deploy();
@@ -71,8 +67,6 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   await membership.deployed();
   await govern.deployed();
   await liquidPool.deployed();
-  await depositPool.deployed();
-  await optInPool.deployed();
   await memberToken.deployed();
   await team.deployed();
 
@@ -83,8 +77,6 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
     membership.address,
     liquidPool.address,
     memberToken.address,
-    depositPool.address,
-    optInPool.address,
     budgetApprovalAddresses,
     governFactory.address,
     feedRegistry.address,
@@ -108,7 +100,11 @@ const createTokens = async () => {
   const tokenC721 = await TokenC721.deploy();
   await tokenC721.deployed();
 
-  return { tokenA, tokenB, tokenC721 };
+  const TokenD1155 = await ethers.getContractFactory('TokenD1155');
+  const tokenD1155 = await TokenD1155.deploy();
+  await tokenD1155.deployed();
+
+  return { tokenA, tokenB, tokenC721, tokenD1155 };
 };
 
 const createGovern = async () => {

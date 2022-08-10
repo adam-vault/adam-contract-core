@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -28,13 +28,17 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 		_;
 	}
 
+  function initialize() public initializer {
+    __ERC1155_init("");
+  }
+
 	function _beforeTokenTransfer(
-			address operator,
+			address,
 			address from,
 			address to,
 			uint256[] memory ids,
-			uint256[] memory amounts,
-			bytes memory data
+			uint256[] memory,
+			bytes memory
 	) internal override {
 		if (from == address(0)) { // mint
 			require(balanceOf(to, ids[0]) == 0, "Team: Member/Members already added");

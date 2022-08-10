@@ -43,7 +43,7 @@ task('interface', 'Generate interface for contracts', async function (args, hre)
     artifacts: './artifacts/contracts',
     contracts: 'contracts/*.sol',
     outputPath: './contracts/interface',
-    solidityVersion: '^0.8.0',
+    solidityVersion: '0.8.7',
     license: 'GPL-3.0',
   });
 });

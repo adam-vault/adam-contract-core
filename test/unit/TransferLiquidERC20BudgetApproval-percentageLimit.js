@@ -15,7 +15,7 @@ const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limit', function () {
-  let transferLiquidERC20BAImplementation, budgetApproval, dao;
+  let transferLiquidERC20BAImplementation, budgetApproval, dao, team;
   let executor, executee, approver, receiver;
   let tokenA, feedRegistry;
 
@@ -26,10 +26,12 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory('TransferLiquidERC20BudgetApproval', { signer: executor });
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
+    const Team = await ethers.getContractFactory('Team', { signer: executor });
 
     transferLiquidERC20BAImplementation = await TransferLiquidERC20BudgetApproval.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
     dao = await MockLPDao.deploy();
+    team = await Team.deploy();
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
@@ -46,7 +48,9 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
       [
         dao.address, // dao addressc
         executor.address, // executor
+        0, // executorTeam
         [approver.address], // approvers
+        0, // approverTeam
         1, // minApproval
         'Transfer Liquid ERC20', // text
         'outflowLiquid', // transaction type
@@ -54,6 +58,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
         endTime, // endTime
         false, // allow unlimited usage
         10, // usage count
+        team.address, // team
       ],
       false, // allow all addresses
       [receiver.address], // allowed addresses (use when above = false)
