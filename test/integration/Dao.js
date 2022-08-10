@@ -114,7 +114,7 @@ describe('Integration - Dao', function () {
       const memberTokenAddr = await dao.memberToken();
       const memberToken = await ethers.getContractAt('MemberToken', memberTokenAddr);
 
-      await expect(await memberToken.balanceOf(dao.address)).to.eq(100);
+      expect(await memberToken.balanceOf(dao.address)).to.eq(100);
     });
 
     it('should not able to deposit when not enough Admission Token', async function () {

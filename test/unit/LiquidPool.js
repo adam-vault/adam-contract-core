@@ -274,7 +274,7 @@ describe('LiquidPool.sol', function () {
       await tokenAsSigner2.approve(lp.address, parseEther('12.123'));
       await lpAsSigner2.depositToken(token.address, parseEther('12.123'));
 
-      // DP price = 1.0046 / 0.0046 = ~218 eth per DP
+      // LP price = 1.0046 / 0.0046 = ~218 eth per LP
       // TOKEN price = 12.123 * 0.0046 = ~0.055 eth
       // Quote = 0.055 / 218 = ~0.000255 eth
       expect(await lp.balanceOf(signer2.address)).to.eq(parseEther('0.000255348078837348'));
