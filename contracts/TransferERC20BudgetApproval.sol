@@ -63,7 +63,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         (address _token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
         bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
         
-        IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
+        IBudgetApprovalExecutee(executee).executeByBudgetApproval(_token, executeData, 0);
 
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(allowAllTokens || token == _token, "Token not whitelisted in budget");
