@@ -33,6 +33,11 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         _;
     }
 
+    modifier onlyDao() {
+        require(msg.sender == address(dao), "not dao");
+        _;
+    }
+
     function initialize(
         address owner,
         address[] memory depositTokens,
@@ -158,6 +163,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         emit AllowDepositToken(erc20);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override initializer {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyDao {}
     receive() external payable {}
 }
