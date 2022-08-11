@@ -189,12 +189,12 @@ describe('TransferERC20BudgetApproval.sol', function () {
 describe('TransferERC20BudgetApproval.sol', function () {
   let transferErc20BAImplementation, budgetApproval, dao, team;
   let executor, approver, receiver;
-  let tokenA, executee, TransferERC20BudgetApproval;
+  let tokenA, tokenB, executee, TransferERC20BudgetApproval;
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
-    ({ tokenA } = await createTokens());
+    ({ tokenA, tokenB } = await createTokens());
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
     transferErc20BAImplementation = await TransferERC20BudgetApproval.deploy();
@@ -625,7 +625,52 @@ describe('TransferERC20BudgetApproval.sol', function () {
         const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(approver).executeTransaction(id)).to.be.revertedWith('Executor not whitelisted in budget');;
+        await expect(budgetApproval.connect(approver).executeTransaction(id)).to.be.revertedWith('Executor not whitelisted in budget');
+      });
+    });
+  });
+
+  describe('Execute Transaction (allowAllTokens = true)', function () {
+    beforeEach(async function () {
+      await tokenA.mint(executee.address, '200');
+      await tokenB.mint(executee.address, '200');
+      const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
+        getCreateTransferERC20BAParams({
+          dao: executee.address,
+          executor: executor.address,
+          allowAllTokens: true,
+        }),
+      );
+
+      const tx = await executee.createBudgetApprovals(
+        [transferErc20BAImplementation.address], [initData],
+      );
+      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
+
+      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
+    });
+
+    context('complete flow with 2 tokens', () => {
+      it('should success', async function () {
+        const transactionData1 = abiCoder.encode(await budgetApproval.executeParams(), [
+          tokenA.address,
+          receiver.address,
+          '10',
+        ]);
+
+        const transactionData2 = abiCoder.encode(await budgetApproval.executeParams(), [
+          tokenB.address,
+          receiver.address,
+          '10',
+        ]);
+
+        const originalBalanceA = await tokenA.balanceOf(receiver.address);
+        const originalBalanceB = await tokenB.balanceOf(receiver.address);
+
+        await budgetApproval.connect(executor).createTransaction([transactionData1, transactionData2], Date.now() + 86400, true);
+
+        expect(await tokenA.balanceOf(receiver.address)).to.eq(originalBalanceA.add('10'));
+        expect(await tokenB.balanceOf(receiver.address)).to.eq(originalBalanceB.add('10'));
       });
     });
   });

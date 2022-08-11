@@ -493,4 +493,39 @@ describe('TransferERC721BudgetApproval.sol', function () {
       ).to.be.revertedWith('Exceeded budget usage limit');
     });
   });
+
+  describe('Execute Transaction (allowAllTokens = true)', function () {
+    beforeEach(async function () {
+      await tokenC721.mint(executee.address, 37754);
+
+      const initData = transferERC721BAImplementation.interface.encodeFunctionData('initialize',
+        getCreateTransferERC721BAParams({
+          dao: executee.address,
+          executor: executor.address,
+          allowAllTokens: true,
+        }),
+      );
+
+      const tx = await executee.createBudgetApprovals(
+        [transferERC721BAImplementation.address], [initData],
+      );
+      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
+
+      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
+    });
+
+    context('complete flow', () => {
+      it('should success', async function () {
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          tokenC721.address,
+          receiver.address,
+          37754,
+        ]);
+
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true);
+
+        expect(await tokenC721.ownerOf(37754)).to.eq(receiver.address);
+      });
+    });
+  });
 });
