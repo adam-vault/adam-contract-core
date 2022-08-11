@@ -9,6 +9,10 @@ contract MockWETH9 {
     mapping (address => uint)                       public  balanceOf;
     mapping (address => mapping (address => uint))  public  allowance;
 
+    function mint(address to, uint256 amount) public {
+        balanceOf[to] += amount;
+    }
+
     function deposit() public payable {
         balanceOf[msg.sender] += msg.value;
     }
