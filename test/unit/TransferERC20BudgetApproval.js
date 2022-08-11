@@ -35,6 +35,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           dao: executee.address,
           executor: executor.address,
           approvers: [approver.address],
+          allowAllAddresses: false,
           toAddresses: [receiver.address],
           token: tokenA.address,
           startTime,
@@ -59,15 +60,15 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
       expect(await budgetApproval.token()).to.eq(tokenA.address);
 
-      expect(await budgetApproval.allowAnyAmount()).to.eq(false);
-      expect(await budgetApproval.totalAmount()).to.eq('100');
-      expect(await budgetApproval.amountPercentage()).to.eq(10);
+      expect(await budgetApproval.allowAnyAmount()).to.eq(true);
+      expect(await budgetApproval.totalAmount()).to.eq(0);
+      expect(await budgetApproval.amountPercentage()).to.eq(100);
 
       expect(await budgetApproval.startTime()).to.eq(startTime);
       expect(await budgetApproval.endTime()).to.eq(endTime);
 
-      expect(await budgetApproval.allowUnlimitedUsageCount()).to.eq(false);
-      expect(await budgetApproval.usageCount()).to.eq(10);
+      expect(await budgetApproval.allowUnlimitedUsageCount()).to.eq(true);
+      expect(await budgetApproval.usageCount()).to.eq(0);
     });
 
     it('should fail if minApproval larger than approvers length', async function () {
@@ -100,7 +101,11 @@ describe('TransferERC20BudgetApproval.sol', function () {
           dao: executee.address,
           executor: executor.address,
           approvers: [approver.address],
+          allowAllAddresses: false,
           toAddresses: [receiver.address],
+          allowAnyAmount: false,
+          totalAmount: 100,
+          amountPercentage: 10,
           token: tokenA.address,
           minApproval: 1,
           team: team.address,
@@ -341,6 +346,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
             startTime: 0,
             endTime: 0,
             amountPercentage: 100,
+            allowUnlimitedUsageCount: false,
             usageCount: 1,
             team: team.address,
           }),

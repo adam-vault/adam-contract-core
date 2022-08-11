@@ -35,8 +35,11 @@ describe('TransferERC721BudgetApproval.sol', function () {
           executor: executor.address,
           approvers: [approver.address],
           minApproval: 1,
+          allowAllAddresses: false,
           toAddresses: [receiver.address],
+          allowAllTokens: false,
           tokens: [tokenC721.address],
+          allowAnyAmount: false,
           totalAmount: 1,
           startTime,
           endTime,
@@ -68,8 +71,8 @@ describe('TransferERC721BudgetApproval.sol', function () {
       expect(await budgetApproval.startTime()).to.eq(startTime);
       expect(await budgetApproval.endTime()).to.eq(endTime);
 
-      expect(await budgetApproval.allowUnlimitedUsageCount()).to.eq(false);
-      expect(await budgetApproval.usageCount()).to.eq(10);
+      expect(await budgetApproval.allowUnlimitedUsageCount()).to.eq(true);
+      expect(await budgetApproval.usageCount()).to.eq(0);
     });
 
     it('should fail if minApproval larger than approvers length', async function () {
@@ -105,8 +108,11 @@ describe('TransferERC721BudgetApproval.sol', function () {
           executor: executor.address,
           approvers: [approver.address],
           minApproval: 1,
+          allowAllAddresses: false,
           toAddresses: [receiver.address],
+          allowAllTokens: false,
           tokens: [tokenC721.address],
+          allowAnyAmount: false,
           totalAmount: 2,
           team: team.address,
         }),
@@ -351,6 +357,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           executor: executor.address,
           toAddresses: [receiver.address],
           tokens: [tokenC721.address],
+          allowUnlimitedUsageCount: false,
           usageCount: 1,
           totalAmount: 1,
           team: team.address,
