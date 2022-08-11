@@ -33,7 +33,7 @@ describe('Integration - Create DAO', function () {
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
-    adam = await createAdam(feedRegistry);
+    adam = await createAdam();
   });
 
   function createDao () {

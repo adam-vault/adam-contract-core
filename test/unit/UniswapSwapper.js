@@ -23,7 +23,6 @@ describe('UniswapSwapper.sol', () => {
   beforeEach(async () => {
     ({ tokenA } = await createTokens());
     [executor] = await ethers.getSigners();
-    feedRegistry = await createFeedRegistry(tokenA, executor);
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
@@ -35,7 +34,7 @@ describe('UniswapSwapper.sol', () => {
     await feedRegistry.setPrice(ADDRESS_DAI, ADDRESS_ETH, parseEther('1'));
     await feedRegistry.setPrice(ADDRESS_UNI, ADDRESS_ETH, parseEther('1'));
     budgetApprovalAddresses = await createBudgetApprovals(executor);
-    adam = await createAdam(feedRegistry, budgetApprovalAddresses);
+    adam = await createAdam(budgetApprovalAddresses);
     const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
       budgetApproval: [13, 3000, 5000, 0], // budgetApproval
       revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval

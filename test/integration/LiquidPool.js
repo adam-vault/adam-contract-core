@@ -11,9 +11,6 @@ const {
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
-const { parseEther } = ethers.utils;
-const abiCoder = ethers.utils.defaultAbiCoder;
-
 describe('LiquidPool.sol', function () {
   let adam, dao, lp;
   let executor, signer;
@@ -35,7 +32,7 @@ describe('LiquidPool.sol', function () {
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
     budgetApprovalAddresses = await createBudgetApprovals(executor);
-    adam = await createAdam(feedRegistry, budgetApprovalAddresses);
+    adam = await createAdam(budgetApprovalAddresses);
   });
 
   describe('No Admission Token Required', function () {

@@ -4,7 +4,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, get } = deployments;
   const { deployer } = await getNamedAccounts();
   const deployNetwork = hre.network.name || 'kovan';
-  const NETWORK_CONSTANTS = fileReader.load(`constant/${deployNetwork}.json`, 'utf-8');
 
   const dao = await get('Dao');
   const membership = await get('Membership');
@@ -41,7 +40,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
             optInPool.address,
             budgetApprovalsAddress,
             governFactory.address,
-            NETWORK_CONSTANTS.FEED_REGISTRY,
             team.address,
           ],
         },
