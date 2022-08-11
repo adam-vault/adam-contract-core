@@ -82,7 +82,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     address public membership;
     address public liquidPool;
     address public governFactory;
-    address public memberTokenImplementation;
     string public name;
     uint256 public locktime;
     uint256 public minDepositAmount;
@@ -111,14 +110,13 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         locktime = params._locktime;
         governFactory = params._governFactory;
         team = params._team;
-        memberTokenImplementation = params._memberTokenImplementation;
         minDepositAmount = params.daoSetting.minDepositAmount;
         baseCurrency = params.baseCurrency;
         logoCID = params.logoCID;
 
         if (params.mintMemberToken) {
             // tokenInfo: [name, symbol]
-            _createMemberToken(params.tokenInfo, params.tokenAmount);
+            _createMemberToken(params._memberTokenImplementation, params.tokenInfo, params.tokenAmount);
         }
 
         uint256[] memory w = new uint256[](1);
@@ -244,7 +242,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
       emit WhitelistTeam(id);
     }
 
-    function _createMemberToken(string[] calldata tokenInfo, uint tokenAmount) internal {
+    function _createMemberToken(address memberTokenImplementation, string[] calldata tokenInfo, uint tokenAmount) internal {
         require(memberToken == address(0), "Member token already initialized");
         require(tokenInfo.length == 2, "Insufficient info to create member token");
 
@@ -350,10 +348,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         IMembership(membership).createMember(owner);
     }
     function _authorizeUpgrade(address newImplementation) internal override onlyGovern("General") {}
-
-    function setOptInPoolImplementation(address newImplementation) public onlyGovern("General") {
-        optInPoolImplementation = newImplementation;
-    }
 
     function upgradeContractTo(address target, address newImplementation) public onlyGovern("General") {
         UUPSUpgradeable(target).upgradeTo(newImplementation);
