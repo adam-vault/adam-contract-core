@@ -9,8 +9,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const membership = await get('Membership');
   const liquidPool = await get('LiquidPool');
   const memberToken = await get('MemberToken');
-  const depositPool = await get('DepositPool');
-  const optInPool = await get('OptInPool');
   const team = await get('Team');
   const governFactory = await get('GovernFactory');
 
@@ -36,8 +34,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
             membership.address,
             liquidPool.address,
             memberToken.address,
-            depositPool.address,
-            optInPool.address,
             budgetApprovalsAddress,
             governFactory.address,
             team.address,
@@ -52,6 +48,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     dao: dao.address,
     membership: membership.address,
     governFactory: governFactory.address,
+    memberToken: memberToken.address,
+    liquidPool: liquidPool.address,
     transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
     uniswapBudgetApproval: budgetApprovalsAddress[1],
     transferErc721BudgetApproval: budgetApprovalsAddress[2],

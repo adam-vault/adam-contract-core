@@ -1,7 +1,7 @@
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
-  console.log({ deployer })
+  console.log({ deployer });
   await deploy('TransferLiquidERC20BudgetApproval', {
     from: deployer,
     log: true,
