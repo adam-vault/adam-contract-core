@@ -115,7 +115,7 @@ async function main () {
   console.log('Contract Addresses', contractAddresses);
 
   // Output Deployment Info as file
-  fileReader.save('deploy', 'results.json', {
+  fileReader.save('deploy-result', 'results.json', {
     network: deployNetwork,
     block_number: blockNumber,
     addresses: contractAddresses,
