@@ -4,11 +4,12 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./interface/IGovern.sol";
 import "hardhat/console.sol";
 
-contract GovernFactory is Initializable, UUPSUpgradeable {
+contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     address public governImplementation;
     mapping(address => mapping(string => address)) public governMap;
@@ -24,6 +25,7 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
     function initialize(
         address _governImplementation
     ) public initializer {
+        __Ownable_init();
         governImplementation = _governImplementation;
     }
 
@@ -65,5 +67,5 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
         IGovern(payable(govern)).addVoteToken(token, weight);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override initializer {}
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
