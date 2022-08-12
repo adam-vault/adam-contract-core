@@ -40,7 +40,7 @@ contract GovernFactory is Initializable, UUPSUpgradeable {
 
         ERC1967Proxy _govern = new ERC1967Proxy(governImplementation, "");
         IGovern(payable(address(_govern))).initialize(
-            address(this),
+            msg.sender,
             name,
             duration,
             quorum,
