@@ -1,7 +1,7 @@
 const hre = require('hardhat');
 const { faker } = require('@faker-js/faker');
 const fileReader = require('../utils/fileReader');
-const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
+const deploymentResult = fileReader.load('deploy-results/results.json', 'utf8');
 
 // rinkeby
 const governAddress = deploymentResult.initdata_addresses.dao0BudgetGovern;

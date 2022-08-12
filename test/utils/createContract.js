@@ -33,7 +33,7 @@ const createFeedRegistry = async (token, signer) => {
   return feedRegistry;
 };
 
-const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
+const createAdam = async (budgetApprovalAddresses) => {
   const [creator] = await ethers.getSigners();
 
   const Dao = await ethers.getContractFactory('MockDaoV2', { signer: creator });
@@ -48,12 +48,6 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
 
   const dao = await Dao.deploy();
-  if (!feedRegistry) {
-    const MockToken = await ethers.getContractFactory('MockToken', { signer: creator });
-    const token = await MockToken.deploy();
-    await token.deployed();
-    feedRegistry = await createFeedRegistry(token, creator);
-  }
   if (!budgetApprovalAddresses) {
     budgetApprovalAddresses = await createBudgetApprovals(creator);
   }
@@ -79,7 +73,6 @@ const createAdam = async (feedRegistry, budgetApprovalAddresses) => {
     memberToken.address,
     budgetApprovalAddresses,
     governFactory.address,
-    feedRegistry.address,
     team.address,
   ], { kind: 'uups' });
 

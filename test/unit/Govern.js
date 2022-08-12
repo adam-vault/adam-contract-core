@@ -1,13 +1,13 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
-const { createTokens, createAdam, createBudgetApprovals, createFeedRegistry } = require('../utils/createContract');
+const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
 
 describe('Govern.sol', function () {
   let adam, dao, governFactory, lp;
   let creator, owner1, owner2;
-  let tokenA, feedRegistry, budgetApprovalAddresses;
+  let tokenA, budgetApprovalAddresses;
   const category = {
     name: 'BudgetApproval',
     duration: 6570, // 1 day
@@ -24,9 +24,8 @@ describe('Govern.sol', function () {
   beforeEach(async function () {
     [creator, owner1, owner2] = await ethers.getSigners();
     const tokens = await createTokens();
-    feedRegistry = await createFeedRegistry(tokens.tokenA, creator);
     budgetApprovalAddresses = await createBudgetApprovals(creator);
-    adam = await createAdam(feedRegistry, budgetApprovalAddresses);
+    adam = await createAdam(budgetApprovalAddresses);
     const tx1 = await createDao();
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     dao = await ethers.getContractAt('MockDaoV2', daoAddr);

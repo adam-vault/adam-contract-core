@@ -29,6 +29,11 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
 
     event CreateMember(address to);
 
+    modifier onlyDao() {
+        require(msg.sender == dao, "not dao");
+        _;
+    }
+
     function initialize(address _dao, string memory _name, uint256 _maxMemberLimit) public initializer
     {
         __ERC721_init(_name.concat(" Membership"), "MS");
@@ -88,5 +93,5 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         }
     }
 
-    function _authorizeUpgrade(address) internal override {}
+    function _authorizeUpgrade(address) internal override onlyDao {}
 }

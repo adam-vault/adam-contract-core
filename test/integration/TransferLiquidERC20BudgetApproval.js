@@ -33,7 +33,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
     budgetApprovalAddresses = await createBudgetApprovals(executor);
-    adam = await createAdam(feedRegistry, budgetApprovalAddresses);
+    adam = await createAdam(budgetApprovalAddresses);
 
     const tx1 = await adam.createDao(
       getCreateDaoParams({}),

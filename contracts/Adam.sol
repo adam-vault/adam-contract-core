@@ -36,7 +36,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         bool isMemberToken;
     }
 
-    address public feedRegistry;
     address public daoImplementation;
     address public membershipImplementation;
     address public liquidPoolImplementation;
@@ -49,7 +48,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     event CreateDao(address indexed dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
-
+    
     function initialize(
         address _daoImplementation,
         address _membershipImplementation,
@@ -57,7 +56,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _memberTokenImplementation,
         address[] calldata _budgetApprovalImplementations,
         address _governFactory,
-        address _feedRegistry,
         address _team
     )
         public initializer
@@ -70,19 +68,26 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         memberTokenImplementation = _memberTokenImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
-        feedRegistry = _feedRegistry;
         team = _team;
     }
 
-    function setDaoImplementation(address _daoImplementation) public {
+    function setDaoImplementation(address _daoImplementation) public onlyOwner {
         daoImplementation = _daoImplementation;
     }
 
-    function setMembershipImplementation(address _membershipImplementation) public {
+    function setMembershipImplementation(address _membershipImplementation) public onlyOwner {
         membershipImplementation = _membershipImplementation;
     }
 
-    function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public {
+    function setLiquidPoolImplementation(address _liquidPoolImplementation) public onlyOwner {
+        liquidPoolImplementation = _liquidPoolImplementation;
+    }
+
+    function setMemberTokenImplementation(address _memberTokenImplementation) public onlyOwner {
+        memberTokenImplementation = _memberTokenImplementation;
+    }
+
+    function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public onlyOwner {
         for(uint i = 0; i < _budgetApprovals.length; i++) {
             require(budgetApprovals[_budgetApprovals[i]] == false, "budget approval already whitelisted");
             budgetApprovals[_budgetApprovals[i]] = true;

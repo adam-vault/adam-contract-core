@@ -34,6 +34,7 @@ describe('Integration - Dao', function () {
   });
 
   describe('when do not Mint member token at dao creation', function () {
+    let memberTokenImpl;
     beforeEach(async function () {
       [creator, member] = await ethers.getSigners();
       adam = await createAdam();
@@ -45,11 +46,12 @@ describe('Integration - Dao', function () {
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
       dao = await ethers.getContractAt('MockDaoV2', daoAddr);
       lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+      memberTokenImpl = await adam.memberTokenImplementation();
     });
 
     it('should be able to call create member token', async function () {
       expect(await dao.memberToken()).to.eq(ethers.constants.AddressZero);
-      await dao.exposedCreateMemberToken(['name', 'symbol'], 100);
+      await dao.exposedCreateMemberToken(memberTokenImpl, ['name', 'symbol'], 100);
       const memberTokenAddr = await dao.memberToken();
       const memberToken = await ethers.getContractAt('MemberToken', memberTokenAddr);
       expect(memberTokenAddr).not.to.eq(ethers.constants.AddressZero);
@@ -60,12 +62,12 @@ describe('Integration - Dao', function () {
     });
 
     it('should not call create member token twice', async function () {
-      await dao.exposedCreateMemberToken(['name', 'symbol'], 100);
-      await expect(dao.exposedCreateMemberToken(['name1', 'symbol1'], 100)).to.revertedWith('Member token already initialized');
+      await dao.exposedCreateMemberToken(memberTokenImpl, ['name', 'symbol'], 100);
+      await expect(dao.exposedCreateMemberToken(memberTokenImpl, ['name1', 'symbol1'], 100)).to.revertedWith('Member token already initialized');
     });
 
     it('should revert if tokenInfo.length < 2', async function () {
-      await expect(dao.exposedCreateMemberToken(['name1'], 100)).to.revertedWith('Insufficient info to create member token');
+      await expect(dao.exposedCreateMemberToken(memberTokenImpl, ['name1'], 100)).to.revertedWith('Insufficient info to create member token');
     });
 
     it('owner should be able to deposit', async function () {
@@ -82,6 +84,8 @@ describe('Integration - Dao', function () {
   });
 
   describe('when import ERC721 Admission token at dao creation', function () {
+    let memberTokenImpl;
+
     beforeEach(async function () {
       adam = await createAdam();
       tokenC721 = (await createTokens()).tokenC721;
@@ -95,10 +99,11 @@ describe('Integration - Dao', function () {
       const daoAddr = creationEventLog.args.dao;
       dao = await ethers.getContractAt('MockDaoV2', daoAddr);
       lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+      memberTokenImpl = await adam.memberTokenImplementation();
     });
 
     it('should be able to create member token', async function () {
-      await expect(dao.exposedCreateMemberToken(['name1', 'symbol1'], 100));
+      await expect(dao.exposedCreateMemberToken(memberTokenImpl, ['name1', 'symbol1'], 100));
       const memberTokenAddr = await dao.memberToken();
       const memberToken = await ethers.getContractAt('MemberToken', memberTokenAddr);
 
@@ -117,6 +122,7 @@ describe('Integration - Dao', function () {
   });
 
   describe('when import ERC20 Admission token at dao creation', function () {
+    let memberTokenImpl;
     beforeEach(async function () {
       adam = await createAdam();
       tokenA = (await createTokens()).tokenA;
@@ -130,10 +136,11 @@ describe('Integration - Dao', function () {
       const daoAddr = creationEventLog.args.dao;
       dao = await ethers.getContractAt('MockDaoV2', daoAddr);
       lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+      memberTokenImpl = await adam.memberTokenImplementation();
     });
 
     it('should be able to create member token', async function () {
-      await expect(dao.exposedCreateMemberToken(['name1', 'symbol1'], 100));
+      await expect(dao.exposedCreateMemberToken(memberTokenImpl, ['name1', 'symbol1'], 100));
       const memberTokenAddr = await dao.memberToken();
       const memberToken = await ethers.getContractAt('MemberToken', memberTokenAddr);
 
@@ -152,6 +159,7 @@ describe('Integration - Dao', function () {
   });
 
   describe('when Mint ERC20 member token as Admission token at dao creation', function () {
+    let memberTokenImpl;
     beforeEach(async function () {
       adam = await createAdam();
       const tx1 = await adam.createDao(
@@ -166,10 +174,11 @@ describe('Integration - Dao', function () {
       const daoAddr = creationEventLog.args.dao;
       dao = await ethers.getContractAt('MockDaoV2', daoAddr);
       lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+      memberTokenImpl = await adam.memberTokenImplementation();
     });
 
     it('should not be able to call create member token', async function () {
-      await expect(dao.exposedCreateMemberToken(['name1', 'symbol1'], 100)).to.revertedWith('Member token already initialized');
+      await expect(dao.exposedCreateMemberToken(memberTokenImpl, ['name1', 'symbol1'], 100)).to.revertedWith('Member token already initialized');
     });
 
     it('should minted member token', async function () {

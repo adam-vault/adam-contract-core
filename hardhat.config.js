@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('hardhat-deploy');
 
 require('@nomiclabs/hardhat-etherscan');
 require('@nomiclabs/hardhat-waffle');
@@ -17,14 +18,6 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
   for (const account of accounts) {
     console.log(account.address);
   }
-});
-
-task('deploy', 'Fast Deploy Contract', async (taskArgs, hre) => {
-  const Contract = await hre.ethers.getContractFactory(taskArgs);
-  const contract = await Contract.deploy();
-  await contract.deployed();
-
-  console.log(taskArgs + ' deployed to: ', contract.address);
 });
 
 // You need to export an object to set up your config
@@ -82,5 +75,15 @@ module.exports = {
   },
   mocha: {
     timeout: 10000000,
+  },
+  verify: {
+    etherscan: {
+      apiKey: 'S25GZYUMGEB97YGGSF8BQ64K5XG7AYXZBV',
+    },
+  },
+  namedAccounts: {
+    deployer: {
+      default: 0,
+    },
   },
 };

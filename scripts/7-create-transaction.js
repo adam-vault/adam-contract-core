@@ -1,6 +1,6 @@
 const hre = require('hardhat');
 const fileReader = require('../utils/fileReader');
-const deploymentResult = fileReader.load('deploy/results.json', 'utf8');
+const deploymentResult = fileReader.load('deploy-results/results.json', 'utf8');
 const abiCoder = hre.ethers.utils.defaultAbiCoder;
 const { parseEther } = hre.ethers.utils;
 const _ = require('lodash');

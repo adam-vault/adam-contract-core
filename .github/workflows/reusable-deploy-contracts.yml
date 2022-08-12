@@ -76,7 +76,7 @@ jobs:
           name: deploy_${{ env.GIT_REF }}
           path: |
             abis/
-            deploy/results.json
+            deploy-results/results.json
 
       - name: Slack Notification
         id: slack

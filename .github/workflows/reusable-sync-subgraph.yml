@@ -44,7 +44,7 @@ jobs:
             .[0].addresses.governFactory = .[1].addresses.governFactory |
             .[0].addresses.team = .[1].addresses.team |
             .[0]' \
-            config/${{ env.DEPLOY_ENV }}.json ${{ runner.temp }}/deployment/deploy/results.json > temp.json \
+            config/${{ env.DEPLOY_ENV }}.json ${{ runner.temp }}/deployment/deploy-results/results.json > temp.json \
             && mv temp.json config/${{ env.DEPLOY_ENV }}.json
       
       - name: Make Pull Request

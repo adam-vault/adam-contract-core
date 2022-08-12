@@ -11,7 +11,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 describe('TransferERC721BudgetApproval.sol', function () {
   let adam, dao, transferERC721BAImplementation, budgetApproval;
   let executor, approver, receiver;
-  let tokenC721, feedRegistry, budgetApprovalAddresses;
+  let tokenC721, budgetApprovalAddresses;
 
   before(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
@@ -19,7 +19,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
     ({ tokenC721 } = await createTokens());
 
     budgetApprovalAddresses = await createBudgetApprovals(executor);
-    adam = await createAdam(feedRegistry, budgetApprovalAddresses);
+    adam = await createAdam(budgetApprovalAddresses);
 
     const tx1 = await adam.createDao(
       paramsStruct.getCreateDaoParams({}),

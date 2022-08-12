@@ -92,7 +92,6 @@ async function main () {
   const adam = await hre.upgrades.deployProxy(Adam, [
     dao.address, membership.address, liquidPool.address, memberToken.address,
     budgetApprovalsAddress, governInfo[0],
-    NETWORK_CONSTANTS.FEED_REGISTRY,
     team,
   ], { kind: 'uups' });
   await adam.deployed();
@@ -103,6 +102,8 @@ async function main () {
     adam: adam.address,
     dao: dao.address,
     membership: membership.address,
+    memberToken: memberToken.address,
+    liquidPool: liquidPool.address,
     governFactory: governInfo[0],
     govern: governInfo[1],
     transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
@@ -114,7 +115,7 @@ async function main () {
   console.log('Contract Addresses', contractAddresses);
 
   // Output Deployment Info as file
-  fileReader.save('deploy', 'results.json', {
+  fileReader.save('deploy-result', 'results.json', {
     network: deployNetwork,
     block_number: blockNumber,
     addresses: contractAddresses,
