@@ -11,6 +11,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const memberToken = await get('MemberToken');
   const team = await get('Team');
   const governFactory = await get('GovernFactory');
+  const govern = await get('Govern');
 
   const budgetApprovalsAddress = (await Promise.all([
     get('TransferLiquidERC20BudgetApproval'),
@@ -48,6 +49,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     dao: dao.address,
     membership: membership.address,
     governFactory: governFactory.address,
+    govern: govern.address,
     memberToken: memberToken.address,
     liquidPool: liquidPool.address,
     transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],

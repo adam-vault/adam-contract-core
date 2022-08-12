@@ -4,12 +4,13 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "./lib/ToString.sol";
 import "./lib/Base64.sol";
 
-contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
+contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgradeable {
 	using Counters for Counters.Counter;
 	using ToString for address;
 	using Base64 for bytes;
@@ -29,6 +30,7 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 	}
 
   function initialize() public initializer {
+	__Ownable_init();
     __ERC1155_init("");
   }
 
@@ -116,5 +118,5 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable {
 		));
 	}
 
-	function _authorizeUpgrade(address newImplementation) internal override initializer {}
+	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
