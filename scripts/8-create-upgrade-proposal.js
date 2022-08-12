@@ -6,12 +6,13 @@ const deploymentResult = fileReader.load('deploy-results/results.json', 'utf8');
 async function getLatestImplementation(address) {
   const upgradableContract = await hre.ethers.getContractAt('UUPSUpgradeable', address);
   const events = await upgradableContract.queryFilter(upgradableContract.filters.Upgraded());
-  return events.pop();
+  return events.pop().args.implementation;
 }
 
-async function main () {
+async function main() {
   const newDeployment = { // implementation address
     dao: deploymentResult.addresses.dao,
+    govern: deploymentResult.addresses.govern,
     memberToken: deploymentResult.addresses.memberToken,
     membership: deploymentResult.addresses.membership,
     liquidPool: deploymentResult.addresses.liquidPool,
@@ -21,59 +22,96 @@ async function main () {
   const events = await adam.queryFilter(adam.filters.CreateDao());
   const daoAddresses = await events.map(e => e.args.dao);
 
-  await daoAddresses.reduce(async (p, daoAddress) => {
-    await p;
-    const dao = await hre.ethers.getContractAt('Dao', daoAddress);
-    const governAddress = await dao.govern('General');
-    const memberToken = await dao.memberToken();
-    const membership = await dao.membership();
-    const liquidPool = await dao.liquidPool();
+  const daoAddress = daoAddresses.pop();
 
-    const govern = await hre.ethers.getContractAt('Govern', governAddress);
-    const calldatas = [];
-    const description = [];
+  // console.log({ daoAddresses, newDeployment });
+  // await daoAddresses.reduce(async (p, daoAddress) => {
+  //   await p;
+  const dao = await hre.ethers.getContractAt('Dao', daoAddress);
+  const governAddress = await dao.govern('General');
+  const memberToken = await dao.memberToken();
+  const membership = await dao.membership();
+  const liquidPool = await dao.liquidPool();
 
-    const originalDaoImpl = await getLatestImplementation(daoAddress);
-    if (originalDaoImpl.toLowerCase() !== newDeployment.dao.toLowerCase()) {
-      description.push(`Dao Contract: ${originalDaoImpl} -> ${newDeployment.dao}`);
-      calldatas.push(dao.interface.encodeFunctionData('upgradeTo', [newDeployment.dao]));
+  console.log('=== Dao: ' + daoAddress + '===');
+  console.log('\n=== Comparing implementation changes ===\n');
+
+  const govern = await hre.ethers.getContractAt('Govern', governAddress);
+  const calldatas = [];
+  const description = [];
+
+  async function upgradeContract(name, contractAddress, newImplAddress) {
+    console.log(`\n${name} Contract: ${contractAddress}`);
+    const originalImpl = await getLatestImplementation(contractAddress);
+    if (originalImpl.toLowerCase() !== newImplAddress.toLowerCase()) {
+      console.log(`=> ${originalImpl} -> ${newImplAddress}`);
+      description.push(`${name} Contract: ${contractAddress}\n${originalImpl} -> ${newImplAddress}`);
+      calldatas.push(dao.interface.encodeFunctionData('upgradeContractTo', [contractAddress, newImplAddress]));
     }
+  }
 
-    const originalMembershipImpl = await getLatestImplementation(membership);
-    if (originalMembershipImpl.toLowerCase() !== newDeployment.membership.toLowerCase()) {
-      description.push(`Membership Contract: ${originalMembershipImpl} -> ${newDeployment.membership}`);
-      calldatas.push(dao.interface.encodeFunctionData('upgradeContractTo', [membership, newDeployment.membership]));
-    }
+  const originalDaoImpl = await getLatestImplementation(daoAddress);
+  console.log(`Dao Contract: ${daoAddress}`);
+  if (originalDaoImpl.toLowerCase() !== newDeployment.dao.toLowerCase()) {
+    console.log(`=> ${originalDaoImpl} -> ${newDeployment.dao}`);
+    description.push(`Dao Contract: ${daoAddress}\n${originalDaoImpl} -> ${newDeployment.dao}`);
+    calldatas.push(dao.interface.encodeFunctionData('upgradeTo', [newDeployment.dao]));
+  }
 
-    const originalLiquidPoolImpl = await getLatestImplementation(liquidPool);
-    if (originalLiquidPoolImpl.toLowerCase() !== newDeployment.liquidPool.toLowerCase()) {
-      description.push(`LiquidPool Contract: ${originalLiquidPoolImpl} -> ${newDeployment.liquidPool}`);
-      calldatas.push(dao.interface.encodeFunctionData('upgradeContractTo', [liquidPool, newDeployment.liquidPool]));
-    }
+  await upgradeContract('Membership', membership, newDeployment.membership);
+  await upgradeContract('LiquidPool', liquidPool, newDeployment.liquidPool);
+  await upgradeContract('Govern', governAddress, newDeployment.govern);
 
-    if (memberToken.toLowerCase() !== ethers.constants.AddressZero) {
-      const originalMemberTokenImpl = await getLatestImplementation(memberToken);
-      if (originalMemberTokenImpl.toLowerCase() !== newDeployment.memberToken.toLowerCase()) {
-        description.push(`MemberToken Contract: ${originalMemberTokenImpl} -> ${newDeployment.memberToken}`);
-        calldatas.push(dao.interface.encodeFunctionData('upgradeContractTo', [memberToken, newDeployment.memberToken]));
-      }
-    }
-    console.log(calldatas);
+  if (memberToken.toLowerCase() !== ethers.constants.AddressZero) {
+    await upgradeContract('MemberToken', memberToken, newDeployment.memberToken);
+  }
 
-    if (!calldatas.length) {
-      return Promise.resolve();
-    }
+  if (!calldatas.length) {
+    return Promise.resolve();
+  }
 
-    const descriptioJson = JSON.stringify({
-      category: 'Version',
-      subcategory: 'upgrade',
-      title: 'Update to latest version',
-      description: description.join('/n'),
-    });
-    console.log(descriptioJson);
+  const descriptioJson = JSON.stringify({
+    category: 'Version',
+    subcategory: 'upgrade',
+    title: 'Update to latest version 6',
+    description: description.join('\n'),
+  });
 
-    // return govern.propose(calldatas.map(() => daoAddress), calldatas.map(() => 0), calldatas, descriptioJson);
-  }, Promise.resolve());
+  console.log('\n=== Prepare Proposal Data ===\n');
+  console.log(descriptioJson);
+
+  console.log('\n=== Submit Tx for Govern.propose ===\n');
+  const tx = await govern.propose(calldatas.map(() => daoAddress), calldatas.map(() => 0), calldatas, descriptioJson);
+
+  console.log('\n=== Wait for 1 block and Vote ===\n');
+  const receipt = await tx.wait();
+  const event = receipt.events.pop();
+  const proposalId = event.args.proposalId;
+  console.log('Govern', governAddress);
+  console.log('Proposal ID', proposalId);
+  console.log('StartBlock', event.args.startBlock);
+  console.log('EndBlock', event.args.endBlock);
+
+  fileReader.save('deploy-results', 'results.json', {
+    ...deploymentResult,
+    initdata_addresses: {
+      governAddress,
+      proposalId: proposalId.toString(),
+    },
+  });
+
+
+  // console.log('\n=== Submit Tx for Govern.castVote(yes) ===\n');
+  // const tx1 = await govern.castVote(proposalId, '1');
+
+  // console.log('\n=== Wait for 6 block and Execute ===\n');
+  // await tx1.wait(6);
+
+  // console.log('\n=== Submit Tx for Govern.execcute(proposal) ===\n');
+  // await govern.execute(calldatas.map(() => daoAddress), calldatas.map(() => 0), calldatas, ethers.utils.id(descriptioJson));
+  // console.log('Proposal Executed');
+
+  //   }, Promise.resolve());
 }
 
 // We recommend this pattern to be able to use async/await everywhere

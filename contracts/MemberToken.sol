@@ -62,6 +62,10 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
         return super.getVotes(account);
     }
 
+    function version() public pure returns (uint256) {
+        return 2;
+    }
+
     function _authorizeUpgrade(address newImplementation) internal override onlyDao {}
 
 }

@@ -28,7 +28,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string logoCID;
         uint256 maxMemberLimit;
     }
-
     struct AdmissionToken {
         address token;
         uint256 minTokenToAdmit;

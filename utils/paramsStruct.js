@@ -9,7 +9,7 @@ function getCreateDaoParams ({
   name = faker.company.companyName(),
   description = faker.commerce.productDescription(),
   lockTime = 0,
-  generalGovernSetting = [300, 3000, 5000, 0],
+  generalGovernSetting = [180, 3000, 5000, 0],
   tokenInfo = [`${faker.company.companyName()}Token`, 'MT'],
   tokenAmount = 100,
   minDepositAmount = 0,

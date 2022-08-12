@@ -357,5 +357,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         UUPSUpgradeable(target).upgradeToAndCall(newImplementation, data);
     }
 
+    function versionAA() public pure returns (uint256) {
+        return 5;
+    }
+
     receive() external payable {}
 }
