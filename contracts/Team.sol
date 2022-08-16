@@ -41,7 +41,7 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgr
 			uint256[] memory ids,
 			uint256[] memory,
 			bytes memory
-	) internal override {
+	) internal view override {
 		if (from == address(0)) { // mint
 			require(balanceOf(to, ids[0]) == 0, "Team: Member/Members already added");
 		}
