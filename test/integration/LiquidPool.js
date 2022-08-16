@@ -204,7 +204,7 @@ describe('Integration - Dao.sol', function () {
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.not.be.reverted;
       });
 
-      it('throws "Admission token not enough" with not enough ERC1155 Member Token', async function () {
+      it('throws "Admission token not enough" error with not enough ERC1155 Member Token', async function () {
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
       });
     });
@@ -240,7 +240,7 @@ describe('Integration - Dao.sol', function () {
         expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
       });
 
-      it('throws "Admission token not enough" with not enough ERC20 Member Token', async function () {
+      it('throws "Admission token not enough" error with not enough ERC20 Member Token', async function () {
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
       });
     });
@@ -268,18 +268,18 @@ describe('Integration - Dao.sol', function () {
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.not.be.reverted;
       });
 
-      it('throws "Admission token not enough" with both admission tokens not enough', async function () {
+      it('throws "Admission token not enough" error with both admission tokens not enough', async function () {
         await tokenA.mint(member.address, 1);
         await tokenD1155.mint(member.address, 111, 1, 0);
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
       });
 
-      it('throws "Admission token not enough" with two admission token not enough', async function () {
+      it('throws "Admission token not enough" error with two admission token not enough', async function () {
         await tokenC721.mint(member.address, 222);
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
       });
 
-      it('throws "Admission token not enough" with one admission token not enough', async function () {
+      it('throws "Admission token not enough" error with one admission token not enough', async function () {
         await tokenC721.mint(member.address, 222);
         await tokenD1155.mint(member.address, 111, 2, 0);
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
