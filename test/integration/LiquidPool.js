@@ -3,7 +3,7 @@ const { ethers } = require('hardhat');
 const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
 const decodeBase64 = require('../utils/decodeBase64');
-
+const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
 const { createAdam, createTokens } = require('../utils/createContract.js');
 const paramsStruct = require('../../utils/paramsStruct');
 const {
@@ -12,7 +12,7 @@ const {
   ADDRESS_MOCK_AGGRGATOR,
 } = require('../utils/constants');
 
-describe('Integration - Dao.sol', function () {
+describe('Integration - LiquidPool.sol', function () {
   let adam, dao, membership, tokenC721, tokenA, tokenD1155;
   let creator, member, anyone, feedRegistry;
 
@@ -24,7 +24,6 @@ describe('Integration - Dao.sol', function () {
     [creator, member, anyone] = await ethers.getSigners();
     ({ tokenA, tokenC721, tokenD1155 } = await createTokens());
 
-    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
