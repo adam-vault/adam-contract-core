@@ -139,14 +139,6 @@ describe('Integration - Dao.sol', function () {
         memberTokenImpl = await adam.memberTokenImplementation();
       });
 
-      it('should be able to create member token', async function () {
-        await expect(dao.exposedCreateMemberToken(memberTokenImpl, ['name1', 'symbol1'], 100));
-        const memberTokenAddr = await dao.memberToken();
-        const memberToken = await ethers.getContractAt('MemberToken', memberTokenAddr);
-
-        expect(await memberToken.balanceOf(dao.address)).to.eq(100);
-      });
-
       it('allows EOA to deposit successfully with enough ERC721 Admission Token', async function () {
         await tokenC721.mint(member.getAddress(), 1);
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.not.be.reverted;
