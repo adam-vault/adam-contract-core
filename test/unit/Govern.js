@@ -23,7 +23,6 @@ describe('Govern.sol', function () {
 
   beforeEach(async function () {
     [creator, owner1, owner2] = await ethers.getSigners();
-    const tokens = await createTokens();
     budgetApprovalAddresses = await createBudgetApprovals(creator);
     adam = await createAdam(budgetApprovalAddresses);
     const tx1 = await createDao();
@@ -89,13 +88,14 @@ describe('Govern.sol', function () {
 
       it('should be able to propose a proposal, vote and execute', async function () {
         await dao.exposedTransferMemberToken(creator.address, 1);
-        const MT = await dao.memberToken();
-        const mt = await ethers.getContractAt('MemberToken', MT);
+        const mt = await ethers.getContractAt('MemberToken', await dao.memberToken());
         expect(await mt.balanceOf(creator.address)).to.eq(1);
 
         const governAddr = await governFactory.governMap(dao.address, 'General');
         const govern = await ethers.getContractAt('Govern', governAddr);
-        await hre.network.provider.send('hardhat_mine', ['0x2']);
+        await ethers.provider.send('hardhat_mine', ['0x2']);
+        await ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
+
         expect(await mt.getPastVotes(creator.address, await ethers.provider.getBlockNumber() - 1)).to.eq(1);
 
         const token = await ethers.getContractAt('TokenA', tokenA.address);
@@ -117,17 +117,17 @@ describe('Govern.sol', function () {
         expect(await govern.state(proposalId)).to.eq(1); // Active
         expect(await govern.getProposalVote(proposalId, 1)).to.eq(1);
 
-        await hre.network.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
+        await ethers.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
+        await ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
+
         expect(await govern.state(proposalId)).to.eq(4); // Success
 
         const descriptionHash = ethers.utils.id('Proposal #1: Transfer token');
-
-        await expect(govern.execute(
+        await govern.execute(
           [tokenA.address],
           [0],
           [transferCalldata],
-          descriptionHash,
-        ));
+          descriptionHash);
 
         expect(await govern.state(proposalId)).to.eq(7); // Executed
         expect(await token.balanceOf(owner1.address)).to.eq(1000);
@@ -182,7 +182,8 @@ describe('Govern.sol', function () {
         expect(await govern.hasVoted(proposalId, owner2.address)).to.eq(true);
         expect(await govern.state(proposalId)).to.eq(1); // Active
 
-        await hre.network.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
+        await ethers.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
+        await ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
 
         expect(await govern.getProposalVote(proposalId, 0)).to.eq(1);
         expect(await govern.getProposalVote(proposalId, 1)).to.eq(1);
@@ -239,7 +240,8 @@ describe('Govern.sol', function () {
         expect(await govern.hasVoted(proposalId, owner2.address)).to.eq(true);
         expect(await govern.state(proposalId)).to.eq(1); // Active
 
-        await hre.network.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
+        await ethers.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
+        await ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
 
         expect(await govern.getProposalVote(proposalId, 0)).to.eq(1);
         expect(await govern.getProposalVote(proposalId, 1)).to.eq(1);
