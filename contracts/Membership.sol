@@ -74,10 +74,10 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
       address from,
       address to,
       uint256
-    ) internal override {
-      if (from != address(0) && to != address(0)) {
-			  revert("Membership: Transfer of membership is aboundand");
-		  } 
+    ) internal pure override {
+        if (from != address(0) && to != address(0)) {
+		    revert("Membership: Transfer of membership is aboundand");
+		} 
     }
 
     function _afterTokenTransfer(
