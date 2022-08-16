@@ -118,5 +118,5 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgr
 		));
 	}
 
-	function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+	function _authorizeUpgrade(address) internal view override onlyOwner {}
 }

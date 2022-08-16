@@ -347,7 +347,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     function _mintMember(address owner) internal {
         IMembership(membership).createMember(owner);
     }
-    function _authorizeUpgrade(address newImplementation) internal override onlyGovern("General") {}
+    function _authorizeUpgrade(address) internal view override onlyGovern("General") {}
 
     function upgradeContractTo(address target, address newImplementation) public onlyGovern("General") {
         UUPSUpgradeable(target).upgradeTo(newImplementation);

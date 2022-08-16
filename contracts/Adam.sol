@@ -140,5 +140,5 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         emit CreateDao(address(_dao), params._name, params._description, msg.sender);
         return address(_dao);
     }
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal view override onlyOwner {}
 }

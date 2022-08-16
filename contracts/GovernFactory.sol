@@ -67,5 +67,5 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         IGovern(payable(govern)).addVoteToken(token, weight);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal view override onlyOwner {}
 }

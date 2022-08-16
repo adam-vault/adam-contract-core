@@ -194,5 +194,5 @@ contract Govern is
         uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
         return (proposalvote.forVotes * 100) >= totalVotes * passThreshold / 100;
     }
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal view override onlyOwner {}
 }

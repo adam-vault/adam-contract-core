@@ -14,4 +14,10 @@ module.exports = {
         'tests/TokenC721.sol',
         'tests/TokenD1155.sol',
     ],
+    // solcOptimizerDetails: {
+    //     yul: true,
+    //     yulDetails: {
+    //       stackAllocation: true,
+    //     },
+    // },
 };
