@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { ethers } = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
 const decodeBase64 = require('../utils/decodeBase64');
 
 describe('Team.sol', function () {
@@ -9,7 +9,11 @@ describe('Team.sol', function () {
   beforeEach(async function () {
     [creator, member1, member2, member3] = await ethers.getSigners();
     const Team = await ethers.getContractFactory('Team', { signer: creator });
-    team = await Team.deploy();
+    team = await upgrades.deployProxy(Team, { kind: 'uups' });
+  });
+
+  it('init creator as owner', async function () {
+    expect(await team.owner()).to.eq(creator.address);
   });
 
   describe('safeTransferFrom()', function () {
