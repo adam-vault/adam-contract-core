@@ -3,17 +3,35 @@ const { ethers, upgrades } = require('hardhat');
 const decodeBase64 = require('../utils/decodeBase64');
 
 describe('Team.sol', function () {
-  let creator, member1, member2, member3;
+  let creator, member1, member2, member3, member4;
   let team;
 
   beforeEach(async function () {
-    [creator, member1, member2, member3] = await ethers.getSigners();
+    [creator, member1, member2, member3, member4] = await ethers.getSigners();
     const Team = await ethers.getContractFactory('Team', { signer: creator });
     team = await upgrades.deployProxy(Team, { kind: 'uups' });
   });
 
   it('init creator as owner', async function () {
     expect(await team.owner()).to.eq(creator.address);
+  });
+
+  describe('upgradeTo()', function () {
+    let mockV2Impl;
+    beforeEach(async function () {
+      const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
+      mockV2Impl = await MockUpgrade.deploy();
+      await mockV2Impl.deployed();
+    });
+    it('allows owner to upgrade', async function () {
+      await team.upgradeTo(mockV2Impl.address);
+      const v2Contract = await ethers.getContractAt('MockVersionUpgrade', team.address);
+      expect(await v2Contract.v2()).to.equal(true);
+    });
+
+    it('throws "Ownable: caller is not the owner" error if upgrade by non owner', async function () {
+      await expect(team.connect(member2).upgradeTo(mockV2Impl.address)).to.revertedWith('Ownable: caller is not the owner');
+    });
   });
 
   describe('safeTransferFrom()', function () {
@@ -24,7 +42,7 @@ describe('Team.sol', function () {
       const event = receipt.events.find(e => e.event === 'TransferSingle');
       teamId = event.args.id;
     });
-    it('throw "Team: Transfer of team ownership is aboundand" error if member transfer their token', async function () {
+    it('throws "Team: Transfer of team ownership is aboundand" error if member transfer their token', async function () {
       await expect(team.connect(member2).safeTransferFrom(member2.address, member3.address, teamId, 1, '0x')).to.revertedWith('Team: Transfer of team ownership is aboundand');
     });
   });
