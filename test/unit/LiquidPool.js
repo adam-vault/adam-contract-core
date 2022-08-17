@@ -322,7 +322,7 @@ describe('LiquidPool.sol', function () {
   });
 
   describe('canAddAsset()', function () {
-    it('returns true if feed registry unresolvable', async function () {
+    it('returns true if feed registry resolvable', async function () {
       await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
       expect(await lp.canAddAsset(token.address)).to.eq(true);
     });
