@@ -90,14 +90,15 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         if (totalSupply() == 0) {
             _mint(receiver, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
             _afterDeposit(receiver, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
+            emit Deposit(receiver, Denominations.ETH, msg.value);
             return;
         }
         uint256 total = totalPrice() - assetBaseCurrencyPrice(Denominations.ETH, msg.value);
         _mint(receiver, (assetBaseCurrencyPrice(Denominations.ETH, msg.value) * 10 ** baseCurrencyDecimals()) / (total * 10 ** baseCurrencyDecimals() / totalSupply()));
 
-        _afterDeposit(msg.sender, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
+        _afterDeposit(receiver, assetBaseCurrencyPrice(Denominations.ETH, msg.value));
 
-        emit Deposit(msg.sender, Denominations.ETH, msg.value);
+        emit Deposit(receiver, Denominations.ETH, msg.value);
     }
 
     function redeem(uint256 amount) public {
@@ -116,9 +117,9 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
 
         _mint(receiver, quote(assetBaseCurrencyPrice(asset, amount)));
         IERC20Metadata(asset).transferFrom(msg.sender, address(this), amount);
-        _afterDeposit(msg.sender, assetBaseCurrencyPrice(asset, amount));
+        _afterDeposit(receiver, assetBaseCurrencyPrice(asset, amount));
 
-        emit Deposit(msg.sender, asset, amount);
+        emit Deposit(receiver, asset, amount);
     }
 
     function addAssets(address[] calldata erc20s) public onlyGovern("General") {
