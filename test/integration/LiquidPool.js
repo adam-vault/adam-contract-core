@@ -285,6 +285,40 @@ describe('Integration - LiquidPool.sol', function () {
       });
     });
 
+    context('when using non valid Admission Token', async function () {
+      beforeEach(async function () {
+        const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
+        const nonERC20Contract = await MockUpgrade.deploy();
+
+        const tx1 = await adam.createDao(
+          paramsStruct.getCreateDaoParams({
+            admissionTokens: [
+              [nonERC20Contract.address, 1, 0, false],
+            ],
+          }),
+        );
+        const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
+        dao = await ethers.getContractAt('Dao', daoAddr);
+        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+      });
+
+      it('throws "Admission token not enough" error when deposit', async function () {
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+      });
+    });
+
+    context('when using non contract Admission Token', async function () {
+      it('throws "Admission Token not support!" error', async function () {
+        await expect(adam.createDao(
+          paramsStruct.getCreateDaoParams({
+            admissionTokens: [
+              [ethers.constants.AddressZero, 1, 0, false],
+            ],
+          }),
+        )).to.be.revertedWith('Admission Token not Support!');
+      });
+    });
+
     context('when minDepositAmount is set', async function () {
       beforeEach(async function () {
         const tx1 = await adam.createDao(
