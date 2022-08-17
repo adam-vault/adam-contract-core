@@ -8,7 +8,7 @@ module.exports = {
         'mocks/MockPriceResolver.sol',
         'mocks/MockToken.sol',
         'mocks/MockWETH9.sol',
-
+        'mocks/MockVersionUpgrade.sol',
         'tests/TokenA.sol',
         'tests/TokenB.sol',
         'tests/TokenC721.sol',
