@@ -93,7 +93,7 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgr
 	}
 
 	function setInfo(string memory name, string memory description, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender){
-    nameOf[tokenId] = name;
+    	nameOf[tokenId] = name;
 		descriptionOf[tokenId] = description;
 
 		emit EditInfo(name, description, tokenId);
