@@ -1,451 +1,415 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
-const findEventArgs = require('../../utils/findEventArgs');
-const { createTokens } = require('../utils/createContract');
-const { getCreateTransferERC20BAParams } = require('../../utils/paramsStruct');
+const chai = require('chai');
+const { ethers, upgrades, network } = require('hardhat');
+const { smock } = require('@defi-wonderland/smock');
+
+const { expect } = chai;
+const { BigNumber } = ethers;
+chai.should();
+chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferERC20BudgetApproval.sol', function () {
-  let transferErc20BAImplementation, budgetApproval, dao, team;
-  let executor, approver, receiver;
-  let tokenA, executee, TransferERC20BudgetApproval;
+  let creator, executor, receiver;
+  let mockToken, team, executee;
+  let executeeAsSigner, TransferERC20BudgetApproval;
+
+  function initializeParser (params = {}) {
+    return [[
+      params.executee || executee.address,
+      params.executor || executor.address,
+      params.executorTeamId || 0,
+      params.approvers || [],
+      params.approverTeamId || 0,
+      params.minApproval || 0,
+      params.text || 'text',
+      params.transactionType || 'transactionType',
+      params.startTime || Math.round(Date.now() / 1000) - 86400,
+      params.endTime || Math.round(Date.now() / 1000) + 86400,
+      params.allowUnlimitedUsageCount || true,
+      params.usageCount || 0,
+      params.team || team.address,
+    ],
+    params.allowAllToAddresses !== undefined ? params.allowAllToAddresses : true,
+    params.toAddresses || [],
+    params.allowAllTokens !== undefined ? params.allowAllTokens : true,
+    params.token || ethers.constants.AddressZero,
+    params.allowAnyAmount !== undefined ? params.allowAnyAmount : true,
+    params.totalAmount || 0,
+    params.amountPercentage || '100'];
+  }
 
   beforeEach(async function () {
-    [executor, approver, receiver] = await ethers.getSigners();
+    [creator, executor, receiver] = await ethers.getSigners();
 
-    ({ tokenA } = await createTokens());
-    const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
-    TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
-    transferErc20BAImplementation = await TransferERC20BudgetApproval.deploy();
-    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
-    const Team = await ethers.getContractFactory('Team', { signer: executor });
+    team = await smock.fake('Team');
+    executee = await smock.fake('MockBudgetApprovalExecutee');
+    mockToken = await smock.fake('ERC20');
 
-    team = await Team.deploy();
-    dao = await MockLPDao.deploy();
-    executee = await MockBudgetApprovalExecutee.deploy();
+    await network.provider.request({
+      method: 'hardhat_impersonateAccount',
+      params: [executee.address],
+    });
+    await network.provider.send(
+      'hardhat_setBalance', [
+        executee.address,
+        '0x10000000000000000000000000000',
+      ]);
+
+    executeeAsSigner = await ethers.getSigner(executee.address);
+    TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executeeAsSigner });
   });
-
-  describe('Create Budget Approval', function () {
-    it('should success', async function () {
+  describe('initialize', async function () {
+    it('init with params with the least setting successfully', async () => {
+      const transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
+        allowAllToAddresses: true,
+        toAddresses: [],
+        allowAllTokens: true,
+        token: ethers.constants.AddressZero,
+        allowAnyAmount: true,
+        totalAmount: 0,
+        amountPercentage: '100',
+      }));
+      expect(await transferErc20BA.name()).to.be.eq('Transfer ERC20 Budget Approval');
+      expect(await transferErc20BA.allowAllAddresses()).to.be.eq(true);
+      expect(await transferErc20BA.allowAllTokens()).to.be.eq(true);
+      expect(await transferErc20BA.token()).to.be.eq(ethers.constants.AddressZero);
+      expect(await transferErc20BA.allowAnyAmount()).to.be.eq(true);
+      expect(await transferErc20BA.totalAmount()).to.be.eq(ethers.BigNumber.from('0'));
+      expect(await transferErc20BA.amountPercentage()).to.be.eq(ethers.BigNumber.from('100'));
+    });
+    it('init with params with complex setting successfully', async () => {
+      const transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
+        allowAllToAddresses: false,
+        toAddresses: [],
+        allowAllTokens: false,
+        token: mockToken.address,
+        allowAnyAmount: false,
+        totalAmount: ethers.BigNumber.from('1000'),
+        amountPercentage: '90',
+      }));
+      expect(await transferErc20BA.name()).to.be.eq('Transfer ERC20 Budget Approval');
+      expect(await transferErc20BA.allowAllAddresses()).to.be.eq(false);
+      expect(await transferErc20BA.allowAllTokens()).to.be.eq(false);
+      expect(await transferErc20BA.token()).to.be.eq(mockToken.address);
+      expect(await transferErc20BA.allowAnyAmount()).to.be.eq(false);
+      expect(await transferErc20BA.totalAmount()).to.be.eq(ethers.BigNumber.from('1000'));
+      expect(await transferErc20BA.amountPercentage()).to.be.eq(ethers.BigNumber.from('90'));
+    });
+    it('throws "duplicate token" error if toAddresses duplicated', async () => {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferERC20BudgetApproval.interface.encodeFunctionData('initialize',
-        getCreateTransferERC20BAParams({
-          dao: executee.address,
-          executor: executor.address,
-          approvers: [approver.address],
-          toAddresses: [receiver.address],
-          token: tokenA.address,
-          startTime,
-          endTime,
-          minApproval: 1,
-          team: team.address,
-        }),
-      );
-
-      const tx = await executee.createBudgetApprovals([transferErc20BAImplementation.address], [initData]);
-      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
-
-      expect(await budgetApproval.dao()).to.eq(executee.address);
-      expect(await budgetApproval.executor()).to.eq(executor.address);
-      expect(await budgetApproval.approversMapping(approver.address)).to.eq(true);
-      expect(await budgetApproval.minApproval()).to.eq(1);
-
-      expect(await budgetApproval.allowAllAddresses()).to.eq(false);
-      expect(await budgetApproval.addressesMapping(receiver.address)).to.eq(true);
-
-      expect(await budgetApproval.token()).to.eq(tokenA.address);
-
-      expect(await budgetApproval.allowAnyAmount()).to.eq(false);
-      expect(await budgetApproval.totalAmount()).to.eq('100');
-      expect(await budgetApproval.amountPercentage()).to.eq(10);
-
-      expect(await budgetApproval.startTime()).to.eq(startTime);
-      expect(await budgetApproval.endTime()).to.eq(endTime);
-
-      expect(await budgetApproval.allowUnlimitedUsageCount()).to.eq(false);
-      expect(await budgetApproval.usageCount()).to.eq(10);
-    });
-
-    it('should fail if minApproval larger than approvers length', async function () {
-      const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferERC20BAParams({
-          dao: executee.address,
-          executor: executor.address,
-          approvers: [approver.address],
-          minApproval: 2,
-          toAddresses: [receiver.address],
-          token: tokenA.address,
-          team: team.address,
-        }),
-      );
-
-      await expect(
-        executee.createBudgetApprovals(
-          [transferErc20BAImplementation.address],
-          [initData],
-        ),
-      ).to.be.revertedWith('Invalid approver list');
+      await expect(upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
+        dao: executee.address,
+        executor: creator.address,
+        executorTeamId: 0,
+        approvers: [],
+        approverTeamId: 0,
+        minApproval: 0,
+        text: 'text',
+        transactionType: 'transactionType',
+        startTime,
+        endTime,
+        allowUnlimitedUsageCount: true,
+        usageCount: 0,
+        team: team.address,
+        allowAllToAddresses: false,
+        toAddresses: [creator.address, creator.address],
+        allowAllTokens: true,
+        token: ethers.constants.AddressZero,
+        allowAnyAmount: true,
+        totalAmount: 0,
+        amountPercentage: '100',
+      }))).to.be.revertedWith('duplicate token');
     });
   });
-
-  describe('Execute Transaction (Transfer illiquid token)', function () {
+  describe('executeParams', async function () {
+    let transferErc20BA;
     beforeEach(async function () {
-      await tokenA.mint(executee.address, '200');
-      const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferERC20BAParams({
-          dao: executee.address,
-          executor: executor.address,
-          approvers: [approver.address],
+      transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
+        allowAllToAddresses: true,
+        toAddresses: [],
+        allowAllTokens: true,
+        token: ethers.constants.AddressZero,
+        allowAnyAmount: true,
+        totalAmount: 0,
+        amountPercentage: '100',
+      }));
+    });
+    it('describes execute params', async function () {
+      expect(await transferErc20BA.executeParams()).to.be.deep.equal(['address token', 'address to', 'uint256 value']);
+    });
+  });
+  describe('execute', async function () {
+    context('allow limited absolute amount', async function () {
+      let transferErc20BA;
+      beforeEach(async function () {
+        transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
+          allowAllToAddresses: true,
+          toAddresses: [],
+          allowAllTokens: true,
+          token: ethers.constants.AddressZero,
+          allowAnyAmount: false,
+          totalAmount: 100,
+          amountPercentage: '100',
+        }));
+        executee.executeByBudgetApproval.returns('0x');
+      });
+      it('allows user to transfer under allow amount', async function () {
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          50,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          mockToken.interface.encodeFunctionData('transfer', [
+            receiver.address,
+            50,
+          ]),
+          BigNumber.from('0'));
+      });
+      it('allows user to transfer equal allow amount', async function () {
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          100,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          mockToken.interface.encodeFunctionData('transfer', [
+            receiver.address,
+            100,
+          ]),
+          BigNumber.from('0'));
+      });
+      it('allows user to transfer amount twice', async function () {
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          50,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        const encodeData = mockToken.interface.encodeFunctionData('transfer', [
+          receiver.address,
+          50,
+        ]);
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          encodeData,
+          BigNumber.from('0'));
+        executee.executeByBudgetApproval.atCall(1).should.be.calledWith(
+          mockToken.address,
+          encodeData,
+          BigNumber.from('0'));
+      });
+      it('throws "Exceeded max budget transferable amount" error if the 1st time outflow exceeds amount limit', async function () {
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          101,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable amount');
+      });
+      it('throws "Exceeded max budget transferable amount" error if the 2nd time outflow exceeds amount limit', async function () {
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          51,
+        ]);
+        await transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true);
+        const encodeData = mockToken.interface.encodeFunctionData('transfer', [
+          receiver.address,
+          51,
+        ]);
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          encodeData,
+          BigNumber.from('0'));
+
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable amount');
+      });
+    });
+    context('allow limited percentage of token', async function () {
+      let transferErc20BA;
+      beforeEach(async function () {
+        transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
+          allowAllToAddresses: true,
+          toAddresses: [],
+          allowAllTokens: true,
+          token: ethers.constants.AddressZero,
+          allowAnyAmount: true,
+          totalAmount: 0,
+          amountPercentage: '50',
+        }));
+        executee.executeByBudgetApproval.returns('0x');
+      });
+      it('allows user to transfer under allow percentage amount', async function () {
+        mockToken.balanceOf.returns(200);
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          50,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          mockToken.interface.encodeFunctionData('transfer', [
+            receiver.address,
+            50,
+          ]),
+          BigNumber.from('0'));
+      });
+      it('allows user to transfer equal allow percentage amount', async function () {
+        mockToken.balanceOf.returns(50);
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          50,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          mockToken.interface.encodeFunctionData('transfer', [
+            receiver.address,
+            50,
+          ]),
+          BigNumber.from('0'));
+      });
+      it('allows user to transfer percentage amount twice', async function () {
+        mockToken.balanceOf.returns(50);
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          1,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        const encodeData = mockToken.interface.encodeFunctionData('transfer', [
+          receiver.address,
+          1,
+        ]);
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          encodeData,
+          BigNumber.from('0'));
+        executee.executeByBudgetApproval.atCall(1).should.be.calledWith(
+          mockToken.address,
+          encodeData,
+          BigNumber.from('0'));
+      });
+      it('throws "Exceeded max budget transferable percentage" error if outflow with 0 and have no balance', async function () {
+        mockToken.balanceOf.returns(0);
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          0,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable percentage');
+      });
+      it('throws "Exceeded max budget transferable percentage" error if the 1st time outflow exceeds percentage limit', async function () {
+        mockToken.balanceOf.returns(50);
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          51,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable percentage');
+      });
+      it('throws "Exceeded max budget transferable percentage" error if the 2nd time outflow exceeds percentage limit', async function () {
+        mockToken.balanceOf.returns(50);
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          25,
+        ]);
+        await transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true);
+        const encodeData = mockToken.interface.encodeFunctionData('transfer', [
+          receiver.address,
+          25,
+        ]);
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          encodeData,
+          BigNumber.from('0'));
+
+        const transactionData2 = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
+          receiver.address,
+          51,
+        ]);
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData2], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable percentage');
+      });
+    });
+    context('allow limited toAddresses', async function () {
+      let transferErc20BA;
+      beforeEach(async function () {
+        transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
+          allowAllToAddresses: false,
           toAddresses: [receiver.address],
-          token: tokenA.address,
-          minApproval: 1,
-          team: team.address,
-        }),
-      );
-
-      const tx = await executee.createBudgetApprovals(
-        [transferErc20BAImplementation.address], [initData],
-      );
-      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
-    });
-
-    context('ERC20 complete flow', () => {
-      it('should success', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '10',
-        ]);
-
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-        const originalBalance = await tokenA.balanceOf(receiver.address);
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await budgetApproval.connect(executor).executeTransaction(id);
-
-        expect(await tokenA.balanceOf(receiver.address)).to.eq(originalBalance.add('10'));
+        }));
+        executee.executeByBudgetApproval.returns('0x');
       });
-    });
-
-    context('not executed by executor', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
+      it('allows user to transfer to whitelisted address', async function () {
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
           receiver.address,
-          '10',
+          50,
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(approver).executeTransaction(id))
-          .to.be.revertedWith('Executor not whitelisted in budget');
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          mockToken.interface.encodeFunctionData('transfer', [
+            receiver.address,
+            50,
+          ]),
+          BigNumber.from('0'));
       });
-    });
-
-    context('not created by executor', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '10',
-        ]);
-        await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false))
-          .to.be.revertedWith('Executor not whitelisted in budget');
-      });
-    });
-
-    context('not approved by approver', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '10',
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('status invalid');
-      });
-    });
-
-    context('revoked by executor', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '10',
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(executor).revokeTransaction(id);
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('status invalid');
-      });
-    });
-
-    context('not allowed address', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
+      it('throws "Recipient not whitelisted in budget" error if send to non-permitted receiver', async function () {
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
           executor.address,
-          '10',
+          25,
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('Recipient not whitelisted in budget');
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.be.revertedWith('Recipient not whitelisted in budget');
       });
     });
+    context('allow limited token contract', async function () {
+      let transferErc20BA, unknownToken;
+      beforeEach(async function () {
+        unknownToken = await smock.fake('ERC20');
 
-    context('exceed amount', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '101',
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('Exceeded max budget transferable amount');
+        transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
+          allowAllTokens: false,
+          token: mockToken.address,
+        }));
+        executee.executeByBudgetApproval.returns('0x');
       });
-    });
-
-    context('exceed amount percentage', () => {
-      it('should revert', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
+      it('allows user to transfer to whitelisted address', async function () {
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          mockToken.address,
           receiver.address,
-          '21',
+          50,
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('Exceeded max budget transferable percentage');
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.not.be.reverted;
+        executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
+          mockToken.address,
+          mockToken.interface.encodeFunctionData('transfer', [
+            receiver.address,
+            50,
+          ]),
+          BigNumber.from('0'));
       });
-    });
-
-    context('execute before startTime', () => {
-      it('should revert', async function () {
-        const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferERC20BAParams({
-            dao: executee.address,
-            executor: executor.address,
-            approvers: [],
-            minApproval: 0,
-            toAddresses: [receiver.address],
-            token: tokenA.address,
-            endTime: 0,
-            amountPercentage: 100,
-            startTime: Math.round(Date.now() / 1000) + 86400,
-            team: team.address,
-          }),
-        );
-
-        const tx = await executee.createBudgetApprovals(
-          [transferErc20BAImplementation.address],
-          [initData],
-        );
-        const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-        const testBudgetApproval = await ethers.getContractAt(
-          'TransferERC20BudgetApproval',
-          budgetApprovalAddress,
-        );
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
+      it('throws "Token not whitelisted in budget" error if send to non-permitted receiver', async function () {
+        const transactionData = abiCoder.encode(await transferErc20BA.executeParams(), [
+          unknownToken.address,
           receiver.address,
-          '101',
+          25,
         ]);
-        await expect(
-          testBudgetApproval
-            .connect(executor)
-            .createTransaction(
-              [transactionData],
-              Math.round(Date.now() / 1000) + 86400,
-              true,
-            ),
-        ).to.be.revertedWith('Budget usage period not started');
-      });
-    });
-
-    context('execute after endTime', () => {
-      it('should revert', async function () {
-        const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferERC20BAParams({
-            dao: executee.address,
-            executor: executor.address,
-            approvers: [],
-            minApproval: 0,
-            toAddresses: [receiver.address],
-            token: tokenA.address,
-            startTime: 0,
-            amountPercentage: 100,
-            endTime: Math.round(Date.now() / 1000) - 86400,
-            team: team.address,
-          }),
-        );
-
-        const tx = await executee.createBudgetApprovals(
-          [transferErc20BAImplementation.address],
-          [initData],
-        );
-        const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-        const testBudgetApproval = await ethers.getContractAt(
-          'TransferERC20BudgetApproval',
-          budgetApprovalAddress,
-        );
-
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '101',
-        ]);
-        await expect(
-          testBudgetApproval
-            .connect(executor)
-            .createTransaction(
-              [transactionData],
-              Math.round(Date.now() / 1000) + 86400,
-              true,
-            ),
-        ).to.be.revertedWith('Budget usage period has ended');
-      });
-    });
-
-    context('execute if not enough usage count', () => {
-      it('should revert', async function () {
-        const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-          getCreateTransferERC20BAParams({
-            dao: dao.address,
-            executor: executor.address,
-            approvers: [],
-            minApproval: 0,
-            toAddresses: [receiver.address],
-            token: tokenA.address,
-            startTime: 0,
-            endTime: 0,
-            amountPercentage: 100,
-            usageCount: 1,
-            team: team.address,
-          }),
-        );
-
-        const tx = await executee.createBudgetApprovals(
-          [transferErc20BAImplementation.address],
-          [initData],
-        );
-        const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-        const testBudgetApproval = await ethers.getContractAt(
-          'TransferERC20BudgetApproval',
-          budgetApprovalAddress,
-        );
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '1',
-        ]);
-        await testBudgetApproval.connect(executor).createTransaction(
-          [transactionData],
-          Math.round(Date.now() / 1000) + 86400,
-          true,
-        );
-
-        await expect(
-          testBudgetApproval
-            .connect(executor)
-            .createTransaction(
-              [transactionData],
-              Math.round(Date.now() / 1000) + 86400,
-              true,
-            ),
-        ).to.be.revertedWith('Exceeded budget usage limit');
-      });
-    });
-  });
-
-  describe('Execute Transaction with team (Transfer illiquid token)', function () {
-    beforeEach(async function () {
-      await tokenA.mint(executee.address, '200');
-      await team.addTeam('Testing1', executor.address, [executor.address], 'Test');
-      await team.addTeam('Testing2', executor.address, [approver.address], 'Test');
-
-      const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
-        getCreateTransferERC20BAParams({
-          dao: executee.address,
-          executorTeamId: 1,
-          approverTeamId: 2,
-          toAddresses: [receiver.address],
-          token: tokenA.address,
-          minApproval: 0,
-          team: team.address,
-        }),
-      );
-
-      const tx = await executee.createBudgetApprovals(
-        [transferErc20BAImplementation.address], [initData],
-      );
-      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-      budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
-    });
-
-    context('ERC20 complete flow', () => {
-      it('should success', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '10',
-        ]);
-
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-        const originalBalance = await tokenA.balanceOf(receiver.address);
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await budgetApproval.connect(executor).executeTransaction(id);
-
-        expect(await tokenA.balanceOf(receiver.address)).to.eq(originalBalance.add('10'));
-      });
-
-      it('should revert with approver not in list', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '10',
-        ]);
-
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-        await expect(budgetApproval.connect(executor).approveTransaction(id)).to.be.revertedWith('Approver not whitelisted in budget');
-      });
-
-      it('should revert with executor not in list', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '10',
-        ]);
-
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(approver).executeTransaction(id)).to.be.revertedWith('Executor not whitelisted in budget');;
+        await expect(transferErc20BA.connect(executor).createTransaction([transactionData], Date.now() + 86400, true)).to.be.revertedWith('Token not whitelisted in budget');
       });
     });
   });
