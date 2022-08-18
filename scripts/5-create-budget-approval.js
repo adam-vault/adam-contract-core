@@ -101,7 +101,7 @@ async function main () {
     budgetApprovalAddresses.push(args.budgetApproval);
   });
 
-  fileReader.save('deploy', 'results.json', {
+  fileReader.save('deploy-results', 'results.json', {
     ...deploymentResult,
     initdata_addresses: {
       ...deploymentResult.initdata_addresses,
