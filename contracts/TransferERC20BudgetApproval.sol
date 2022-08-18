@@ -85,7 +85,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     }
 
     function _addToAddress(address to) internal {
-        require(!addressesMapping[to], "duplicate token");
+        require(!addressesMapping[to], "Duplicated address in target address list");
         addressesMapping[to] = true;
         emit AllowAddress(to);
     }

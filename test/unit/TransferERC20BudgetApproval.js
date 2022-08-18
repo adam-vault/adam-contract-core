@@ -96,7 +96,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       expect(await transferErc20BA.totalAmount()).to.be.eq(ethers.BigNumber.from('1000'));
       expect(await transferErc20BA.amountPercentage()).to.be.eq(ethers.BigNumber.from('90'));
     });
-    it('throws "duplicate token" error if toAddresses duplicated', async () => {
+    it('throws "Duplicated address in target address list" error if toAddresses duplicated', async () => {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
       await expect(upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
@@ -120,7 +120,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         allowAnyAmount: true,
         totalAmount: 0,
         amountPercentage: '100',
-      }))).to.be.revertedWith('duplicate token');
+      }))).to.be.revertedWith('Duplicated address in target address list');
     });
   });
   describe('executeParams', async function () {
