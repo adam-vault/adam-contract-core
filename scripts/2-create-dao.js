@@ -54,7 +54,7 @@ async function main () {
 
   const governFactory = await hre.ethers.getContractAt('GovernFactory', deploymentResult.addresses.governFactory);
   const dao0BudgetGovern = await governFactory.governMap(daoAddresses[0].address, 'BudgetApproval');
-  fileReader.save('deploy', 'results.json', {
+  fileReader.save('deploy-results', 'results.json', {
     ...deploymentResult,
     initdata_addresses: {
       ...deploymentResult.initdata_addresses,
