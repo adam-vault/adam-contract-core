@@ -72,7 +72,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         }
     }
     function _addToken(address token) internal {
-        require(!tokensMapping[token], "Duplicated Item in source token list.");
+        require(!tokensMapping[token], "Duplicated Item in source token list");
         tokens.push(token);
         tokensMapping[token] = true;
         emit AllowToken(token);

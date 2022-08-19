@@ -8,10 +8,16 @@ module.exports = {
         'mocks/MockPriceResolver.sol',
         'mocks/MockToken.sol',
         'mocks/MockWETH9.sol',
-
+        'mocks/MockVersionUpgrade.sol',
         'tests/TokenA.sol',
         'tests/TokenB.sol',
         'tests/TokenC721.sol',
         'tests/TokenD1155.sol',
     ],
+    // solcOptimizerDetails: {
+    //     yul: true,
+    //     yulDetails: {
+    //       stackAllocation: true,
+    //     },
+    // },
 };
