@@ -11,7 +11,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferERC20BudgetApproval.sol', function () {
   let creator, executor, receiver;
-  let mockToken, team, executee;
+  let mockToken, team, executee, unknownToken;
   let executeeAsSigner, TransferERC20BudgetApproval;
 
   function initializeParser (params = {}) {
@@ -60,6 +60,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
     team = await smock.fake('Team');
     executee = await smock.fake('MockBudgetApprovalExecutee');
     mockToken = await smock.fake('ERC20');
+    unknownToken = await smock.fake('ERC20');
 
     await network.provider.request({
       method: 'hardhat_impersonateAccount',
@@ -270,7 +271,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
       it('throws "Recipient not whitelisted in budget" error if send to non-permitted receiver', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 25),
+          encodeTxData(mockToken.address, executor.address, 25),
         ], Date.now() + 86400, true)).to.be.revertedWith('Recipient not whitelisted in budget');
       });
     });
@@ -293,7 +294,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
       it('throws "Token not whitelisted in budget" error if send to non-permitted receiver', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 25),
+          encodeTxData(unknownToken.address, receiver.address, 25),
         ], Date.now() + 86400, true)).to.be.revertedWith('Token not whitelisted in budget');
       });
     });
