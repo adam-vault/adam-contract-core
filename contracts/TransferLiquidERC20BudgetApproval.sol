@@ -6,6 +6,7 @@ import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./base/PriceResolver.sol";
+import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
 import "./interface/IDao.sol";
@@ -66,7 +67,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         (address token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
         uint256 amountInBaseCurrency;
 
-        if (token == ETH_ADDRESS) {
+        if (token == Denominations.ETH) {
             IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, "", value);
         } else {
             bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
