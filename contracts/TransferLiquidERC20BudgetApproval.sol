@@ -66,6 +66,8 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         (address token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
         uint256 amountInBaseCurrency;
 
+        uint256 totalBalanceBeforeExecute = totalBalanceInBaseCurrency();
+
         if (token == ETH_ADDRESS) {
             IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, "", value);
         } else {
@@ -77,29 +79,29 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(tokensMapping[token], "Token not whitelisted in budget");
         require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "Exceeded max budget transferable amount");
-        require(checkAmountPercentageValid(amountInBaseCurrency), "Exceeded max budget transferable percentage");
+        require(checkAmountPercentageValid(totalBalanceBeforeExecute, amountInBaseCurrency), "Exceeded max budget transferable percentage");
 
         if(!allowAnyAmount) {
             totalAmount -= amountInBaseCurrency;
         }
     }
 
-    function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {
-        if (amountPercentage == 100) return true;
-
-        uint256 _totalAmount = amount;
-
+    function totalBalanceInBaseCurrency() internal view returns (uint256 totalBalance) {
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i] == Denominations.ETH) {
-                _totalAmount += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
+                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
             }else {
-                _totalAmount += assetBaseCurrencyPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
+                totalBalance += assetBaseCurrencyPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
             }
         }
+    }
 
-        if (_totalAmount == 0) return false;
+    function checkAmountPercentageValid(uint256 totalBalance, uint256 amount) internal view returns (bool) {
+        if (amountPercentage == 100) return true;
 
-        return amount <= _totalAmount * amountPercentage / 100;
+        if (totalBalance == 0) return false;
+
+        return amount <= totalBalance * amountPercentage / 100;
     }
 
     function _addToken(address token) internal {
