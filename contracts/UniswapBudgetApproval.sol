@@ -12,8 +12,6 @@ import "./interface/IDao.sol";
 import "./interface/IAdam.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
-import "hardhat/console.sol";
-
 contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
 
     using BytesLib for bytes;
@@ -86,7 +84,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         require(to == Constant.UNISWAP_ROUTER || to == Constant.WETH_ADDRESS, "Invalid Uniswap address or WETH address");
 
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
-        console.logBytes(result);
+
         (
             address tokenIn,
             address tokenOut,
