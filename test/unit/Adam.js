@@ -23,10 +23,6 @@ describe('Adam.sol', function () {
     const dao = await Dao.deploy();
     await dao.deployed();
 
-    const FeedRegistry = await ethers.getContractFactory('MockFeedRegistry');
-    const feedRegistry = await FeedRegistry.deploy();
-    await feedRegistry.deployed();
-
     const MemberToken = await ethers.getContractFactory('MemberToken');
     const memberToken = await deployMockContract(creator, MemberToken.interface.fragments);
 
@@ -47,7 +43,6 @@ describe('Adam.sol', function () {
       memberToken.address,
       [uniswapBudgetApproval.address],
       governFactory.address,
-      feedRegistry.address,
       team.address,
     ]);
   });

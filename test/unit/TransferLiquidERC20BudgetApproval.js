@@ -41,7 +41,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
   });
 
   describe('Create Budget Approval', function () {
-    it('should success', async function () {
+    it('creates liquid ERC20 Budget Approval', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
@@ -98,7 +98,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       expect(await budgetApproval.usageCount()).to.eq(10);
     });
 
-    it('should fail if minApproval larger than approvers length', async function () {
+    it('throws "Invalid approver list"', async function () {
       const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
         [
           executee.address, // dao address
@@ -173,7 +173,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('ETH complete flow', () => {
-      it('should success', async function () {
+      it('executes transfer ERC20', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -192,7 +192,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('ERC20 complete flow', () => {
-      it('should success', async function () {
+      it('executes transfer ERC20', async function () {
         await tokenA.mint(executee.address, parseEther('10'));
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenA.address,
@@ -212,7 +212,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('multiple outflowLiquid', () => {
-      it('should success', async function () {
+      it('executes transfer ERC20', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -230,7 +230,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('not executed by executor', () => {
-      it('should revert', async function () {
+      it('throws "Executor not whitelisted in budget"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -246,7 +246,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('not created by executor', () => {
-      it('should revert', async function () {
+      it('throws "Executor not whitelisted in budget"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -258,7 +258,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('not approved by approver', () => {
-      it('should revert', async function () {
+      it('throws "status invalid"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -273,7 +273,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('revoked by executor', () => {
-      it('should revert', async function () {
+      it('throws "status invalid"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -289,7 +289,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('not allowed address', () => {
-      it('should revert', async function () {
+      it('throws "Recipient not whitelisted in budget"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           executor.address,
@@ -305,7 +305,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('exceed amount', () => {
-      it('should revert', async function () {
+      it('throws "Exceeded max budget transferable amount"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -321,7 +321,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('exceed amount percentage', () => {
-      it('should revert', async function () {
+      it('throws "Exceeded max budget transferable percentage"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -337,7 +337,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('execute before startTime', () => {
-      it('should revert', async function () {
+      it('throws "Budget usage period not started"', async function () {
         const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
           [
             executee.address, // dao address
@@ -391,7 +391,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('execute after endTime', () => {
-      it('should revert', async function () {
+      it('throws "Budget usage period has ended"', async function () {
         const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
           [
             executee.address, // dao address
@@ -446,7 +446,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     context('execute if not enough usage count', () => {
-      it('should revert', async function () {
+      it('throws "Exceeded budget usage limit"', async function () {
         const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
           [
             dao.address, // dao address

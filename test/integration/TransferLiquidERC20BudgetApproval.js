@@ -69,7 +69,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       await lp.connect(executor).deposit(executor.address, { value: parseEther('200') });
     });
 
-    it('should success create Liquid ERC 20 BA', async function () {
+    it('creates Liquid ERC 20 BA', async function () {
       expect(await lp.budgetApprovals(budgetApprovalAddress)).to.eq(true);
       expect(await budgetApproval.dao()).to.eq(dao.address);
     });

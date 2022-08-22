@@ -14,7 +14,7 @@ describe('Membership.sol', function () {
   });
 
   describe('createMember()', function () {
-    it('should create member when success', async function () {
+    it('creates member when success', async function () {
       await membership.createMember(member.address);
 
       expect(await membership.isMember(member.address)).to.equal(true);
@@ -22,11 +22,11 @@ describe('Membership.sol', function () {
       expect(await membership.totalSupply()).to.equal(1);
     });
 
-    it('should revert when msg.sender is not dao', async function () {
+    it('throws "access denied"', async function () {
       await expect(membership.connect(member).createMember(member.address)).to.be.revertedWith('access denied');
     });
 
-    it('should revert when exceed maxMemberLimit', async function () {
+    it('throws "member count exceed limit"', async function () {
       await membership.createMember(member.address);
 
       await expect(membership.createMember(member2.address)).to.be.revertedWith('member count exceed limit');
@@ -34,7 +34,7 @@ describe('Membership.sol', function () {
   });
 
   describe('tokenURI()', function () {
-    it('should return tokenURI', async function () {
+    it('returns tokenURI', async function () {
       await membership.createMember(member.address);
 
       expect(await membership.tokenURI(1)).to.equal('data:application/json;base64,eyJuYW1lIjogIkRhb05hbWUgTWVtYmVyc2hpcCAjMSJ9');
@@ -42,7 +42,7 @@ describe('Membership.sol', function () {
   });
 
   describe('transferFrom()', function () {
-    it('should revert', async function () {
+    it('throws "Membership: Transfer of membership is aboundand"', async function () {
       await membership.createMember(member.address);
       await expect(membership.connect(member).transferFrom(member.address, creator.address, 1)).to.be.revertedWith('Membership: Transfer of membership is aboundand');
     });

@@ -14,25 +14,25 @@ describe('MemberToken.sol', function () {
   });
 
   describe('mint()', function () {
-    it('should sucess when msg.sender is minter', async function () {
+    it('mints when msg.sender is minter', async function () {
       await memberToken.mint(member.address, 10);
 
       expect(await memberToken.balanceOf(member.address)).to.equal(10);
     });
 
-    it('should revert when msg.sender is not minter', async function () {
+    it('throws "Not minter"', async function () {
       await expect(memberToken.connect(member).mint(member.address, 10)).to.be.revertedWith('Not minter');
     });
   });
 
   describe('getVotes()', function () {
-    it('should return correct votes of non minter', async function () {
+    it('returns correct votes of non minter', async function () {
       await memberToken.mint(member.address, 10);
 
       expect(await memberToken.getVotes(member.address)).to.equal(10);
     });
 
-    it('should return 0 of minter', async function () {
+    it('returns 0 of minter', async function () {
       await memberToken.mint(creator.address, 10);
 
       expect(await memberToken.getVotes(creator.address)).to.equal(0);
@@ -40,7 +40,7 @@ describe('MemberToken.sol', function () {
   });
 
   describe('getPastVotes()', function () {
-    it('should return correct votes of non minter', async function () {
+    it('returns correct votes of non minter', async function () {
       await memberToken.mint(member.address, 10);
       const blockNumber = await ethers.provider.getBlockNumber();
       await memberToken.mint(member.address, 10);
@@ -48,7 +48,7 @@ describe('MemberToken.sol', function () {
       expect(await memberToken.getPastVotes(member.address, blockNumber)).to.equal(10);
     });
 
-    it('should return 0 of minter', async function () {
+    it('returns 0 of minter', async function () {
       await memberToken.mint(creator.address, 10);
       const blockNumber = await ethers.provider.getBlockNumber();
       await memberToken.mint(creator.address, 10);
@@ -58,7 +58,7 @@ describe('MemberToken.sol', function () {
   });
 
   describe('getPastTotalSupply', function () {
-    it('should return total amount without balance of minter', async function () {
+    it('returns total amount without balance of minter', async function () {
       await memberToken.mint(member.address, 10);
       await memberToken.mint(creator.address, 10);
       const blockNumber = await ethers.provider.getBlockNumber();

@@ -59,7 +59,7 @@ describe('UniswapBudgetApproval.sol', function () {
   });
 
   describe('Create Budget Approval', function () {
-    it('should success', async function () {
+    it('creates Uniswap Budget Appproval', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = UniswapBudgetApproval.interface.encodeFunctionData('initialize',
@@ -141,7 +141,7 @@ describe('UniswapBudgetApproval.sol', function () {
     });
 
     context('Wrap ETH', () => {
-      it('should success', async function () {
+      it('executes', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_WETH,
           '0xd0e30db0',
@@ -155,7 +155,7 @@ describe('UniswapBudgetApproval.sol', function () {
     });
 
     context('Unwrap ETH', () => {
-      it('should success', async function () {
+      it('executes', async function () {
         await WETH.mint(executee.address, parseEther('1'));
 
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
@@ -171,8 +171,7 @@ describe('UniswapBudgetApproval.sol', function () {
     });
 
     context('ETH => tokenA', () => {
-      it('should success', async function () {
-        
+      it('executes', async function () {
         const functionCallData = uniswapRouter.interface.encodeFunctionData('exactOutputSingle', [[
           ADDRESS_ETH,
           tokenA.address,
@@ -185,8 +184,8 @@ describe('UniswapBudgetApproval.sol', function () {
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
           Date.now() + 86400,
-          [functionCallData]
-        ])
+          [functionCallData],
+        ]);
 
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_UNISWAP_ROUTER,
@@ -201,8 +200,7 @@ describe('UniswapBudgetApproval.sol', function () {
     });
 
     context('tokenA => ETH', () => {
-      it('should success', async function () {
-
+      it('executes', async function () {
         await tokenA.mint(executee.address, 200);
         const originalBalance = await ethers.provider.getBalance(executee.address);
         const functionCallData = uniswapRouter.interface.encodeFunctionData('exactOutputSingle', [[
@@ -217,7 +215,7 @@ describe('UniswapBudgetApproval.sol', function () {
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
           Date.now() + 86400,
-          [functionCallData]
+          [functionCallData],
         ]);
 
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
@@ -232,8 +230,7 @@ describe('UniswapBudgetApproval.sol', function () {
     });
 
     context('WETH => tokenA', () => {
-      it('should success', async function () {
-        
+      it('executes', async function () {
         await WETH.mint(executee.address, 100);
 
         const functionCallData = uniswapRouter.interface.encodeFunctionData('exactOutputSingle', [[
@@ -248,8 +245,8 @@ describe('UniswapBudgetApproval.sol', function () {
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
           Date.now() + 86400,
-          [functionCallData]
-        ])
+          [functionCallData],
+        ]);
 
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_UNISWAP_ROUTER,
@@ -264,8 +261,7 @@ describe('UniswapBudgetApproval.sol', function () {
     });
 
     context('tokenA => WETH', () => {
-      it('should success', async function () {
-
+      it('executes', async function () {
         await tokenA.mint(executee.address, 200);
         const functionCallData = uniswapRouter.interface.encodeFunctionData('exactOutputSingle', [[
           tokenA.address,
@@ -279,7 +275,7 @@ describe('UniswapBudgetApproval.sol', function () {
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
           Date.now() + 86400,
-          [functionCallData]
+          [functionCallData],
         ]);
 
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [

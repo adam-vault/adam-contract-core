@@ -93,18 +93,18 @@ describe('Dao.sol', function () {
   });
 
   describe('setFirstDepositTime()', function () {
-    it('should sucess when msg.sender is liquid pool', async function () {
+    it('sets first deposit time when msg.sender is liquid pool', async function () {
       const { blockNumber } = await dao.connect(lpAsSigner).setFirstDepositTime(creator.address);
       const { timestamp } = await ethers.provider.getBlock(blockNumber);
       expect(await dao.firstDepositTime(creator.address)).to.equal(timestamp);
     });
-    it('should revert when msg.sender is not liquid pool', async function () {
+    it('throws "only LP"', async function () {
       await expect(dao.setFirstDepositTime(creator.address)).to.be.revertedWith('only LP');
     });
   });
 
   describe('canCreateBudgetApproval()', function () {
-    it('should return value of adam.budgetApprovals()', async function () {
+    it('returns value of adam.budgetApprovals()', async function () {
       await mockAdam.mock.budgetApprovals.returns(true);
       expect(await dao.canCreateBudgetApproval(creator.address)).to.equal(true);
 
@@ -114,7 +114,7 @@ describe('Dao.sol', function () {
   });
 
   describe('govern()', function () {
-    it('should return address from governFactory.governMap()', async function () {
+    it('returns address from governFactory.governMap()', async function () {
       expect(await dao.govern('General')).to.equal(mockGovern.address);
     });
   });
@@ -140,7 +140,7 @@ describe('Dao.sol', function () {
   });
 
   describe('isMember()', function () {
-    it('should return value from membership.isMember()', async function () {
+    it('returns value from membership.isMember()', async function () {
       await mockMemberShip.mock.isMember.returns(true);
       expect(await dao.isMember(creator.address)).to.equal(true);
 
@@ -150,21 +150,21 @@ describe('Dao.sol', function () {
   });
 
   describe('updateDaoSetting()', function () {
-    it('should update dao setting', async function () {
+    it('updates dao setting', async function () {
       await dao.connect(mockGovern).updateDaoSetting([10]);
       expect(await dao.minDepositAmount()).to.equal(10);
     });
   });
 
   describe('addAssets()', function () {
-    it('should success to add supported asset', async function () {
+    it('adds supported asset', async function () {
       await dao.connect(mockGovern).addAssets([tokenA.address]);
       expect(await dao.isAssetSupported(tokenA.address)).to.equal(true);
     });
   });
 
   describe('createTeam()', function () {
-    it('should success to create team', async function () {
+    it('creates team', async function () {
       const tx = await dao.connect(mockGovern).createTeam('title', creator.address, [member.address], 'description');
       const { tokenId: teamId } = await findEventArgs(tx, 'WhitelistTeam');
       expect(await dao.teamWhitelist(teamId)).to.equal(true);
@@ -172,28 +172,28 @@ describe('Dao.sol', function () {
   });
 
   describe('isPassAdmissionToken()', function () {
-    it('return true when all pass', async function () {
+    it('returns true when all pass', async function () {
       await tokenA.mint(member.address, 10);
       await tokenC721.mint(member.address, 1);
       await tokenD1155.mint(member.address, 1, 1, 0);
       expect(await dao.isPassAdmissionToken(member.address)).to.equal(true);
     });
-    it('return false when lack ERC20', async function () {
+    it('returns false when lack ERC20', async function () {
       await tokenC721.mint(member.address, 1);
       await tokenD1155.mint(member.address, 1, 1, 0);
       expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
     });
-    it('return false when lack ERC721', async function () {
+    it('returns false when lack ERC721', async function () {
       await tokenA.mint(member.address, 10);
       await tokenD1155.mint(member.address, 1, 1, 0);
       expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
     });
-    it('return false when lack ERC1155', async function () {
+    it('returns false when lack ERC1155', async function () {
       await tokenA.mint(member.address, 10);
       await tokenC721.mint(member.address, 1);
       expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
     });
-    it('return false when lack all tokens', async function () {
+    it('returns false when lack all tokens', async function () {
       expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
     });
   });
