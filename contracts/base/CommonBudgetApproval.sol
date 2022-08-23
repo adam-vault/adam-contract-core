@@ -3,7 +3,6 @@
 pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
@@ -14,7 +13,7 @@ import "../interface/IMembership.sol";
 import "../interface/ITeam.sol";
 import "../interface/IBudgetApprovalExecutee.sol";
 
-abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
+abstract contract CommonBudgetApproval is Initializable {
 
     using Counters for Counters.Counter;
     using BytesLib for bytes;
@@ -48,8 +47,6 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     Counters.Counter private _transactionIds;
 
     mapping(uint256 => Transaction) public transactions;
-
-    address constant public ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     address public executor;
     uint256 public executorTeamId;
@@ -228,6 +225,4 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     function _execute(uint256, bytes memory) internal virtual;
     function executeParams() public pure virtual returns (string[] memory);
     function name() external virtual returns (string memory);
-
-    function _authorizeUpgrade(address) internal override initializer {}
 }
