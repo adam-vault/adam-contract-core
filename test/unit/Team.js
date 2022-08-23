@@ -46,13 +46,11 @@ describe('Team.sol', function () {
 
   describe('addTeam()', function () {
     it('adds a team', async function () {
-      expect(tx).to.emit('AddTeam');
       expect(await team.creatorOf(teamId)).to.eq(creator.address);
       expect(await team.minterOf(teamId)).to.eq(member1.address);
       expect(await team.nameOf(teamId)).to.eq('Team Name');
     });
     it('mints tokens to member', async function () {
-      expect(tx).to.emit('AddTeam');
       expect(await team.balanceOf(member1.address, teamId)).to.eq(1);
       expect(await team.balanceOf(member2.address, teamId)).to.eq(1);
     });
