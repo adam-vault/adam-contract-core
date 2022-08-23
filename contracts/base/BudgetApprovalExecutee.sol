@@ -17,6 +17,7 @@ contract BudgetApprovalExecutee is Initializable {
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event ExecuteByBudgetApproval(address budgetApproval, bytes data);
+    event RevokeBudgetApproval(address budgetApproval);
 
     modifier onlyBudgetApproval {
         require(budgetApprovals(msg.sender), "BudgetApprovalExecutee: access denied");
@@ -63,6 +64,18 @@ contract BudgetApprovalExecutee is Initializable {
             emit CreateBudgetApproval(address(ba), data[i]);
 
             ICommonBudgetApproval(address(ba)).afterInitialized();
+        }
+    }
+
+    function _beforeRevokeBudgetApproval(address) virtual internal {}
+
+    function revokeBudgetApprovals(address[] memory __budgetApprovals) public {
+        for(uint i = 0; i < __budgetApprovals.length; i++) {
+            require(_budgetApprovals[__budgetApprovals[i]], "BudgetApprovalExecutee: budget approval is not valid");
+            _beforeRevokeBudgetApproval(__budgetApprovals[i]);
+
+            _budgetApprovals[__budgetApprovals[i]] = false;
+            emit RevokeBudgetApproval(__budgetApprovals[i]);
         }
     }
 
