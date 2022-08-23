@@ -130,6 +130,8 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         require(dao.canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
 
+    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {}
+
     function _assetBalance(address asset) internal view returns (uint256) {
         if(asset == Denominations.ETH) {
             return address(this).balance;

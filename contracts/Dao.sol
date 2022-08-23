@@ -161,6 +161,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
     }
 
+    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {}
+
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
         return IAdam(adam).budgetApprovals(budgetApproval);
     }
