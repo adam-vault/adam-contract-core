@@ -86,12 +86,20 @@ describe('TransferERC20BudgetApproval.sol', function () {
         parseEther('10'),
       ]);
 
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const deadline = Date.now() + 86400;
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], deadline, false);
       const { id } = await findEventArgs(tx, 'CreateTransaction');
       const orgReceiverBalance = await tokenA.balanceOf(receiver.address);
+      expect(await budgetApproval.statusOf(id)).to.eq(0);
+      expect(await budgetApproval.deadlineOf(id)).to.eq(deadline);
+      expect(await budgetApproval.approvedCountOf(id)).to.eq(ethers.BigNumber.from('0'));
 
       await budgetApproval.connect(approver).approveTransaction(id);
+      expect(await budgetApproval.statusOf(id)).to.eq(1);
+      expect(await budgetApproval.approvedCountOf(id)).to.eq(ethers.BigNumber.from('1'));
+
       await budgetApproval.connect(executor).executeTransaction(id);
+      expect(await budgetApproval.statusOf(id)).to.eq(2);
 
       expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('190'));
       expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('10').add(orgReceiverBalance));
