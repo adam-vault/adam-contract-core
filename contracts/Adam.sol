@@ -146,7 +146,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _liquidPoolImplementation,
         address _memberTokenImplementation,
         address _governImplementation
-    ) public view returns (uint256) {
+    ) public pure returns (uint256) {
         return uint256(keccak256(abi.encode(
             _daoImplementation,
             _membershipImplementation,

@@ -56,12 +56,12 @@ describe('Integration - Adam.sol', function () {
       const dao = await ethers.getContractAt('Dao', daoAddr);
       await dao.upgradeTo(mockDaoV2.address);
 
-      console.log(mockDaoV2.address);
-      const EIP1967_STORAGE_SLOT = ethers.utils.hexlify(
-        ethers.BigNumber.from(ethers.utils.id('eip1967.proxy.implementation')).sub(1));
-      const a = await ethers.provider.getStorageAt(dao.address, EIP1967_STORAGE_SLOT);
-      const b = ethers.utils.hexStripZeros(a);
-      console.log(b);
+      // console.log(mockDaoV2.address);
+      // const EIP1967_STORAGE_SLOT = ethers.utils.hexlify(
+      //   ethers.BigNumber.from(ethers.utils.id('eip1967.proxy.implementation')).sub(1));
+      // const a = await ethers.provider.getStorageAt(dao.address, EIP1967_STORAGE_SLOT);
+      // const b = ethers.utils.hexStripZeros(a);
+      // console.log(b);
 
       const daoUpgraded = await ethers.getContractAt('MockDaoV2', daoAddr);
 

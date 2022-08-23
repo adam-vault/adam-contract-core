@@ -1,15 +1,12 @@
 const chai = require('chai');
-const { ethers, upgrades, network } = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 
 const { expect } = chai;
-const { BigNumber } = ethers;
 chai.should();
 chai.use(smock.matchers);
 
-const abiCoder = ethers.utils.defaultAbiCoder;
-
-describe.only('Adam.sol', function () {
+describe('Adam.sol', function () {
   let deployer, daoCreator, unknown;
 
   let dao, membership, liquidPool, memberToken, govern, governFactory, team;
@@ -69,6 +66,138 @@ describe.only('Adam.sol', function () {
         team.address,
       ]);
       await expect(tx).to.be.revertedWith('budget approval already whitelisted');
+    });
+  });
+
+  describe('upgradeTo()', function () {
+    let mockV2Impl;
+    let adam;
+    beforeEach(async function () {
+      adam = await upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        [budgetApproval.address],
+        governFactory.address,
+        team.address,
+      ]);
+
+      const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
+      mockV2Impl = await MockUpgrade.deploy();
+      await mockV2Impl.deployed();
+    });
+    it('allows owner to upgrade', async function () {
+      await adam.upgradeTo(mockV2Impl.address);
+      const v2Contract = await ethers.getContractAt('MockVersionUpgrade', adam.address);
+      expect(await v2Contract.v2()).to.equal(true);
+    });
+    it('throws "Ownable: caller is not the owner" error if upgrade by non owner', async function () {
+      await expect(adam.connect(unknown).upgradeTo(mockV2Impl.address)).to.revertedWith('Ownable: caller is not the owner');
+    });
+  });
+
+  describe('whitelistBudgetApprovals()', async function () {
+    let adam;
+    let newBudgetApproval1, newBudgetApproval2;
+    beforeEach(async function () {
+      adam = await upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        [budgetApproval.address],
+        governFactory.address,
+        team.address,
+      ]);
+      newBudgetApproval1 = await smock.fake('CommonBudgetApproval');
+      newBudgetApproval2 = await smock.fake('CommonBudgetApproval');
+    });
+    it('adds budgetApprovals to whitelist', async () => {
+      await adam.whitelistBudgetApprovals([
+        newBudgetApproval1.address,
+        newBudgetApproval2.address,
+      ]);
+      expect(await adam.budgetApprovals(newBudgetApproval1.address)).to.be.eq(true);
+      expect(await adam.budgetApprovals(newBudgetApproval2.address)).to.be.eq(true);
+    });
+    it('remains old budgetApprovals in whitelist after new budgetApprovals add to whitelist', async () => {
+      await adam.whitelistBudgetApprovals([
+        newBudgetApproval1.address,
+        newBudgetApproval2.address,
+      ]);
+      expect(await adam.budgetApprovals(budgetApproval.address)).to.be.eq(true);
+    });
+    it('throws "budget approval already whitelisted" if budgetApproval duplicated', async () => {
+      const tx = adam.whitelistBudgetApprovals([
+        newBudgetApproval1.address,
+        newBudgetApproval2.address,
+        budgetApproval.address,
+      ]);
+      await expect(tx).to.be.revertedWith('budget approval already whitelisted');
+    });
+    it('throws "Ownable: caller is not the owner" if not called by deployer', async () => {
+      const tx = adam.connect(unknown).whitelistBudgetApprovals([]);
+      await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+  });
+  describe('createDao()', async function () {
+    let adamForCreatrDao;
+    let daoForCreatrDao, membershipForCreatrDao, liquidPoolForCreatrDao;
+
+    beforeEach(async function () {
+      daoForCreatrDao = await (await ethers.getContractFactory('MockLPDao')).deploy();
+      membershipForCreatrDao = await (await ethers.getContractFactory('MockMembership')).deploy();
+      liquidPoolForCreatrDao = await (await ethers.getContractFactory('MockLiquidPool')).deploy();
+
+      adamForCreatrDao = await upgrades.deployProxy(Adam, [
+        daoForCreatrDao.address,
+        membershipForCreatrDao.address,
+        liquidPoolForCreatrDao.address,
+        memberToken.address,
+        [budgetApproval.address],
+        governFactory.address,
+        team.address,
+      ], { signer: daoCreator });
+    });
+    it('createDao successfully', async () => {
+      await expect(adamForCreatrDao.createDao([
+        'name',
+        'description',
+        0,
+        [0, 0, 0, 0],
+        ['name', 'symbol'],
+        0,
+        0,
+        [],
+        0,
+        [],
+        ethers.constants.AddressZero,
+        '',
+        2,
+      ])).to.not.be.reverted;
+    });
+    it('emits createDao event', async () => {
+      const tx = await adamForCreatrDao.createDao([
+        'name',
+        'description',
+        0,
+        [0, 0, 0, 0],
+        ['name', 'symbol'],
+        0,
+        0,
+        [],
+        0,
+        [],
+        ethers.constants.AddressZero,
+        '',
+        2,
+      ]);
+      const receipt = await tx.wait();
+      const event = receipt.events.find(e => e.event === 'CreateDao');
+
+      expect(event.args.dao).is.not.empty;
+      expect(await adamForCreatrDao.daos(event.args.dao)).to.be.eq(true);
     });
   });
 
