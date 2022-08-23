@@ -34,8 +34,8 @@ describe('MemberToken.sol', function () {
       const v2Contract = await ethers.getContractAt('MockVersionUpgrade', memberToken.address);
       expect(await v2Contract.v2()).to.equal(true);
     });
-    it('throws "not dao" error if upgrade by non dao', async function () {
-      await expect(memberToken.connect(minter).upgradeTo(mockV2Impl.address)).to.revertedWith('not dao');
+    it('throws "Not dao" error if upgrade by non dao', async function () {
+      await expect(memberToken.connect(minter).upgradeTo(mockV2Impl.address)).to.revertedWith('Not dao');
     });
   });
 
