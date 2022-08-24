@@ -349,12 +349,18 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
     function _authorizeUpgrade(address) internal view override onlyGovern("General") {}
 
-    function upgradeContractTo(address target, address newImplementation) public onlyGovern("General") {
-        UUPSUpgradeable(target).upgradeTo(newImplementation);
+    function upgradeImplementations(address[] calldata targets, address[] calldata newImplementations) public onlyGovern("General") {
+        require(targets.length == newImplementations.length, "params length not match");
+        for (uint256 i = 0; i < targets.length; i++) {
+            UUPSUpgradeable(targets[i]).upgradeTo(newImplementations[i]);
+        }
     }
 
-    function upgradeContractToAndCall(address target, address newImplementation, bytes memory data) public payable onlyGovern("General") {
-        UUPSUpgradeable(target).upgradeToAndCall(newImplementation, data);
+    function upgradeImplementationsAndCall(address[] calldata targets, address[] calldata newImplementations, bytes[] memory data) public payable onlyGovern("General") {
+        require(targets.length == newImplementations.length && newImplementations.length == data.length, "params length not match");
+        for (uint256 i = 0; i < targets.length; i++) {
+            UUPSUpgradeable(targets[i]).upgradeToAndCall(newImplementations[i], data[i]);
+        }
     }
 
     receive() external payable {}
