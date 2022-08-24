@@ -4,6 +4,7 @@
   "event Approval(address indexed owner, address indexed spender, uint256 value)",
   "event BeaconUpgraded(address indexed beacon)",
   "event CreateBudgetApproval(address budgetApproval, bytes data)",
+  "event Deposit(address account, address token, uint256 depositAmount)",
   "event Transfer(address indexed from, address indexed to, uint256 value)",
   "event Upgraded(address indexed implementation)",
   "function addAssets(address[] erc20s)",
