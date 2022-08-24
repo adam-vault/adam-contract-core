@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
+import "./interface/IGovernFactory.sol";
 import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
@@ -39,15 +40,26 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public daoImplementation;
     address public membershipImplementation;
     address public liquidPoolImplementation;
+    address public memberTokenImplementation;
+
     address public governFactory;
     address public team;
-    address public governImplementation;
-    address public memberTokenImplementation;
+
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
 
     event CreateDao(address indexed dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
+    event ImplementationUpgrade(
+        uint256 indexed versionId,
+        address daoImplementation,
+        address membershipImplementation,
+        address liquidPoolImplementation,
+        address memberTokenImplementation,
+        address governImplementation,
+        address adamImplementation,
+        string description
+    );
     
     function initialize(
         address _daoImplementation,
@@ -61,30 +73,17 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         public initializer
     {
         __Ownable_init();
-
-        daoImplementation = _daoImplementation;
-        membershipImplementation = _membershipImplementation;
-        liquidPoolImplementation = _liquidPoolImplementation;
-        memberTokenImplementation = _memberTokenImplementation;
         whitelistBudgetApprovals(_budgetApprovalImplementations);
         governFactory = _governFactory;
         team = _team;
-    }
 
-    function setDaoImplementation(address _daoImplementation) public onlyOwner {
-        daoImplementation = _daoImplementation;
-    }
-
-    function setMembershipImplementation(address _membershipImplementation) public onlyOwner {
-        membershipImplementation = _membershipImplementation;
-    }
-
-    function setLiquidPoolImplementation(address _liquidPoolImplementation) public onlyOwner {
-        liquidPoolImplementation = _liquidPoolImplementation;
-    }
-
-    function setMemberTokenImplementation(address _memberTokenImplementation) public onlyOwner {
-        memberTokenImplementation = _memberTokenImplementation;
+        upgradeImplementations(
+            _daoImplementation,
+            _membershipImplementation,
+            _liquidPoolImplementation,
+            _memberTokenImplementation,
+            IGovernFactory(governFactory).governImplementation(),
+            "");
     }
 
     function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public onlyOwner {
@@ -140,5 +139,57 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         emit CreateDao(address(_dao), params._name, params._description, msg.sender);
         return address(_dao);
     }
+    
+    function hashVersion(
+        address _daoImplementation,
+        address _membershipImplementation,
+        address _liquidPoolImplementation,
+        address _memberTokenImplementation,
+        address _governImplementation
+    ) public pure returns (uint256) {
+        return uint256(keccak256(abi.encode(
+            _daoImplementation,
+            _membershipImplementation,
+            _liquidPoolImplementation,
+            _memberTokenImplementation,
+            _governImplementation
+       )));
+    }
+
+    function upgradeImplementations(
+        address _daoImplementation,
+        address _membershipImplementation,
+        address _liquidPoolImplementation,
+        address _memberTokenImplementation,
+        address _governImplementation,
+        string memory description
+    ) public onlyOwner {
+        require(IGovernFactory(governFactory).governImplementation() == _governImplementation, "governImpl not match");
+
+        daoImplementation = _daoImplementation;
+        membershipImplementation = _membershipImplementation;
+        liquidPoolImplementation = _liquidPoolImplementation;
+        memberTokenImplementation = _memberTokenImplementation;
+
+        uint256 versionId = hashVersion(
+            _daoImplementation,
+            _membershipImplementation,
+            _liquidPoolImplementation,
+            _memberTokenImplementation,
+            _governImplementation
+        );
+
+        emit ImplementationUpgrade(
+            versionId,
+            _daoImplementation,
+            _membershipImplementation,
+            _liquidPoolImplementation,
+            _memberTokenImplementation,
+            _governImplementation,
+            _getImplementation(),
+            description
+        );
+    }
+
     function _authorizeUpgrade(address) internal view override onlyOwner {}
 }

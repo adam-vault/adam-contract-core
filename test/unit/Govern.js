@@ -27,7 +27,7 @@ describe('Govern.sol', function () {
     adam = await createAdam(budgetApprovalAddresses);
     const tx1 = await createDao();
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-    dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+    dao = await ethers.getContractAt('MockDao', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     const governFactoryAddr = await dao.governFactory();
     governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
@@ -145,7 +145,7 @@ describe('Govern.sol', function () {
         }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
 
         const governFactoryAddr = await dao.governFactory();
@@ -203,7 +203,7 @@ describe('Govern.sol', function () {
 
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
         const governFactoryAddr = await dao.governFactory();
         governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);

@@ -12,7 +12,7 @@ describe('LiquidPool.sol', function () {
   let lp, lpAsSigner1, lpAsSigner2;
   let creator;
   let signer1, signer2;
-  let token, tokenAsSigner1, tokenAsSigner2;
+  let token, token2, tokenAsSigner1, tokenAsSigner2;
   let feedRegistry, dao, memberToken, team;
 
   beforeEach(async function () {
@@ -34,10 +34,13 @@ describe('LiquidPool.sol', function () {
     team = await Team.deploy();
     dao = await MockLPDao.deploy();
     token = await MockToken.deploy();
+    token2 = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
     await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0.0046'));
+    await feedRegistry.setPrice(token2.address, ADDRESS_ETH, parseEther('0.0046'));
     await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
+    await feedRegistry.setAggregator(token2.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
@@ -329,6 +332,34 @@ describe('LiquidPool.sol', function () {
     it('returns false if feed registry unresolvable', async function () {
       await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ethers.constants.AddressZero);
       expect(await lp.canAddAsset(token.address)).to.eq(false);
+    });
+  });
+
+  describe('addAssets()', function () {
+    it('emits AllowDepositToken', async function () {
+      const tx = await lp.addAssets([token2.address]);
+      const receipt = await tx.wait();
+      const event = receipt.events.find(e => e.event === 'AllowDepositToken');
+      expect(event.args.token).to.eq(token2.address);
+      expect(await lp.isAssetSupported(token2.address)).to.eq(true);
+    });
+  });
+
+  describe('removeAssets()', function () {
+    it('emits DisallowDepositToken', async function () {
+      await lp.addAssets([token2.address]);
+      const tx = await lp.removeAssets([ADDRESS_ETH]);
+      const receipt = await tx.wait();
+      const event = receipt.events.find(e => e.event === 'DisallowDepositToken');
+      expect(event.args.token).to.eq(ADDRESS_ETH);
+      expect(await lp.isAssetSupported(ADDRESS_ETH)).to.eq(false);
+      expect(await lp.isAssetSupported(token.address)).to.eq(true);
+      expect(await lp.isAssetSupported(token2.address)).to.eq(true);
+
+      await lp.removeAssets([token2.address]);
+      expect(await lp.isAssetSupported(ADDRESS_ETH)).to.eq(false);
+      expect(await lp.isAssetSupported(token.address)).to.eq(true);
+      expect(await lp.isAssetSupported(token2.address)).to.eq(false);
     });
   });
 });

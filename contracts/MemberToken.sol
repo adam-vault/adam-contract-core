@@ -17,7 +17,7 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
     }
 
     modifier onlyDao() {
-        require(msg.sender == dao, "Not minter");
+        require(msg.sender == dao, "Not dao");
         _;
     }
 

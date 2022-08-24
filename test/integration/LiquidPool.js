@@ -81,7 +81,7 @@ describe('Integration - LiquidPool.sol', function () {
           }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
         memberTokenImpl = await adam.memberTokenImplementation();
       });
@@ -133,7 +133,7 @@ describe('Integration - LiquidPool.sol', function () {
         const receipt = await tx1.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
         const daoAddr = creationEventLog.args.dao;
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
         memberTokenImpl = await adam.memberTokenImplementation();
       });
@@ -160,7 +160,7 @@ describe('Integration - LiquidPool.sol', function () {
         const receipt = await tx1.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
         const daoAddr = creationEventLog.args.dao;
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
         memberTokenImpl = await adam.memberTokenImplementation();
       });
@@ -221,7 +221,7 @@ describe('Integration - LiquidPool.sol', function () {
         const receipt = await tx1.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
         const daoAddr = creationEventLog.args.dao;
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
         memberTokenImpl = await adam.memberTokenImplementation();
       });
@@ -329,7 +329,7 @@ describe('Integration - LiquidPool.sol', function () {
         const receipt = await tx1.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
         const daoAddr = creationEventLog.args.dao;
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
 
@@ -353,7 +353,7 @@ describe('Integration - LiquidPool.sol', function () {
         const receipt = await tx1.wait();
         const creationEventLog = _.find(receipt.events, { event: 'CreateDao' });
         const daoAddr = creationEventLog.args.dao;
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
         membership = await ethers.getContractAt('Membership', await dao.membership());
       });
