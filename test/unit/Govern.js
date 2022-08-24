@@ -7,7 +7,7 @@ const paramsStruct = require('../../utils/paramsStruct');
 describe('Govern.sol', function () {
   let adam, dao, governFactory, lp;
   let creator, owner1, owner2;
-  let tokenA, budgetApprovalAddresses;
+  let tokenA, tokenC721, budgetApprovalAddresses;
   const category = {
     name: 'BudgetApproval',
     duration: 6570, // 1 day
@@ -33,6 +33,7 @@ describe('Govern.sol', function () {
     governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
     const res = await createTokens();
     tokenA = res.tokenA;
+    tokenC721 = res.tokenC721;
   });
 
   describe('GovernFactory', function () {
@@ -46,6 +47,27 @@ describe('Govern.sol', function () {
       )).to.emit(governFactory, 'CreateGovern');
 
       expect(await governFactory.governMap(dao.address, 'General')).to.be.exist;
+    });
+
+    it('creates govern success with votable ERC20 Token', async function () {
+      await expect(governFactory.createGovern(
+        'salary',
+        category.duration,
+        category.quorum,
+        category.passThreshold,
+        tokenA.address,
+      )).to.emit(governFactory, 'CreateGovern');
+      expect(await governFactory.governMap(dao.address, 'General')).to.be.exist;
+    });
+
+    it('creates govern fail without votable ERC20 Token', async function () {
+      await expect(governFactory.createGovern(
+        'salary',
+        category.duration,
+        category.quorum,
+        category.passThreshold,
+        tokenC721.address,
+      )).to.be.revertedWith('Govern Token without vote function');
     });
   });
 

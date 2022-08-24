@@ -52,6 +52,7 @@ contract Govern is
         uint _passThreshold,
         address _voteToken
     ) public initializer {
+        require(_isVotableToken(_voteToken), "Govern Token without vote function");
         __Governor_init(_name);
 
         owner = _owner;
@@ -162,6 +163,18 @@ contract Govern is
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
         uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
         return (proposalvote.forVotes * 100) >= totalVotes * passThreshold / 100;
+    }
+
+    function _isVotableToken(address _voteToken) internal view returns (bool) {
+        try IVotesUpgradeable(_voteToken).getPastTotalSupply(0) {
+        } catch {
+            return false;
+        }
+        try IVotesUpgradeable(_voteToken).getPastVotes(address(this), 0) {
+            return true;
+        } catch {
+            return false;
+        }
     }
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
