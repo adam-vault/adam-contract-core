@@ -192,7 +192,7 @@ contract Govern is
     function _voteSucceeded(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
         uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
-        return (proposalvote.forVotes * 100) >= totalVotes * passThreshold / 100;
+        return totalVotes == 0 ? false : (proposalvote.forVotes * 100 * 100) >= totalVotes * passThreshold;
     }
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
