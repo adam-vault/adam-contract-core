@@ -42,7 +42,6 @@ describe('Govern.sol', function () {
         category.duration,
         category.quorum,
         category.passThreshold,
-        [1],
         0, // membership,
       )).to.emit(governFactory, 'CreateGovern');
 

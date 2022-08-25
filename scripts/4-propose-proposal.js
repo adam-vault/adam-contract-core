@@ -12,7 +12,7 @@ async function main () {
 
   const Dao = await hre.ethers.getContractFactory('Dao');
 
-  const calldata = Dao.interface.encodeFunctionData('createGovern', ['New Proposal Cat', 3600, 1000, 10000, [1], 0]);
+  const calldata = Dao.interface.encodeFunctionData('createGovern', ['New Proposal Cat', 3600, 1000, 10000, 0]);
 
   await govern.propose([daoAddress], [0], [calldata], '{"category":"Budget","subcategory":"budget_swap","title":"this is the title","description":"here for description"}');
 }

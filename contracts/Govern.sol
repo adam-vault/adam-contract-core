@@ -36,11 +36,8 @@ contract Govern is
     uint public duration;
     uint public quorumThreshold;
     uint public passThreshold;
-    uint[] public voteWeights;
-    address[] public voteTokens;
+    address public voteToken;
     mapping(uint256 => ProposalVote) private _proposalVotes;
-
-    event AddVoteToken(address token, uint weight);
 
     modifier onlyOwner {
         require(msg.sender == owner, "Access denied");
@@ -53,8 +50,7 @@ contract Govern is
         uint _duration,
         uint _quorum,
         uint _passThreshold,
-        uint[] memory _voteWeights,
-        address[] memory _voteTokens
+        address _voteToken
     ) public initializer {
         __Governor_init(_name);
 
@@ -63,8 +59,7 @@ contract Govern is
         duration = _duration;
         quorumThreshold = _quorum; //expecting 2 decimals (i.e. 1000 = 10%)
         passThreshold = _passThreshold; //expecting 2 decimals (i.e. 250 = 2.5%)
-        voteWeights = _voteWeights;
-        voteTokens = _voteTokens;
+        voteToken = _voteToken;
     }
 
     function getProposalVote(uint256 proposalId, uint8 support) public view returns (uint256) {
@@ -102,15 +97,7 @@ contract Govern is
     }
 
     function getVotes(address account, uint256 blockNumber) public view override returns (uint256) {
-        uint256 totalVotes = 0;
-
-        for(uint i=0; i < voteTokens.length; i++) {
-            uint accountVotes = VotesUpgradeable(voteTokens[i]).getPastVotes(account, blockNumber);
-
-            totalVotes = totalVotes + accountVotes * voteWeights[i];
-        }
-
-        return totalVotes;
+        return VotesUpgradeable(voteToken).getPastVotes(account, blockNumber);
     }
 
     function quorum(uint256 blockNumber) public view override returns (uint256) {
@@ -118,14 +105,7 @@ contract Govern is
     }
 
     function totalPastSupply(uint256 blockNumber) public view returns (uint256) {
-        uint256 sum = 0;
-
-        for(uint256 i=0; i<voteTokens.length; i++) {
-            uint accountSupply = VotesUpgradeable(voteTokens[i]).getPastTotalSupply(blockNumber);
-            sum = sum + accountSupply;
-        } 
-
-        return sum;
+        return VotesUpgradeable(voteToken).getPastTotalSupply(blockNumber);
     }
 
     function quorumReached(uint256 proposalId) public view returns (bool) {
@@ -134,17 +114,6 @@ contract Govern is
 
     function voteSucceeded(uint256 proposalId) public view returns (bool) {
         return _voteSucceeded(proposalId);
-    }
-
-    function addVoteToken(address token, uint weight) public onlyOwner {
-        for(uint256 i=0; i <voteTokens.length; i++) {
-            require(voteTokens[i] != token, "Token already in list");
-        }
-
-        voteTokens.push(token);
-        voteWeights.push(weight);
-
-        emit AddVoteToken(token, weight);
     }
 
     function execute(
