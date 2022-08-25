@@ -23,7 +23,7 @@ jobs:
     uses: ./.github/workflows/reusable-sync-subgraph.yml
     with:
       GIT_REF: ${{ github.ref_name }}
-      DEPLOY_ENV: alpha
+      DEPLOY_ENV: qa
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
 
@@ -33,7 +33,7 @@ jobs:
     uses: ./.github/workflows/reusable-sync-frontend.yml
     with:
       GIT_REF: ${{ github.ref_name }}
-      DEPLOY_ENV: alpha
+      DEPLOY_ENV: qa
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
 
