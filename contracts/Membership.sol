@@ -42,6 +42,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     }
 
     function createMember(address to) public {
+        require(!isMember[to], "Member already created");
         require(msg.sender == dao, "access denied");
         require(totalSupply < maxMemberLimit, "member count exceed limit");
 
