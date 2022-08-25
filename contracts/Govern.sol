@@ -184,7 +184,7 @@ contract Govern is
 
     function _quorumReached(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
-        uint countedVotes = proposalvote.forVotes + proposalvote.abstainVotes;
+        uint countedVotes = proposalvote.forVotes + proposalvote.againstVotes;
 
         return quorum(proposalSnapshot(proposalId)) <= countedVotes * 100;
     }
