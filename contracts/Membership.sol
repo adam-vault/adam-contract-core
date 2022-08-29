@@ -36,6 +36,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
 
     function initialize(address _dao, string memory _name, uint256 _maxMemberLimit) public initializer
     {
+        __EIP712_init(_name.concat(" Membership"), "1");
         __ERC721_init(_name.concat(" Membership"), "MS");
         dao = payable(_dao);
         maxMemberLimit = _maxMemberLimit;
