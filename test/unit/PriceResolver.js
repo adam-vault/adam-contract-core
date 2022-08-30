@@ -33,6 +33,7 @@ describe('PriceResolver.sol', () => {
     const tokenAEthAggregator = await MockAggregatorV3.deploy();
     tokenAEthAggregator.setPrice(parseEther('0.25'));
     await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, parseEther('0.25'));
+    await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, tokenAEthAggregator.address);
 
     tokenB = await MockToken.deploy();
@@ -40,6 +41,7 @@ describe('PriceResolver.sol', () => {
     const tokenBEthAggregator = await MockAggregatorV3.deploy();
     tokenBEthAggregator.setPrice(parseEther('0.5'));
     await feedRegistry.setPrice(tokenB.address, ADDRESS_ETH, parseEther('0.5'));
+    await feedRegistry.setDecimal(tokenB.address, ADDRESS_ETH, 18);
     await feedRegistry.setAggregator(tokenB.address, ADDRESS_ETH, tokenBEthAggregator.address);
 
     priceResolver = await MockPriceResolver.deploy();
@@ -62,6 +64,7 @@ describe('PriceResolver.sol', () => {
 
   describe('assetBaseCurrency(): base currency = tokenA', function () {
     beforeEach(async () => {
+      await priceResolver.setBaseCurrency(tokenA.address);
       await priceResolver.setBaseCurrency(tokenA.address);
     });
 

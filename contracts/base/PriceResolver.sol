@@ -11,6 +11,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../lib/Constant.sol";
+import "hardhat/console.sol";
 
 contract PriceResolver is Initializable {
     address public baseCurrency;
@@ -33,9 +34,11 @@ contract PriceResolver is Initializable {
 
         address baseCurrencyETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(baseCurrency, Denominations.ETH));
         address assetETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH));
-        int price = getDerivedPrice(assetETHFeed, baseCurrencyETHFeed, baseCurrencyDecimals());
+        uint8 baseDecimals = baseCurrencyDecimals();
+        int price = getDerivedPrice(assetETHFeed, baseCurrencyETHFeed, 18 /* ETH decimals */);
+
         if (price > 0) {
-            return uint256(price) * amount / 10 ** IERC20Metadata(asset).decimals();
+            return uint256(scalePrice(int256(price) * int256(amount), 18 + IERC20Metadata(asset).decimals(), baseDecimals));
         }
         return 0;
     }
@@ -45,7 +48,9 @@ contract PriceResolver is Initializable {
             return ethAmount;
 
         (, int price,,,) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
+        uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY).decimals(asset, Denominations.ETH);
 
+        price = scalePrice(price, priceDecimals, 18 /* ETH decimals */);
         if (price > 0) {
             return ethAmount * (10 ** IERC20Metadata(asset).decimals()) / uint256(price);
         }

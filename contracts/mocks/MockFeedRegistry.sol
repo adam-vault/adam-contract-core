@@ -8,6 +8,7 @@ contract MockFeedRegistry {
   // int256 private _price;
   mapping(address => mapping(address => int256)) private _price;
   mapping(address => mapping(address => address)) private _aggregator;
+  mapping(address => mapping(address => uint8)) private _decimal;
   // mapping(address => bool) private _feed;
 
   function setPrice(address base, address quote, int256 price) public {
@@ -17,6 +18,14 @@ contract MockFeedRegistry {
   function setAggregator(address base, address quote, address aggregator) public {
       _aggregator[base][quote] = aggregator;
   }
+
+  function setDecimal(address base, address quote, uint8 decimal) public {
+      _decimal[base][quote] = decimal;
+  }
+  function decimals(address base, address quote) public view returns (uint8) {
+      return _decimal[base][quote];
+  }
+  
 
   // function setFeed(address asset, bool supported) public {
   //     _feed[asset] = supported;
