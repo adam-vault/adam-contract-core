@@ -63,29 +63,30 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         (address _token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
         bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
         
+        uint256 balanceBeforeExecute = IERC20(_token).balanceOf(executee);
+
         IBudgetApprovalExecutee(executee).executeByBudgetApproval(_token, executeData, 0);
 
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(allowAllTokens || token == _token, "Token not whitelisted in budget");
         require(allowAnyAmount || value <= totalAmount, "Exceeded max budget transferable amount");
-        require(checkAmountPercentageValid(value, _token), "Exceeded max budget transferable percentage");
+        require(checkAmountPercentageValid(balanceBeforeExecute, value), "Exceeded max budget transferable percentage");
 
         if(!allowAnyAmount) {
             totalAmount -= value;
         }
     }
 
-    function checkAmountPercentageValid(uint256 amount, address _token) internal view returns (bool) {
+    function checkAmountPercentageValid(uint256 balanceOfToken, uint256 amount) internal view returns (bool) {
         if (amountPercentage == 100) return true;
 
-        uint256 _totalAmount = amount + IERC20(_token).balanceOf(executee);
-        if (_totalAmount == 0) return false;
+        if (balanceOfToken == 0) return false;
 
-        return amount <= _totalAmount * amountPercentage / 100;
+        return amount <= balanceOfToken * amountPercentage / 100;
     }
 
     function _addToAddress(address to) internal {
-        require(!addressesMapping[to], "duplicate token");
+        require(!addressesMapping[to], "Duplicated address in target address list");
         addressesMapping[to] = true;
         emit AllowAddress(to);
     }

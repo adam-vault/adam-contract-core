@@ -82,6 +82,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
         require(to == Constant.UNISWAP_ROUTER || to == Constant.WETH_ADDRESS, "Invalid Uniswap address or WETH address");
 
+        uint256 totalBalanceBeforeExecute = totalBalanceInBaseCurrency();
+
         bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
 
         (
@@ -100,7 +102,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         require(fromTokensMapping[tokenIn], "Source token not whitelisted in budget");
         require(allowAllToTokens || toTokensMapping[tokenOut], "Target token not whitelisted in budget");
         require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "Exceeded max budget transferable amount");
-        require(checkAmountPercentageValid(amountInBaseCurrency), "Exceeded max budget transferable percentage");
+        require(checkAmountPercentageValid(totalBalanceBeforeExecute, amountInBaseCurrency), "Exceeded max budget transferable percentage");
 
 
         if(!allowAnyAmount) {
@@ -110,22 +112,22 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         emit ExecuteUniswapTransaction(transactionId, tokenIn, tokenOut, amountIn, amountOut, Constant.UNISWAP_ROUTER);
     }
 
-    function checkAmountPercentageValid(uint256 amount) internal view returns (bool) {
-        if (amountPercentage == 100) return true;
-
-        uint256 _totalAmount = amount;
-
+    function totalBalanceInBaseCurrency() internal view returns (uint256 totalBalance) {
         for (uint i = 0; i < fromTokens.length; i++) {
             if (fromTokens[i] == Denominations.ETH) {
-                _totalAmount += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
+                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
             } else {
-                _totalAmount += assetBaseCurrencyPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee));
+                totalBalance += assetBaseCurrencyPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee));
             }
         }
+    }
 
-        if (_totalAmount == 0) return false;
+    function checkAmountPercentageValid(uint256 totalBalance, uint256 amount) internal view returns (bool) {
+        if (amountPercentage == 100) return true;
 
-        return amount <= _totalAmount * amountPercentage / 100;
+        if (totalBalance == 0) return false;
+
+        return amount <= totalBalance * amountPercentage / 100;
     }
 
     function _addFromToken(address token) internal {

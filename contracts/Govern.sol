@@ -178,5 +178,5 @@ contract Govern is
         }
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(address) internal view override onlyOwner {}
 }

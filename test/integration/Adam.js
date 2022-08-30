@@ -14,14 +14,18 @@ const {
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
-describe('Integration - Create DAO', function () {
-  let creator, owner1, owner2;
+describe('Integration - Adam.sol', function () {
+  let creator;
   let token;
   let feedRegistry;
   let adam;
 
+  function createDao () {
+    return adam.createDao(paramsStruct.getCreateDaoParams({ name: 'A Company' }));
+  };
+
   beforeEach(async function () {
-    [creator, owner1, owner2] = await ethers.getSigners();
+    [creator] = await ethers.getSigners();
     const tokens = await createTokens();
     token = tokens.tokenA;
 
@@ -36,96 +40,50 @@ describe('Integration - Create DAO', function () {
     adam = await createAdam();
   });
 
-  function createDao () {
-    return adam.createDao(paramsStruct.getCreateDaoParams({ name: 'A Company' }));
-  };
+  describe('when createDao() called', function () {
+    it('creates successfully', async function () {
+      await expect(createDao())
+        .to.emit(adam, 'CreateDao');
+    });
 
-  it('can create dao', async function () {
-    await expect(createDao())
-      .to.emit(adam, 'CreateDao');
-  });
-
-  it('can upgrade dao', async function () {
-    const tx1 = await createDao();
-    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-
-    const MockDaoV2 = await ethers.getContractFactory('MockDaoV2');
-    const mockDaoV2 = await MockDaoV2.deploy();
-    await mockDaoV2.deployed();
-
-    const dao = await ethers.getContractAt('Dao', daoAddr);
-    await dao.upgradeTo(mockDaoV2.address);
-
-    const daoUpgraded = await ethers.getContractAt('MockDaoV2', daoAddr);
-
-    expect(await daoUpgraded.v2()).to.equal(true);
-  });
-
-  describe('Deposit ETH to DAO', function () {
-    let dao, lp, membership;
-    beforeEach(async function () {
+    it('produces upgradable dao', async function () {
       const tx1 = await createDao();
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-      dao = await ethers.getContractAt('Dao', daoAddr);
 
-      const membershipAddr = await dao.membership();
-      membership = await ethers.getContractAt('Membership', membershipAddr);
-      lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+      const MockDaoV2 = await ethers.getContractFactory('MockDaoV2');
+      const mockDaoV2 = await MockDaoV2.deploy();
+      await mockDaoV2.deployed();
+      const dao = await ethers.getContractAt('Dao', daoAddr);
+      await dao.upgradeTo(mockDaoV2.address);
+
+      // console.log(mockDaoV2.address);
+      // const EIP1967_STORAGE_SLOT = ethers.utils.hexlify(
+      //   ethers.BigNumber.from(ethers.utils.id('eip1967.proxy.implementation')).sub(1));
+      // const a = await ethers.provider.getStorageAt(dao.address, EIP1967_STORAGE_SLOT);
+      // const b = ethers.utils.hexStripZeros(a);
+      // console.log(b);
+
+      const daoUpgraded = await ethers.getContractAt('MockDaoV2', daoAddr);
+
+      expect(await daoUpgraded.v2()).to.equal(true);
     });
 
-    it('create Membership when deposit()', async function () {
-      await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
-      expect(await membership.balanceOf(creator.address)).to.equal(1);
-
-      const jsonResponse = decodeBase64(await membership.tokenURI(1));
-      expect(jsonResponse.name).to.equal('A Company Membership #1');
-      expect(await ethers.provider.getBalance(lp.address)).to.equal(ethers.utils.parseEther('0.000123'));
+    it('creates successfully when set 0x0 as admission token', async function () {
+      await expect(adam.createDao(
+        paramsStruct.getCreateDaoParams({
+          mintMemberToken: true,
+          admissionTokens: [[ethers.constants.AddressZero, 50, 0, true]],
+        }),
+      )).to.not.be.reverted;
     });
 
-    it('gives token uri with member address', async function () {
-      const tx = await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
-      await tx.wait();
-
-      const jsonResponse = decodeBase64(await membership.tokenURI(1));
-      expect(jsonResponse.name).to.equal('A Company Membership #1');
-    });
-
-    it('should not recreate Member when deposit() again by same EOA', async function () {
-      await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
-      await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
-      await lp.deposit(creator.address, { value: ethers.utils.parseEther('0.000123') });
-
-      expect(await membership.balanceOf(creator.address)).to.equal(1);
-      expect(await ethers.provider.getBalance(lp.address)).to.equal(ethers.utils.parseEther('0.000369'));
-    });
-  });
-
-  describe('Redeem ETH from DAO', function () {
-    let dao, lp, membership;
-    beforeEach(async function () {
-      const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
-        lockTime: 1000,
-        depositTokens: [ADDRESS_ETH, token.address], // depositTokens
-      }),
-      );
-      const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-      dao = await ethers.getContractAt('Dao', daoAddr);
-
-      const membershipAddr = await dao.membership();
-      membership = await ethers.getContractAt('Membership', membershipAddr);
-      lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-      await lp.deposit(creator.address, { value: ethers.utils.parseEther('123') });
-    });
-
-    it('redeem and burn exact amount of eth', async function () {
-      await hre.ethers.provider.send('evm_increaseTime', [1000]);
-      await lp.redeem(ethers.utils.parseEther('3'));
-
-      expect(await membership.balanceOf(creator.address)).to.equal(1);
-      expect(await lp.balanceOf(creator.address)).to.equal(ethers.utils.parseEther('120'));
-    });
-    it('cannot redeem and burn exact amount of eth inside lockup period', async function () {
-      await expect(lp.redeem(ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
+    it('throws "Admission Token not Support!" error when set non-contract address as admission token', async function () {
+      await expect(adam.createDao(
+        paramsStruct.getCreateDaoParams({
+          mintMemberToken: true,
+          admissionTokens: [[await creator.getAddress(), 50, 0, false]],
+        }),
+      )).to.be.revertedWith('Admission Token not Support!');
     });
   });
 });

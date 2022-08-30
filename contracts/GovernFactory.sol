@@ -57,6 +57,6 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             voteToken
         );
     }
-    
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+
+    function _authorizeUpgrade(address) internal view override onlyOwner {}
 }

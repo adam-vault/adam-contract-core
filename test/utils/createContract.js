@@ -36,7 +36,7 @@ const createFeedRegistry = async (token, signer) => {
 const createAdam = async (budgetApprovalAddresses) => {
   const [creator] = await ethers.getSigners();
 
-  const Dao = await ethers.getContractFactory('MockDaoV2', { signer: creator });
+  const Dao = await ethers.getContractFactory('MockDao', { signer: creator });
 
   const Membership = await ethers.getContractFactory('Membership', { signer: creator });
   const Adam = await ethers.getContractFactory('Adam', { signer: creator });
