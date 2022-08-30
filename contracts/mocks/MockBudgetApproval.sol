@@ -22,4 +22,3 @@ contract MockBudgetApproval is CommonBudgetApproval{
         return "Mock";
     }
 }
-

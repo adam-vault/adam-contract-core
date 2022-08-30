@@ -7,13 +7,16 @@ const findEventArgs = require('../../utils/findEventArgs');
 
 describe('Dao.sol - test/unit/Dao.js', function () {
   let creator, member, mockGovern;
-  let dao, mockAdam, mockMemberShip, lpAsSigner;
+  let dao, mockAdam, mockMemberShip, mockBudgetApproval, lpAsSigner;
   let tokenA, tokenC721, tokenD1155;
 
   beforeEach(async function () {
     [creator, member, mockGovern] = await ethers.getSigners();
 
     ({ tokenA, tokenC721, tokenD1155 } = await createTokens());
+
+    const MockBudgetApproval = await ethers.getContractFactory('MockBudgetApproval');
+    mockBudgetApproval = await MockBudgetApproval.deploy();
 
     const futureAdamAddress = getContractAddress({
       from: creator.address,
@@ -27,6 +30,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
       method: 'hardhat_impersonateAccount',
       params: [mockAdam.address],
     });
+    await mockAdam.mock.budgetApprovals.withArgs(mockBudgetApproval.address).returns(true);
 
     const adamAsSigner = await ethers.getSigner(mockAdam.address);
 
@@ -195,6 +199,25 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     });
     it('returns false when lack all tokens', async function () {
       expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
+    });
+  });
+
+  describe('createBudgetApprovals()', function () {
+    it('creates budget approval', async function () {
+      const tx = await dao.createBudgetApprovals([mockBudgetApproval.address], ['0x']);
+      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
+      expect(await dao.budgetApprovals(budgetApprovalAddress)).to.equal(true);
+    });
+  });
+
+  describe('revokeBudgetApprovals()', function () {
+    it('revokes budget approval', async function () {
+      const tx = await dao.createBudgetApprovals([mockBudgetApproval.address], ['0x']);
+      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
+      expect(await dao.budgetApprovals(budgetApprovalAddress)).to.equal(true);
+
+      await dao.revokeBudgetApprovals([budgetApprovalAddress]);
+      expect(await dao.budgetApprovals(budgetApprovalAddress)).to.equal(false);
     });
   });
 });
