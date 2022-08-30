@@ -70,10 +70,10 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         uint256 totalBalanceBeforeExecute = totalBalanceInBaseCurrency();
 
         if (token == Denominations.ETH) {
-            IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, "", value);
+            IBudgetApprovalExecutee(executee()).executeByBudgetApproval(to, "", value);
         } else {
             bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
-            IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
+            IBudgetApprovalExecutee(executee()).executeByBudgetApproval(token, executeData, 0);
         }
         
         amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
@@ -90,9 +90,9 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
     function totalBalanceInBaseCurrency() internal view returns (uint256 totalBalance) {
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i] == Denominations.ETH) {
-                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
-            }else {
-                totalBalance += assetBaseCurrencyPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee));
+                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, executee().balance);
+            } else {
+                totalBalance += assetBaseCurrencyPrice(tokens[i], IERC20(tokens[i]).balanceOf(executee()));
             }
         }
     }

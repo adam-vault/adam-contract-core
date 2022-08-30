@@ -44,7 +44,6 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price lim
     const endTime = Math.round(Date.now() / 1000) + 86400;
     const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
       [
-        dao.address, // dao addressc
         executor.address, // executor
         0, // executorTeam
         [approver.address], // approvers

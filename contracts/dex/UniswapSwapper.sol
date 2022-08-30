@@ -216,4 +216,7 @@ contract UniswapSwapper is Initializable {
         address tokenOut = path[path.length - 1];
         return (tokenIn, tokenOut, amountIn, amountOutMin, false, true);
     }
+
+    uint256[50] private __gap;
+
 }

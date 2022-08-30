@@ -13,25 +13,30 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "../lib/Constant.sol";
 
 contract PriceResolver is Initializable {
-    address public baseCurrency;
+    address private _baseCurrency;
 
-    function __PriceResolver_init(address _baseCurrency) internal onlyInitializing {
-        baseCurrency = _baseCurrency;
+    function __PriceResolver_init(address __baseCurrency) internal onlyInitializing {
+        _baseCurrency = __baseCurrency;
     }
 
-    function assetBaseCurrencyPrice(address asset, uint256 amount) public view returns (uint256) {
-        if (asset == baseCurrency)
+    function baseCurrency() public view virtual returns (address) {
+        return _baseCurrency;
+    }
+
+    function assetBaseCurrencyPrice(address asset, uint256 amount) public view virtual returns (uint256) {
+        address __baseCurrency = baseCurrency();
+        if (asset == __baseCurrency)
             return amount;
         
-        if(baseCurrency == Denominations.ETH || baseCurrency == Constant.WETH_ADDRESS) {
+        if(__baseCurrency == Denominations.ETH || __baseCurrency == Constant.WETH_ADDRESS) {
             return assetEthPrice(asset, amount);
         }
 
         if(asset == Denominations.ETH || asset == Constant.WETH_ADDRESS) {
-            return ethAssetPrice(baseCurrency, amount);
+            return ethAssetPrice(__baseCurrency, amount);
         }
 
-        address baseCurrencyETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(baseCurrency, Denominations.ETH));
+        address baseCurrencyETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(__baseCurrency, Denominations.ETH));
         address assetETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH));
         int price = getDerivedPrice(assetETHFeed, baseCurrencyETHFeed, baseCurrencyDecimals());
         if (price > 0) {
@@ -40,7 +45,7 @@ contract PriceResolver is Initializable {
         return 0;
     }
 
-    function ethAssetPrice(address asset, uint256 ethAmount) public view returns (uint256) {
+    function ethAssetPrice(address asset, uint256 ethAmount) public view virtual returns (uint256) {
         if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
             return ethAmount;
 
@@ -53,7 +58,7 @@ contract PriceResolver is Initializable {
         return 0;
     }
 
-    function assetEthPrice(address asset, uint256 amount) public view returns (uint256) {
+    function assetEthPrice(address asset, uint256 amount) public view virtual returns (uint256) {
         if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
             return amount;
 
@@ -69,6 +74,7 @@ contract PriceResolver is Initializable {
     function getDerivedPrice(address _base, address _quote, uint8 _decimals)
         internal
         view
+        virtual
         returns (int256)
     {
         require(_decimals > uint8(0) && _decimals <= uint8(18), "Invalid _decimals");
@@ -87,6 +93,7 @@ contract PriceResolver is Initializable {
     function scalePrice(int256 _price, uint8 _priceDecimals, uint8 _decimals)
         internal
         pure
+        virtual
         returns (int256)
     {
         if (_priceDecimals < _decimals) {
@@ -97,16 +104,16 @@ contract PriceResolver is Initializable {
         return _price;
     }
 
-    function baseCurrencyDecimals() public view returns (uint8) {
-        if (baseCurrency == Denominations.ETH) return 18;
-        try IERC20Metadata(baseCurrency).decimals() returns (uint8 _decimals) {
+    function baseCurrencyDecimals() public view virtual returns (uint8) {
+        if (baseCurrency() == Denominations.ETH) return 18;
+        try IERC20Metadata(baseCurrency()).decimals() returns (uint8 _decimals) {
             return _decimals;
         } catch {
             return 0;
         }
     }
 
-    function canResolvePrice(address asset) public view returns (bool) {
+    function canResolvePrice(address asset) public view virtual returns (bool) {
         if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
             return true;
         try FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH) {
@@ -115,4 +122,6 @@ contract PriceResolver is Initializable {
             return false;
         }
     }
+
+    uint256[50] private __gap;
 }

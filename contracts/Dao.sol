@@ -102,6 +102,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event CreateMember(address account, uint256 depositAmount);
 
     function initialize(InitializeParams calldata params) public initializer {
+        ___BudgetApprovalExecutee_init(params._team);
+
         adam = msg.sender;
         creator = params._creator;
         membership = params._membership;
@@ -109,7 +111,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         name = params._name;
         locktime = params._locktime;
         governFactory = params._governFactory;
-        team = params._team;
         minDepositAmount = params.daoSetting.minDepositAmount;
         baseCurrency = params.baseCurrency;
         logoCID = params.logoCID;
@@ -224,7 +225,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("General") {
-      uint256 id = ITeam(team).addTeam(title, minter, members, description);
+      uint256 id = ITeam(team()).addTeam(title, minter, members, description);
       teamWhitelist[id] = true;
 
       emit WhitelistTeam(id);
