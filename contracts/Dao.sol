@@ -119,15 +119,11 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             _createMemberToken(params._memberTokenImplementation, params.tokenInfo, params.tokenAmount);
         }
 
-        uint256[] memory w = new uint256[](1);
-        w[0] = 1;
-        // CAUTION: if later on support create govern with multi token, also need to add VoteType
         _createGovern(
             "General",
             params.generalGovernSetting[0],
             params.generalGovernSetting[1],
             params.generalGovernSetting[2],
-            w,
             params.generalGovernSetting[3]
         );
 
@@ -186,7 +182,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         uint duration,
         uint quorum,
         uint passThreshold,
-        uint[] calldata voteWeights,
         uint voteToken
     ) public onlyGovern("Govern") {
         _createGovern(
@@ -194,30 +189,23 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             duration,
             quorum,
             passThreshold,
-            voteWeights,
             voteToken
         );
     }
 
-    function getVoteTypeValues(VoteType voteType) internal view returns (address[] memory) {
+    function getVoteTypeValues(VoteType voteType) internal view returns (address) {
         if (VoteType.Membership == voteType) {
             if (address(membership) == address(0)) {
                 revert("Membership not yet initialized");
             }
-
-            address[] memory values = new address[](1);
-            values[0] = address(membership);
-            return values;
+            return address(membership);
         }
 
         if (VoteType.MemberToken == voteType) {
             if (address(memberToken) == address(0)) {
                 revert("MemberToken not yet initialized");
             }
-
-            address[] memory values = new address[](1);
-            values[0] = address(memberToken);
-            return values;
+            return address(memberToken);
         }
 
         if (VoteType.Other == voteType) {
@@ -315,17 +303,15 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         uint duration,
         uint quorum,
         uint passThreshold,
-        uint[] memory voteWeights,
         uint voteToken
     ) internal {
-        address[] memory _voteTokens = getVoteTypeValues(VoteType(voteToken));
+        address _voteToken = getVoteTypeValues(VoteType(voteToken));
         IGovernFactory(governFactory).createGovern(
             _name,
             duration,
             quorum,
             passThreshold,
-            voteWeights,
-            _voteTokens
+            _voteToken
         );
     }
 

@@ -18,8 +18,7 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string name,
         address govern,
         address caller,
-        uint[] voteWeights,
-        address[] voteTokens
+        address voteToken
     );
 
     function initialize(
@@ -34,21 +33,19 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint duration,
         uint quorum,
         uint passThreshold,
-        uint[] calldata voteWeights,
-        address[] calldata voteTokens
+        address voteToken
     ) external {
         require(governMap[msg.sender][name] == address(0), "error");
-        require(voteWeights.length == voteTokens.length, "Vote weights, vote tokens length mismatch");
 
         ERC1967Proxy _govern = new ERC1967Proxy(governImplementation, "");
+        
         IGovern(payable(address(_govern))).initialize(
             msg.sender,
             name,
             duration,
             quorum,
             passThreshold,
-            voteWeights,
-            voteTokens
+            voteToken
         );
 
         governMap[msg.sender][name] = address(_govern);
@@ -57,8 +54,7 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             name,
             address(_govern),
             msg.sender,
-            voteWeights,
-            voteTokens
+            voteToken
         );
     }
 

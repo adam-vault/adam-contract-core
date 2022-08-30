@@ -21,7 +21,6 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
 
     string public constant override name = "Uniswap Budget Approval";
 
-    bool public allowAllAddresses;
     address[] public fromTokens;
     mapping(address => bool) public fromTokensMapping;
     bool public allowAnyAmount;
@@ -62,7 +61,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     function afterInitialized() external override onlyExecutee {
         bytes memory data = abi.encodeWithSignature("approve(address,uint256)", Constant.UNISWAP_ROUTER, type(uint256).max);
         for(uint i = 0; i < fromTokens.length; i++) {
-            if(fromTokens[i] != ETH_ADDRESS) {
+            if(fromTokens[i] != Denominations.ETH) {
                 IBudgetApprovalExecutee(executee).executeByBudgetApproval(fromTokens[i], data, 0);
             }
         }
@@ -94,7 +93,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             uint256 amountOut,
             bool estimatedIn,
             bool estimatedOut
-        ) = UniswapSwapper.decodeUniswapDataAfterSwap(to, executeData, value, result);
+        ) = decodeUniswapDataAfterSwap(to, executeData, value, result);
 
         uint256 amountInBaseCurrency = assetBaseCurrencyPrice(tokenIn, amountIn);
 
@@ -132,8 +131,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     }
 
     function _addFromToken(address token) internal {
-        require(!fromTokensMapping[token], "Duplicated Item in source token list.");
-        require(canResolvePrice(token), "Unresolvable token in source token list.");
+        require(!fromTokensMapping[token], "Duplicated token in source token list");
+        require(canResolvePrice(token), "Unresolvable token in source token list");
         fromTokens.push(token);
         fromTokensMapping[token] = true;
         emit AllowToken(token);

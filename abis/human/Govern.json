@@ -1,5 +1,4 @@
 [
-  "event AddVoteToken(address token, uint256 weight)",
   "event AdminChanged(address previousAdmin, address newAdmin)",
   "event BeaconUpgraded(address indexed beacon)",
   "event ProposalCanceled(uint256 proposalId)",
@@ -9,7 +8,6 @@
   "event VoteCast(address indexed voter, uint256 proposalId, uint8 support, uint256 weight, string reason)",
   "function BALLOT_TYPEHASH() view returns (bytes32)",
   "function COUNTING_MODE() pure returns (string)",
-  "function addVoteToken(address token, uint256 weight)",
   "function castVote(uint256 proposalId, uint8 support) returns (uint256)",
   "function castVoteBySig(uint256 proposalId, uint8 support, uint8 v, bytes32 r, bytes32 s) returns (uint256)",
   "function castVoteWithReason(uint256 proposalId, uint8 support, string reason) returns (uint256)",
@@ -19,7 +17,7 @@
   "function getVotes(address account, uint256 blockNumber) view returns (uint256)",
   "function hasVoted(uint256 proposalId, address account) view returns (bool)",
   "function hashProposal(address[] targets, uint256[] values, bytes[] calldatas, bytes32 descriptionHash) pure returns (uint256)",
-  "function initialize(address _owner, string _name, uint256 _duration, uint256 _quorum, uint256 _passThreshold, uint256[] _voteWeights, address[] _voteTokens)",
+  "function initialize(address _owner, string _name, uint256 _duration, uint256 _quorum, uint256 _passThreshold, address _voteToken)",
   "function name() view returns (string)",
   "function owner() view returns (address)",
   "function passThreshold() view returns (uint256)",
@@ -39,8 +37,7 @@
   "function upgradeToAndCall(address newImplementation, bytes data) payable",
   "function version() view returns (string)",
   "function voteSucceeded(uint256 proposalId) view returns (bool)",
-  "function voteTokens(uint256) view returns (address)",
-  "function voteWeights(uint256) view returns (uint256)",
+  "function voteToken() view returns (address)",
   "function votingDelay() pure returns (uint256)",
   "function votingPeriod() view returns (uint256)"
 ]

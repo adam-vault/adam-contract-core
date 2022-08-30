@@ -7,7 +7,7 @@ const paramsStruct = require('../../utils/paramsStruct');
 describe('Govern.sol', function () {
   let adam, dao, governFactory, lp;
   let creator, owner1, owner2;
-  let tokenA, budgetApprovalAddresses;
+  let tokenA, tokenC721, budgetApprovalAddresses;
   const category = {
     name: 'BudgetApproval',
     duration: 6570, // 1 day
@@ -33,6 +33,7 @@ describe('Govern.sol', function () {
     governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
     const res = await createTokens();
     tokenA = res.tokenA;
+    tokenC721 = res.tokenC721;
   });
 
   describe('GovernFactory', function () {
@@ -42,11 +43,32 @@ describe('Govern.sol', function () {
         category.duration,
         category.quorum,
         category.passThreshold,
-        [1],
         0, // membership,
       )).to.emit(governFactory, 'CreateGovern');
 
       expect(await governFactory.governMap(dao.address, 'General')).to.be.exist;
+    });
+
+    it('creates a govern success if token votable', async function () {
+      await expect(governFactory.createGovern(
+        'salary',
+        category.duration,
+        category.quorum,
+        category.passThreshold,
+        tokenA.address,
+      )).to.emit(governFactory, 'CreateGovern');
+
+      expect(await governFactory.governMap(dao.address, 'General')).to.be.exist;
+    });
+
+    it('creates a govern fail if token not votable', async function () {
+      await expect(governFactory.createGovern(
+        'salary',
+        category.duration,
+        category.quorum,
+        category.passThreshold,
+        tokenC721.address,
+      )).to.be.revertedWith('Govern Token without voting function');
     });
   });
 
@@ -252,5 +274,80 @@ describe('Govern.sol', function () {
         expect(await govern.state(proposalId)).to.eq(3); // Defeated
       });
     });
+  });
+
+  it('return false in voteSucceeded if no one has voted', async function () {
+    const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
+      generalGovernSetting: [300, 1000, 5100, 0],
+      mintMemberToken: true,
+    }),
+    );
+
+    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
+
+    dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+    const governFactoryAddr = await dao.governFactory();
+    governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
+
+    const governAddr = await governFactory.governMap(dao.address, 'General');
+    const govern = await ethers.getContractAt('Govern', governAddr);
+
+    const token = await ethers.getContractAt('ERC20', tokenA.address);
+    const transferCalldata = token.interface.encodeFunctionData(
+      'transfer', [owner1.address, 1000],
+    );
+
+    const tx = await govern.propose(
+      [tokenA.address],
+      [0],
+      [transferCalldata],
+      'Proposal #1: Transfer token',
+    );
+    const { proposalId } = await findEventArgs(tx, 'ProposalCreated');
+
+    await ethers.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
+    await ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
+
+    expect(await govern.voteSucceeded(proposalId)).to.eq(false);
+  });
+
+  it('counts quorum correctly', async function () {
+    const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
+      generalGovernSetting: [300, 1000, 4900, 0],
+      mintMemberToken: true,
+    }),
+    );
+
+    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
+
+    dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+    const governFactoryAddr = await dao.governFactory();
+    governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
+
+    await lp.connect(owner1).deposit(owner1.address, { value: ethers.utils.parseEther('1') });
+    await lp.connect(owner2).deposit(owner2.address, { value: ethers.utils.parseEther('2') });
+
+    const governAddr = await governFactory.governMap(dao.address, 'General');
+    const govern = await ethers.getContractAt('Govern', governAddr);
+
+    const token = await ethers.getContractAt('ERC20', tokenA.address);
+    const transferCalldata = token.interface.encodeFunctionData(
+      'transfer', [owner1.address, 1000],
+    );
+
+    const tx = await govern.propose(
+      [tokenA.address],
+      [0],
+      [transferCalldata],
+      'Proposal #1: Transfer token',
+    );
+    const { proposalId } = await findEventArgs(tx, 'ProposalCreated');
+
+    await govern.connect(owner1).castVote(proposalId, 0);
+    await ethers.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
+    await ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
+    expect(await govern.quorumReached(proposalId)).to.eq(true);
   });
 });

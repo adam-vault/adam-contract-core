@@ -50,6 +50,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     event CreateDao(address indexed dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
+    event AbandonBudgetApproval(address budgetApproval);
     event ImplementationUpgrade(
         uint256 indexed versionId,
         address daoImplementation,
@@ -91,6 +92,14 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             require(budgetApprovals[_budgetApprovals[i]] == false, "budget approval already whitelisted");
             budgetApprovals[_budgetApprovals[i]] = true;
             emit WhitelistBudgetApproval(_budgetApprovals[i]);
+        }
+    }
+
+    function abandonBudgetApprovals(address[] calldata _budgetApprovals) public onlyOwner {
+        for(uint i = 0; i < _budgetApprovals.length; i++) {
+            require(budgetApprovals[_budgetApprovals[i]] == true, "Budget approval not exist");
+            budgetApprovals[_budgetApprovals[i]] = false;
+            emit AbandonBudgetApproval(_budgetApprovals[i]);
         }
     }
 
