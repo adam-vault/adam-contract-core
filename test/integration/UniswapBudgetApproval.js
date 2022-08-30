@@ -87,8 +87,6 @@ describe('UniswapBudgetApproval.sol', function () {
       expect(await budgetApproval.approversMapping(approver.address)).to.eq(true);
       expect(await budgetApproval.minApproval()).to.eq(1);
 
-      expect(await budgetApproval.allowAllAddresses()).to.eq(false);
-
       expect(await budgetApproval.fromTokens(0)).to.eq(ADDRESS_ETH);
       expect(await budgetApproval.fromTokens(1)).to.eq(ADDRESS_WETH);
       expect(await budgetApproval.fromTokensMapping(ADDRESS_ETH)).to.eq(true);
