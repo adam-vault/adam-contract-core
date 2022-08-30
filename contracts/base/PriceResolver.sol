@@ -63,7 +63,10 @@ contract PriceResolver is Initializable {
             return amount;
 
         (, int price,,,) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
-
+        uint8 baseDecimals = baseCurrencyDecimals();
+        uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY).decimals(asset, Denominations.ETH);
+        price = scalePrice(price, priceDecimals, baseDecimals);
+        
         if (price > 0) {
             return uint256(price) * amount / 10 ** IERC20Metadata(asset).decimals();
         }
@@ -104,6 +107,7 @@ contract PriceResolver is Initializable {
 
     function baseCurrencyDecimals() public view returns (uint8) {
         if (baseCurrency == Denominations.ETH) return 18;
+
         try IERC20Metadata(baseCurrency).decimals() returns (uint8 _decimals) {
             return _decimals;
         } catch {

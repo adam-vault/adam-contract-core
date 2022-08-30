@@ -38,6 +38,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     const feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
     await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, parseEther('1'));
+    await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
   });
 
   describe('Create Budget Approval', function () {

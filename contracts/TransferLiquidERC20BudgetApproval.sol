@@ -75,6 +75,8 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         }
         
         amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
+        console.log("amountInBaseCurrency", amountInBaseCurrency);
+        console.log("totalAmount", totalAmount);
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(tokensMapping[token], "Token not whitelisted in budget");
         require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "Exceeded max budget transferable amount");
@@ -100,6 +102,8 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
 
         if (_totalAmount == 0) return false;
 
+        console.log("checkAmountPercentageValid amount", amount);
+        console.log("checkAmountPercentageValid _totalAmount", _totalAmount);
         return amount <= _totalAmount * amountPercentage / 100;
     }
 

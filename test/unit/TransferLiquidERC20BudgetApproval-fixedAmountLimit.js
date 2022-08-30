@@ -39,6 +39,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price lim
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
     await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, parseEther('1'));
+    await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
 
     const startTime = Math.round(Date.now() / 1000) - 86400;
     const endTime = Math.round(Date.now() / 1000) + 86400;
