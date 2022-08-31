@@ -49,8 +49,6 @@ describe('UniswapSwapper.sol', () => {
     const uniswapBAImplementation = await ethers.getContractAt('UniswapBudgetApproval', uniswapBAImplementationAddr);
     const initData = uniswapBAImplementation.interface.encodeFunctionData('initialize', [
       [
-        // dao address
-        dao.address,
         // executor
         ethers.constants.AddressZero,
         0, // executorTeam

@@ -46,7 +46,6 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
         [
-          executee.address, // dao addressc
           executor.address, // executor
           0, // executorTeam
           [approver.address], // approvers
@@ -74,7 +73,6 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
 
       budgetApproval = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', budgetApprovalAddress);
 
-      expect(await budgetApproval.dao()).to.eq(executee.address);
       expect(await budgetApproval.executor()).to.eq(executor.address);
       expect(await budgetApproval.approversMapping(approver.address)).to.eq(true);
       expect(await budgetApproval.minApproval()).to.eq(1);
@@ -101,7 +99,6 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
     it('throws "Invalid approver list"', async function () {
       const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
         [
-          executee.address, // dao address
           executor.address, // executor
           0, // executorTeam
           [approver.address], // approvers
@@ -141,7 +138,6 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       const endTime = Math.round(Date.now() / 1000) + 86400;
       const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
         [
-          dao.address, // dao addressc
           executor.address, // executor
           0, // executorTeam
           [approver.address], // approvers
@@ -340,7 +336,6 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       it('throws "Budget usage period not started"', async function () {
         const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
           [
-            executee.address, // dao address
             executor.address, // executor
             0, // executorTeam
             [], // approvers
@@ -394,7 +389,6 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       it('throws "Budget usage period has ended"', async function () {
         const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
           [
-            executee.address, // dao address
             executor.address, // executor
             0, // executorTeam
             [], // approvers
@@ -449,7 +443,6 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
       it('throws "Exceeded budget usage limit"', async function () {
         const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
           [
-            dao.address, // dao address
             executor.address, // executor
             0, // executorTeam
             [], // approvers

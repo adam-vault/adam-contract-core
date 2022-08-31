@@ -60,8 +60,8 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
     ) internal override {
         (address token, address to, uint256 tokenId) = abi.decode(data,(address, address, uint256));
 
-        bytes memory executeData = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", executee, to, tokenId);
-        IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
+        bytes memory executeData = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", executee(), to, tokenId);
+        IBudgetApprovalExecutee(executee()).executeByBudgetApproval(token, executeData, 0);
 
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(allowAllTokens || tokensMapping[token], "Token not whitelisted in budget");

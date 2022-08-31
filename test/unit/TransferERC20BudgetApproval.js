@@ -16,7 +16,6 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
   function initializeParser (params = {}) {
     return [[
-      params.executee || executee.address,
       params.executor || executor.address,
       params.executorTeamId || 0,
       params.approvers || [],

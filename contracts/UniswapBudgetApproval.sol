@@ -62,7 +62,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         bytes memory data = abi.encodeWithSignature("approve(address,uint256)", Constant.UNISWAP_ROUTER, type(uint256).max);
         for(uint i = 0; i < fromTokens.length; i++) {
             if(fromTokens[i] != Denominations.ETH) {
-                IBudgetApprovalExecutee(executee).executeByBudgetApproval(fromTokens[i], data, 0);
+                IBudgetApprovalExecutee(executee()).executeByBudgetApproval(fromTokens[i], data, 0);
             }
         }
     }
@@ -84,7 +84,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
 
         uint256 totalBalanceBeforeExecute = totalBalanceInBaseCurrency();
 
-        bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
+        bytes memory result = IBudgetApprovalExecutee(executee()).executeByBudgetApproval(to, executeData, value);
 
         (
             address tokenIn,
@@ -115,9 +115,9 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     function totalBalanceInBaseCurrency() internal view returns (uint256 totalBalance) {
         for (uint i = 0; i < fromTokens.length; i++) {
             if (fromTokens[i] == Denominations.ETH) {
-                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
+                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, executee().balance);
             } else {
-                totalBalance += assetBaseCurrencyPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee));
+                totalBalance += assetBaseCurrencyPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee()));
             }
         }
     }

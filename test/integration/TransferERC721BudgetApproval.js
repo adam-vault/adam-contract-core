@@ -59,7 +59,6 @@ describe('TransferERC721BudgetApproval.sol', function () {
 
     it('create ERC 721 BA should success', async function () {
       expect(await dao.budgetApprovals(budgetApprovalAddress)).to.eq(true);
-      expect(await budgetApproval.dao()).to.eq(dao.address);
     });
 
     it('transfer ERC 721 Token should success', async function () {
@@ -154,7 +153,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
 
       budgetApproval = await ethers.getContractAt('TransferERC721BudgetApproval', budgetApprovalAddress);
 
-      expect(await budgetApproval.dao()).to.eq(executee.address);
+      expect(await budgetApproval.executee()).to.eq(executee.address);
       expect(await budgetApproval.executor()).to.eq(executor.address);
       expect(await budgetApproval.approversMapping(approver.address)).to.eq(true);
       expect(await budgetApproval.minApproval()).to.eq(1);
