@@ -44,7 +44,11 @@ contract PriceResolver is Initializable {
         if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
             return ethAmount;
 
-        (, int price,,,) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
+        (uint80 roundID, int price, , uint256 updatedAt, uint80 answeredInRound) = 
+        FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
+
+        require(answeredInRound >= roundID, "Stale price in Chainlink");
+        require(block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink");
 
         if (price > 0) {
             return ethAmount * (10 ** IERC20Metadata(asset).decimals()) / uint256(price);
@@ -57,7 +61,11 @@ contract PriceResolver is Initializable {
         if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
             return amount;
 
-        (, int price,,,) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
+        (uint80 roundID, int price, , uint256 updatedAt, uint80 answeredInRound) = 
+        FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
+
+        require(answeredInRound >= roundID, "Stale price in Chainlink");
+        require(block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink");
 
         if (price > 0) {
             return uint256(price) * amount / 10 ** IERC20Metadata(asset).decimals();
@@ -73,11 +81,20 @@ contract PriceResolver is Initializable {
     {
         require(_decimals > uint8(0) && _decimals <= uint8(18), "Invalid _decimals");
         int256 decimals = int256(10 ** uint256(_decimals));
-        ( , int256 basePrice, , , ) = AggregatorV3Interface(_base).latestRoundData();
+        (uint80 _baseRoundID, int basePrice, , uint256 _baseUpdatedAt, uint80 _baseAnsweredInRound) = 
+        AggregatorV3Interface(_base).latestRoundData();
+
+        require(_baseAnsweredInRound >= _baseRoundID, "Stale price in Chainlink");
+        require(block.timestamp <= _baseUpdatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink");
+
         uint8 baseDecimals = AggregatorV3Interface(_base).decimals();
         basePrice = scalePrice(basePrice, baseDecimals, _decimals);
+        (uint80 _quoteRoundID, int quotePrice, , uint256 _quoteUpdatedAt, uint80 _quoteAnsweredInRound) = 
+        AggregatorV3Interface(_quote).latestRoundData();
 
-        ( , int256 quotePrice, , , ) = AggregatorV3Interface(_quote).latestRoundData();
+        require(_quoteAnsweredInRound >= _quoteRoundID, "Stale price in Chainlink");
+        require(block.timestamp <= _quoteUpdatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink");
+
         uint8 quoteDecimals = AggregatorV3Interface(_quote).decimals();
         quotePrice = scalePrice(quotePrice, quoteDecimals, _decimals);
 

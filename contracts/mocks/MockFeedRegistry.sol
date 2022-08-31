@@ -8,6 +8,7 @@ contract MockFeedRegistry {
   // int256 private _price;
   mapping(address => mapping(address => int256)) private _price;
   mapping(address => mapping(address => address)) private _aggregator;
+  mapping(address => mapping(address => uint256)) private _timestamp;
   // mapping(address => bool) private _feed;
 
   function setPrice(address base, address quote, int256 price) public {
@@ -16,6 +17,9 @@ contract MockFeedRegistry {
 
   function setAggregator(address base, address quote, address aggregator) public {
       _aggregator[base][quote] = aggregator;
+  }
+  function setBlockTimestamp(address base, address quote, uint256 timestamp) public {
+      _timestamp[base][quote] = timestamp;
   }
 
   // function setFeed(address asset, bool supported) public {
@@ -33,7 +37,11 @@ contract MockFeedRegistry {
       uint256 updatedAt,
       uint80 answeredInRound
     ) {
-        return (18446744073709580067, _price[base][quote], 1649757960, 1649757960, 18446744073709580067);
+        if( _timestamp[base][quote] > 0 ){
+          return (18446744073709580067, _price[base][quote], _timestamp[base][quote], _timestamp[base][quote], 18446744073709580067);
+        }else{
+          return (18446744073709580067, _price[base][quote], block.timestamp, block.timestamp, 18446744073709580067);
+        }
     }
 
   function getFeed(address base, address quote) external view returns (address aggregator) {
