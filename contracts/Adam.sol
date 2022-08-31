@@ -97,7 +97,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function abandonBudgetApprovals(address[] calldata _budgetApprovals) public onlyOwner {
         for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(budgetApprovals[_budgetApprovals[i]] == true, "Budget approval not exist");
+            require(budgetApprovals[_budgetApprovals[i]] == true, "budget approval not exist");
             budgetApprovals[_budgetApprovals[i]] = false;
             emit AbandonBudgetApproval(_budgetApprovals[i]);
         }
