@@ -213,7 +213,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
       it('allows user to transfer equal allow percentage amount', async function () {
         mockToken.balanceOf.returns(50);
         await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 50),
+          encodeTxData(mockToken.address, receiver.address, 25),
         ], Date.now() + 86400, true)).to.not.be.reverted;
       });
       it('allows user to transfer percentage amount twice', async function () {
