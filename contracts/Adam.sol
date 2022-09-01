@@ -173,6 +173,10 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _governImplementation,
         string memory description
     ) public onlyOwner {
+        require(_daoImplementation != address(0), "daoImpl is null");
+        require(_membershipImplementation != address(0), "membershipImpl is null");
+        require(_liquidPoolImplementation != address(0), "liquidPoolImpl is null");
+        require(_memberTokenImplementation != address(0), "memberTokenImpl is null");
         require(IGovernFactory(governFactory).governImplementation() == _governImplementation, "governImpl not match");
 
         daoImplementation = _daoImplementation;
