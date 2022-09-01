@@ -58,7 +58,6 @@ function getCreateTransferERC20BAParams ({
   token = ethers.constants.AddressZero,
   allowAnyAmount,
   totalAmount = 0,
-  amountPercentage = '100',
   team,
 }) {
   return Object.entries({
@@ -82,7 +81,6 @@ function getCreateTransferERC20BAParams ({
     token,
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
-    amountPercentage,
   }).map(([key, value]) => {
     return value;
   });
@@ -105,7 +103,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   tokens = [],
   allowAnyAmount,
   totalAmount = 0,
-  amountPercentage = 100,
   baseCurrency = ETH,
   team,
 }) {
@@ -129,7 +126,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     tokens,
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
-    amountPercentage,
     baseCurrency,
   }).map(([key, value]) => {
     return value;

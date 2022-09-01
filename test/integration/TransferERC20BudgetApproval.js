@@ -223,7 +223,6 @@ describe('TransferERC20BudgetApproval.sol', function () {
           approvers: [approver.address],
           toAddresses: [receiver.address],
           totalAmount: 100,
-          amountPercentage: 10,
           token: tokenA.address,
           startTime,
           endTime,
@@ -250,7 +249,6 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
       expect(await budgetApproval.allowAnyAmount()).to.eq(false);
       expect(await budgetApproval.totalAmount()).to.eq('100');
-      expect(await budgetApproval.amountPercentage()).to.eq(10);
 
       expect(await budgetApproval.startTime()).to.eq(startTime);
       expect(await budgetApproval.endTime()).to.eq(endTime);
@@ -291,7 +289,6 @@ describe('TransferERC20BudgetApproval.sol', function () {
           approvers: [approver.address],
           toAddresses: [receiver.address],
           totalAmount: 100,
-          amountPercentage: 10,
           token: tokenA.address,
           minApproval: 1,
           usageCount: 1,
@@ -415,22 +412,6 @@ describe('TransferERC20BudgetApproval.sol', function () {
       });
     });
 
-    context('exceed amount percentage', () => {
-      it('throws "Exceeded max budget transferable percentage"', async function () {
-        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-          tokenA.address,
-          receiver.address,
-          '21',
-        ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-        const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-        await budgetApproval.connect(approver).approveTransaction(id);
-        await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('Exceeded max budget transferable percentage');
-      });
-    });
-
     context('execute before startTime', () => {
       it('throws "Budget usage period not started"', async function () {
         const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
@@ -442,7 +423,6 @@ describe('TransferERC20BudgetApproval.sol', function () {
             toAddresses: [receiver.address],
             token: tokenA.address,
             endTime: 0,
-            amountPercentage: 100,
             startTime: Math.round(Date.now() / 1000) + 86400,
             team: team.address,
           }),
@@ -486,7 +466,6 @@ describe('TransferERC20BudgetApproval.sol', function () {
             toAddresses: [receiver.address],
             token: tokenA.address,
             startTime: 0,
-            amountPercentage: 100,
             endTime: Math.round(Date.now() / 1000) - 86400,
             team: team.address,
           }),
@@ -532,7 +511,6 @@ describe('TransferERC20BudgetApproval.sol', function () {
             token: tokenA.address,
             startTime: 0,
             endTime: 0,
-            amountPercentage: 100,
             usageCount: 1,
             team: team.address,
           }),

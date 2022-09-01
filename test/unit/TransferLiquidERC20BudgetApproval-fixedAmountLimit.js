@@ -62,7 +62,6 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price lim
       [ADDRESS_ETH, tokenA.address], // allowed token
       false, // allow any amount
       ethers.utils.parseEther('1'), // allowed total amount
-      '100', // allowed amount percentage
       ADDRESS_ETH, // base currency
     ]);
 

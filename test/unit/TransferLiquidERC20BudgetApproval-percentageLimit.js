@@ -64,7 +64,6 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
       [ADDRESS_ETH, tokenA.address], // allowed token
       true, // allow any amount
       0, // allowed total amount
-      '50', // allowed amount percentage
       ADDRESS_ETH, // base currency
     ]);
 
@@ -96,28 +95,6 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
 
     expect(await receiver.getBalance()).to.eq(originalBalance.add(ethers.utils.parseEther('1')));
   });
-  it('cannot send 1.1 Eth', async function () {
-    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.5'));
-    await tokenA.mint(executee.address, ethers.utils.parseEther('1'));
-    await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('1.5') });
-
-    const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-      ADDRESS_ETH,
-      receiver.address,
-      parseEther('1.1'),
-    ]);
-
-    const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-    const receipt = await tx.wait();
-    const creationEventLog = _.find(receipt.events, { event: 'CreateTransaction' });
-
-    const transactionId = creationEventLog.args.id;
-
-    await budgetApproval.connect(approver).approveTransaction(transactionId);
-
-    await expect(budgetApproval.connect(executor).executeTransaction(transactionId))
-      .to.be.revertedWith('Exceeded max budget transferable percentage');
-  });
 
   it('can send 10 Token', async function () {
     await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.1'));
@@ -137,23 +114,5 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
     await budgetApproval.connect(executor).executeTransaction(id);
 
     expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.utils.parseEther('10'));
-  });
-  it('cannot send 11 Token', async function () {
-    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.1'));
-    await tokenA.mint(executee.address, ethers.utils.parseEther('11'));
-    await executor.sendTransaction({ to: executee.address, value: ethers.utils.parseEther('0.9') });
-
-    const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-      tokenA.address,
-      receiver.address,
-      parseEther('11'),
-    ]);
-
-    const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
-    const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-    await budgetApproval.connect(approver).approveTransaction(id);
-    await expect(budgetApproval.connect(executor).executeTransaction(id))
-      .to.be.revertedWith('Exceeded max budget transferable percentage');
   });
 });
