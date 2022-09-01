@@ -100,7 +100,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event WhitelistTeam(uint256 tokenId);
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
     event CreateMember(address account, uint256 depositAmount);
-    event Donation(address donator, uint256 amount);
+    event Deposit(address donator, uint256 amount);
 
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
@@ -364,7 +364,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     receive() external payable {
       if (msg.sender != address(0) && msg.value != 0) {
-        emit Donation(msg.sender, msg.value);
+        emit Deposit(msg.sender, msg.value);
       }
     }
 }
