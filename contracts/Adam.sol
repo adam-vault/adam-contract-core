@@ -71,7 +71,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _governFactory,
         address _team
     )
-        public initializer
+        external initializer
     {
         __Ownable_init();
         whitelistBudgetApprovals(_budgetApprovalImplementations);
