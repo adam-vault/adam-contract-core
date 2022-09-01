@@ -87,12 +87,12 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
       parseEther('1'),
     ]);
 
-    const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+    const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
     const { id } = await findEventArgs(tx, 'CreateTransaction');
 
     const originalBalance = await receiver.getBalance();
-    await budgetApproval.connect(approver).approveTransaction(id);
-    await budgetApproval.connect(executor).executeTransaction(id);
+    await budgetApproval.connect(approver).approveTransaction(id, '');
+    await budgetApproval.connect(executor).executeTransaction(id, '');
 
     expect(await receiver.getBalance()).to.eq(originalBalance.add(ethers.utils.parseEther('1')));
   });
@@ -108,11 +108,11 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
       parseEther('10'),
     ]);
 
-    const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+    const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
     const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-    await budgetApproval.connect(approver).approveTransaction(id);
-    await budgetApproval.connect(executor).executeTransaction(id);
+    await budgetApproval.connect(approver).approveTransaction(id, '');
+    await budgetApproval.connect(executor).executeTransaction(id, '');
 
     expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.utils.parseEther('10'));
   });

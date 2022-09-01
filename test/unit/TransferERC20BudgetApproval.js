@@ -151,7 +151,7 @@ describe('TransferERC20BudgetApproval.sol', async function () {
       it('allows user to transfer under allow amount', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
 
         executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
           mockToken.address,
@@ -162,33 +162,33 @@ describe('TransferERC20BudgetApproval.sol', async function () {
       it('allows user to transfer equal allow amount', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 100),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
       });
 
       it('allows user to transfer amount twice', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
 
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Exceeded max budget transferable amount" error if the 1st time outflow exceeds amount limit', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 101),
-        ], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable amount');
+        ], Date.now() + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
       });
 
       it('throws "Exceeded max budget transferable amount" error if the 2nd time outflow exceeds amount limit', async function () {
         await transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
-        ], Date.now() + 86400, true);
+        ], Date.now() + 86400, true, '');
 
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 51),
-        ], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable amount');
+        ], Date.now() + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
       });
     });
 
@@ -210,24 +210,24 @@ describe('TransferERC20BudgetApproval.sol', async function () {
         mockToken.balanceOf.returns(200);
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
       });
 
       it('allows user to transfer equal allow percentage amount', async function () {
-        mockToken.balanceOf.returns(50);
+        mockToken.balanceOf.returns(100);
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 25),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
       });
       it('allows user to transfer percentage amount twice', async function () {
         mockToken.balanceOf.returns(50);
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 1),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
 
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 1),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
       });
     });
 
@@ -247,13 +247,13 @@ describe('TransferERC20BudgetApproval.sol', async function () {
       it('allows user to transfer to whitelisted address', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Recipient not whitelisted in budget" error if send to non-permitted receiver', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, executor.address, 25),
-        ], Date.now() + 86400, true)).to.be.revertedWith('Recipient not whitelisted in budget');
+        ], Date.now() + 86400, true, '')).to.be.revertedWith('Recipient not whitelisted in budget');
       });
     });
 
@@ -273,13 +273,13 @@ describe('TransferERC20BudgetApproval.sol', async function () {
       it('allows user to transfer to whitelisted address', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
-        ], Date.now() + 86400, true)).to.not.be.reverted;
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Token not whitelisted in budget" error if send to non-permitted receiver', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(unknownToken.address, receiver.address, 25),
-        ], Date.now() + 86400, true)).to.be.revertedWith('Token not whitelisted in budget');
+        ], Date.now() + 86400, true, '')).to.be.revertedWith('Token not whitelisted in budget');
       });
     });
   });
