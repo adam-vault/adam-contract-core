@@ -49,8 +49,7 @@
   "function teamWhitelist(uint256) view returns (bool)",
   "function transferMemberToken(address to, uint256 amount)",
   "function updateDaoSetting(tuple(uint256 minDepositAmount) _setting)",
-  "function upgradeContractTo(address target, address newImplementation)",
-  "function upgradeContractToAndCall(address target, address newImplementation, bytes data) payable",
+  "function upgradeImplementations(address[] targets, address[] newImplementations)",
   "function upgradeTo(address newImplementation)",
   "function upgradeToAndCall(address newImplementation, bytes data) payable"
 ]
