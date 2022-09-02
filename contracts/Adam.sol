@@ -71,7 +71,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _governFactory,
         address _team
     )
-        public initializer
+        external initializer
     {
         __Ownable_init();
         whitelistBudgetApprovals(_budgetApprovalImplementations);
@@ -103,7 +103,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function createDao(CreateDaoParams calldata params) public returns (address) {
+    function createDao(CreateDaoParams calldata params) external returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
@@ -173,6 +173,10 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _governImplementation,
         string memory description
     ) public onlyOwner {
+        require(_daoImplementation != address(0), "daoImpl is null");
+        require(_membershipImplementation != address(0), "membershipImpl is null");
+        require(_liquidPoolImplementation != address(0), "liquidPoolImpl is null");
+        require(_memberTokenImplementation != address(0), "memberTokenImpl is null");
         require(IGovernFactory(governFactory).governImplementation() == _governImplementation, "governImpl not match");
 
         daoImplementation = _daoImplementation;
