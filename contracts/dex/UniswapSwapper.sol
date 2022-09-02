@@ -3,194 +3,132 @@
 pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/IPeripheryImmutableState.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "../lib/BytesLib.sol";
 import "../lib/Constant.sol";
 
 contract UniswapSwapper is Initializable {
-
     using BytesLib for bytes;
 
-    function decodeUniswapDataBeforeSwap(address to, bytes memory _data, uint256 amount) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
-        
-        if(to == Constant.UNISWAP_ROUTER) {
-            // Uniswap Swap Router
-            (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, amount);
-        } else if (to == Constant.WETH_ADDRESS) {
-            // WETH9
-            (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
-        } else {
-            revert("Failed to decode Uniswap bytecode");
-        }
+    enum MulticallResultAttribute { EMPTY, AMOUNT_IN, AMOUNT_OUT }
+
+    struct MulticallData {
+        address recipient;
+        address tokenIn;
+        address tokenOut; 
+        uint256 amountIn; 
+        uint256 amountOut; 
+        MulticallResultAttribute resultType;
     }
 
-    function decodeUniswapDataAfterSwap(address to, bytes memory _data, uint256 amount, bytes memory swapResult) public view returns (address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
-        if(to == Constant.UNISWAP_ROUTER) {
-            // Uniswap Swap Router
-            (bytes[] memory byteResults) = abi.decode(swapResult, (bytes[]));
-
-            (tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut) = _decodeUniswapRouter(_data, amount, byteResults);
-        } else if (to == Constant.WETH_ADDRESS) {
-            // WETH9
-            (tokenIn, tokenOut, amountIn, amountOut) = _decodeWETH9(_data, amount);
-        } else {
-            revert("Failed to decode Uniswap result bytecode");
-        }
+    function WETH9() public view returns (address) {
+        return IPeripheryImmutableState(Constant.WETH_ADDRESS).WETH9();
     }
 
-    function _decodeWETH9(bytes memory _data, uint256 amount) internal pure returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut) {
-
-        if(_data.toBytes4(0) == 0xd0e30db0) {
-            // deposit()
-            return (Denominations.ETH, Constant.WETH_ADDRESS, amount, amount);
-        } else if (_data.toBytes4(0) == 0x2e1a7d4d) {
-            // withdraw(uint256)
-            uint256 _amount = abi.decode(_data.slice(4, _data.length - 4), (uint256));
-            return (Constant.WETH_ADDRESS, Denominations.ETH, _amount, _amount);
+    function decodeWETH9Call(bytes memory data, uint256 value) external view returns(address tokenIn, address tokenOut, uint256 amount) {
+        bytes4 funcSig = data.toBytes4(0);
+        if (funcSig == bytes4(keccak256("deposit()"))) {
+            return (Denominations.ETH, WETH9(), value);
+        } else if (funcSig == bytes4(keccak256("withdraw(uint256)"))) {
+            return (WETH9(), Denominations.ETH, abi.decode(data.slice(4, data.length - 4), (uint256)));
         }
 
         revert("Failed to decode Uniswap bytecode");
     }
 
-    function _decodeUniswapRouter(bytes memory _data, uint256 amount) internal view returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
+    function decodeUniswapMulticall(bytes memory rawData, bytes memory response) external view returns(MulticallData[] memory multicalData) {
+        bytes[] memory executions = _decodeMulticall(rawData);
+        bytes[] memory executionResults;
 
-        // Uniswap multicall(uint256,bytes[])
-        require(_data.toBytes4(0) == 0x5ae401dc, "Failed to decode Uniswap bytecode");
+        multicalData = new MulticallData[](executions.length);
 
-        (, bytes[] memory multicallBytesArray) = abi.decode(_data.slice(4, _data.length - 4), (uint256, bytes[]));
+        if (response.length == 0) {
+            executionResults = abi.decode(response, (bytes[]));
+        } 
 
-        for(uint i=0; i < multicallBytesArray.length; i++) {
+        for(uint i=0; i < executions.length; i++) {
+            (bool success, bytes memory rawSwapData) = address(this).staticcall(executions[i]);
+            require(success, "fail to decode uniswap multicall");
 
-            // unwrapWETH9(uint256,address)
-            if (multicallBytesArray[i].toBytes4(0) == 0x49404b7c) {
-                if (tokenOut == Constant.WETH_ADDRESS && i == multicallBytesArray.length - 1) {
-                    tokenOut = Denominations.ETH;
-                } else {
-                    revert("Failed to decode Uniswap bytecode");
+            MulticallData memory swapData = abi.decode(rawSwapData, (MulticallData));
+            if (response.length != 0) {
+                if (swapData.resultType == MulticallResultAttribute.AMOUNT_IN) {
+                    swapData.amountIn = abi.decode(executionResults[i], (uint256));
+                } else if (swapData.resultType == MulticallResultAttribute.AMOUNT_OUT) {
+                    swapData.amountOut = abi.decode(executionResults[i], (uint256));
                 }
             }
-            // refundETH() 
-            else if (multicallBytesArray[i].toBytes4(0) == 0x12210e8a) {
-                // no need handling
-            } else {
-                (, bytes memory result) = address(this).staticcall(multicallBytesArray[i]);
-                (address _tokenIn, address _tokenOut, uint256 _amountIn, uint256 _amountOut, bool _estimatedIn, bool _estimatedOut) = abi.decode(result, (address, address, uint256, uint256, bool, bool));
-                tokenIn = _tokenIn;
-                tokenOut = _tokenOut;
-                amountIn += _amountIn;
-                amountOut += _amountOut;
-                estimatedIn = _estimatedIn;
-                estimatedOut = _estimatedOut;
-            }
-        }
-
-        // Uniswap treat ETH as WETH
-        if(tokenIn == Constant.WETH_ADDRESS && amount >= amountIn) {
-            tokenIn = Denominations.ETH;
+            multicalData[i] = swapData;
         }
     }
 
-    function _decodeUniswapRouter(bytes memory _data, uint256 amount, bytes[] memory decodedResults) internal view returns(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, bool estimatedIn, bool estimatedOut) {
-
-        // Uniswap multicall(uint256,bytes[])
-        require(_data.toBytes4(0) == 0x5ae401dc, "Failed to decode Uniswap bytecode");
-        (, bytes[] memory multicallBytesArray) = abi.decode(_data.slice(4, _data.length - 4), (uint256, bytes[]));
-
-        for(uint i=0; i < multicallBytesArray.length; i++) {
-
-            // unwrapWETH9(uint256,address)
-            if (multicallBytesArray[i].toBytes4(0) == 0x49404b7c) {
-                if (tokenOut == Constant.WETH_ADDRESS && i == multicallBytesArray.length - 1) {
-                    tokenOut = Denominations.ETH;
-                } else {
-                    revert("Failed to decode Uniswap bytecode");
-                }
-            }
-            // refundETH() 
-            else if (multicallBytesArray[i].toBytes4(0) == 0x12210e8a) {
-                // no need handling
-            } else {
-                (, bytes memory callResult) = address(this).staticcall(multicallBytesArray[i]);
-                (address _tokenIn, address _tokenOut, uint256 _amountIn, uint256 _amountOut, bool _estimatedIn,) = abi.decode(callResult, (address, address, uint256, uint256, bool, bool));
-                tokenIn = _tokenIn;
-                tokenOut = _tokenOut;
-                uint256 returnValue = abi.decode(decodedResults[i], (uint256));
-                if(_estimatedIn) {
-                    amountIn += returnValue;
-                    amountOut += _amountOut;
-                } else {
-                    amountIn += _amountIn;
-                    amountOut += returnValue;
-                }
-            }
+    function _decodeMulticall(bytes memory _data) internal pure returns (bytes[] memory executions) {
+        bytes4 funcSig = _data.toBytes4(0);
+        if (funcSig == bytes4(keccak256("multicall(uint256, bytes[])"))) {
+            (, executions) = abi.decode(_data.slice(4, _data.length - 4), (uint256, bytes[]));
+        } else if (funcSig == bytes4(keccak256("multicall(bytes32, bytes[])"))) {
+            (, executions) = abi.decode(_data.slice(4, _data.length - 4), (bytes32, bytes[]));
+        } else {
+           revert("Failed to decode Uniswap multicall bytecode");
         }
-
-        // Uniswap treat ETH as WETH
-        if(tokenIn == Constant.WETH_ADDRESS && amount >= amountIn) {
-            tokenIn = Denominations.ETH;
-        }
-
-        estimatedIn = false;
-        estimatedOut = false;
-    }
-
-    struct ExactOutputSingleParams {
-        address tokenIn;
-        address tokenOut;
-        uint24 fee;
-        address recipient;
-        uint256 amountOut;
-        uint256 amountInMaximum;
-        uint160 sqrtPriceLimitX96;
     }
 
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
-    function exactOutputSingle(ExactOutputSingleParams calldata params) public pure returns (address, address, uint256, uint256, bool, bool) {
-        return (params.tokenIn, params.tokenOut, params.amountInMaximum, params.amountOut, true, false);
+    function exactOutputSingle(
+        ISwapRouter.ExactOutputSingleParams calldata params
+    ) public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: params.recipient,
+            tokenIn: params.tokenIn,
+            tokenOut: params.tokenOut,
+            amountIn: params.amountInMaximum,
+            amountOut: params.amountOut,
+            resultType: MulticallResultAttribute.AMOUNT_IN
+        });
     }
-
-    struct ExactInputSingleParams {
-        address tokenIn;
-        address tokenOut;
-        uint24 fee;
-        address recipient;
-        uint256 amountIn;
-        uint256 amountOutMinimum;
-        uint160 sqrtPriceLimitX96;
+    // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
+    function exactInputSingle(
+        ISwapRouter.ExactInputSingleParams calldata params
+    ) public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: params.recipient,
+            tokenIn: params.tokenIn,
+            tokenOut: params.tokenOut,
+            amountIn: params.amountIn,
+            amountOut: params.amountOutMinimum,
+            resultType: MulticallResultAttribute.AMOUNT_OUT
+        });
     }
 
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
-    function exactInputSingle(ExactInputSingleParams calldata params) public pure returns (address, address, uint256, uint256, bool, bool) {
-        return (params.tokenIn, params.tokenOut, params.amountIn, params.amountOutMinimum, false, true);
-    }
-
-    struct ExactOutputParams {
-        bytes path;
-        address recipient;
-        uint256 amountOut;
-        uint256 amountInMaximum;
-    }
-
-    // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
-    function exactOutput(ExactOutputParams calldata params) public pure returns (address, address, uint256, uint256, bool, bool) {
-        address tokenOut = params.path.toAddress(0);
-        address tokenIn = params.path.toAddress(params.path.length - 20);
-        return (tokenIn, tokenOut, params.amountInMaximum, params.amountOut, true, false);
-    }
-
-    struct ExactInputParams {
-        bytes path;
-        address recipient;
-        uint256 amountIn;
-        uint256 amountOutMinimum;
+    function exactOutput(
+        ISwapRouter.ExactOutputParams calldata params
+    ) public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: params.recipient,
+            tokenIn: params.path.toAddress(0),
+            tokenOut: params.path.toAddress(params.path.length - 20),
+            amountIn: params.amountInMaximum,
+            amountOut: params.amountOut, 
+            resultType: MulticallResultAttribute.AMOUNT_IN
+        });
     }
 
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
-    function exactInput(ExactInputParams calldata params) public pure returns (address, address, uint256, uint256, bool, bool) {
-        address tokenIn = params.path.toAddress(0);
-        address tokenOut = params.path.toAddress(params.path.length - 20);
-        return (tokenIn, tokenOut, params.amountIn, params.amountOutMinimum, false, true);
+    function exactInput(
+        ISwapRouter.ExactInputParams calldata params
+    ) public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: params.recipient,
+            tokenIn: params.path.toAddress(0),
+            tokenOut: params.path.toAddress(params.path.length - 20),
+            amountIn: params.amountIn,
+            amountOut: params.amountOutMinimum, 
+            resultType: MulticallResultAttribute.AMOUNT_OUT
+        });
     }
 
     // From Uniswap/swap-router-contracts/contracts/V2SwapRouter.sol
@@ -198,11 +136,16 @@ contract UniswapSwapper is Initializable {
         uint256 amountOut,
         uint256 amountInMax,
         address[] calldata path,
-        address //to
-    ) public pure returns (address, address, uint256, uint256, bool, bool) {
-        address tokenIn = path[0];
-        address tokenOut = path[path.length - 1];
-        return (tokenIn, tokenOut, amountInMax, amountOut, true, false);
+        address recipient
+    ) public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: recipient,
+            tokenIn: path[0],
+            tokenOut: path[path.length - 1],
+            amountIn: amountInMax,
+            amountOut: amountOut, 
+            resultType: MulticallResultAttribute.AMOUNT_IN
+        });
     }
 
     // From Uniswap/swap-router-contracts/contracts/V2SwapRouter.sol
@@ -210,11 +153,69 @@ contract UniswapSwapper is Initializable {
         uint256 amountIn,
         uint256 amountOutMin,
         address[] calldata path,
-        address //to
-    ) public pure returns (address, address, uint256, uint256, bool, bool) {
-        address tokenIn = path[0];
-        address tokenOut = path[path.length - 1];
-        return (tokenIn, tokenOut, amountIn, amountOutMin, false, true);
+        address recipient
+    ) public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: recipient,
+            tokenIn: path[0],
+            tokenOut: path[path.length - 1],
+            amountIn: amountIn,
+            amountOut: amountOutMin, 
+            resultType: MulticallResultAttribute.AMOUNT_OUT
+        });
+    }
+
+    function unwrapWETH9(
+        uint256 amountMinimum,
+        address recipient
+    ) public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: recipient,
+            tokenIn: address(0),
+            tokenOut: Denominations.ETH,
+            amountIn: 0,
+            amountOut: amountMinimum, 
+            resultType: MulticallResultAttribute.EMPTY
+        });
+    }
+
+    function refundETH() public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: address(0),
+            tokenIn: address(0),
+            tokenOut: address(0),
+            amountIn: 0,
+            amountOut: 0,
+            resultType: MulticallResultAttribute.EMPTY
+        });
+    }
+
+    function selfPermit(
+        address, uint256, uint256, uint8, bytes32, bytes32
+    ) public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: address(0),
+            tokenIn: address(0),
+            tokenOut: address(0),
+            amountIn: 0,
+            amountOut: 0, 
+            resultType: MulticallResultAttribute.EMPTY
+        });
+    }
+
+    function sweepToken(
+        address token,
+        uint256 amountMinimum,
+        address recipient
+    ) public pure returns (MulticallData memory) {
+        return MulticallData({
+            recipient: recipient,
+            tokenIn: address(0),
+            tokenOut: token,
+            amountIn: 0,
+            amountOut: amountMinimum, 
+            resultType: MulticallResultAttribute.EMPTY
+        });
     }
 
     uint256[50] private __gap;

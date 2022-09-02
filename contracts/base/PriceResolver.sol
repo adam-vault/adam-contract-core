@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/IPeripheryImmutableState.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
@@ -22,17 +23,20 @@ contract PriceResolver is Initializable {
     function baseCurrency() public view virtual returns (address) {
         return _baseCurrency;
     }
+    function _WETH9() internal view returns (address) {
+        return IPeripheryImmutableState(Constant.UNISWAP_ROUTER).WETH9();
+    }
 
     function assetBaseCurrencyPrice(address asset, uint256 amount) public view virtual returns (uint256) {
         address __baseCurrency = baseCurrency();
         if (asset == __baseCurrency)
             return amount;
         
-        if(__baseCurrency == Denominations.ETH || __baseCurrency == Constant.WETH_ADDRESS) {
+        if(__baseCurrency == Denominations.ETH || __baseCurrency == _WETH9()) {
             return assetEthPrice(asset, amount);
         }
 
-        if(asset == Denominations.ETH || asset == Constant.WETH_ADDRESS) {
+        if(asset == Denominations.ETH || asset == _WETH9()) {
             return ethAssetPrice(__baseCurrency, amount);
         }
 
@@ -46,7 +50,7 @@ contract PriceResolver is Initializable {
     }
 
     function ethAssetPrice(address asset, uint256 ethAmount) public view virtual returns (uint256) {
-        if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
+        if (asset == Denominations.ETH || asset == _WETH9())
             return ethAmount;
 
         (, int price,,,) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
@@ -59,7 +63,7 @@ contract PriceResolver is Initializable {
     }
 
     function assetEthPrice(address asset, uint256 amount) public view virtual returns (uint256) {
-        if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
+        if (asset == Denominations.ETH || asset == _WETH9())
             return amount;
 
         (, int price,,,) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
@@ -114,7 +118,7 @@ contract PriceResolver is Initializable {
     }
 
     function canResolvePrice(address asset) public view virtual returns (bool) {
-        if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
+        if (asset == Denominations.ETH || asset == _WETH9())
             return true;
         try FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH) {
             return true;
