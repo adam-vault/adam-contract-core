@@ -49,6 +49,9 @@ contract Govern is
         address _voteToken
     ) public initializer {
         require(_isVotableToken(_voteToken),"Govern Token without voting function");
+        require(_owner != address(0),"Owner cannot be empty");
+        require(_voteToken != address(0),"VoteToken cannot be empty");
+
         __Governor_init(_name);
 
         owner = _owner;
