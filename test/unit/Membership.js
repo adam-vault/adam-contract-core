@@ -48,7 +48,7 @@ describe('Membership.sol', function () {
       expect(await membership.totalSupply()).to.equal(1);
     });
 
-    it.only('throws "not dao" if not called by dao', async function () {
+    it('throws "not dao" if not called by dao', async function () {
       await expect(membership.connect(member).createMember(member.address)).to.be.revertedWith('not dao');
     });
 
