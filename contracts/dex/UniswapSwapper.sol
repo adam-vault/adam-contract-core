@@ -13,7 +13,7 @@ import "../lib/Constant.sol";
 contract UniswapSwapper is Initializable {
     using BytesLib for bytes;
 
-    address public constant RECIPIENT_ME = address(1);
+    address public constant RECIPIENT_EXECUTEE = address(1);
     address public constant RECIPIENT_UNISWAP_ROUTER = address(2);
 
     enum MulticallResultAttribute { EMPTY, AMOUNT_IN, AMOUNT_OUT }

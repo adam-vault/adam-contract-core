@@ -110,7 +110,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             MulticallData memory mData = mDataArr[i];
 
             require(mData.recipient == address(0) || 
-                mData.recipient == RECIPIENT_ME || 
+                mData.recipient == RECIPIENT_EXECUTEE || 
                 mData.recipient == RECIPIENT_UNISWAP_ROUTER || 
                 mData.recipient == executee(), "Recipient not whitelisted");
             
@@ -125,7 +125,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
                 emit ExecuteUniswapInTransaction(transactionId, Constant.UNISWAP_ROUTER, mData.tokenIn, mData.amountIn);
             }
 
-            if (mData.amountOut > 0 && (mData.recipient == RECIPIENT_ME || mData.recipient == executee())) {
+            if (mData.amountOut > 0 && (mData.recipient == RECIPIENT_EXECUTEE || mData.recipient == executee())) {
                 require(allowAllToTokens || toTokensMapping[mData.tokenOut], "Target token not whitelisted");
 
                 emit ExecuteUniswapOutTransaction(transactionId, Constant.UNISWAP_ROUTER, mData.tokenOut, mData.amountOut);
