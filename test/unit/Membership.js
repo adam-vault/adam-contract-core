@@ -48,8 +48,8 @@ describe('Membership.sol', function () {
       expect(await membership.totalSupply()).to.equal(1);
     });
 
-    it('throws "access denied" if not called by dao', async function () {
-      await expect(membership.connect(member).createMember(member.address)).to.be.revertedWith('access denied');
+    it.only('throws "not dao" if not called by dao', async function () {
+      await expect(membership.connect(member).createMember(member.address)).to.be.revertedWith('not dao');
     });
 
     it('throws "member count exceed limit" if member count exceeds limit', async function () {
