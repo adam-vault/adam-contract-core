@@ -141,6 +141,50 @@ describe('Adam.sol', function () {
       await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
     });
   });
+
+  describe('abandonBudgetApprovals()', async function () {
+    let adam;
+    let newBudgetApproval1, newBudgetApproval2;
+    beforeEach(async function () {
+      newBudgetApproval1 = await smock.fake('CommonBudgetApproval');
+      newBudgetApproval2 = await smock.fake('CommonBudgetApproval');
+      adam = await upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        [budgetApproval.address, newBudgetApproval1.address],
+        governFactory.address,
+        team.address,
+      ]);
+    });
+    it('removes budgetApprovals from whitelist', async () => {
+      await adam.abandonBudgetApprovals([
+        budgetApproval.address,
+        newBudgetApproval1.address,
+      ]);
+      expect(await adam.budgetApprovals(budgetApproval.address)).to.be.eq(false);
+      expect(await adam.budgetApprovals(newBudgetApproval1.address)).to.be.eq(false);
+    });
+    it('remains old budgetApprovals in whitelist after budgetApprovals removes from whitelist', async () => {
+      await adam.abandonBudgetApprovals([
+        budgetApproval.address,
+      ]);
+      expect(await adam.budgetApprovals(newBudgetApproval1.address)).to.be.eq(true);
+    });
+    it('throws "budget approval not exist" if abandon non exist budgetApproval', async () => {
+      const tx = adam.abandonBudgetApprovals([
+        budgetApproval.address,
+        newBudgetApproval2.address,
+      ]);
+      await expect(tx).to.be.revertedWith('budget approval not exist');
+    });
+    it('throws "Ownable: caller is not the owner" if not called by deployer', async () => {
+      const tx = adam.connect(unknown).whitelistBudgetApprovals([]);
+      await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+  });
+
   describe('createDao()', async function () {
     let adamForCreatrDao;
     let daoForCreatrDao, membershipForCreatrDao, liquidPoolForCreatrDao;
