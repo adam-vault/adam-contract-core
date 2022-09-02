@@ -13,6 +13,9 @@ import "../lib/Constant.sol";
 contract UniswapSwapper is Initializable {
     using BytesLib for bytes;
 
+    address public constant RECIPIENT_ME = address(1);
+    address public constant RECIPIENT_UNISWAP_ROUTER = address(2);
+
     enum MulticallResultAttribute { EMPTY, AMOUNT_IN, AMOUNT_OUT }
 
     struct MulticallData {
@@ -39,9 +42,10 @@ contract UniswapSwapper is Initializable {
         revert("Failed to decode Uniswap bytecode");
     }
 
-    function decodeUniswapMulticall(bytes memory rawData, bytes memory response) external view returns(MulticallData[] memory multicalData) {
+    function decodeUniswapMulticall(bytes memory rawData, uint256 value, bytes memory response) external view returns(MulticallData[] memory multicalData) {
         bytes[] memory executions = _decodeMulticall(rawData);
         bytes[] memory executionResults;
+        uint256 remainEth = value;
 
         multicalData = new MulticallData[](executions.length);
 
@@ -49,11 +53,16 @@ contract UniswapSwapper is Initializable {
             executionResults = abi.decode(response, (bytes[]));
         } 
 
-        for(uint i=0; i < executions.length; i++) {
+        for (uint i = 0; i < executions.length; i++) {
             (bool success, bytes memory rawSwapData) = address(this).staticcall(executions[i]);
             require(success, "fail to decode uniswap multicall");
 
             MulticallData memory swapData = abi.decode(rawSwapData, (MulticallData));
+            if (swapData.tokenIn == WETH9() && remainEth != 0) {
+                require(swapData.amountIn <= remainEth, "fail to decode WETH swap data");
+                swapData.tokenIn == Denominations.ETH;
+                remainEth -= swapData.amountIn;
+            }
             if (response.length != 0) {
                 if (swapData.resultType == MulticallResultAttribute.AMOUNT_IN) {
                     swapData.amountIn = abi.decode(executionResults[i], (uint256));
@@ -63,6 +72,8 @@ contract UniswapSwapper is Initializable {
             }
             multicalData[i] = swapData;
         }
+
+        require(remainEth == 0, "passing too much ETH to uniswap");
     }
 
     function _decodeMulticall(bytes memory _data) internal pure returns (bytes[] memory executions) {
