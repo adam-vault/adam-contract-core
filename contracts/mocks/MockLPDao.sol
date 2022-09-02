@@ -13,6 +13,40 @@ contract MockLPDao {
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isMember;
 
+    struct InitializeParams {
+        address _creator;
+        address _membership;
+        address _liquidPool;
+        address _governFactory;
+        address _team;
+        address _memberTokenImplementation;
+        string _name;
+        string _description;
+        uint256 _locktime;
+        uint256[4] generalGovernSetting;
+        string[] tokenInfo;
+        uint256 tokenAmount;
+        DaoSetting daoSetting;
+        address[] depositTokens;
+        bool mintMemberToken;
+        AdmissionToken[] admissionTokens;
+        address baseCurrency;
+        string logoCID;
+    }
+
+    struct AdmissionToken {
+        address token;
+        uint256 minTokenToAdmit;
+        uint256 tokenId;
+        bool isMemberToken;
+    }
+
+    struct DaoSetting {
+        uint256 minDepositAmount;
+    }
+
+    function initialize(InitializeParams calldata params) public {}
+
     function byPassGovern(address) public pure returns (bool) {
         return true;
     }

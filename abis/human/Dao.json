@@ -4,6 +4,7 @@
   "event AllowDepositToken(address token)",
   "event BeaconUpgraded(address indexed beacon)",
   "event CreateBudgetApproval(address budgetApproval, bytes data)",
+  "event CreateMember(address account, uint256 depositAmount)",
   "event CreateMemberToken(address creator, address token)",
   "event SetFirstDepositTime(address owner, uint256 time)",
   "event Upgraded(address indexed implementation)",
@@ -33,7 +34,6 @@
   "function locktime() view returns (uint256)",
   "function logoCID() view returns (string)",
   "function memberToken() view returns (address)",
-  "function memberTokenImplementation() view returns (address)",
   "function membership() view returns (address)",
   "function minDepositAmount() view returns (uint256)",
   "function mintMember(address owner)",
@@ -49,6 +49,7 @@
   "function teamWhitelist(uint256) view returns (bool)",
   "function transferMemberToken(address to, uint256 amount)",
   "function updateDaoSetting(tuple(uint256 minDepositAmount) _setting)",
+  "function upgradeImplementations(address[] targets, address[] newImplementations)",
   "function upgradeTo(address newImplementation)",
   "function upgradeToAndCall(address newImplementation, bytes data) payable"
 ]

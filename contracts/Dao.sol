@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
-import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
@@ -29,7 +29,7 @@ import "hardhat/console.sol";
 
 contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
-    using Address for address;
+    using AddressUpgradeable for address;
     using InterfaceChecker for address;
 
     struct InitializeParams {
@@ -100,6 +100,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event WhitelistTeam(uint256 tokenId);
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
     event CreateMember(address account, uint256 depositAmount);
+    event Deposit(address account, uint256 amount);
 
     function initialize(InitializeParams calldata params) public initializer {
         adam = msg.sender;
@@ -347,15 +348,23 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     function _mintMember(address owner) internal {
         IMembership(membership).createMember(owner);
     }
-    function _authorizeUpgrade(address newImplementation) internal override onlyGovern("General") {}
+    function _authorizeUpgrade(address) internal view override onlyGovern("General") {}
 
-    function upgradeContractTo(address target, address newImplementation) public onlyGovern("General") {
-        UUPSUpgradeable(target).upgradeTo(newImplementation);
+    function upgradeImplementations(address[] calldata targets, address[] calldata newImplementations) public onlyGovern("General") {
+        require(targets.length == newImplementations.length, "params length not match");
+        for (uint256 i = 0; i < targets.length; i++) {
+            if (targets[i] == address(this)) {
+                _upgradeTo(newImplementations[i]);
+            } else {
+                UUPSUpgradeable(targets[i]).upgradeTo(newImplementations[i]);
+            }
+        }
     }
 
-    function upgradeContractToAndCall(address target, address newImplementation, bytes memory data) public payable onlyGovern("General") {
-        UUPSUpgradeable(target).upgradeToAndCall(newImplementation, data);
-    }
 
-    receive() external payable {}
+    receive() external payable {
+      if (msg.sender != address(0) && msg.value != 0) {
+        emit Deposit(msg.sender, msg.value);
+      }
+    }
 }

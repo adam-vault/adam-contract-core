@@ -17,7 +17,7 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
     }
 
     modifier onlyDao() {
-        require(msg.sender == dao, "Not minter");
+        require(msg.sender == dao, "Not dao");
         _;
     }
 
@@ -62,6 +62,6 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
         return super.getVotes(account);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyDao {}
+    function _authorizeUpgrade(address) internal view override onlyDao {}
 
 }

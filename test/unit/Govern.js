@@ -27,7 +27,7 @@ describe('Govern.sol', function () {
     adam = await createAdam(budgetApprovalAddresses);
     const tx1 = await createDao();
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-    dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+    dao = await ethers.getContractAt('MockDao', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     const governFactoryAddr = await dao.governFactory();
     governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
@@ -36,7 +36,7 @@ describe('Govern.sol', function () {
   });
 
   describe('GovernFactory', function () {
-    it('should create a govern & emit CreateGovern event', async function () {
+    it('creates a govern & emit CreateGovern event', async function () {
       await expect(dao.createGovern(
         'salary',
         category.duration,
@@ -52,7 +52,7 @@ describe('Govern.sol', function () {
 
   describe('Voting and executing proposals', function () {
     context('For one toke only', function () {
-      it('should be able to propose a proposal and vote', async function () {
+      it('proposes a proposal and vote', async function () {
         await dao.exposedTransferMemberToken(creator.address, 1);
 
         const governAddr = await governFactory.governMap(dao.address, 'General');
@@ -86,7 +86,7 @@ describe('Govern.sol', function () {
         )).to.be.revertedWith('Governor: proposal not successful');
       });
 
-      it('should be able to propose a proposal, vote and execute', async function () {
+      it('proposes a proposal, vote and execute', async function () {
         await dao.exposedTransferMemberToken(creator.address, 1);
         const mt = await ethers.getContractAt('MemberToken', await dao.memberToken());
         expect(await mt.balanceOf(creator.address)).to.eq(1);
@@ -135,7 +135,7 @@ describe('Govern.sol', function () {
     });
 
     context('For voting with membership ERC721Vote tokens', function () {
-      it('should success due to 10% pass threshold (1 against 1 for)', async function () {
+      it('success due to 10% pass threshold (1 against 1 for)', async function () {
         const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
           budgetApproval: [300, 1000, 1000, 0], // budgetApproval
           revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
@@ -145,7 +145,7 @@ describe('Govern.sol', function () {
         }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
 
         const governFactoryAddr = await dao.governFactory();
@@ -194,7 +194,7 @@ describe('Govern.sol', function () {
         expect(await govern.state(proposalId)).to.eq(4); // Success
       });
 
-      it('should failed due to 51% pass threshold (1 against 1 for)', async function () {
+      it('fails due to 51% pass threshold (1 against 1 for)', async function () {
         const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
           generalGovernSetting: [300, 1000, 5100, 0],
           mintMemberToken: true,
@@ -203,7 +203,7 @@ describe('Govern.sol', function () {
 
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
-        dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+        dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
         const governFactoryAddr = await dao.governFactory();
         governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
