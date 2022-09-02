@@ -64,6 +64,20 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
         return super.getVotes(account);
     }
 
+    function delegate(address) public virtual override {
+        revert("Not support delegate Vote");
+    }
+    function delegateBySig(
+        address,
+        uint256,
+        uint256,
+        uint8,
+        bytes32,
+        bytes32
+    ) public virtual override {
+        revert("Not support delegate Vote");
+    }
+
     function _authorizeUpgrade(address) internal view override onlyDao {}
 
 }
