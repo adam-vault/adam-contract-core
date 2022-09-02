@@ -28,6 +28,7 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
     ) public initializer {
         minter = _minter;
         dao = msg.sender;
+        __ERC20Permit_init(_name);
         __ERC20_init(_name, _symbol);
     }
 
