@@ -8,6 +8,7 @@ require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer');
 require('./tasks/interface');
 require('./tasks/export');
+require('./tasks/decodeUniswap');
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
