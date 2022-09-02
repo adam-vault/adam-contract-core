@@ -103,7 +103,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function createDao(CreateDaoParams calldata params) public returns (address) {
+    function createDao(CreateDaoParams calldata params) external returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
