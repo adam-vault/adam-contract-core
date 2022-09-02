@@ -73,9 +73,13 @@ contract PriceResolver is Initializable {
 
         (uint80 roundID, int price, , uint256 updatedAt, uint80 answeredInRound) = 
         FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
-
+        uint8 baseDecimals = baseCurrencyDecimals();
+        uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY).decimals(asset, Denominations.ETH);
+        
         require(answeredInRound >= roundID, "Stale price in Chainlink");
         require(block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink");
+
+        price = scalePrice(price, priceDecimals, baseDecimals);
 
         if (price > 0) {
             return uint256(price) * amount / 10 ** IERC20Metadata(asset).decimals();

@@ -100,6 +100,9 @@ describe('PriceResolver.sol', () => {
   });
 
   describe('assetEthPrice()', function () {
+    beforeEach(async () => {
+      await priceResolver.setBaseCurrency(ADDRESS_ETH);
+    });
     it('asset = 1ETH, return 1', async function () {
       expect(await priceResolver.assetEthPrice(ADDRESS_ETH, parseEther('1'))).to.eq(parseEther('1'));
     });
