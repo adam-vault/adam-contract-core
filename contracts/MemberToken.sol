@@ -25,7 +25,8 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
         address _minter,
         string memory _name,
         string memory _symbol
-    ) public initializer {
+    ) external initializer {
+        require(_minter != address(0), "minter is null");
         minter = _minter;
         dao = msg.sender;
         __ERC20Permit_init(_name);
@@ -35,7 +36,7 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
     function mint(
         address account,
         uint256 amount
-    ) public onlyMinter {
+    ) external onlyMinter {
         _mint(account, amount);
     }
 
