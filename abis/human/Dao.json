@@ -6,6 +6,7 @@
   "event CreateBudgetApproval(address budgetApproval, bytes data)",
   "event CreateMember(address account, uint256 depositAmount)",
   "event CreateMemberToken(address creator, address token)",
+  "event Deposit(address account, uint256 amount)",
   "event SetFirstDepositTime(address owner, uint256 time)",
   "event Upgraded(address indexed implementation)",
   "event WhitelistTeam(uint256 tokenId)",
