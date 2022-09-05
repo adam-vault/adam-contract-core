@@ -3,13 +3,10 @@
 pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "../lib/BytesLib.sol";
-import "../lib/RevertMsg.sol";
 
-import "../interface/IMembership.sol";
 import "../interface/ITeam.sol";
 import "../interface/IBudgetApprovalExecutee.sol";
 
@@ -30,8 +27,8 @@ abstract contract CommonBudgetApproval is Initializable {
         bytes[] data;
         Status status;
         uint256 deadline;
-        uint256 approvedCount;
         bool isExist;
+        uint256 approvedCount;
         mapping(address => bool) approved;
     }
 
@@ -46,7 +43,7 @@ abstract contract CommonBudgetApproval is Initializable {
 
     Counters.Counter private _transactionIds;
 
-    mapping(uint256 => Transaction) private _transactions;
+    mapping(uint256 => Transaction) public transactions;
 
     address private _executor;
     uint256 private _executorTeamId;
@@ -88,12 +85,12 @@ abstract contract CommonBudgetApproval is Initializable {
     }
 
     modifier matchStatus(uint256 id, Status status) {
-        require(_transactions[id].status == status, "Transaction status invalid");
+        require(transactions[id].status == status, "Transaction status invalid");
         _;
     }
 
     modifier checkTime(uint256 id) {
-        require(block.timestamp <= _transactions[id].deadline, "Transaction expired");
+        require(block.timestamp <= transactions[id].deadline, "Transaction expired");
         require(block.timestamp >= startTime(), "Budget usage period not started");
 
         uint256 __endtime = endTime();
@@ -194,7 +191,7 @@ abstract contract CommonBudgetApproval is Initializable {
     function executeTransaction(uint256 id) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
         bool unlimited = allowUnlimitedUsageCount();
         uint256 count = usageCount();
-        bytes[] memory data = _transactions[id].data;
+        bytes[] memory data = transactions[id].data;
 
         for (uint i = 0; i < data.length; i++) {
             require(unlimited || count > 0, "Exceeded budget usage limit");
@@ -205,7 +202,7 @@ abstract contract CommonBudgetApproval is Initializable {
         }
 
         _usageCount = count;
-        _transactions[id].status = Status.Completed;
+        transactions[id].status = Status.Completed;
         emit ExecuteTransaction(id, data, msg.sender);
     }
 
@@ -214,16 +211,16 @@ abstract contract CommonBudgetApproval is Initializable {
         uint256 id = _transactionIds.current();
 
         // workaround when have mapping in Struct
-        Transaction storage newTransaction = _transactions[id];
+        Transaction storage newTransaction = transactions[id];
         newTransaction.id = id;
         newTransaction.data = _data;
         newTransaction.deadline = _deadline;
         newTransaction.isExist = true;
 
         if (minApproval() == 0) {
-            _transactions[id].status = Status.Approved;
+            transactions[id].status = Status.Approved;
         } else {
-            _transactions[id].status = Status.Pending;
+            transactions[id].status = Status.Pending;
         }
 
         emit CreateTransaction(id, _data, _deadline,  newTransaction.status);
@@ -235,40 +232,32 @@ abstract contract CommonBudgetApproval is Initializable {
     }
 
     function approveTransaction(uint256 id) external onlyApprover {
-        require(_transactions[id].status == Status.Pending
-            || _transactions[id].status == Status.Approved,
+        require(_transactionIds.current() >= id, "Invaild TransactionId");
+        require(transactions[id].status == Status.Pending
+            || transactions[id].status == Status.Approved,
             "Unexpected transaction status");
-        require(!_transactions[id].approved[msg.sender], "Transaction has been approved before");
+        require(!transactions[id].approved[msg.sender], "Transaction has been approved before");
 
-        _transactions[id].approved[msg.sender] = true;
-        _transactions[id].approvedCount++;
+        transactions[id].approved[msg.sender] = true;
+        transactions[id].approvedCount++;
 
-        if(_transactions[id].approvedCount >= minApproval()) {
-            _transactions[id].status = Status.Approved;
+        if(transactions[id].approvedCount >= minApproval()) {
+            transactions[id].status = Status.Approved;
         }
 
         emit ApproveTransaction(id, msg.sender);
     }
 
     function revokeTransaction(uint256 id) external onlyExecutor {
-        require(_transactions[id].status != Status.Completed, "Transaction has been completed before");
-        _transactions[id].status = Status.Cancelled;
+        require(_transactionIds.current() >= id, "Invaild TransactionId");
+        require(transactions[id].status != Status.Completed, "Transaction has been completed before");
+        transactions[id].status = Status.Cancelled;
 
         emit RevokeTransaction(id);
     }
 
-    function statusOf(uint256 id) public view returns (Status) {
-        return _transactions[id].status;
-    }
-    function approvedCountOf(uint256 id) public view returns (uint256) {
-        return _transactions[id].approvedCount;
-    }
-    function deadlineOf(uint256 id) public view returns (uint256) {
-        return _transactions[id].deadline;
-    }
-
     function _execute(uint256, bytes memory) internal virtual;
-    function executeParams() public pure virtual returns (string[] memory);
+    function executeParams() external pure virtual returns (string[] memory);
     function name() external virtual returns (string memory);
 
     uint256[50] private __gap;
