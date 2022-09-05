@@ -90,4 +90,11 @@ describe('MemberToken.sol', function () {
       expect(await memberToken.getPastTotalSupply(blockNumber)).to.equal(10);
     });
   });
+
+  describe('delegate', function () {
+    it('delegate fail for Member Token', async function () {
+      await memberToken.connect(minter).mint(member.address, 10);
+      await expect(memberToken.connect(member).delegate(minter.address)).to.be.revertedWith('Not support delegate Vote');
+    });
+  });
 });

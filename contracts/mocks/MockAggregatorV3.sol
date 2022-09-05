@@ -28,6 +28,6 @@ contract MockAggregatorV3 {
     uint256 updatedAt,
     uint80 answeredInRound
     ) {
-        return (18446744073709580067, price, 1649757960, 1649757960, 18446744073709580067);
+        return (18446744073709580067, price, block.timestamp, block.timestamp, 18446744073709580067);
     }
 }

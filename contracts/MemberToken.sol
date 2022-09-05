@@ -25,16 +25,18 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
         address _minter,
         string memory _name,
         string memory _symbol
-    ) public initializer {
+    ) external initializer {
+        require(_minter != address(0), "minter is null");
         minter = _minter;
         dao = msg.sender;
+        __ERC20Permit_init(_name);
         __ERC20_init(_name, _symbol);
     }
 
     function mint(
         address account,
         uint256 amount
-    ) public onlyMinter {
+    ) external onlyMinter {
         _mint(account, amount);
     }
 
@@ -60,6 +62,20 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
     function getVotes(address account) public view virtual override returns (uint256) {
         if(account == minter) return 0;
         return super.getVotes(account);
+    }
+
+    function delegate(address) public virtual override {
+        revert("Not support delegate Vote");
+    }
+    function delegateBySig(
+        address,
+        uint256,
+        uint256,
+        uint8,
+        bytes32,
+        bytes32
+    ) public virtual override {
+        revert("Not support delegate Vote");
     }
 
     function _authorizeUpgrade(address) internal view override onlyDao {}

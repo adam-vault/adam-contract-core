@@ -89,16 +89,16 @@ describe('TransferERC20BudgetApproval.sol', function () {
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], deadline, false);
       const { id } = await findEventArgs(tx, 'CreateTransaction');
       const orgReceiverBalance = await tokenA.balanceOf(receiver.address);
-      expect(await budgetApproval.statusOf(id)).to.eq(0);
-      expect(await budgetApproval.deadlineOf(id)).to.eq(deadline);
-      expect(await budgetApproval.approvedCountOf(id)).to.eq(ethers.BigNumber.from('0'));
+      expect((await budgetApproval.transactions(id)).status).to.eq(0);
+      expect((await budgetApproval.transactions(id)).deadline).to.eq(deadline);
+      expect((await budgetApproval.transactions(id)).approvedCount).to.eq(ethers.BigNumber.from('0'));
 
       await budgetApproval.connect(approver).approveTransaction(id);
-      expect(await budgetApproval.statusOf(id)).to.eq(1);
-      expect(await budgetApproval.approvedCountOf(id)).to.eq(ethers.BigNumber.from('1'));
+      expect((await budgetApproval.transactions(id)).status).to.eq(1);
+      expect((await budgetApproval.transactions(id)).approvedCount).to.eq(ethers.BigNumber.from('1'));
 
       await budgetApproval.connect(executor).executeTransaction(id);
-      expect(await budgetApproval.statusOf(id)).to.eq(2);
+      expect((await budgetApproval.transactions(id)).status).to.eq(2);
 
       expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('190'));
       expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('10').add(orgReceiverBalance));
@@ -341,6 +341,21 @@ describe('TransferERC20BudgetApproval.sol', function () {
       });
     });
 
+    context('Approve Incorrect Transaction Id ', () => {
+      it('throws "Invaild TransactionId"', async function () {
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          tokenA.address,
+          receiver.address,
+          '10',
+        ]);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+        const { id } = await findEventArgs(tx, 'CreateTransaction');
+
+        await expect(budgetApproval.connect(approver).approveTransaction(id + 1))
+          .to.be.revertedWith('Invaild TransactionId');
+      });
+    });
+
     context('not created by executor', () => {
       it('throws "Executor not whitelisted in budget"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
@@ -381,6 +396,21 @@ describe('TransferERC20BudgetApproval.sol', function () {
         await budgetApproval.connect(executor).revokeTransaction(id);
         await expect(budgetApproval.connect(executor).executeTransaction(id))
           .to.be.revertedWith('status invalid');
+      });
+    });
+
+    context('revoked incorrect transaction id', () => {
+      it('throws "Invaild TransactionId"', async function () {
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          tokenA.address,
+          receiver.address,
+          '10',
+        ]);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+        const { id } = await findEventArgs(tx, 'CreateTransaction');
+        ;
+        await expect(budgetApproval.connect(executor).revokeTransaction(id + 1))
+          .to.be.revertedWith('Invaild TransactionId');
       });
     });
 
