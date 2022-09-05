@@ -4,7 +4,7 @@ pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/IPeripheryImmutableState.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "../lib/BytesLib.sol";
@@ -28,7 +28,7 @@ contract UniswapSwapper is Initializable {
     }
 
     function WETH9() public view returns (address) {
-        return IPeripheryImmutableState(Constant.WETH_ADDRESS).WETH9();
+        return Constant.WETH_ADDRESS;
     }
 
     function decodeWETH9Call(bytes memory data, uint256 value) external view returns(address tokenIn, address tokenOut, uint256 amount) {
@@ -63,7 +63,7 @@ contract UniswapSwapper is Initializable {
                 swapData.tokenIn == Denominations.ETH;
                 remainEth -= swapData.amountIn;
             }
-            if (response.length != 0) {
+            if (executionResults.length != 0) {
                 if (swapData.resultType == MulticallResultAttribute.AMOUNT_IN) {
                     swapData.amountIn = abi.decode(executionResults[i], (uint256));
                 } else if (swapData.resultType == MulticallResultAttribute.AMOUNT_OUT) {
@@ -78,9 +78,9 @@ contract UniswapSwapper is Initializable {
 
     function _decodeMulticall(bytes memory _data) internal pure returns (bytes[] memory executions) {
         bytes4 funcSig = _data.toBytes4(0);
-        if (funcSig == bytes4(keccak256("multicall(uint256, bytes[])"))) {
+        if (funcSig == bytes4(keccak256("multicall(uint256,bytes[])"))) {
             (, executions) = abi.decode(_data.slice(4, _data.length - 4), (uint256, bytes[]));
-        } else if (funcSig == bytes4(keccak256("multicall(bytes32, bytes[])"))) {
+        } else if (funcSig == bytes4(keccak256("multicall(bytes32,bytes[])"))) {
             (, executions) = abi.decode(_data.slice(4, _data.length - 4), (bytes32, bytes[]));
         } else {
            revert("Failed to decode Uniswap multicall bytecode");
@@ -89,7 +89,7 @@ contract UniswapSwapper is Initializable {
 
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
     function exactOutputSingle(
-        ISwapRouter.ExactOutputSingleParams calldata params
+        IV3SwapRouter.ExactOutputSingleParams calldata params
     ) public pure returns (MulticallData memory) {
         return MulticallData({
             recipient: params.recipient,
@@ -102,7 +102,7 @@ contract UniswapSwapper is Initializable {
     }
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
     function exactInputSingle(
-        ISwapRouter.ExactInputSingleParams calldata params
+        IV3SwapRouter.ExactInputSingleParams calldata params
     ) public pure returns (MulticallData memory) {
         return MulticallData({
             recipient: params.recipient,
@@ -116,7 +116,7 @@ contract UniswapSwapper is Initializable {
 
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
     function exactOutput(
-        ISwapRouter.ExactOutputParams calldata params
+        IV3SwapRouter.ExactOutputParams calldata params
     ) public pure returns (MulticallData memory) {
         return MulticallData({
             recipient: params.recipient,
@@ -130,7 +130,7 @@ contract UniswapSwapper is Initializable {
 
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
     function exactInput(
-        ISwapRouter.ExactInputParams calldata params
+        IV3SwapRouter.ExactInputParams calldata params
     ) public pure returns (MulticallData memory) {
         return MulticallData({
             recipient: params.recipient,

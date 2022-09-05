@@ -1,19 +1,23 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { smock } = require('@defi-wonderland/smock');
 const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
 const decodeBase64 = require('../utils/decodeBase64');
 const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
 const { createAdam, createTokens } = require('../utils/createContract.js');
 const paramsStruct = require('../../utils/paramsStruct');
+
 const {
   ADDRESS_ETH,
   ADDRESS_MOCK_FEED_REGISTRY,
   ADDRESS_MOCK_AGGRGATOR,
+  ADDRESS_UNISWAP_ROUTER,
+  ADDRESS_WETH,
 } = require('../utils/constants');
 
 describe('Integration - LiquidPool.sol', function () {
-  let adam, dao, membership, tokenC721, tokenA, tokenD1155;
+  let adam, dao, membership, tokenC721, tokenA, tokenD1155, uniswapRouter;
   let creator, member, anyone, feedRegistry;
 
   function createDao () {
@@ -24,12 +28,10 @@ describe('Integration - LiquidPool.sol', function () {
     [creator, member, anyone] = await ethers.getSigners();
     ({ tokenA, tokenC721, tokenD1155 } = await createTokens());
 
-    await ethers.provider.send('hardhat_setCode', [
-      ADDRESS_MOCK_FEED_REGISTRY,
-      feedRegistryArticfact.deployedBytecode,
-    ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
-    await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
+    feedRegistry = await smock.fake('MockFeedRegistry', { address: ADDRESS_MOCK_FEED_REGISTRY }); // how to use
+    feedRegistry.getFeed
+      .whenCalledWith(tokenA.address, ADDRESS_ETH)
+      .returns(ADDRESS_MOCK_AGGRGATOR);
 
     adam = await createAdam();
   });

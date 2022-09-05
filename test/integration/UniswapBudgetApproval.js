@@ -171,7 +171,7 @@ describe('UniswapBudgetApproval.sol', function () {
     context('ETH => tokenA', () => {
       it('executes', async function () {
         const functionCallData = uniswapRouter.interface.encodeFunctionData('exactOutputSingle', [[
-          ADDRESS_ETH,
+          ADDRESS_WETH,
           tokenA.address,
           0,
           executee.address,

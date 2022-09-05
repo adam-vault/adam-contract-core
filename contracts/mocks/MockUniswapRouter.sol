@@ -4,6 +4,8 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "../lib/BytesLib.sol";
+import "../lib/Constant.sol";
+import "./MockWETH9.sol";
 import "hardhat/console.sol";
 
 contract MockUniswapRouter {
@@ -48,7 +50,12 @@ contract MockUniswapRouter {
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
     function exactOutputSingle(ExactOutputSingleParams calldata params) public payable returns (uint256 amountIn) {
         amountIn = params.amountInMaximum;
-        if(params.tokenIn == Denominations.ETH) {
+
+        if (msg.value > 0) {
+            MockWETH9(params.tokenIn).deposit{value: msg.value}();
+        }
+
+        if(params.tokenIn == Constant.WETH_ADDRESS && msg.value > 0) {
             require(msg.value == amountIn, "value not match"); 
         } else {
             IERC20(params.tokenIn).transferFrom(msg.sender, address(this), amountIn);
