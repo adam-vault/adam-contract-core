@@ -47,7 +47,7 @@ contract Govern is
         uint _quorum,
         uint _passThreshold,
         address _voteToken
-    ) public initializer {
+    ) external initializer {
         require(_isVotableToken(_voteToken),"Govern Token without voting function");
         require(_owner != address(0),"Owner cannot be empty");
         require(_voteToken != address(0),"VoteToken cannot be empty");
@@ -62,7 +62,7 @@ contract Govern is
         voteToken = _voteToken;
     }
 
-    function getProposalVote(uint256 proposalId, uint8 support) public view returns (uint256) {
+    function getProposalVote(uint256 proposalId, uint8 support) external view returns (uint256) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
         
         if (support == uint8(VoteType.Against)) {
@@ -108,11 +108,11 @@ contract Govern is
         return VotesUpgradeable(voteToken).getPastTotalSupply(blockNumber);
     }
 
-    function quorumReached(uint256 proposalId) public view returns (bool) {
+    function quorumReached(uint256 proposalId) external view returns (bool) {
         return _quorumReached(proposalId);
     }
 
-    function voteSucceeded(uint256 proposalId) public view returns (bool) {
+    function voteSucceeded(uint256 proposalId) external view returns (bool) {
         return _voteSucceeded(proposalId);
     }
 
