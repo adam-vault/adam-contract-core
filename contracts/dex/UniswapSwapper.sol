@@ -58,9 +58,10 @@ contract UniswapSwapper is Initializable {
             require(success, "fail to decode uniswap multicall");
 
             MulticallData memory swapData = abi.decode(rawSwapData, (MulticallData));
+            
             if (swapData.tokenIn == WETH9() && remainEth != 0) {
                 require(swapData.amountIn <= remainEth, "fail to decode WETH swap data");
-                swapData.tokenIn == Denominations.ETH;
+                swapData.tokenIn = Denominations.ETH;
                 remainEth -= swapData.amountIn;
             }
             if (executionResults.length != 0) {
