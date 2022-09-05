@@ -16,6 +16,9 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgr
 	using Base64 for bytes;
 
 	event EditInfo(string name, string description, uint256 tokenId);
+	event AddTeam(uint256 tokenId, address creator, address minter, string name, string description);
+	event AddMembers(uint256 tokenId, address[] members);
+	event RemoveMembers(uint256 tokenId, address[] members);
 
 	mapping(uint256 => address) public creatorOf;
 	mapping(uint256 => address) public minterOf;
@@ -29,7 +32,7 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgr
 		_;
 	}
 
-  function initialize() public initializer {
+  function initialize() external initializer {
 	__Ownable_init();
     __ERC1155_init("");
   }
@@ -43,11 +46,15 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgr
 			bytes memory
 	) internal view override {
 		if (from == address(0)) { // mint
-			require(balanceOf(to, ids[0]) == 0, "Team: Member/Members already added");
+			for(uint i = 0; i < ids.length; i++) {
+				require(balanceOf(to, ids[i]) == 0, "Team: Member/Members already added");
+			}
 		}
 
 		if (to == address(0)) { // burn
-			require(balanceOf(from, ids[0]) > 0, "Team: Member/Members not exists");
+			for(uint i = 0; i < ids.length; i++) {
+				require(balanceOf(from, ids[i]) > 0, "Team: Member/Members not exists");
+			}
 		}
 
 		if (from != address(0) && to != address(0)) {
@@ -72,27 +79,37 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgr
 		}
 	}
 
-	function addTeam(string memory name, address minter, address[] memory members, string memory description) public returns (uint256) {
+	function addTeam(string memory name, address minter, address[] memory members, string memory description) external returns (uint256) {
+
+		require(minter != address(0), "minter is null");
+
 		_tokenIds.increment();
-		creatorOf[_tokenIds.current()] = msg.sender;
-		minterOf[_tokenIds.current()] = minter;
-		nameOf[_tokenIds.current()] = name;
-		descriptionOf[_tokenIds.current()] = description;
 
-		_mintTokens(members, _tokenIds.current());
+		uint256 _tokenId = _tokenIds.current();
 
-		return _tokenIds.current();
+		creatorOf[_tokenId] = msg.sender;
+		minterOf[_tokenId] = minter;
+		nameOf[_tokenId] = name;
+		descriptionOf[_tokenId] = description;
+
+		_mintTokens(members, _tokenId);
+
+		emit AddTeam(_tokenId, msg.sender, minter, name, description);
+
+		return _tokenId;
 	}
 
-	function addMembers(address[] memory members, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender) {
+	function addMembers(address[] memory members, uint256 tokenId) external onlyTeamMinter(tokenId, msg.sender) {
 		_mintTokens(members, tokenId);
+		emit AddMembers(tokenId, members);
 	}
 
-	function removeMembers(address[] memory members, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender) {
+	function removeMembers(address[] memory members, uint256 tokenId) external onlyTeamMinter(tokenId, msg.sender) {
 		_burnTokens(members, tokenId);
+		emit RemoveMembers(tokenId, members);
 	}
 
-	function setInfo(string memory name, string memory description, uint256 tokenId) public onlyTeamMinter(tokenId, msg.sender){
+	function setInfo(string memory name, string memory description, uint256 tokenId) external onlyTeamMinter(tokenId, msg.sender){
     	nameOf[tokenId] = name;
 		descriptionOf[tokenId] = description;
 
