@@ -16,6 +16,7 @@ contract BudgetApprovalExecutee is Initializable {
     mapping(address => bool) private _budgetApprovals;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);
+    event ExecuteByBudgetApproval(address budgetApproval, bytes data);
 
     modifier onlyBudgetApproval {
         require(budgetApprovals(msg.sender), "BudgetApprovalExecutee: access denied");
@@ -39,13 +40,14 @@ contract BudgetApprovalExecutee is Initializable {
         if(!success) {
             revert(string("Reverted by external contract").concat(RevertMsg.ToString(result)));
         }
+        emit ExecuteByBudgetApproval(msg.sender, _data);
 
         return result;
     }
 
     function _beforeCreateBudgetApproval(address) virtual internal {}
 
-    function createBudgetApprovals(address[] memory __budgetApprovals, bytes[] memory data) public virtual {
+    function createBudgetApprovals(address[] memory __budgetApprovals, bytes[] memory data) external virtual {
         require(__budgetApprovals.length == data.length, "Incorrect Calldata");
 
         for(uint i = 0; i < __budgetApprovals.length; i++) {
