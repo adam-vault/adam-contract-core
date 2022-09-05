@@ -47,7 +47,7 @@ contract Govern is
         uint _quorum,
         uint _passThreshold,
         address _voteToken
-    ) external initializer {
+    ) public initializer {
         require(_isVotableToken(_voteToken),"Govern Token without voting function");
         require(_owner != address(0),"Owner cannot be empty");
         require(_voteToken != address(0),"VoteToken cannot be empty");
@@ -62,7 +62,7 @@ contract Govern is
         voteToken = _voteToken;
     }
 
-    function getProposalVote(uint256 proposalId, uint8 support) external view returns (uint256) {
+    function getProposalVote(uint256 proposalId, uint8 support) public view returns (uint256) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
         
         if (support == uint8(VoteType.Against)) {
@@ -76,19 +76,19 @@ contract Govern is
         }
     }
 
-    function votingPeriod() external view override returns (uint256) {
+    function votingPeriod() public view override returns (uint256) {
         return duration / Constant.BLOCK_NUMBER_IN_SECOND;
     }
 
-    function votingDelay() external pure override returns (uint256) {
+    function votingDelay() public pure override returns (uint256) {
         return 0;
     }
 
-    function proposalThreshold() external pure override returns (uint256) {
+    function proposalThreshold() public pure override returns (uint256) {
         return 0;
     }
 
-    function COUNTING_MODE() external pure override returns (string memory) {
+    function COUNTING_MODE() public pure override returns (string memory) {
         return "support=bravo&quorum=bravo";
     }
 
@@ -96,7 +96,7 @@ contract Govern is
         return _proposalVotes[proposalId].hasVoted[account];
     }
 
-    function getVotes(address account, uint256 blockNumber) external view override returns (uint256) {
+    function getVotes(address account, uint256 blockNumber) public view override returns (uint256) {
         return VotesUpgradeable(voteToken).getPastVotes(account, blockNumber);
     }
 
@@ -108,11 +108,11 @@ contract Govern is
         return VotesUpgradeable(voteToken).getPastTotalSupply(blockNumber);
     }
 
-    function quorumReached(uint256 proposalId) external view returns (bool) {
+    function quorumReached(uint256 proposalId) public view returns (bool) {
         return _quorumReached(proposalId);
     }
 
-    function voteSucceeded(uint256 proposalId) external view returns (bool) {
+    function voteSucceeded(uint256 proposalId) public view returns (bool) {
         return _voteSucceeded(proposalId);
     }
 
@@ -160,9 +160,8 @@ contract Govern is
 
     function _voteSucceeded(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
-        uint forVotes = proposalvote.forVotes;
-        uint totalVotes = forVotes + proposalvote.againstVotes;
-        return totalVotes == 0 ? false : (forVotes * 100 * 100) >= totalVotes * passThreshold;
+        uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
+        return totalVotes == 0 ? false : (proposalvote.forVotes * 100 * 100) >= totalVotes * passThreshold;
     }
 
     function _isVotableToken(address _voteToken) internal view  returns (bool) {
