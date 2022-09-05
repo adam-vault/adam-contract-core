@@ -32,9 +32,9 @@ abstract contract CommonBudgetApproval is Initializable {
         mapping(address => bool) approved;
     }
 
-    event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status);
+    event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status, string comment);
     event ApproveTransaction(uint256 id, address approver, string comment);
-    event ExecuteTransaction(uint256 id, bytes[] data, address _executor, string comment);
+    event ExecuteTransaction(uint256 id, bytes[] data, address _executor);
     event RevokeTransaction(uint256 id);
     event AllowAddress(address target);
     event AllowToken(address token);
@@ -193,7 +193,7 @@ abstract contract CommonBudgetApproval is Initializable {
 
     function afterInitialized() virtual external onlyExecutee {}
 
-    function executeTransaction(uint256 id, string calldata comment) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
+    function executeTransaction(uint256 id) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
         bool unlimited = allowUnlimitedUsageCount();
         uint256 count = usageCount();
         bytes[] memory data = transactions[id].data;
@@ -208,7 +208,7 @@ abstract contract CommonBudgetApproval is Initializable {
 
         _usageCount = count;
         transactions[id].status = Status.Completed;
-        emit ExecuteTransaction(id, data, msg.sender, comment);
+        emit ExecuteTransaction(id, data, msg.sender);
     }
 
     function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute, string calldata comment) external onlyExecutor returns (uint256) {
@@ -228,10 +228,10 @@ abstract contract CommonBudgetApproval is Initializable {
             transactions[id].status = Status.Pending;
         }
 
-        emit CreateTransaction(id, _data, _deadline,  newTransaction.status);
+        emit CreateTransaction(id, _data, _deadline,  newTransaction.status, comment);
 
         if (_isExecute) {
-            executeTransaction(id, comment);
+            executeTransaction(id);
         }
         return id;
     }
