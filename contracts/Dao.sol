@@ -99,7 +99,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event WhitelistTeam(uint256 tokenId);
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
     event CreateMember(address account, uint256 depositAmount);
-    event UpdateDaoSetting(DaoSetting setting);
+    event UpdateDaoSetting(uint256 minDepositAmount);
 
     function initialize(InitializeParams calldata params) public initializer {
         require( 
@@ -186,7 +186,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("General") {
         minDepositAmount = _setting.minDepositAmount;
-        emit UpdateDaoSetting(_setting);
+        emit UpdateDaoSetting(_setting.minDepositAmount);
     }
 
     function createGovern(
