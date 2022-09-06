@@ -4,7 +4,6 @@ pragma solidity 0.8.7;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
 
@@ -20,6 +19,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
     mapping(address => bool) public tokensMapping;
     bool public allowAnyAmount;
     uint256 public totalAmount;
+    event execute(address to, address token);
 
     function initialize(
         InitializeParams calldata params,
@@ -29,7 +29,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         address[] memory _tokens,
         bool _allowAnyAmount,
         uint256 _totalAmount
-    ) public initializer {
+    ) external initializer {
         __BudgetApproval_init(params);
         
         allowAllAddresses = _allowAllAddresses;
@@ -46,7 +46,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         totalAmount = _totalAmount;
     }
 
-    function executeParams() public pure override returns (string[] memory) {
+    function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address token";
         arr[1] = "address to";
@@ -70,6 +70,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         if(!allowAnyAmount) {
             totalAmount -= 1;
         }
+        emit execute(to, token);
     }
     function _addToken(address token) internal {
         require(!tokensMapping[token], "Duplicated Item in source token list");
@@ -84,4 +85,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         emit AllowAddress(to);
     }
 
+    function tokensLength() public view returns(uint256) {
+        return tokens.length;
+    }
 }
