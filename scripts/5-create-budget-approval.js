@@ -16,7 +16,8 @@ const {
 // rinkeby
 const daoAddress = deploymentResult.initdata_addresses.daos[0].address;
 const transferLiquidERC20BudgetApprovalAddress = deploymentResult.addresses.transferLiquidERC20BudgetApproval;
-const uniswapBudetApprovalAddress = deploymentResult.addresses.uniswapBudgetApproval;
+const uniswapBudetApprovalAddress =
+  deploymentResult.addresses.liquidUniswapBudgetApproval;
 const transferERC20BudgetApprovalAddress = deploymentResult.addresses.transferERC20BudgetApproval;
 
 const budgetApprovalAddresses = [];
@@ -53,19 +54,23 @@ async function main () {
     }),
   );
 
-  const uniswapBudgetApproval = await hre.ethers.getContractAt('UniswapBudgetApproval', uniswapBudetApprovalAddress);
-  const dataUniswap = uniswapBudgetApproval.interface.encodeFunctionData('initialize',
+  const liquidUniswapBudgetApproval = await hre.ethers.getContractAt(
+    "LiquidUniswapBudgetApproval",
+    uniswapBudetApprovalAddress
+  );
+  const dataUniswap = liquidUniswapBudgetApproval.interface.encodeFunctionData(
+    "initialize",
     getCreateUniswapBAParams({
       dao: daoAddress,
-      executor: '0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A',
+      executor: "0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A",
       allowUnlimitedUsageCount: true,
       usageCount: 0,
       fromTokens: [ETH_ADDRESS, DAI_ADDRESS],
       toTokens: [ETH_ADDRESS, DAI_ADDRESS],
       allowAnyAmount: true,
-      totalAmount: hre.ethers.utils.parseEther('0'),
-      amountPercentage: '100',
-    }),
+      totalAmount: hre.ethers.utils.parseEther("0"),
+      amountPercentage: "100",
+    })
   );
 
   const transferERC20BudgetApproval = await hre.ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BudgetApprovalAddress);

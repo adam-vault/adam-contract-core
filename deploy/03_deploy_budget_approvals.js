@@ -1,8 +1,9 @@
 const budgetApprovals = [
   'TransferLiquidERC20BudgetApproval',
-  'UniswapBudgetApproval',
+  'LiquidUniswapBudgetApproval',
   'TransferERC721BudgetApproval',
   'TransferERC20BudgetApproval',
+  'UniswapBudgetApproval',
 ];
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
