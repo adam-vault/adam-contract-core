@@ -101,7 +101,7 @@ contract Govern is
     }
 
     function quorum(uint256 blockNumber) public view override returns (uint256) {
-        return totalPastSupply(blockNumber) * (quorumThreshold / 100);
+        return totalPastSupply(blockNumber) * (quorumThreshold / 10000);
     }
 
     function totalPastSupply(uint256 blockNumber) public view returns (uint256) {
@@ -155,7 +155,7 @@ contract Govern is
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
         uint countedVotes = proposalvote.forVotes + proposalvote.againstVotes;
 
-        return quorum(proposalSnapshot(proposalId)) <= countedVotes * 100;
+        return quorum(proposalSnapshot(proposalId)) <= countedVotes;
     }
 
     function _voteSucceeded(uint256 proposalId) internal view override returns (bool) {
