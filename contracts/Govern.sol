@@ -160,8 +160,9 @@ contract Govern is
 
     function _voteSucceeded(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
-        uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
-        return totalVotes == 0 ? false : (proposalvote.forVotes * 100 * 100) >= totalVotes * passThreshold;
+        uint _forVotes = proposalvote.forVotes;
+        uint totalVotes = _forVotes + proposalvote.againstVotes;
+        return totalVotes == 0 ? false : (_forVotes * 100 * 100) >= totalVotes * passThreshold;
     }
 
     function _isVotableToken(address _voteToken) internal view  returns (bool) {
