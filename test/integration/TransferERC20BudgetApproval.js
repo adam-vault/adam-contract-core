@@ -471,18 +471,16 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     context('exceed amount', () => {
       it('throws "Exceeded max budget transferable amount"', async function () {
-        const transactionData = abiCoder.encode(
-          await budgetApproval.executeParams(),
-          [tokenA.address, receiver.address, '101'],
-        );
-        const tx = await budgetApproval
-          .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+        const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+          tokenA.address,
+          receiver.address,
+          '101',
+        ]);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         await budgetApproval.connect(approver).approveTransaction(id, '');
-        await expect(
-          budgetApproval.connect(executor).executeTransaction(id),
-        ).to.be.revertedWith('Exceeded max budget transferable amount');
+        await expect(budgetApproval.connect(executor).executeTransaction(id))
+          .to.be.revertedWith('Exceeded max budget transferable amount');
       });
     });
 
