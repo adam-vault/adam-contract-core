@@ -15,6 +15,11 @@ import "../lib/Constant.sol";
 contract PriceResolver is Initializable {
     address private _baseCurrency;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function __PriceResolver_init(address __baseCurrency) internal onlyInitializing {
         _baseCurrency = __baseCurrency;
     }

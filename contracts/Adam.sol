@@ -62,6 +62,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string description
     );
     
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+    
     function initialize(
         address _daoImplementation,
         address _membershipImplementation,
