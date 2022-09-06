@@ -70,11 +70,11 @@ describe('TransferERC721BudgetApproval.sol', function () {
         1,
       ]);
 
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(id);
-      await budgetApproval.connect(executor).executeTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
+      await budgetApproval.connect(executor).executeTransaction(id, '');
 
       expect(await tokenC721.balanceOf(dao.address)).to.eq(0);
       expect(await tokenC721.balanceOf(receiver.address)).to.eq(1);
@@ -93,12 +93,12 @@ describe('TransferERC721BudgetApproval.sol', function () {
         receiver.address,
         3,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionDataId1, transactionDataId2], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionDataId1, transactionDataId2], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       const orgReceiverBalance = await tokenC721.balanceOf(receiver.address);
-      await budgetApproval.connect(approver).approveTransaction(id);
-      await budgetApproval.connect(executor).executeTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
+      await budgetApproval.connect(executor).executeTransaction(id, '');
 
       expect(await tokenC721.balanceOf(dao.address)).to.eq(0);
       expect(await tokenC721.balanceOf(receiver.address)).to.eq(Number(orgReceiverBalance) + 2);
@@ -231,11 +231,11 @@ describe('TransferERC721BudgetApproval.sol', function () {
         37752,
       ]);
 
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(id);
-      await budgetApproval.connect(executor).executeTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
+      await budgetApproval.connect(executor).executeTransaction(id, '');
 
       expect(await tokenC721.ownerOf(37752)).to.eq(receiver.address);
     });
@@ -254,11 +254,11 @@ describe('TransferERC721BudgetApproval.sol', function () {
         receiver.address,
         37753,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData2], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData2], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(id);
-      await budgetApproval.connect(executor).executeTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
+      await budgetApproval.connect(executor).executeTransaction(id, '');
 
       expect(await tokenC721.ownerOf(37752)).to.eq(receiver.address);
       expect(await tokenC721.ownerOf(37753)).to.eq(receiver.address);
@@ -271,12 +271,12 @@ describe('TransferERC721BudgetApproval.sol', function () {
         receiver.address,
         37752,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
 
-      await expect(budgetApproval.connect(approver).executeTransaction(id))
+      await expect(budgetApproval.connect(approver).executeTransaction(id, ''))
         .to.be.revertedWith('Executor not whitelisted in budget');
     });
 
@@ -288,7 +288,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
         37752,
       ]);
 
-      await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false))
+      await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false, ''))
         .to.be.revertedWith('Executor not whitelisted in budget');
     });
 
@@ -299,10 +299,10 @@ describe('TransferERC721BudgetApproval.sol', function () {
         receiver.address,
         37752,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await expect(budgetApproval.connect(executor).executeTransaction(id))
+      await expect(budgetApproval.connect(executor).executeTransaction(id, ''))
         .to.be.revertedWith('status invalid');
     });
 
@@ -313,11 +313,11 @@ describe('TransferERC721BudgetApproval.sol', function () {
         receiver.address,
         37752,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await budgetApproval.connect(executor).revokeTransaction(id);
-      await expect(budgetApproval.connect(executor).executeTransaction(id))
+      await expect(budgetApproval.connect(executor).executeTransaction(id, ''))
         .to.be.revertedWith('status invalid');
     });
 
@@ -328,12 +328,12 @@ describe('TransferERC721BudgetApproval.sol', function () {
         executor.address,
         37752,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
 
-      await expect(budgetApproval.connect(executor).executeTransaction(id))
+      await expect(budgetApproval.connect(executor).executeTransaction(id, ''))
         .to.be.revertedWith('Recipient not whitelisted in budget');
     });
 
@@ -357,12 +357,12 @@ describe('TransferERC721BudgetApproval.sol', function () {
         receiver.address,
         37754,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData2, transactionData3], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData2, transactionData3], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
 
-      await expect(budgetApproval.connect(executor).executeTransaction(id))
+      await expect(budgetApproval.connect(executor).executeTransaction(id, ''))
         .to.be.revertedWith('Exceeded max budget transferable amount');
     });
 
@@ -403,6 +403,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
             [transactionData],
             Math.round(Date.now() / 1000) + 86400,
             true,
+            '',
           ),
       ).to.be.revertedWith('Budget usage period not started');
     });
@@ -443,6 +444,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
             [transactionData],
             Math.round(Date.now() / 1000) + 86400,
             true,
+            '',
           ),
       ).to.be.revertedWith('Budget usage period has ended');
     });
@@ -481,6 +483,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
         [transactionData],
         Math.round(Date.now() / 1000) + 86400,
         true,
+        '',
       );
 
       await expect(
@@ -490,6 +493,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
             [transactionData],
             Math.round(Date.now() / 1000) + 86400,
             true,
+            '',
           ),
       ).to.be.revertedWith('Exceeded budget usage limit');
     });
@@ -523,7 +527,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
           37754,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await tokenC721.ownerOf(37754)).to.eq(receiver.address);
       });

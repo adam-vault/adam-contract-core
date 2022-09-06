@@ -36,8 +36,8 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bool isExist;
     }
 
-    event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status);
-    event ApproveTransaction(uint256 id, address approver);
+    event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status, string comment);
+    event ApproveTransaction(uint256 id, address approver, string comment);
     event ExecuteTransaction(uint256 id, bytes[] data, address executor);
     event RevokeTransaction(uint256 id);
     event AllowAddress(address target);
@@ -167,7 +167,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         emit ExecuteTransaction(id, transactions[id].data, msg.sender);
     }
 
-    function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute) external onlyExecutor returns (uint256) {
+    function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute, string calldata comment) external onlyExecutor returns (uint256) {
         _transactionIds.increment();
         uint256 id = _transactionIds.current();
 
@@ -184,7 +184,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             transactions[id].status = Status.Pending;
         }
 
-        emit CreateTransaction(id, _data, _deadline,  newTransaction.status);
+        emit CreateTransaction(id, _data, _deadline,  newTransaction.status, comment);
 
         if (_isExecute) {
             executeTransaction(id);
@@ -192,7 +192,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         return id;
     }
 
-    function approveTransaction(uint256 id) external onlyApprover {
+    function approveTransaction(uint256 id, string calldata comment) external onlyApprover {
         require(transactions[id].status == Status.Pending
             || transactions[id].status == Status.Approved,
             "Unexpected transaction status");
@@ -205,7 +205,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             transactions[id].status = Status.Approved;
         }
 
-        emit ApproveTransaction(id, msg.sender);
+        emit ApproveTransaction(id, msg.sender, comment);
     }
 
     function revokeTransaction(uint256 id) external onlyExecutor {
