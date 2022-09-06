@@ -23,17 +23,20 @@ contract PriceResolver is Initializable {
     function baseCurrency() public view virtual returns (address) {
         return _baseCurrency;
     }
+    function _WETH9() internal view returns (address) {
+        return Constant.WETH_ADDRESS;
+    }
 
     function assetBaseCurrencyPrice(address asset, uint256 amount) public view virtual returns (uint256) {
         address __baseCurrency = baseCurrency();
         if (asset == __baseCurrency)
             return amount;
         
-        if(__baseCurrency == Denominations.ETH || __baseCurrency == Constant.WETH_ADDRESS) {
+        if(__baseCurrency == Denominations.ETH || __baseCurrency == _WETH9()) {
             return assetEthPrice(asset, amount);
         }
 
-        if(asset == Denominations.ETH || asset == Constant.WETH_ADDRESS) {
+        if(asset == Denominations.ETH || asset == _WETH9()) {
             return ethAssetPrice(__baseCurrency, amount);
         }
 
@@ -49,7 +52,7 @@ contract PriceResolver is Initializable {
     }
 
     function ethAssetPrice(address asset, uint256 ethAmount) public view virtual returns (uint256) {
-        if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
+        if (asset == Denominations.ETH || asset == _WETH9())
             return ethAmount;
 
         (uint80 roundID, int price, , uint256 updatedAt, uint80 answeredInRound) = 
@@ -68,7 +71,7 @@ contract PriceResolver is Initializable {
     }
 
     function assetEthPrice(address asset, uint256 amount) public view virtual returns (uint256) {
-        if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
+        if (asset == Denominations.ETH || asset == _WETH9())
             return amount;
 
         (uint80 roundID, int price, , uint256 updatedAt, uint80 answeredInRound) = 
@@ -139,11 +142,11 @@ contract PriceResolver is Initializable {
     }
 
     function canResolvePrice(address asset) public view virtual returns (bool) {
-        if (asset == Denominations.ETH || asset == Constant.WETH_ADDRESS)
+        if (asset == Denominations.ETH || asset == _WETH9())
             return true;
         try FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH) {
             return true;
-        } catch (bytes memory /*lowLevelData*/) {
+        } catch (bytes memory) {
             return false;
         }
     }
