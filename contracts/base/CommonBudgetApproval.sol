@@ -36,7 +36,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bool isExist;
     }
 
-    event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status);
+    event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status, address creator);
     event ApproveTransaction(uint256 id, address approver);
     event ExecuteTransaction(uint256 id, bytes[] data, address executor);
     event RevokeTransaction(uint256 id);
@@ -184,7 +184,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
             transactions[id].status = Status.Pending;
         }
 
-        emit CreateTransaction(id, _data, _deadline,  newTransaction.status);
+        emit CreateTransaction(id, _data, _deadline,  newTransaction.status, msg.sender);
 
         if (_isExecute) {
             executeTransaction(id);

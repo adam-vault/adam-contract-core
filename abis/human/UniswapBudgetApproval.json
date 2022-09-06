@@ -6,7 +6,7 @@
   "event AllowToken(address token)",
   "event ApproveTransaction(uint256 id, address approver)",
   "event BeaconUpgraded(address indexed beacon)",
-  "event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, uint8 status)",
+  "event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, uint8 status, address creator)",
   "event ExecuteTransaction(uint256 id, bytes[] data, address executor)",
   "event ExecuteUniswapTransaction(uint256 id, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address toAddress)",
   "event RevokeTransaction(uint256 id)",
