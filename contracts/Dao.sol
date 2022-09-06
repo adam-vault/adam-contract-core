@@ -61,7 +61,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     struct AdmissionTokenSetting{
         uint256 minTokenToAdmit;
         uint256 tokenId;
-        bool    active;
+        bool active;
     }
 
     struct DaoSetting {
@@ -362,7 +362,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         IMembership(membership).createMember(owner);
     }
 
-    function admissionTokenskLength() public view returns(uint256) {
+    function admissionTokensLength() public view returns(uint256) {
         return admissionTokens.length;
     }
 
