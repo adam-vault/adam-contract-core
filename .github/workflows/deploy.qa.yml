@@ -2,7 +2,7 @@ name: Deploy QA
 on:
   push:
     tags:    
-      - 'v[0-9].[0-9]+.[0-9]+\-qa'
+      - 'v[0-9].[0-9]+.[0-9]+.[0-9]+\-qa'
 
 jobs:
   deploy-contracts:
