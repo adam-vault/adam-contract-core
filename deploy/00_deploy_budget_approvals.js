@@ -6,7 +6,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
   });
-  await deploy('UniswapBudgetApproval', {
+  await deploy("LiquidUniswapBudgetApproval", {
     from: deployer,
     log: true,
   });
@@ -21,8 +21,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.tags = [
-  'TransferLiquidERC20BudgetApproval',
-  'UniswapBudgetApproval',
-  'TransferERC721BudgetApproval',
-  'TransferERC20BudgetApproval',
+  "TransferLiquidERC20BudgetApproval",
+  "LiquidUniswapBudgetApproval",
+  "TransferERC721BudgetApproval",
+  "TransferERC20BudgetApproval",
 ];
