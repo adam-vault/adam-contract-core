@@ -49,7 +49,7 @@ contract UniswapSwapper is Initializable {
 
         multicalData = new MulticallData[](executions.length);
 
-        if (response.length == 0) {
+        if (response.length != 0) {
             executionResults = abi.decode(response, (bytes[]));
         } 
 
