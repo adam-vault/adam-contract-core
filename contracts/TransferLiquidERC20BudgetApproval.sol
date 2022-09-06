@@ -9,8 +9,6 @@ import "./base/PriceResolver.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
-import "./interface/IDao.sol";
-import "./interface/IAdam.sol";
 import "hardhat/console.sol";
 
 contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
@@ -25,6 +23,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
     bool public allowAnyAmount;
     uint256 public totalAmount;
     uint8 public amountPercentage;
+    event execute(address to, address token, uint256 amount);
 
     function initialize(
         InitializeParams calldata params,
@@ -35,7 +34,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         uint256 _totalAmount,
         uint8 _amountPercentage,
         address _baseCurrency
-    ) public initializer {
+    ) external initializer {
         __BudgetApproval_init(params);
 
         allowAllAddresses = _allowAllAddresses;
@@ -52,7 +51,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         __PriceResolver_init(_baseCurrency);
     }
 
-    function executeParams() public pure override returns (string[] memory) {
+    function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address token";
         arr[1] = "address to";
@@ -66,8 +65,9 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
     ) internal override {
         (address token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
         uint256 amountInBaseCurrency;
-
         uint256 totalBalanceBeforeExecute = totalBalanceInBaseCurrency();
+        uint256 _totalAmount = totalAmount;
+        bool _allowAnyAmount = allowAnyAmount;
 
         if (token == Denominations.ETH) {
             IBudgetApprovalExecutee(executee()).executeByBudgetApproval(to, "", value);
@@ -79,12 +79,13 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(tokensMapping[token], "Token not whitelisted in budget");
-        require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "Exceeded max budget transferable amount");
+        require(_allowAnyAmount || amountInBaseCurrency <= _totalAmount, "Exceeded max budget transferable amount");
         require(checkAmountPercentageValid(totalBalanceBeforeExecute, amountInBaseCurrency), "Exceeded max budget transferable percentage");
 
-        if(!allowAnyAmount) {
-            totalAmount -= amountInBaseCurrency;
+        if(!_allowAnyAmount) {
+            totalAmount = _totalAmount - amountInBaseCurrency;
         }
+        emit execute(to, token, value);
     }
 
     function totalBalanceInBaseCurrency() internal view returns (uint256 totalBalance) {
@@ -98,11 +99,13 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
     }
 
     function checkAmountPercentageValid(uint256 totalBalance, uint256 amount) internal view returns (bool) {
-        if (amountPercentage == 100) return true;
+        uint256 _amountPercentage = amountPercentage;
+
+        if (_amountPercentage == 100) return true;
 
         if (totalBalance == 0) return false;
 
-        return amount <= totalBalance * amountPercentage / 100;
+        return amount <= totalBalance * _amountPercentage / 100;
     }
 
     function _addToken(address token) internal {

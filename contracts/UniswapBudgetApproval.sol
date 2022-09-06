@@ -67,7 +67,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         }
     }
 
-    function executeParams() public pure override returns (string[] memory) {
+    function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address to";
         arr[1] = "bytes data";

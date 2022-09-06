@@ -5,11 +5,8 @@ pragma solidity 0.8.7;
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./base/PriceResolver.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
-import "./interface/IDao.sol";
-import "./interface/IAdam.sol";
 import "hardhat/console.sol";
 
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
@@ -24,6 +21,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     bool public allowAnyAmount;
     uint256 public totalAmount;
     uint8 public amountPercentage;
+    event execute(address to, address token, uint256 amount);
 
     function initialize(
         InitializeParams calldata params,
@@ -34,7 +32,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         bool _allowAnyAmount,
         uint256 _totalAmount,
         uint8 _amountPercentage
-    ) public initializer {
+    ) external initializer {
         __BudgetApproval_init(params);
 
         allowAllAddresses = _allowAllAddresses;
@@ -48,7 +46,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         amountPercentage = _amountPercentage;
     }
 
-    function executeParams() public pure override returns (string[] memory) {
+    function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address token";
         arr[1] = "address to";
@@ -62,26 +60,29 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     ) internal override {
         (address _token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
         bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
-        
+        bool _allowAnyAmount = allowAnyAmount;
+        uint256 _totalAmount = totalAmount;
         uint256 balanceBeforeExecute = IERC20(_token).balanceOf(executee());
 
         IBudgetApprovalExecutee(executee()).executeByBudgetApproval(_token, executeData, 0);
 
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(allowAllTokens || token == _token, "Token not whitelisted in budget");
-        require(allowAnyAmount || value <= totalAmount, "Exceeded max budget transferable amount");
+        require(_allowAnyAmount || value <= _totalAmount, "Exceeded max budget transferable amount");
         require(checkAmountPercentageValid(balanceBeforeExecute, value), "Exceeded max budget transferable percentage");
 
-        if(!allowAnyAmount) {
-            totalAmount -= value;
+        if(!_allowAnyAmount) {
+            totalAmount = _totalAmount - value;
         }
+        emit execute(to, _token, value);
     }
 
     function checkAmountPercentageValid(uint256 balanceOfToken, uint256 amount) internal view returns (bool) {
-        if (amountPercentage == 100) return true;
+        uint256 _amountPercentage = amountPercentage;
+        if (_amountPercentage == 100) return true;
         if (balanceOfToken == 0) return false;
 
-        return amount <= balanceOfToken * amountPercentage / 100;
+        return amount <= balanceOfToken * _amountPercentage / 100;
     }
 
     function _addToAddress(address to) internal {
