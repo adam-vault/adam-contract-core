@@ -25,6 +25,8 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _governImplementation
     ) public initializer {
         __Ownable_init();
+
+        require(_governImplementation != address(0), "Govern implementation must not be null");
         governImplementation = _governImplementation;
     }
 
