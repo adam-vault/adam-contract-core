@@ -11,7 +11,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../lib/Constant.sol";
-import "hardhat/console.sol";
 
 contract PriceResolver is Initializable {
     address private _baseCurrency;
@@ -59,8 +58,8 @@ contract PriceResolver is Initializable {
         FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY).decimals(asset, Denominations.ETH);
 
-        require(answeredInRound >= roundID, "Stale price in Chainlink 62");
-        require(block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink 63");
+        require(answeredInRound >= roundID, "Stale price in Chainlink");
+        require(block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink");
 
         price = scalePrice(price, priceDecimals, 18 /* ETH decimals */);
         if (price > 0) {
@@ -78,13 +77,8 @@ contract PriceResolver is Initializable {
         FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(asset, Denominations.ETH);
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY).decimals(asset, Denominations.ETH);
         
-        require(answeredInRound >= roundID, "Stale price in Chainlink 81");
-        console.log(block.timestamp);
-        console.log(roundID);
-        console.log(updatedAt);
-        console.log(Constant.STALE_PRICE_DELAY);
-
-        require(block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink 82");
+        require(answeredInRound >= roundID, "Stale price in Chainlink");
+        require(block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink");
 
         price = scalePrice(price, priceDecimals, 18 /* ETH decimals */);
 
