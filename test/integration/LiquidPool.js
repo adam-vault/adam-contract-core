@@ -28,10 +28,12 @@ describe('Integration - LiquidPool.sol', function () {
     [creator, member, anyone] = await ethers.getSigners();
     ({ tokenA, tokenC721, tokenD1155 } = await createTokens());
 
-    feedRegistry = await smock.fake('MockFeedRegistry', { address: ADDRESS_MOCK_FEED_REGISTRY }); // how to use
-    feedRegistry.getFeed
-      .whenCalledWith(tokenA.address, ADDRESS_ETH)
-      .returns(ADDRESS_MOCK_AGGRGATOR);
+    await ethers.provider.send('hardhat_setCode', [
+      ADDRESS_MOCK_FEED_REGISTRY,
+      feedRegistryArticfact.deployedBytecode,
+    ]);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
+    await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
     adam = await createAdam();
   });

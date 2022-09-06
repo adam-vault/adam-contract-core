@@ -169,7 +169,8 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
 
     function _transferAsset(address target, address asset, uint256 amount) internal {
         if(asset == Denominations.ETH) {
-            payable(target).call{ value: amount }("");
+            (bool success, ) = payable(target).call{ value: amount }("");
+            require(success, "Failed to send Ether");
         } else {
             IERC20MetadataUpgradeable(asset).safeTransfer(target, amount);
         }

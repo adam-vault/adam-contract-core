@@ -15,7 +15,7 @@ describe('GovernFactory.sol', function () {
     await govern.deployed();
 
     GovernFactory = await ethers.getContractFactory('GovernFactory');
-    governFactory = await upgrades.deployProxy(GovernFactory, [govern.address]);
+    governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   });
 
   describe('initialize()', function () {

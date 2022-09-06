@@ -45,7 +45,7 @@ describe('Adam.sol', function () {
         [budgetApproval.address],
         governFactory.address,
         team.address,
-      ]);
+      ], { kind: 'uups' });
       expect(await adam.daoImplementation()).to.be.eq(dao.address);
       expect(await adam.membershipImplementation()).to.be.eq(membership.address);
       expect(await adam.liquidPoolImplementation()).to.be.eq(liquidPool.address);
@@ -64,7 +64,7 @@ describe('Adam.sol', function () {
         [budgetApproval.address, budgetApproval.address],
         governFactory.address,
         team.address,
-      ]);
+      ], { kind: 'uups' });
       await expect(tx).to.be.revertedWith('budget approval already whitelisted');
     });
   });
@@ -81,7 +81,7 @@ describe('Adam.sol', function () {
         [budgetApproval.address],
         governFactory.address,
         team.address,
-      ]);
+      ], { kind: 'uups' });
 
       const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
       mockV2Impl = await MockUpgrade.deploy();
@@ -109,7 +109,7 @@ describe('Adam.sol', function () {
         [budgetApproval.address],
         governFactory.address,
         team.address,
-      ]);
+      ], { kind: 'uups' });
       newBudgetApproval1 = await smock.fake('CommonBudgetApproval');
       newBudgetApproval2 = await smock.fake('CommonBudgetApproval');
     });
@@ -156,7 +156,7 @@ describe('Adam.sol', function () {
         [budgetApproval.address, newBudgetApproval1.address],
         governFactory.address,
         team.address,
-      ]);
+      ], { kind: 'uups' });
     });
     it('removes budgetApprovals from whitelist', async () => {
       await adam.abandonBudgetApprovals([
@@ -202,7 +202,7 @@ describe('Adam.sol', function () {
         [budgetApproval.address],
         governFactory.address,
         team.address,
-      ], { signer: daoCreator });
+      ], { signer: daoCreator, kind: 'uups' });
     });
     it('createDao successfully', async () => {
       await expect(adamForCreatrDao.createDao([
@@ -257,7 +257,7 @@ describe('Adam.sol', function () {
         [budgetApproval.address],
         governFactory.address,
         team.address,
-      ]);
+      ], { kind: 'uups' });
     });
     it('generates hash', async () => {
       expect(await adam.hashVersion(
@@ -315,7 +315,7 @@ describe('Adam.sol', function () {
         [budgetApproval.address],
         governFactory.address,
         team.address,
-      ]);
+      ], { kind: 'uups' });
     });
     it('set implementations to new addresses by deployer', async () => {
       await adam.connect(deployer).upgradeImplementations(

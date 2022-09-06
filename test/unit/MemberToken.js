@@ -10,7 +10,7 @@ describe('MemberToken.sol', function () {
 
     MemberToken = await ethers.getContractFactory('MemberToken');
     // Use creator address to simulate minter address
-    memberToken = await upgrades.deployProxy(MemberToken, [minter.address, 'MemberTokenName', 'MT']);
+    memberToken = await upgrades.deployProxy(MemberToken, [minter.address, 'MemberTokenName', 'MT'], { kind: 'uups' });
   });
 
   describe('initialize()', function () {
