@@ -12,14 +12,14 @@ import "./interface/IDao.sol";
 import "./interface/IAdam.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
-contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
+contract LiquidUniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
 
     using BytesLib for bytes;
 
     event AllowToToken(address token);
     event ExecuteUniswapTransaction(uint256 id, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address toAddress);
 
-    string public constant override name = "Uniswap Budget Approval";
+    string public constant override name = "Liquid Uniswap Budget Approval";
 
     bool public allowAllAddresses;
     address[] public fromTokens;
