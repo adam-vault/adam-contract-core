@@ -8,6 +8,7 @@ contract MockFeedRegistry {
   // int256 private _price;
   mapping(address => mapping(address => int256)) private _price;
   mapping(address => mapping(address => address)) private _aggregator;
+  mapping(address => mapping(address => uint8)) private _decimal;
   mapping(address => mapping(address => uint256)) private _timestamp;
   // mapping(address => bool) private _feed;
 
@@ -21,6 +22,14 @@ contract MockFeedRegistry {
   function setBlockTimestamp(address base, address quote, uint256 timestamp) public {
       _timestamp[base][quote] = timestamp;
   }
+
+  function setDecimal(address base, address quote, uint8 decimal) public {
+      _decimal[base][quote] = decimal;
+  }
+  function decimals(address base, address quote) public view returns (uint8) {
+      return _decimal[base][quote];
+  }
+  
 
   // function setFeed(address asset, bool supported) public {
   //     _feed[asset] = supported;
