@@ -21,6 +21,11 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function initialize(
         address _minter,
         string memory _name,

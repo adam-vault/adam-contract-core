@@ -23,6 +23,11 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     uint8 public amountPercentage;
     event execute(address to, address token, uint256 amount);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function initialize(
         InitializeParams calldata params,
         bool _allowAllAddresses,

@@ -115,6 +115,11 @@ abstract contract CommonBudgetApproval is Initializable {
         _;
     }
 
+     /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function executor() public view returns (address) {
         return _executor;
     }
