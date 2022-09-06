@@ -13,23 +13,25 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const governFactory = await get('GovernFactory');
   const govern = await get('Govern');
 
-  const budgetApprovalsAddress = (await Promise.all([
-    get('TransferLiquidERC20BudgetApproval'),
-    get('UniswapBudgetApproval'),
-    get('TransferERC721BudgetApproval'),
-    get('TransferERC20BudgetApproval'),
-  ])).map((deployment) => deployment.address);
+  const budgetApprovalsAddress = (
+    await Promise.all([
+      get("TransferLiquidERC20BudgetApproval"),
+      get("LiquidUniswapBudgetApproval"),
+      get("TransferERC721BudgetApproval"),
+      get("TransferERC20BudgetApproval"),
+    ])
+  ).map((deployment) => deployment.address);
 
-  const adam = await deploy('Adam', {
+  const adam = await deploy("Adam", {
     from: deployer,
     log: true,
     args: [],
     proxy: {
-      proxyContract: 'ERC1967Proxy',
-      proxyArgs: ['{implementation}', '{data}'],
+      proxyContract: "ERC1967Proxy",
+      proxyArgs: ["{implementation}", "{data}"],
       execute: {
         init: {
-          methodName: 'initialize',
+          methodName: "initialize",
           args: [
             dao.address,
             membership.address,
@@ -53,7 +55,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     memberToken: memberToken.address,
     liquidPool: liquidPool.address,
     transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
-    uniswapBudgetApproval: budgetApprovalsAddress[1],
+    liquidUniswapBudgetApproval: budgetApprovalsAddress[1],
     transferErc721BudgetApproval: budgetApprovalsAddress[2],
     transferERC20BudgetApproval: budgetApprovalsAddress[3],
     team: team.address,

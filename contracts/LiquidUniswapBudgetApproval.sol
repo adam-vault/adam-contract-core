@@ -10,7 +10,7 @@ import "./lib/Constant.sol";
 import "./base/PriceResolver.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
-contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
+contract LiquidUniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
 
     using BytesLib for bytes;
 
@@ -19,7 +19,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     event ExecuteUniswapOutTransaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount);
     event ExecuteWETH9Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address tokenIn, address tokenOut, uint256 amount);
 
-    string public constant override name = "Uniswap Budget Approval";
+    string public constant override name = "Liquid Uniswap Budget Approval";
 
     address[] public fromTokens;
     mapping(address => bool) public fromTokensMapping;
