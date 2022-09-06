@@ -10,9 +10,12 @@ const createBudgetApprovals = async (signer) => {
   const transferLiquidERC20BudgetApproval = await TransferLiquidERC20BudgetApproval.deploy();
   await transferLiquidERC20BudgetApproval.deployed();
 
-  const UniswapBudgetApproval = await ethers.getContractFactory('UniswapBudgetApproval');
-  const uniswapBudgetApproval = await UniswapBudgetApproval.deploy();
-  await uniswapBudgetApproval.deployed();
+  const LiquidUniswapBudgetApproval = await ethers.getContractFactory(
+    "LiquidUniswapBudgetApproval"
+  );
+  const liquidUniswapBudgetApproval =
+    await LiquidUniswapBudgetApproval.deploy();
+  await liquidUniswapBudgetApproval.deployed();
 
   const TransferERC721BudgetApproval = await ethers.getContractFactory('TransferERC721BudgetApproval', { signer });
   const transferERC721BudgetApproval = await TransferERC721BudgetApproval.deploy();
@@ -22,7 +25,12 @@ const createBudgetApprovals = async (signer) => {
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
   await transferERC20BudgetApproval.deployed();
 
-  return [transferLiquidERC20BudgetApproval.address, uniswapBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address];
+  return [
+    transferLiquidERC20BudgetApproval.address,
+    liquidUniswapBudgetApproval.address,
+    transferERC721BudgetApproval.address,
+    transferERC20BudgetApproval.address,
+  ];
 };
 
 const createFeedRegistry = async (token, signer) => {

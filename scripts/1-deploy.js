@@ -12,10 +12,15 @@ const deployBudgetApprovals = async () => {
   await transferLiquidERC20BudgetApproval.deployed();
   console.log(`Deployed TransferLiquidERC20BudgetApproval ${transferLiquidERC20BudgetApproval.address}`);
 
-  const UniswapBudgetApproval = await hre.ethers.getContractFactory('UniswapBudgetApproval');
-  const uniswapBudgetApproval = await UniswapBudgetApproval.deploy();
-  await uniswapBudgetApproval.deployed();
-  console.log(`Deployed UniswapBudgetApproval ${uniswapBudgetApproval.address}`);
+  const LiquidUniswapBudgetApproval = await hre.ethers.getContractFactory(
+    "LiquidUniswapBudgetApproval"
+  );
+  const liquidUniswapBudgetApproval =
+    await LiquidUniswapBudgetApproval.deploy();
+  await liquidUniswapBudgetApproval.deployed();
+  console.log(
+    `Deployed LiquidUniswapBudgetApproval ${liquidUniswapBudgetApproval.address}`
+  );
 
   const TransferERC721BudgetApproval = await hre.ethers.getContractFactory('TransferERC721BudgetApproval');
   const transferERC721BudgetApproval = await TransferERC721BudgetApproval.deploy();
@@ -27,7 +32,12 @@ const deployBudgetApprovals = async () => {
   await transferERC20BudgetApproval.deployed();
   console.log(`Deployed TransferERC20BudgetApproval ${transferERC20BudgetApproval.address}`);
 
-  return [transferLiquidERC20BudgetApproval.address, uniswapBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address];
+  return [
+    transferLiquidERC20BudgetApproval.address,
+    liquidUniswapBudgetApproval.address,
+    transferERC721BudgetApproval.address,
+    transferERC20BudgetApproval.address,
+  ];
 };
 
 const deployGovernFactory = async () => {
@@ -107,7 +117,7 @@ async function main () {
     governFactory: governInfo[0],
     govern: governInfo[1],
     transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
-    uniswapBudgetApproval: budgetApprovalsAddress[1],
+    liquidUniswapBudgetApproval: budgetApprovalsAddress[1],
     transferErc721BudgetApproval: budgetApprovalsAddress[2],
     transferERC20BudgetApproval: budgetApprovalsAddress[3],
     team,
