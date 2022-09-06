@@ -328,13 +328,28 @@ console.log(result);
       it('UNI => ETH (exact)', async () => {
         const data = '0x5ae401dc000000000000000000000000000000000000000000000000000000006214a2ba00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000010442712a67000000000000000000000000000000000000000000000000000ffcb9e57d4000000000000000000000000000000000000000000000000000000475b84cdb53f90000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000030000000000000000000000001f9840a85d5af5bf1d1762f925bdaddc4201f9840000000000000000000000005592ec0cfb4dbc12d3ab100b257153436a1f0fea000000000000000000000000c778417e063141139fce010982780140aa0cd5ab00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000012409b8134600000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000254db1c2244000000000000000000000000000000000000000000000000000000a8bdae12a333f0000000000000000000000000000000000000000000000000000000000000042c778417e063141139fce010982780140aa0cd5ab000bb8c7ad46e0b8a400bb3c915120d284aafba8fc4735000bb81f9840a85d5af5bf1d1762f925bdaddc4201f98400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004449404b7c00000000000000000000000000000000000000000000000000354a6ba7a18000000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc16300000000000000000000000000000000000000000000000000000000';
 
-        const [tokenIn, tokenOut, , amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapMulticall(data, 0, '0x');
+        const [
+          { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 },
+          { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 },
+          { tokenIn: tokenIn3, tokenOut: tokenOut3, amountIn: amountIn3, amountOut: amountOut3, recipient: recipient3 }] = await contract.decodeUniswapMulticall(data, 0, '0x');
 
-        expect(tokenIn).to.equal(ADDRESS_UNI);
-        expect(tokenOut).to.equal(ADDRESS_ETH);
-        expect(amountOut).to.equal(parseEther('0.015'));
-        expect(estimatedIn).to.equal(true);
-        expect(estimatedOut).to.equal(false);
+        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(tokenIn1).to.equal(ADDRESS_UNI);
+        expect(tokenOut1).to.equal(ADDRESS_WETH);
+        expect(amountIn1).to.equal(BigNumber.from('1255334330717177'));
+        expect(amountOut1).to.equal(BigNumber.from('4500000000000000'));
+
+        expect(recipient2).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
+        expect(tokenIn2).to.equal(ADDRESS_WETH);
+        expect(tokenOut2).to.equal(ADDRESS_DAI);
+        expect(amountIn2).to.equal(BigNumber.from('10500000000000000'));
+        expect(amountOut2).to.equal(BigNumber.from('2968521963877183'));
+
+        expect(recipient3).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
+        expect(tokenIn3).to.equal(ethers.constants.AddressZero);
+        expect(tokenOut3).to.equal(ADDRESS_ETH);
+        expect(amountIn3).to.equal(BigNumber.from('0'));
+        expect(amountOut3).to.equal(BigNumber.from('15000000000000000'));
       });
     });
   });
@@ -344,30 +359,20 @@ console.log(result);
       it('ETH => WETH', async () => {
         const msgValue = parseEther('0.1');
         const data = '0xd0e30db0';
-        const result = '0x';
-
-        const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapMulticall(data, msgValue, result);
+        const [tokenIn, tokenOut, amount] = await contract.decodeWETH9Call(data, msgValue);
 
         expect(tokenIn).to.equal(ADDRESS_ETH);
         expect(tokenOut).to.equal(ADDRESS_WETH);
-        expect(amountIn).to.equal(msgValue);
-        expect(amountOut).to.equal(msgValue);
-        expect(estimatedIn).to.equal(false);
-        expect(estimatedOut).to.equal(false);
+        expect(amount).to.equal(msgValue);
       });
 
       it('WETH => ETH', async () => {
         const data = '0x2e1a7d4d000000000000000000000000000000000000000000000000016345785d8a0000';
-        const result = '0x';
-
-        const [tokenIn, tokenOut, amountIn, amountOut, estimatedIn, estimatedOut] = await contract.decodeUniswapMulticall(data, 0, result);
+        const [tokenIn, tokenOut, amount] = await contract.decodeWETH9Call(data, 0);
 
         expect(tokenIn).to.equal(ADDRESS_WETH);
         expect(tokenOut).to.equal(ADDRESS_ETH);
-        expect(amountIn).to.equal(parseEther('0.1'));
-        expect(amountOut).to.equal(parseEther('0.1'));
-        expect(estimatedIn).to.equal(false);
-        expect(estimatedOut).to.equal(false);
+        expect(amount).to.equal(parseEther('0.1'));
       });
     });
 
@@ -378,14 +383,14 @@ console.log(result);
       it('ETH (exact) => DAI', async () => {
         const msgValue = parseEther('0.1');
         const data = '0x5ae401dc00000000000000000000000000000000000000000000000000000000621360a200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000e4472b43f3000000000000000000000000000000000000000000000000016345785d8a0000000000000000000000000000000000000000005db3338b89c8ee48136867a9ff0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc1630000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c778417e063141139fce010982780140aa0cd5ab000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc473500000000000000000000000000000000000000000000000000000000';
-        const [{ recipient, tokenIn, tokenOut, amountIn, amountOut, resultType }] = await contract.decodeUniswapMulticall(data, msgValue, mockEncodedResult);
+        const [
+          { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 }] = await contract.decodeUniswapMulticall(data, msgValue, mockEncodedResult);
 
-        expect(recipient).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
-        expect(tokenIn).to.equal(ADDRESS_ETH);
-        expect(tokenOut).to.equal(ADDRESS_DAI);
-        expect(amountIn).to.equal(msgValue);
-        expect(amountOut).to.equal(BigNumber.from(result));
-        expect(resultType).to.equal(2);
+        expect(recipient1).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
+        expect(tokenIn1).to.equal(ADDRESS_ETH);
+        expect(tokenOut1).to.equal(ADDRESS_DAI);
+        expect(amountIn1).to.equal(BigNumber.from('100000000000000000'));
+        expect(amountOut1).to.equal(BigNumber.from('100'));
       });
 
       it('ETH => DAI (exact)', async () => {
@@ -399,7 +404,7 @@ console.log(result);
         expect(recipient1).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn1).to.equal(ADDRESS_ETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
-        expect(amountIn1).to.equal(BigNumber.from('135715855724850170'));
+        expect(amountIn1).to.equal(BigNumber.from('100'));
         expect(amountOut1).to.equal(BigNumber.from('10000000000000000000000000000000'));
 
         expect(recipient2).to.equal(ethers.constants.AddressZero);
@@ -419,7 +424,7 @@ console.log(result);
         expect(tokenIn1).to.equal(ADDRESS_WETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
         expect(amountIn1).to.equal(BigNumber.from('100000000000000000'));
-        expect(amountOut1).to.equal(BigNumber.from('7477631271982700022195063184384'));
+        expect(amountOut1).to.equal(BigNumber.from('100'));
       });
 
       it('WETH => DAI (exact)', async () => {
@@ -431,7 +436,7 @@ console.log(result);
         expect(recipient1).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn1).to.equal(ADDRESS_WETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
-        expect(amountIn1).to.equal(BigNumber.from('100298849244922706'));
+        expect(amountIn1).to.equal(BigNumber.from('100'));
         expect(amountOut1).to.equal(BigNumber.from('7500000000000000000000000000000'));
       });
 
@@ -446,7 +451,7 @@ console.log(result);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('60000000000000000'));
-        expect(amountOut1).to.equal(BigNumber.from('151824778966640088'));
+        expect(amountOut1).to.equal(BigNumber.from('100'));
 
         expect(recipient2).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn2).to.equal(ethers.constants.AddressZero);
@@ -465,7 +470,7 @@ console.log(result);
         expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
-        expect(amountIn1).to.equal(BigNumber.from('59278845877470570'));
+        expect(amountIn1).to.equal(BigNumber.from('100'));
         expect(amountOut1).to.equal(BigNumber.from('150000000000000000'));
 
         expect(recipient2).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
@@ -490,7 +495,7 @@ console.log(result);
         expect(tokenIn1).to.equal(ADDRESS_ETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
         expect(amountIn1).to.equal(BigNumber.from('100000000000000000'));
-        expect(amountOut1).to.equal(BigNumber.from('13693551211040738738821856344669'));
+        expect(amountOut1).to.equal(BigNumber.from('100'));
       });
 
       it('ETH => DAI (exact)', async () => {
@@ -504,7 +509,7 @@ console.log(result);
         expect(recipient1).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn1).to.equal(ADDRESS_ETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
-        expect(amountIn1).to.equal(BigNumber.from('1345821'));
+        expect(amountIn1).to.equal(BigNumber.from('100'));
         expect(amountOut1).to.equal(BigNumber.from('100000000000000000000'));
 
         expect(recipient2).to.equal(ethers.constants.AddressZero);
@@ -524,7 +529,7 @@ console.log(result);
         expect(tokenIn1).to.equal(ADDRESS_WETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
         expect(amountIn1).to.equal(BigNumber.from('100000000000000000'));
-        expect(amountOut1).to.equal(BigNumber.from('13693551211040738738821856344669'));
+        expect(amountOut1).to.equal(BigNumber.from('100'));
       });
 
       it('WETH => DAI (exact)', async () => {
@@ -536,7 +541,7 @@ console.log(result);
         expect(recipient1).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn1).to.equal(ADDRESS_WETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
-        expect(amountIn1).to.equal(BigNumber.from('53821821314610751'));
+        expect(amountIn1).to.equal(BigNumber.from('100'));
         expect(amountOut1).to.equal(BigNumber.from('7500000000000000000000000000000'));
       });
 
@@ -551,7 +556,7 @@ console.log(result);
         expect(tokenIn1).to.equal(ADDRESS_DAI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('100000000000000000000'));
-        expect(amountOut1).to.equal(BigNumber.from('1335249'));
+        expect(amountOut1).to.equal(BigNumber.from('100'));
 
         expect(recipient2).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn2).to.equal(ethers.constants.AddressZero);
@@ -570,7 +575,7 @@ console.log(result);
         expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
-        expect(amountIn1).to.equal(BigNumber.from('39458910193623'));
+        expect(amountIn1).to.equal(BigNumber.from('100'));
         expect(amountOut1).to.equal(BigNumber.from('100000000000000'));
 
         expect(recipient2).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
@@ -595,13 +600,13 @@ console.log(result);
         expect(tokenIn1).to.equal(ADDRESS_ETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
         expect(amountIn1).to.equal(BigNumber.from('240000000000000000'));
-        expect(amountOut1).to.equal(BigNumber.from('17780670925216377724444828399924'));
+        expect(amountOut1).to.equal(BigNumber.from('50'));
 
         expect(recipient2).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn2).to.equal(ADDRESS_ETH);
         expect(tokenOut2).to.equal(ADDRESS_DAI);
         expect(amountIn2).to.equal(BigNumber.from('60000000000000000'));
-        expect(amountOut2).to.equal(BigNumber.from('4453765843225961921417282756956'));
+        expect(amountOut2).to.equal(BigNumber.from('50'));
       });
 
       it('ETH => DAI (exact)', async () => {
@@ -616,13 +621,13 @@ console.log(result);
         expect(recipient1).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn1).to.equal(ADDRESS_ETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
-        expect(amountIn1).to.equal(BigNumber.from('152717707464680469'));
+        expect(amountIn1).to.equal(BigNumber.from('50'));
         expect(amountOut1).to.equal(BigNumber.from('11250000000000000000000000000000'));
 
         expect(recipient2).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn2).to.equal(ADDRESS_ETH);
         expect(tokenOut2).to.equal(ADDRESS_DAI);
-        expect(amountIn2).to.equal(BigNumber.from('50761983934282444'));
+        expect(amountIn2).to.equal(BigNumber.from('50'));
         expect(amountOut2).to.equal(BigNumber.from('3750000000000000000000000000000'));
 
         expect(recipient3).to.equal(ethers.constants.AddressZero);
@@ -643,13 +648,13 @@ console.log(result);
         expect(tokenIn1).to.equal(ADDRESS_WETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
         expect(amountIn1).to.equal(BigNumber.from('130000000000000000'));
-        expect(amountOut1).to.equal(BigNumber.from('9510910121553791812234521776800'));
+        expect(amountOut1).to.equal(BigNumber.from('50'));
 
         expect(recipient2).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn2).to.equal(ADDRESS_WETH);
         expect(tokenOut2).to.equal(ADDRESS_DAI);
         expect(amountIn2).to.equal(BigNumber.from('70000000000000000'));
-        expect(amountOut2).to.equal(BigNumber.from('5139321076038308400432457094277'));
+        expect(amountOut2).to.equal(BigNumber.from('50'));
       });
 
       it('WETH => DAI (exact)', async () => {
@@ -662,11 +667,11 @@ console.log(result);
         expect(recipient1).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
         expect(tokenIn1).to.equal(ADDRESS_WETH);
         expect(tokenOut1).to.equal(ADDRESS_DAI);
-        expect(amountIn1).to.equal(BigNumber.from('68281423398521295'));
+        expect(amountIn1).to.equal(BigNumber.from('50'));
         expect(amountOut1).to.equal(BigNumber.from('5000000000000000000000000000000'));
 
         expect(recipient2).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
-        expect(amountIn2).to.equal(BigNumber.from('68093547353334936'));
+        expect(amountIn2).to.equal(BigNumber.from('50'));
         expect(amountOut2).to.equal(BigNumber.from('5000000000000000000000000000000'));
         expect(tokenIn2).to.equal(ADDRESS_WETH);
         expect(tokenOut2).to.equal(ADDRESS_DAI);
@@ -684,11 +689,11 @@ console.log(result);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('1500000000000000'));
-        expect(amountOut1).to.equal(BigNumber.from('4365832801460657'));
+        expect(amountOut1).to.equal(BigNumber.from('50'));
 
         expect(recipient2).to.equal('0x0000000000000000000000000000000000000002');
         expect(amountIn2).to.equal(BigNumber.from('3500000000000000'));
-        expect(amountOut2).to.equal(BigNumber.from('9987973472327102'));
+        expect(amountOut2).to.equal(BigNumber.from('50'));
         expect(tokenIn2).to.equal(ADDRESS_UNI);
         expect(tokenOut2).to.equal(ADDRESS_WETH);
 
@@ -710,11 +715,11 @@ console.log(result);
         expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
-        expect(amountIn1).to.equal(BigNumber.from('1255334330717177'));
+        expect(amountIn1).to.equal(BigNumber.from('50'));
         expect(amountOut1).to.equal(BigNumber.from('4500000000000000'));
 
         expect(recipient2).to.equal('0x0000000000000000000000000000000000000002');
-        expect(amountIn2).to.equal(parseEther('0.002968521963877183'));
+        expect(amountIn2).to.equal(BigNumber.from('50'));
         expect(amountOut2).to.equal(parseEther('0.010500000000000000'));
         expect(tokenIn2).to.equal(ADDRESS_WETH);
         expect(tokenOut2).to.equal(ADDRESS_UNI);
