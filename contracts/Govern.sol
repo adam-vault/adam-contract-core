@@ -104,7 +104,7 @@ contract Govern is
         uint256 blockNumber,
         bytes memory // params
     ) internal view override returns (uint256) {
-      VotesUpgradeable(voteToken).getPastVotes(account, blockNumber);
+      return VotesUpgradeable(voteToken).getPastVotes(account, blockNumber);
     }
 
     function quorum(uint256 blockNumber) public view override returns (uint256) {
