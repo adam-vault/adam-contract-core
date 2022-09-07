@@ -35,7 +35,7 @@ describe('TransferERC20BudgetApproval.sol', async function () {
     params.token || ethers.constants.AddressZero,
     params.allowAnyAmount !== undefined ? params.allowAnyAmount : true,
     params.totalAmount || 0,
-    params.amountPercentage || '100'];
+    ];
   }
 
   function encodeTxData (token, receiver, amount) {
@@ -91,7 +91,6 @@ describe('TransferERC20BudgetApproval.sol', async function () {
       expect(await transferErc20BA.token()).to.be.eq(ethers.constants.AddressZero);
       expect(await transferErc20BA.allowAnyAmount()).to.be.eq(true);
       expect(await transferErc20BA.totalAmount()).to.be.eq(ethers.BigNumber.from('0'));
-      expect(await transferErc20BA.amountPercentage()).to.be.eq(ethers.BigNumber.from('100'));
     });
     it('init with params with complex setting successfully', async () => {
       const contract = await ERC1967Proxy.deploy(
@@ -103,7 +102,6 @@ describe('TransferERC20BudgetApproval.sol', async function () {
           token: mockToken.address,
           allowAnyAmount: false,
           totalAmount: ethers.BigNumber.from('1000'),
-          amountPercentage: '90',
         })));
       const transferErc20BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
 
@@ -113,7 +111,6 @@ describe('TransferERC20BudgetApproval.sol', async function () {
       expect(await transferErc20BA.token()).to.be.eq(mockToken.address);
       expect(await transferErc20BA.allowAnyAmount()).to.be.eq(false);
       expect(await transferErc20BA.totalAmount()).to.be.eq(ethers.BigNumber.from('1000'));
-      expect(await transferErc20BA.amountPercentage()).to.be.eq(ethers.BigNumber.from('90'));
     });
     it('throws "Duplicated address in target address list" error if toAddresses duplicated', async () => {
       await expect(ERC1967Proxy.deploy(
@@ -125,7 +122,6 @@ describe('TransferERC20BudgetApproval.sol', async function () {
           token: ethers.constants.AddressZero,
           allowAnyAmount: true,
           totalAmount: 0,
-          amountPercentage: '100',
         })))).to.be.revertedWith('Duplicated address in target address list');
     });
   });
@@ -156,7 +152,6 @@ describe('TransferERC20BudgetApproval.sol', async function () {
             token: ethers.constants.AddressZero,
             allowAnyAmount: false,
             totalAmount: 100,
-            amountPercentage: '100',
           })));
         transferErc20BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
         executee.executeByBudgetApproval.returns('0x');
@@ -218,7 +213,6 @@ describe('TransferERC20BudgetApproval.sol', async function () {
             token: ethers.constants.AddressZero,
             allowAnyAmount: true,
             totalAmount: 0,
-            amountPercentage: '50',
           })));
         transferErc20BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
         executee.executeByBudgetApproval.returns('0x');
@@ -246,31 +240,6 @@ describe('TransferERC20BudgetApproval.sol', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 1),
         ], Date.now() + 86400, true)).to.not.be.reverted;
-      });
-
-      it('throws "Exceeded max budget transferable percentage" error if outflow with 0 and have no balance', async function () {
-        mockToken.balanceOf.returns(0);
-        await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 0),
-        ], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable percentage');
-      });
-
-      it('throws "Exceeded max budget transferable percentage" error if the 1st time outflow exceeds percentage limit', async function () {
-        mockToken.balanceOf.returns(50);
-        await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 51),
-        ], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable percentage');
-      });
-
-      it('throws "Exceeded max budget transferable percentage" error if the 2nd time outflow exceeds percentage limit', async function () {
-        mockToken.balanceOf.returns(50);
-        await transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 25),
-        ], Date.now() + 86400, true);
-
-        await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 51),
-        ], Date.now() + 86400, true)).to.be.revertedWith('Exceeded max budget transferable percentage');
       });
     });
 
