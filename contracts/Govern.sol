@@ -40,6 +40,11 @@ contract Govern is
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function initialize(
         address _owner,
         string memory _name,
@@ -96,8 +101,12 @@ contract Govern is
         return _proposalVotes[proposalId].hasVoted[account];
     }
 
-    function getVotes(address account, uint256 blockNumber) public view override returns (uint256) {
-        return VotesUpgradeable(voteToken).getPastVotes(account, blockNumber);
+    function _getVotes(
+        address account,
+        uint256 blockNumber,
+        bytes memory // params
+    ) internal view override returns (uint256) {
+      VotesUpgradeable(voteToken).getPastVotes(account, blockNumber);
     }
 
     function quorum(uint256 blockNumber) public view override returns (uint256) {
@@ -133,7 +142,8 @@ contract Govern is
         uint256 proposalId,
         address account,
         uint8 support,
-        uint256 weight
+        uint256 weight,
+        bytes memory // params
     ) internal override {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
 

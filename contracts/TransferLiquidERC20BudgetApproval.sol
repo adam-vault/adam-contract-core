@@ -24,6 +24,11 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
     uint256 public totalAmount;
     event execute(address to, address token, uint256 amount);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function initialize(
         InitializeParams calldata params,
         bool _allowAllAddresses,

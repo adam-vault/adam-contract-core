@@ -9,10 +9,10 @@ chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC20BudgetApproval.sol', function () {
+describe('TransferERC20BudgetApproval.sol', async function () {
   let creator, executor, receiver;
   let mockToken, team, executee, unknownToken;
-  let executeeAsSigner, TransferERC20BudgetApproval;
+  let executeeAsSigner, TransferERC20BudgetApproval, ERC1967Proxy, transferErc20BAImpl;
 
   function initializeParser (params = {}) {
     return [[
@@ -73,11 +73,18 @@ describe('TransferERC20BudgetApproval.sol', function () {
 
     executeeAsSigner = await ethers.getSigner(executee.address);
     TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executeeAsSigner });
+    ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy', { signer: executeeAsSigner });
+
+    transferErc20BAImpl = await TransferERC20BudgetApproval.deploy();
   });
 
   describe('initialize()', async function () {
     it('init with params with the least setting successfully', async () => {
-      const transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser());
+      const contract = await ERC1967Proxy.deploy(
+        transferErc20BAImpl.address,
+        TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser()));
+      const transferErc20BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
+
       expect(await transferErc20BA.name()).to.be.eq('Transfer ERC20 Budget Approval');
       expect(await transferErc20BA.allowAllAddresses()).to.be.eq(true);
       expect(await transferErc20BA.allowAllTokens()).to.be.eq(true);
@@ -116,7 +123,10 @@ describe('TransferERC20BudgetApproval.sol', function () {
   describe('executeParams()', async function () {
     let transferErc20BA;
     beforeEach(async function () {
-      transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser());
+      const contract = await ERC1967Proxy.deploy(
+        transferErc20BAImpl.address,
+        TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser()));
+      transferErc20BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
     });
     it('describes execute params', async function () {
       expect(await transferErc20BA.executeParams()).to.be.deep.equal(['address token', 'address to', 'uint256 value']);
@@ -224,10 +234,13 @@ describe('TransferERC20BudgetApproval.sol', function () {
     context('allow limited toAddresses', async function () {
       let transferErc20BA;
       beforeEach(async function () {
-        transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
-          allowAllToAddresses: false,
-          toAddresses: [receiver.address],
-        }));
+        const contract = await ERC1967Proxy.deploy(
+          transferErc20BAImpl.address,
+          TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
+            allowAllToAddresses: false,
+            toAddresses: [receiver.address],
+          })));
+        transferErc20BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
         executee.executeByBudgetApproval.returns('0x');
       });
 
@@ -248,10 +261,13 @@ describe('TransferERC20BudgetApproval.sol', function () {
       let transferErc20BA;
       beforeEach(async function () {
         executee.executeByBudgetApproval.returns('0x');
-        transferErc20BA = await upgrades.deployProxy(TransferERC20BudgetApproval, initializeParser({
-          allowAllTokens: false,
-          token: mockToken.address,
-        }));
+        const contract = await ERC1967Proxy.deploy(
+          transferErc20BAImpl.address,
+          TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
+            allowAllTokens: false,
+            token: mockToken.address,
+          })));
+        transferErc20BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
       });
 
       it('allows user to transfer to whitelisted address', async function () {
