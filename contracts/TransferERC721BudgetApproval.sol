@@ -21,6 +21,11 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
     uint256 public totalAmount;
     event execute(address to, address token);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function initialize(
         InitializeParams calldata params,
         bool _allowAllAddresses,

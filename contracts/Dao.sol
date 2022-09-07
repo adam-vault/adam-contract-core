@@ -101,6 +101,11 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event CreateMember(address account, uint256 depositAmount);
     event UpdateDaoSetting(uint256 minDepositAmount);
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function initialize(InitializeParams calldata params) public initializer {
         require( 
             address(params._creator) != address(0)

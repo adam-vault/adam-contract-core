@@ -32,6 +32,10 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgr
 		_;
 	}
 
+  constructor() {
+    _disableInitializers();
+  }
+
   function initialize() external initializer {
 	__Ownable_init();
     __ERC1155_init("");
