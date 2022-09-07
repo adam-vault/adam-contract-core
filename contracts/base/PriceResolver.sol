@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity 0.8.7;
-import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "../lib/Constant.sol";
 
 contract PriceResolver is Initializable {
@@ -31,6 +27,7 @@ contract PriceResolver is Initializable {
         return Constant.WETH_ADDRESS;
     }
 
+    /// @notice This function is imported by other contract, thus cannot be external
     function assetBaseCurrencyPrice(address asset, uint256 amount) public view virtual returns (uint256) {
         address __baseCurrency = baseCurrency();
         if (asset == __baseCurrency)
@@ -145,6 +142,7 @@ contract PriceResolver is Initializable {
         }
     }
 
+    /// @notice This function is imported by other contract, thus cannot be external
     function canResolvePrice(address asset) public view virtual returns (bool) {
         if (asset == Denominations.ETH || asset == _WETH9())
             return true;
