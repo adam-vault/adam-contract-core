@@ -13,7 +13,6 @@ import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./base/PriceResolver.sol";
 import "./lib/Concat.sol";
-import "hardhat/console.sol";
 import "./interface/IDao.sol";
 
 contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceResolver, BudgetApprovalExecutee {

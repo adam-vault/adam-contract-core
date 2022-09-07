@@ -9,7 +9,6 @@ import "./base/PriceResolver.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
-import "hardhat/console.sol";
 
 contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolver {
     using BytesLib for bytes;

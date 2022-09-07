@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./lib/Base64.sol";
 import "./lib/ToString.sol";
 import "./lib/Concat.sol";
-import "hardhat/console.sol";
 
 contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     using Counters for Counters.Counter;

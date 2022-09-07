@@ -6,7 +6,6 @@ import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "../lib/BytesLib.sol";
 import "../lib/Constant.sol";
 import "./MockWETH9.sol";
-import "hardhat/console.sol";
 
 contract MockUniswapRouter {
     using BytesLib for bytes;

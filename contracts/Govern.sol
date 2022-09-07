@@ -7,8 +7,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
 import "./lib/Constant.sol";
 
-import "hardhat/console.sol";
-
 contract Govern is
     Initializable, UUPSUpgradeable, GovernorUpgradeable
 {
