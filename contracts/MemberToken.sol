@@ -5,7 +5,6 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
-import "hardhat/console.sol";
 
 contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
     address public minter;

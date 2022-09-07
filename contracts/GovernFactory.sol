@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./interface/IGovern.sol";
-import "hardhat/console.sol";
 
 contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 

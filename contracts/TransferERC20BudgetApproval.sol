@@ -7,7 +7,6 @@ import "./lib/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
-import "hardhat/console.sol";
 
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;

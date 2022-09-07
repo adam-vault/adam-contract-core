@@ -10,7 +10,6 @@ import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
 import "./interface/IGovernFactory.sol";
-import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 

@@ -23,8 +23,6 @@ import "./interface/ITeam.sol";
 import "./lib/Concat.sol";
 import "./lib/InterfaceChecker.sol";
 
-import "hardhat/console.sol";
-
 contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
     using AddressUpgradeable for address;
