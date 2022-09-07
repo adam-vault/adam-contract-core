@@ -21,6 +21,11 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address voteToken
     );
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function initialize(
         address _governImplementation
     ) public initializer {

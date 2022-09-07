@@ -23,6 +23,11 @@ contract BudgetApprovalExecutee is Initializable {
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function ___BudgetApprovalExecutee_init(address __team) internal onlyInitializing {
         _team = __team;
     }

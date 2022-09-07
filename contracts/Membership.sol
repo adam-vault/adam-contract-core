@@ -34,6 +34,11 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
     function initialize(address _dao, string memory _name, uint256 _maxMemberLimit) external initializer
     {
         __EIP712_init(_name.concat(" Membership"), "1");

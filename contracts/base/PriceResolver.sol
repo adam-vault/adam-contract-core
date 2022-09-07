@@ -11,10 +11,14 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../lib/Constant.sol";
-import "hardhat/console.sol";
 
 contract PriceResolver is Initializable {
     address private _baseCurrency;
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
 
     function __PriceResolver_init(address __baseCurrency) internal onlyInitializing {
         _baseCurrency = __baseCurrency;
@@ -23,7 +27,7 @@ contract PriceResolver is Initializable {
     function baseCurrency() public view virtual returns (address) {
         return _baseCurrency;
     }
-    function _WETH9() internal view returns (address) {
+    function _WETH9() internal pure returns (address) {
         return Constant.WETH_ADDRESS;
     }
 
@@ -101,16 +105,16 @@ contract PriceResolver is Initializable {
         (uint80 _baseRoundID, int basePrice, , uint256 _baseUpdatedAt, uint80 _baseAnsweredInRound) = 
         AggregatorV3Interface(_base).latestRoundData();
 
-        require(_baseAnsweredInRound >= _baseRoundID, "Stale price in Chainlink");
-        require(block.timestamp <= _baseUpdatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink");
+        require(_baseAnsweredInRound >= _baseRoundID, "Stale price in Chainlink 104");
+        require(block.timestamp <= _baseUpdatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink 105");
 
         uint8 baseDecimals = AggregatorV3Interface(_base).decimals();
         basePrice = scalePrice(basePrice, baseDecimals, _decimals);
         (uint80 _quoteRoundID, int quotePrice, , uint256 _quoteUpdatedAt, uint80 _quoteAnsweredInRound) = 
         AggregatorV3Interface(_quote).latestRoundData();
 
-        require(_quoteAnsweredInRound >= _quoteRoundID, "Stale price in Chainlink");
-        require(block.timestamp <= _quoteUpdatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink");
+        require(_quoteAnsweredInRound >= _quoteRoundID, "Stale price in Chainlink 112");
+        require(block.timestamp <= _quoteUpdatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink 113");
 
         uint8 quoteDecimals = AggregatorV3Interface(_quote).decimals();
         quotePrice = scalePrice(quotePrice, quoteDecimals, _decimals);
