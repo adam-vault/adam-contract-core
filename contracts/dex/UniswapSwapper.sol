@@ -31,12 +31,12 @@ contract UniswapSwapper is Initializable {
     constructor() {
       _disableInitializers();
     }
-
-    function WETH9() public view returns (address) {
+    
+    function WETH9() public pure returns (address) {
         return Constant.WETH_ADDRESS;
     }
 
-    function decodeWETH9Call(bytes memory data, uint256 value) external view returns(address tokenIn, address tokenOut, uint256 amount) {
+    function decodeWETH9Call(bytes memory data, uint256 value) external pure returns(address tokenIn, address tokenOut, uint256 amount) {
         bytes4 funcSig = data.toBytes4(0);
         if (funcSig == bytes4(keccak256("deposit()"))) {
             return (Denominations.ETH, WETH9(), value);
