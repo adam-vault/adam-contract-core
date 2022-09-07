@@ -27,6 +27,11 @@ contract UniswapSwapper is Initializable {
         MulticallResultAttribute resultType;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+    
     function WETH9() public pure returns (address) {
         return Constant.WETH_ADDRESS;
     }

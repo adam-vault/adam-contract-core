@@ -34,7 +34,10 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     mapping(uint256 => mapping(address => uint256)) private _tokenInAmountOfTransaction;
     mapping(uint256 => address[]) private _tokenInOfTransaction;
 
-
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
 
     function initialize(
         InitializeParams calldata params,
