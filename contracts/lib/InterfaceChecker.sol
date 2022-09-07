@@ -22,6 +22,8 @@ library InterfaceChecker {
         }
     }
     function isERC20(address check) internal view returns(bool) {
+        if (isERC721(check)) { return false; }
+
         try IERC20(check).balanceOf(address(0)) returns (uint256) {
             return true;
         } catch {
