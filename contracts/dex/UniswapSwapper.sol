@@ -96,7 +96,7 @@ contract UniswapSwapper is Initializable {
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
     function exactOutputSingle(
         IV3SwapRouter.ExactOutputSingleParams calldata params
-    ) public pure returns (MulticallData memory) {
+    ) external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: params.recipient,
             tokenIn: params.tokenIn,
@@ -109,7 +109,7 @@ contract UniswapSwapper is Initializable {
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
     function exactInputSingle(
         IV3SwapRouter.ExactInputSingleParams calldata params
-    ) public pure returns (MulticallData memory) {
+    ) external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: params.recipient,
             tokenIn: params.tokenIn,
@@ -123,7 +123,7 @@ contract UniswapSwapper is Initializable {
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
     function exactOutput(
         IV3SwapRouter.ExactOutputParams calldata params
-    ) public pure returns (MulticallData memory) {
+    ) external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: params.recipient,
             tokenIn: params.path.toAddress(0),
@@ -137,7 +137,7 @@ contract UniswapSwapper is Initializable {
     // From Uniswap/swap-router-contracts/contracts/V3SwapRouter.sol
     function exactInput(
         IV3SwapRouter.ExactInputParams calldata params
-    ) public pure returns (MulticallData memory) {
+    ) external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: params.recipient,
             tokenIn: params.path.toAddress(0),
@@ -154,7 +154,7 @@ contract UniswapSwapper is Initializable {
         uint256 amountInMax,
         address[] calldata path,
         address recipient
-    ) public pure returns (MulticallData memory) {
+    ) external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: recipient,
             tokenIn: path[0],
@@ -171,7 +171,7 @@ contract UniswapSwapper is Initializable {
         uint256 amountOutMin,
         address[] calldata path,
         address recipient
-    ) public pure returns (MulticallData memory) {
+    ) external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: recipient,
             tokenIn: path[0],
@@ -185,7 +185,7 @@ contract UniswapSwapper is Initializable {
     function unwrapWETH9(
         uint256 amountMinimum,
         address recipient
-    ) public pure returns (MulticallData memory) {
+    ) external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: recipient,
             tokenIn: address(0),
@@ -196,7 +196,7 @@ contract UniswapSwapper is Initializable {
         });
     }
 
-    function refundETH() public pure returns (MulticallData memory) {
+    function refundETH() external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: address(0),
             tokenIn: address(0),
@@ -209,7 +209,7 @@ contract UniswapSwapper is Initializable {
 
     function selfPermit(
         address, uint256, uint256, uint8, bytes32, bytes32
-    ) public pure returns (MulticallData memory) {
+    ) external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: address(0),
             tokenIn: address(0),
@@ -224,7 +224,7 @@ contract UniswapSwapper is Initializable {
         address token,
         uint256 amountMinimum,
         address recipient
-    ) public pure returns (MulticallData memory) {
+    ) external pure returns (MulticallData memory) {
         return MulticallData({
             recipient: recipient,
             tokenIn: address(0),
