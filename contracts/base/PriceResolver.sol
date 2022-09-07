@@ -27,7 +27,8 @@ contract PriceResolver is Initializable {
         return Constant.WETH_ADDRESS;
     }
 
-    function assetBaseCurrencyPrice(address asset, uint256 amount) external view virtual returns (uint256) {
+    /// @notice This function is imported by other contract, thus cannot be external
+    function assetBaseCurrencyPrice(address asset, uint256 amount) public view virtual returns (uint256) {
         address __baseCurrency = baseCurrency();
         if (asset == __baseCurrency)
             return amount;
@@ -141,7 +142,8 @@ contract PriceResolver is Initializable {
         }
     }
 
-    function canResolvePrice(address asset) external view virtual returns (bool) {
+    /// @notice This function is imported by other contract, thus cannot be external
+    function canResolvePrice(address asset) public view virtual returns (bool) {
         if (asset == Denominations.ETH || asset == _WETH9())
             return true;
         try FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH) {
