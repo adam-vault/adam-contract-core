@@ -8,8 +8,6 @@ import "./dex/UniswapSwapper.sol";
 import "./lib/Constant.sol";
 
 import "./base/PriceResolver.sol";
-import "./interface/IDao.sol";
-import "./interface/IAdam.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
@@ -48,7 +46,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         uint256 _totalAmount,
         uint8 _amountPercentage,
         address _baseCurrency
-    ) public initializer {
+    ) external initializer {
         __BudgetApproval_init(params);
         
         for(uint i = 0; i < _fromTokens.length; i++) {
@@ -70,9 +68,13 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
 
     function afterInitialized() external override onlyExecutee {
         bytes memory data = abi.encodeWithSignature("approve(address,uint256)", Constant.UNISWAP_ROUTER, type(uint256).max);
+        address executee = IBudgetApprovalExecutee(executee());
+
         for(uint i = 0; i < fromTokens.length; i++) {
-            if(fromTokens[i] != Denominations.ETH) {
-                IBudgetApprovalExecutee(executee()).executeByBudgetApproval(fromTokens[i], data, 0);
+            address fromToken = fromTokens[i];
+
+            if(fromToken != Denominations.ETH) {
+                executee.executeByBudgetApproval(fromToken, data, 0);
             }
         }
     }
@@ -186,11 +188,13 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     }
 
     function _checkAmountPercentageValid(uint256 totalBalance, uint256 amount) private view returns (bool) {
-        if (amountPercentage == 100) return true;
+        uint8 _amountPercentage = amountPercentage;
+
+        if (_amountPercentage == 100) return true;
 
         if (totalBalance == 0) return false;
 
-        return amount <= totalBalance * amountPercentage / 100;
+        return amount <= totalBalance * _amountPercentage / 100;
     }
 
     function _addFromToken(address token) private {
