@@ -187,4 +187,6 @@ contract Govern is
     }
 
     function _authorizeUpgrade(address) internal view override onlyOwner {}
+
+    uint256[50] private __gap;
 }

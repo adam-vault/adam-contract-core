@@ -209,4 +209,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     function _authorizeUpgrade(address) internal view override onlyOwner {}
+
+    uint256[50] private __gap;
 }

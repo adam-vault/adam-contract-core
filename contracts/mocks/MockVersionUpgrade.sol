@@ -7,4 +7,6 @@ contract MockVersionUpgrade is UUPSUpgradeable {
         return true;
     }
     function _authorizeUpgrade(address) internal pure override {}
+
+    uint256[50] private __gap;
 }

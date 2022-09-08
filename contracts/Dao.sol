@@ -384,4 +384,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
 
     receive() external payable {}
+
+    uint256[50] private __gap;
 }

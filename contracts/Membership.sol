@@ -101,4 +101,6 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     }
 
     function _authorizeUpgrade(address) internal view override onlyDao {}
+
+    uint256[50] private __gap;
 }

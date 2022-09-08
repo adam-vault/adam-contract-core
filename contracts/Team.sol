@@ -141,4 +141,6 @@ contract Team is Initializable, UUPSUpgradeable, ERC1155Upgradeable, OwnableUpgr
 	}
 
 	function _authorizeUpgrade(address) internal view override onlyOwner {}
+
+  uint256[50] private __gap;
 }
