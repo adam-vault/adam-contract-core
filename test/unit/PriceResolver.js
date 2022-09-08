@@ -33,6 +33,7 @@ describe('PriceResolver.sol', () => {
     const tokenAEthAggregator = await MockAggregatorV3.deploy();
     tokenAEthAggregator.setPrice(parseEther('0.25'));
     await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, parseEther('0.25'));
+    await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, tokenAEthAggregator.address);
 
     tokenB = await MockToken.deploy();
@@ -40,6 +41,7 @@ describe('PriceResolver.sol', () => {
     const tokenBEthAggregator = await MockAggregatorV3.deploy();
     tokenBEthAggregator.setPrice(parseEther('0.5'));
     await feedRegistry.setPrice(tokenB.address, ADDRESS_ETH, parseEther('0.5'));
+    await feedRegistry.setDecimal(tokenB.address, ADDRESS_ETH, 18);
     await feedRegistry.setAggregator(tokenB.address, ADDRESS_ETH, tokenBEthAggregator.address);
 
     priceResolver = await MockPriceResolver.deploy();
@@ -62,6 +64,7 @@ describe('PriceResolver.sol', () => {
 
   describe('assetBaseCurrency(): base currency = tokenA', function () {
     beforeEach(async () => {
+      await priceResolver.setBaseCurrency(tokenA.address);
       await priceResolver.setBaseCurrency(tokenA.address);
     });
 
@@ -97,6 +100,9 @@ describe('PriceResolver.sol', () => {
   });
 
   describe('assetEthPrice()', function () {
+    beforeEach(async () => {
+      await priceResolver.setBaseCurrency(ADDRESS_ETH);
+    });
     it('asset = 1ETH, return 1', async function () {
       expect(await priceResolver.assetEthPrice(ADDRESS_ETH, parseEther('1'))).to.eq(parseEther('1'));
     });
@@ -121,6 +127,15 @@ describe('PriceResolver.sol', () => {
 
     it('give 1ETH, return 2tokenB', async function () {
       expect(await priceResolver.ethAssetPrice(tokenB.address, parseEther('1'))).to.eq(parseUnits('2', 6));
+    });
+  });
+
+  describe('Expiry Timestamp in Chainlink', function () {
+    beforeEach(async () => {
+      await feedRegistry.setBlockTimestamp(tokenB.address, ADDRESS_ETH, Math.round(Date.now() / 1000) - 86400);
+    });
+    it('get ethAssetPrice fail ', async function () {
+      await expect(priceResolver.ethAssetPrice(tokenB.address, parseEther('1'))).to.be.revertedWith('Stale price in Chainlink');
     });
   });
 });

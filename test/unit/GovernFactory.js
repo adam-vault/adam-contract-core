@@ -15,7 +15,7 @@ describe('GovernFactory.sol', function () {
     await govern.deployed();
 
     GovernFactory = await ethers.getContractFactory('GovernFactory');
-    governFactory = await upgrades.deployProxy(GovernFactory, [govern.address]);
+    governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   });
 
   describe('initialize()', function () {
@@ -44,18 +44,14 @@ describe('GovernFactory.sol', function () {
 
   describe('createGovern()', function () {
     it('creates a new govern', async function () {
-      const tx = await governFactory.createGovern('mockName', 0, 0, 0, [0], ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE']);
+      const tx = await governFactory.createGovern('mockName', 0, 0, 0, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
       const { govern: governAddress } = await findEventArgs(tx, 'CreateGovern');
       expect(await governFactory.governMap(creator.address, 'mockName')).to.equal(governAddress);
     });
 
     it('throws "error" error if name is duplicated', async function () {
-      await governFactory.createGovern('mockName', 0, 0, 0, [0], ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE']);
-      await expect(governFactory.createGovern('mockName', 0, 0, 0, [0], ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'])).to.be.revertedWith('error');
-    });
-
-    it('throws "Vote weights, vote tokens length mismatch" error if params length is not match', async function () {
-      await expect(governFactory.createGovern('mockName', 0, 0, 0, [0, 1], ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'])).to.be.revertedWith('Vote weights, vote tokens length mismatch');
+      await governFactory.createGovern('mockName', 0, 0, 0, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
+      await expect(governFactory.createGovern('mockName', 0, 0, 0, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')).to.be.revertedWith('error');
     });
   });
 });

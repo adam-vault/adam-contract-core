@@ -82,12 +82,10 @@ describe('UniswapBudgetApproval.sol', function () {
 
       budgetApproval = await ethers.getContractAt('UniswapBudgetApproval', budgetApprovalAddress);
 
-      expect(await budgetApproval.dao()).to.eq(executee.address);
+      expect(await budgetApproval.executee()).to.eq(executee.address);
       expect(await budgetApproval.executor()).to.eq(executor.address);
       expect(await budgetApproval.approversMapping(approver.address)).to.eq(true);
       expect(await budgetApproval.minApproval()).to.eq(1);
-
-      expect(await budgetApproval.allowAllAddresses()).to.eq(false);
 
       expect(await budgetApproval.fromTokens(0)).to.eq(ADDRESS_ETH);
       expect(await budgetApproval.fromTokens(1)).to.eq(ADDRESS_WETH);
@@ -173,7 +171,7 @@ describe('UniswapBudgetApproval.sol', function () {
     context('ETH => tokenA', () => {
       it('executes', async function () {
         const functionCallData = uniswapRouter.interface.encodeFunctionData('exactOutputSingle', [[
-          ADDRESS_ETH,
+          ADDRESS_WETH,
           tokenA.address,
           0,
           executee.address,

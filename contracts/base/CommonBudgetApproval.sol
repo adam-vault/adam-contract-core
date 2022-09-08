@@ -3,18 +3,14 @@
 pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "../lib/BytesLib.sol";
-import "../lib/RevertMsg.sol";
 
-import "../interface/IMembership.sol";
 import "../interface/ITeam.sol";
 import "../interface/IBudgetApprovalExecutee.sol";
 
-abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
+abstract contract CommonBudgetApproval is Initializable {
 
     using Counters for Counters.Counter;
     using BytesLib for bytes;
@@ -31,14 +27,14 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         bytes[] data;
         Status status;
         uint256 deadline;
-        mapping(address => bool) approved;
-        uint256 approvedCount;
         bool isExist;
+        uint256 approvedCount;
+        mapping(address => bool) approved;
     }
 
     event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status, string comment, address creator);
     event ApproveTransaction(uint256 id, address approver, string comment);
-    event ExecuteTransaction(uint256 id, bytes[] data, address executor);
+    event ExecuteTransaction(uint256 id, bytes[] data, address _executor);
     event RevokeTransaction(uint256 id);
     event AllowAddress(address target);
     event AllowToken(address token);
@@ -49,64 +45,26 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
 
     mapping(uint256 => Transaction) public transactions;
 
-    address constant public ETH_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address private _executor;
+    uint256 private _executorTeamId;
+    address private _executee; // Must be BudgetApprovalExecutee
 
-    address public executor;
-    uint256 public executorTeamId;
-    address payable public dao;
-    address public executee; // Must be BudgetApprovalExecutee
+    mapping(address => bool) private _approversMapping;
+    uint256 private _approverTeamId;
+    uint256 private _minApproval;
 
-    mapping(address => bool) public approversMapping;
-    uint256 public approverTeamId;
-    uint256 public minApproval;
+    string private _text;
+    string private _transactionType;
 
-    string public text;
-    string public transactionType;
+    bool private _allowUnlimitedUsageCount;
+    uint256 private _usageCount;
 
-    bool public allowUnlimitedUsageCount;
-    uint256 public usageCount;
+    uint256 private _startTime;
+    uint256 private _endTime;
 
-    uint256 public startTime;
-    uint256 public endTime;
-
-    address public team;
-
-    modifier onlyApprover() {
-        require(
-          approversMapping[msg.sender] ||
-          ITeam(team).balanceOf(msg.sender, approverTeamId) > 0, "Approver not whitelisted in budget"
-        );
-        _;
-    }
-
-    modifier onlyExecutor() {
-        require(msg.sender == executor ||
-          ITeam(team).balanceOf(msg.sender, executorTeamId) > 0, "Executor not whitelisted in budget"
-        );
-        _;
-    }
-
-    modifier onlyExecutee() {
-        require(msg.sender == executee, "Executee not whitelisted in budget");
-        _;
-    }
-
-    modifier matchStatus(uint256 id, Status status) {
-        require(transactions[id].status == status, "Transaction status invalid");
-        _;
-    }
-
-    modifier checkTime(uint256 id) {
-        require(block.timestamp <= transactions[id].deadline, "Transaction expired");
-        require(block.timestamp >= startTime, "Budget usage period not started");
-        if(endTime != 0) {
-            require(block.timestamp < endTime, "Budget usage period has ended");
-        }
-        _;
-    }
+    address private _team;
 
     struct InitializeParams {
-        address dao;
         address executor;
         uint256 executorTeamId;
         address[] approvers;
@@ -121,50 +79,136 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         address team; // TODO: Get team from IBudgetApprovalExecutee
     }
 
+    modifier onlyExecutee() {
+        require(msg.sender == executee(), "Executee not whitelisted in budget");
+        _;
+    }
+
+    modifier matchStatus(uint256 id, Status status) {
+        require(transactions[id].status == status, "Transaction status invalid");
+        _;
+    }
+
+    modifier checkTime(uint256 id) {
+        require(block.timestamp <= transactions[id].deadline, "Transaction expired");
+        require(block.timestamp >= startTime(), "Budget usage period not started");
+
+        uint256 __endtime = endTime();
+        if (__endtime != 0) {
+            require(block.timestamp < __endtime, "Budget usage period has ended");
+        }
+        _;
+    }
+
+    modifier onlyApprover() {
+        require(
+          approversMapping(msg.sender) ||
+          ITeam(team()).balanceOf(msg.sender, approverTeamId()) > 0, "Approver not whitelisted in budget"
+        );
+        _;
+    }
+
+    modifier onlyExecutor() {
+        require(msg.sender == executor() ||
+          ITeam(team()).balanceOf(msg.sender, executorTeamId()) > 0, "Executor not whitelisted in budget"
+        );
+        _;
+    }
+
+     /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
+    function executor() public view returns (address) {
+        return _executor;
+    }
+    function executorTeamId() public view returns (uint256) {
+        return _executorTeamId;
+    }
+    function executee() public view returns (address) {
+        return _executee;
+    }
+    function approversMapping(address eoa) public view returns (bool) {
+        return _approversMapping[eoa];
+    }
+    function approverTeamId() public view returns (uint256) {
+        return _approverTeamId;
+    }
+    function minApproval() public view returns (uint256) {
+        return _minApproval;
+    }
+    function text() public view returns (string memory) {
+        return _text;
+    }
+    function transactionType() public view returns (string memory) {
+        return _transactionType;
+    }
+    function allowUnlimitedUsageCount() public view returns (bool) {
+        return _allowUnlimitedUsageCount;
+    }
+    function usageCount() public view returns (uint256) {
+        return _usageCount;
+    }
+    function startTime() public view returns (uint256) {
+        return _startTime;
+    }
+    function endTime() public view returns (uint256) {
+        return _endTime;
+    }
+    function team() public view returns (address) {
+        return _team;
+    }
+
     function __BudgetApproval_init(
         InitializeParams calldata params
         ) internal onlyInitializing {
-        dao = payable(params.dao);
-        executee = msg.sender;
-        executor = params.executor;
-        text = params.text;
-        transactionType = params.transactionType;
 
-        for (uint i = 0; i < params.approvers.length; i++) {
-            approversMapping[params.approvers[i]] = true;
-            emit SetApprover(params.approvers[i]);
-        }
-
-        minApproval = params.minApproval;
         require(
-          params.approverTeamId > 0 || (minApproval <= params.approvers.length),
+          params.approverTeamId > 0 || (params.minApproval <= params.approvers.length),
           "Invalid approver list"
         );
 
-        startTime = params.startTime;
-        endTime = params.endTime;
+        _executee = msg.sender;
+        _executor = params.executor;
+        _text = params.text;
+        _transactionType = params.transactionType;
 
-        allowUnlimitedUsageCount = params.allowUnlimitedUsageCount;
-        usageCount = params.usageCount;
+        _minApproval = params.minApproval;
+        _startTime = params.startTime;
+        _endTime = params.endTime;
 
-        team = params.team;
-        executorTeamId = params.executorTeamId;
-        approverTeamId = params.approverTeamId;
+        _allowUnlimitedUsageCount = params.allowUnlimitedUsageCount;
+        _usageCount = params.usageCount;
+
+        _team = params.team;
+        _executorTeamId = params.executorTeamId;
+        _approverTeamId = params.approverTeamId;
+
+        for (uint i = 0; i < params.approvers.length; i++) {
+            _approversMapping[params.approvers[i]] = true;
+            emit SetApprover(params.approvers[i]);
+        }
     }
 
     function afterInitialized() virtual external onlyExecutee {}
 
     function executeTransaction(uint256 id) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
-        for (uint i = 0; i < transactions[id].data.length; i++) {
-            require(allowUnlimitedUsageCount || usageCount > 0, "Exceeded budget usage limit ");
-            if (!allowUnlimitedUsageCount) {
-                usageCount--;
+        bool unlimited = allowUnlimitedUsageCount();
+        uint256 count = usageCount();
+        bytes[] memory data = transactions[id].data;
+
+        for (uint i = 0; i < data.length; i++) {
+            require(unlimited || count > 0, "Exceeded budget usage limit");
+            if (!unlimited) {
+                count--;
             }
-            _execute(id, transactions[id].data[i]);
+            _execute(id, data[i]);
         }
 
+        _usageCount = count;
         transactions[id].status = Status.Completed;
-        emit ExecuteTransaction(id, transactions[id].data, msg.sender);
+        emit ExecuteTransaction(id, data, msg.sender);
     }
 
     function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute, string calldata comment) external onlyExecutor returns (uint256) {
@@ -178,7 +222,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         newTransaction.deadline = _deadline;
         newTransaction.isExist = true;
 
-        if (minApproval == 0) {
+        if (minApproval() == 0) {
             transactions[id].status = Status.Approved;
         } else {
             transactions[id].status = Status.Pending;
@@ -193,6 +237,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function approveTransaction(uint256 id, string calldata comment) external onlyApprover {
+        require(_transactionIds.current() >= id, "Invaild TransactionId");
         require(transactions[id].status == Status.Pending
             || transactions[id].status == Status.Approved,
             "Unexpected transaction status");
@@ -201,7 +246,7 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
         transactions[id].approved[msg.sender] = true;
         transactions[id].approvedCount++;
 
-        if(transactions[id].approvedCount >= minApproval) {
+        if(transactions[id].approvedCount >= minApproval()) {
             transactions[id].status = Status.Approved;
         }
 
@@ -209,25 +254,17 @@ abstract contract CommonBudgetApproval is Initializable, UUPSUpgradeable {
     }
 
     function revokeTransaction(uint256 id) external onlyExecutor {
+        require(_transactionIds.current() >= id, "Invaild TransactionId");
         require(transactions[id].status != Status.Completed, "Transaction has been completed before");
         transactions[id].status = Status.Cancelled;
 
         emit RevokeTransaction(id);
     }
 
-    function statusOf(uint256 id) public view returns (Status) {
-        return transactions[id].status;
-    }
-    function approvedCountOf(uint256 id) public view returns (uint256) {
-        return transactions[id].approvedCount;
-    }
-    function deadlineOf(uint256 id) public view returns (uint256) {
-        return transactions[id].deadline;
-    }
-
     function _execute(uint256, bytes memory) internal virtual;
-    function executeParams() public pure virtual returns (string[] memory);
+    function executeParams() external pure virtual returns (string[] memory);
     function name() external virtual returns (string memory);
 
-    function _authorizeUpgrade(address) internal override initializer {}
+    uint256[50] private __gap;
+
 }

@@ -14,7 +14,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferLiquidERC20BudgetApproval.sol', function () {
+describe('Integration - TransferLiquidERC20BudgetApproval.sol', function () {
   let adam, dao, transferLiquidERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
   let tokenA, feedRegistry, budgetApprovalAddresses;
@@ -71,7 +71,6 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
 
     it('creates Liquid ERC 20 BA', async function () {
       expect(await lp.budgetApprovals(budgetApprovalAddress)).to.eq(true);
-      expect(await budgetApproval.dao()).to.eq(dao.address);
     });
 
     it('transfer ETH should success', async function () {
