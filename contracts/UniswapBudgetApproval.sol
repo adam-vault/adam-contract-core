@@ -68,13 +68,13 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
 
     function afterInitialized() external override onlyExecutee {
         bytes memory data = abi.encodeWithSignature("approve(address,uint256)", Constant.UNISWAP_ROUTER, type(uint256).max);
-        address executee = executee();
+        address _executee = executee();
 
         for(uint i = 0; i < fromTokens.length; i++) {
-            address fromToken = fromTokens[i];
+            address _fromToken = fromTokens[i];
 
-            if(fromToken != Denominations.ETH) {
-                IBudgetApprovalExecutee(executee).executeByBudgetApproval(fromToken, data, 0);
+            if(_fromToken != Denominations.ETH) {
+                IBudgetApprovalExecutee(_executee).executeByBudgetApproval(_fromToken, data, 0);
             }
         }
     }
