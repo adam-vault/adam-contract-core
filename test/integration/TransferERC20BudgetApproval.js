@@ -379,7 +379,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           receiver.address,
           '10',
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await expect(budgetApproval.connect(approver).approveTransaction(id + 1))
@@ -443,7 +443,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
           receiver.address,
           '10',
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         ;
         await expect(budgetApproval.connect(executor).revokeTransaction(id + 1))
