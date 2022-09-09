@@ -15,9 +15,9 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     using BytesLib for bytes;
 
     event AllowToToken(address token);
-    event ExecuteUniswapInTransaction(uint256 indexed id, address indexed toAddress, address token, uint256 amount);
-    event ExecuteUniswapOutTransaction(uint256 indexed id, address indexed toAddress, address token, uint256 amount);
-    event ExecuteWETH9Transaction(uint256 indexed id, address indexed toAddress, address tokenIn, address tokenOut, uint256 amount);
+    event ExecuteUniswapInTransaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount);
+    event ExecuteUniswapOutTransaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount);
+    event ExecuteWETH9Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address tokenIn, address tokenOut, uint256 amount);
 
     string public constant override name = "Uniswap Budget Approval";
 
@@ -127,13 +127,13 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
                 }
                 _tokenInAmount[mData.tokenIn] += mData.amountIn;
 
-                emit ExecuteUniswapInTransaction(transactionId, Constant.UNISWAP_ROUTER, mData.tokenIn, mData.amountIn);
+                emit ExecuteUniswapInTransaction(transactionId, msg.sender, Constant.UNISWAP_ROUTER, mData.tokenIn, mData.amountIn);
             }
 
             if (mData.amountOut > 0 && (mData.recipient == RECIPIENT_EXECUTEE || mData.recipient == executee())) {
                 require(allowAllToTokens || toTokensMapping[mData.tokenOut], "Target token not whitelisted");
 
-                emit ExecuteUniswapOutTransaction(transactionId, Constant.UNISWAP_ROUTER, mData.tokenOut, mData.amountOut);
+                emit ExecuteUniswapOutTransaction(transactionId, msg.sender, Constant.UNISWAP_ROUTER, mData.tokenOut, mData.amountOut);
             }
         }
 
@@ -174,7 +174,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             totalAmount -= amountInPrice;
         }
 
-        emit ExecuteWETH9Transaction(transactionId, WETH9(), tokenIn, tokenOut, amount);
+        emit ExecuteWETH9Transaction(transactionId, msg.sender, WETH9(), tokenIn, tokenOut, amount);
     }
 
     function _fromTokensPrice() private view returns (uint256 totalBalance) {
