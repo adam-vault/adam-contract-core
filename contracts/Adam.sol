@@ -75,6 +75,8 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     {
         __Ownable_init();
         whitelistBudgetApprovals(_budgetApprovalImplementations);
+        require(_governFactory != address(0), "governFactory is null");
+        require(_team != address(0), "team is null");
         governFactory = _governFactory;
         team = _team;
 
@@ -89,6 +91,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public onlyOwner {
         for(uint i = 0; i < _budgetApprovals.length; i++) {
+            require(_budgetApprovals[i] != address(0), "budget approval is null");
             require(budgetApprovals[_budgetApprovals[i]] == false, "budget approval already whitelisted");
             budgetApprovals[_budgetApprovals[i]] = true;
             emit WhitelistBudgetApproval(_budgetApprovals[i]);
