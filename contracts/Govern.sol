@@ -12,8 +12,6 @@ import "hardhat/console.sol";
 contract Govern is
     Initializable, UUPSUpgradeable, GovernorUpgradeable
 {
-    using SafeCastUpgradeable for uint256;
-    using TimersUpgradeable for TimersUpgradeable.BlockNumber;
 
     enum VoteType {
         Against,
