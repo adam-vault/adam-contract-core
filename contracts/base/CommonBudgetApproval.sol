@@ -32,10 +32,10 @@ abstract contract CommonBudgetApproval is Initializable {
         mapping(address => bool) approved;
     }
 
-    event CreateTransaction(uint256 id, bytes[] data, uint256 deadline, Status status, string comment, address creator);
-    event ApproveTransaction(uint256 id, address approver, string comment);
-    event ExecuteTransaction(uint256 id, bytes[] data, address _executor);
-    event RevokeTransaction(uint256 id);
+    event CreateTransaction(uint256 indexed id, bytes[] data, uint256 deadline, Status status, string comment, address creator);
+    event ApproveTransaction(uint256 indexed id, address approver, string comment);
+    event ExecuteTransaction(uint256 indexed id, bytes[] data, address _executor);
+    event RevokeTransaction(uint256 indexed id);
     event AllowAddress(address target);
     event AllowToken(address token);
     event AllowAmount(uint256 amount);

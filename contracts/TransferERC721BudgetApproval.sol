@@ -19,7 +19,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
     mapping(address => bool) public tokensMapping;
     bool public allowAnyAmount;
     uint256 public totalAmount;
-    event Execute(address to, address token);
+    event ExecuteTransferERC721Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 tokenId);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -60,7 +60,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
     }
 
     function _execute(
-        uint256, 
+        uint256 transactionId, 
         bytes memory data
     ) internal override {
         (address token, address to, uint256 tokenId) = abi.decode(data,(address, address, uint256));
@@ -76,7 +76,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         if(!allowAnyAmount) {
             totalAmount -= 1;
         }
-        emit Execute(to, token);
+        emit ExecuteTransferERC721Transaction(transactionId, msg.sender, to, token, tokenId);
     }
     function _addToken(address token) internal {
         require(!tokensMapping[token], "Duplicated Item in source token list");
