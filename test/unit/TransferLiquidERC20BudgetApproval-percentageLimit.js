@@ -102,9 +102,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
     await budgetApproval.connect(approver).approveTransaction(id, '');
     await budgetApproval.connect(executor).executeTransaction(id);
 
-    expect(await receiver.getBalance()).to.eq(
-      originalBalance.add(ethers.utils.parseEther('1')),
-    );
+    expect(await receiver.getBalance()).to.eq(originalBalance.add(ethers.utils.parseEther('1')));
   });
 
   it('can send 10 Token', async function () {

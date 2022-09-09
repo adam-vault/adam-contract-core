@@ -318,9 +318,8 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(approver).approveTransaction(id, '');
-        await expect(
-          budgetApproval.connect(executor).executeTransaction(id),
-        ).to.be.revertedWith('Exceeded max budget transferable amount');
+        await expect(budgetApproval.connect(executor).executeTransaction(id))
+          .to.be.revertedWith('Exceeded max budget transferable amount');
       });
     });
 
