@@ -20,7 +20,7 @@ describe('Adam.sol', function () {
     membership = await smock.fake('Membership');
     memberToken = await smock.fake('MemberToken');
     liquidPool = await smock.fake('LiquidPool');
-    budgetApproval = await smock.fake('CommonBudgetApproval');
+    budgetApproval = await smock.fake('TransferERC20BudgetApproval');
     governFactory = await smock.fake('GovernFactory');
     govern = await smock.fake('Govern');
     team = await smock.fake('Team');
@@ -110,8 +110,8 @@ describe('Adam.sol', function () {
         governFactory.address,
         team.address,
       ], { kind: 'uups' });
-      newBudgetApproval1 = await smock.fake('CommonBudgetApproval');
-      newBudgetApproval2 = await smock.fake('CommonBudgetApproval');
+      newBudgetApproval1 = await smock.fake('TransferERC20BudgetApproval');
+      newBudgetApproval2 = await smock.fake('TransferERC20BudgetApproval');
     });
     it('adds budgetApprovals to whitelist', async () => {
       await adam.whitelistBudgetApprovals([
@@ -146,8 +146,8 @@ describe('Adam.sol', function () {
     let adam;
     let newBudgetApproval1, newBudgetApproval2;
     beforeEach(async function () {
-      newBudgetApproval1 = await smock.fake('CommonBudgetApproval');
-      newBudgetApproval2 = await smock.fake('CommonBudgetApproval');
+      newBudgetApproval1 = await smock.fake('TransferERC20BudgetApproval');
+      newBudgetApproval2 = await smock.fake('TransferERC20BudgetApproval');
       adam = await upgrades.deployProxy(Adam, [
         dao.address,
         membership.address,

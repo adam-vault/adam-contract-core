@@ -382,7 +382,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
         const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-        await expect(budgetApproval.connect(approver).approveTransaction(id + 1))
+        await expect(budgetApproval.connect(approver).approveTransaction(id + 1, ''))
           .to.be.revertedWith('Invaild TransactionId');
       });
     });
