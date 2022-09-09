@@ -131,7 +131,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
                 emit ExecuteUniswapInTransaction(transactionId, Constant.UNISWAP_ROUTER, mData.tokenIn, mData.amountIn);
             }
 
-            if (mData.amountOut > 0 && (mData.recipient == RECIPIENT_EXECUTEE || mData.recipient == _executee)) {
+            if (mData.amountOut > 0 && (mData.recipient == RECIPIENT_EXECUTEE || mData.recipient == __executee)) {
                 require(allowAllToTokens || toTokensMapping[mData.tokenOut], "Target token not whitelisted");
 
                 emit ExecuteUniswapOutTransaction(transactionId, Constant.UNISWAP_ROUTER, mData.tokenOut, mData.amountOut);
