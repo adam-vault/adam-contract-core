@@ -222,4 +222,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
 
     function _authorizeUpgrade(address) internal view override onlyDao {}
     receive() external payable {}
+
+    uint256[50] private __gap;
 }

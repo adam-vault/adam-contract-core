@@ -100,8 +100,9 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         require(!addressesMapping[to], "Duplicated address in target address list");
         addressesMapping[to] = true;
         emit AllowAddress(to);
-
     }
 
-
+    function tokensLength() public view returns(uint256) {
+        return tokens.length;
+    }
 }

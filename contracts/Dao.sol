@@ -391,4 +391,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         emit Deposit(msg.sender, msg.value);
       }
     }
+
+    uint256[50] private __gap;
 }

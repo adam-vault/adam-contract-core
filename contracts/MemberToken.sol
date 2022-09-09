@@ -84,4 +84,5 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
 
     function _authorizeUpgrade(address) internal view override onlyDao {}
 
+    uint256[50] private __gap;
 }
