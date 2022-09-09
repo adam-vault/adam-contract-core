@@ -1,9 +1,11 @@
 [
+  "constructor()",
   "event AbandonBudgetApproval(address budgetApproval)",
   "event AdminChanged(address previousAdmin, address newAdmin)",
   "event BeaconUpgraded(address indexed beacon)",
   "event CreateDao(address indexed dao, string name, string description, address creator)",
   "event ImplementationUpgrade(uint256 indexed versionId, address daoImplementation, address membershipImplementation, address liquidPoolImplementation, address memberTokenImplementation, address governImplementation, address adamImplementation, string description)",
+  "event Initialized(uint8 version)",
   "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)",
   "event Upgraded(address indexed implementation)",
   "event WhitelistBudgetApproval(address budgetApproval)",

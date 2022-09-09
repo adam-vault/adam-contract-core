@@ -74,34 +74,38 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol', function () {
     });
 
     it('transfer ETH should success', async function () {
-      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-        ADDRESS_ETH,
-        receiver.address,
-        parseEther('10'),
-      ]);
+      const transactionData = abiCoder.encode(
+        await budgetApproval.executeParams(),
+        [ADDRESS_ETH, receiver.address, parseEther('10')],
+      );
 
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval
+        .connect(executor)
+        .createTransaction([transactionData], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       const originalBalance = await receiver.getBalance();
-      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
       await budgetApproval.connect(executor).executeTransaction(id);
 
-      expect(await receiver.getBalance()).to.eq(originalBalance.add(parseEther('10')));
+      expect(await receiver.getBalance()).to.eq(
+        originalBalance.add(parseEther('10')),
+      );
     });
 
     it('transfer ERC 20 should success', async function () {
       await tokenA.mint(lp.address, parseEther('10'));
-      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-        tokenA.address,
-        receiver.address,
-        parseEther('10'),
-      ]);
+      const transactionData = abiCoder.encode(
+        await budgetApproval.executeParams(),
+        [tokenA.address, receiver.address, parseEther('10')],
+      );
 
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval
+        .connect(executor)
+        .createTransaction([transactionData], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
-      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
       await budgetApproval.connect(executor).executeTransaction(id);
 
       expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('0'));
@@ -114,11 +118,11 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol', function () {
         receiver.address,
         parseEther('10'),
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData], Date.now() + 86400, false);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData], Date.now() + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       const originalBalance = await receiver.getBalance();
-      await budgetApproval.connect(approver).approveTransaction(id);
+      await budgetApproval.connect(approver).approveTransaction(id, '');
       await budgetApproval.connect(executor).executeTransaction(id);
 
       expect(await receiver.getBalance()).to.eq(originalBalance.add(parseEther('20')));
