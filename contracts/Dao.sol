@@ -249,16 +249,18 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     function _createMemberToken(address memberTokenImplementation, string[] calldata tokenInfo, uint tokenAmount) internal {
+        
         require(memberToken == address(0), "Member token already initialized");
         require(tokenInfo.length == 2, "Insufficient info to create member token");
 
-        ERC1967Proxy _memberToken = new ERC1967Proxy(memberTokenImplementation, "");
-        memberToken = address(_memberToken);
-        IMemberToken(memberToken).initialize(address(this), tokenInfo[0], tokenInfo[1]);
-        _addAsset(memberToken);
+        ERC1967Proxy _memberTokenContract = new ERC1967Proxy(memberTokenImplementation, "");
+        address _memberToken = address(_memberTokenContract);
+        memberToken = _memberToken;
+        IMemberToken(_memberToken).initialize(address(this), tokenInfo[0], tokenInfo[1]);
+        _addAsset(_memberToken);
         _mintMemberToken(tokenAmount);
 
-        emit CreateMemberToken(msg.sender, memberToken);
+        emit CreateMemberToken(msg.sender, _memberToken);
     }
 
     function _setAdmissionToken( AdmissionToken[] memory _admissionTokens) internal {
@@ -366,7 +368,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         IMembership(membership).createMember(owner);
     }
 
-    function admissionTokensLength() public view returns(uint256) {
+    function admissionTokensLength() external view returns(uint256) {
         return admissionTokens.length;
     }
 
