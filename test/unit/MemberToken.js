@@ -10,7 +10,7 @@ describe('MemberToken.sol', function () {
 
     MemberToken = await ethers.getContractFactory('MemberToken');
     // Use creator address to simulate minter address
-    memberToken = await upgrades.deployProxy(MemberToken, [minter.address, 'MemberTokenName', 'MT']);
+    memberToken = await upgrades.deployProxy(MemberToken, [minter.address, 'MemberTokenName', 'MT'], { kind: 'uups' });
   });
 
   describe('initialize()', function () {
@@ -88,6 +88,13 @@ describe('MemberToken.sol', function () {
       await memberToken.connect(minter).mint(member.address, 10);
 
       expect(await memberToken.getPastTotalSupply(blockNumber)).to.equal(10);
+    });
+  });
+
+  describe('delegate', function () {
+    it('delegate fail for Member Token', async function () {
+      await memberToken.connect(minter).mint(member.address, 10);
+      await expect(memberToken.connect(member).delegate(minter.address)).to.be.revertedWith('Not support delegate Vote');
     });
   });
 });

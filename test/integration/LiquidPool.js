@@ -1,19 +1,23 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { smock } = require('@defi-wonderland/smock');
 const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
 const decodeBase64 = require('../utils/decodeBase64');
 const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
 const { createAdam, createTokens } = require('../utils/createContract.js');
 const paramsStruct = require('../../utils/paramsStruct');
+
 const {
   ADDRESS_ETH,
   ADDRESS_MOCK_FEED_REGISTRY,
   ADDRESS_MOCK_AGGRGATOR,
+  ADDRESS_UNISWAP_ROUTER,
+  ADDRESS_WETH,
 } = require('../utils/constants');
 
 describe('Integration - LiquidPool.sol', function () {
-  let adam, dao, membership, tokenC721, tokenA, tokenD1155;
+  let adam, dao, membership, tokenC721, tokenA, tokenD1155, uniswapRouter;
   let creator, member, anyone, feedRegistry;
 
   function createDao () {

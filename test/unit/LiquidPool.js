@@ -41,6 +41,7 @@ describe('LiquidPool.sol', function () {
     await feedRegistry.setPrice(token2.address, ADDRESS_ETH, parseEther('0.0046'));
     await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
     await feedRegistry.setAggregator(token2.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
+    await feedRegistry.setDecimal(token.address, ADDRESS_ETH, 18);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
@@ -391,6 +392,7 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
 
     await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0.0046'));
     await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
+    await feedRegistry.setDecimal(token.address, ADDRESS_ETH, 18);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);

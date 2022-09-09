@@ -10,7 +10,6 @@ import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
 import "./interface/IGovernFactory.sol";
-import "hardhat/console.sol";
 
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
@@ -50,6 +49,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     event CreateDao(address indexed dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
+    event AbandonBudgetApproval(address budgetApproval);
     event ImplementationUpgrade(
         uint256 indexed versionId,
         address daoImplementation,
@@ -61,6 +61,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string description
     );
     
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+    
     function initialize(
         address _daoImplementation,
         address _membershipImplementation,
@@ -70,7 +75,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _governFactory,
         address _team
     )
-        public initializer
+        external initializer
     {
         __Ownable_init();
         whitelistBudgetApprovals(_budgetApprovalImplementations);
@@ -94,7 +99,15 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function createDao(CreateDaoParams calldata params) public returns (address) {
+    function abandonBudgetApprovals(address[] calldata _budgetApprovals) public onlyOwner {
+        for(uint i = 0; i < _budgetApprovals.length; i++) {
+            require(budgetApprovals[_budgetApprovals[i]] == true, "budget approval not exist");
+            budgetApprovals[_budgetApprovals[i]] = false;
+            emit AbandonBudgetApproval(_budgetApprovals[i]);
+        }
+    }
+
+    function createDao(CreateDaoParams calldata params) external returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
@@ -164,6 +177,10 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _governImplementation,
         string memory description
     ) public onlyOwner {
+        require(_daoImplementation != address(0), "daoImpl is null");
+        require(_membershipImplementation != address(0), "membershipImpl is null");
+        require(_liquidPoolImplementation != address(0), "liquidPoolImpl is null");
+        require(_memberTokenImplementation != address(0), "memberTokenImpl is null");
         require(IGovernFactory(governFactory).governImplementation() == _governImplementation, "governImpl not match");
 
         daoImplementation = _daoImplementation;

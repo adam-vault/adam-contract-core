@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./interface/IGovern.sol";
-import "hardhat/console.sol";
 
 contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
@@ -18,14 +17,20 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string name,
         address govern,
         address caller,
-        uint[] voteWeights,
-        address[] voteTokens
+        address voteToken
     );
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
 
     function initialize(
         address _governImplementation
     ) public initializer {
         __Ownable_init();
+
+        require(_governImplementation != address(0), "Govern implementation must not be null");
         governImplementation = _governImplementation;
     }
 
@@ -34,21 +39,19 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint duration,
         uint quorum,
         uint passThreshold,
-        uint[] calldata voteWeights,
-        address[] calldata voteTokens
+        address voteToken
     ) external {
         require(governMap[msg.sender][name] == address(0), "error");
-        require(voteWeights.length == voteTokens.length, "Vote weights, vote tokens length mismatch");
 
         ERC1967Proxy _govern = new ERC1967Proxy(governImplementation, "");
+        
         IGovern(payable(address(_govern))).initialize(
             msg.sender,
             name,
             duration,
             quorum,
             passThreshold,
-            voteWeights,
-            voteTokens
+            voteToken
         );
 
         governMap[msg.sender][name] = address(_govern);
@@ -57,8 +60,7 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             name,
             address(_govern),
             msg.sender,
-            voteWeights,
-            voteTokens
+            voteToken
         );
     }
 

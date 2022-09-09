@@ -8,8 +8,7 @@ contract MockGovern {
         uint _duration,
         uint _quorum,
         uint _passThreshold,
-        uint[] memory _voteWeights,
-        address[] memory _voteTokens
+        address voteToken
     ) public {
     }
 }
