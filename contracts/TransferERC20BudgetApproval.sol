@@ -19,7 +19,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     address public token;
     bool public allowAnyAmount;
     uint256 public totalAmount;
-    event execute(address to, address token, uint256 amount);
+    event Execute(address to, address token, uint256 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -73,7 +73,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         if(!_allowAnyAmount) {
             totalAmount = _totalAmount - value;
         }
-        emit execute(to, _token, value);
+        emit Execute(to, _token, value);
     }
 
     function _addToAddress(address to) internal {

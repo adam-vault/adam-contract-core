@@ -8,8 +8,6 @@ import "./dex/UniswapSwapper.sol";
 import "./lib/Constant.sol";
 
 import "./base/PriceResolver.sol";
-import "./interface/IDao.sol";
-import "./interface/IAdam.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
@@ -102,8 +100,9 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
 
     function _executeUniswapCall(uint256 transactionId, address to, bytes memory executeData, uint256 value) private {
         uint256 priceBefore = _fromTokensPrice();
+        address __executee = executee();
 
-        bytes memory response = IBudgetApprovalExecutee(executee()).executeByBudgetApproval(to, executeData, value);
+        bytes memory response = IBudgetApprovalExecutee(__executee).executeByBudgetApproval(to, executeData, value);
         MulticallData[] memory mDataArr = this.decodeUniswapMulticall(executeData, value, response);
 
         address[] storage _tokenIn = _tokenInOfTransaction[transactionId];
@@ -115,7 +114,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             require(mData.recipient == address(0) || 
                 mData.recipient == RECIPIENT_EXECUTEE || 
                 mData.recipient == RECIPIENT_UNISWAP_ROUTER || 
-                mData.recipient == executee(), "Recipient not whitelisted");
+                mData.recipient == __executee, "Recipient not whitelisted");
             
             if (mData.amountIn > 0) {
                 require(fromTokensMapping[mData.tokenIn], "Source token not whitelisted");
@@ -128,7 +127,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
                 emit ExecuteUniswapInTransaction(transactionId, Constant.UNISWAP_ROUTER, mData.tokenIn, mData.amountIn);
             }
 
-            if (mData.amountOut > 0 && (mData.recipient == RECIPIENT_EXECUTEE || mData.recipient == executee())) {
+            if (mData.amountOut > 0 && (mData.recipient == RECIPIENT_EXECUTEE || mData.recipient == _executee)) {
                 require(allowAllToTokens || toTokensMapping[mData.tokenOut], "Target token not whitelisted");
 
                 emit ExecuteUniswapOutTransaction(transactionId, Constant.UNISWAP_ROUTER, mData.tokenOut, mData.amountOut);

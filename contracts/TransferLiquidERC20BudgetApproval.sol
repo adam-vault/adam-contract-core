@@ -21,7 +21,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
     mapping(address => bool) public tokensMapping;
     bool public allowAnyAmount;
     uint256 public totalAmount;
-    event execute(address to, address token, uint256 amount);
+    event Execute(address to, address token, uint256 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -84,7 +84,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         if(!_allowAnyAmount) {
             totalAmount = _totalAmount - amountInBaseCurrency;
         }
-        emit execute(to, token, value);
+        emit Execute(to, token, value);
     }
 
     function _addToken(address token) internal {
@@ -100,8 +100,9 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         require(!addressesMapping[to], "Duplicated address in target address list");
         addressesMapping[to] = true;
         emit AllowAddress(to);
-
     }
 
-
+    function tokensLength() public view returns(uint256) {
+        return tokens.length;
+    }
 }
