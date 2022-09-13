@@ -18,7 +18,7 @@ jobs:
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
   sync-centralized-backend:
     name: Sync Centralized Backend
-    # needs: deploy-contracts
+    needs: deploy-contracts
     uses: ./.github/workflows/reusable-sync-centralized-backend.yml
     with:
       GIT_REF: ${{ github.ref_name }}
