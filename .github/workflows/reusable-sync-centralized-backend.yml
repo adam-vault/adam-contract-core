@@ -27,16 +27,16 @@ jobs:
           repository: ${{ github.repository_owner }}/adam-backend
           token: ${{ secrets.GH_PAT }}      
       
-      - name: Fetch Deployment Info
-        uses: actions/download-artifact@v3
-        with:
-          name: deploy_${{ env.GIT_REF }}
-          path: ${{ runner.temp }}/deployment
+      # - name: Fetch Deployment Info
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: deploy_${{ env.GIT_REF }}
+      #     path: ${{ runner.temp }}/deployment
 
-      - name: Replace ABIs
-        run: |
-          cp ${{ runner.temp }}/deployment/abis/machine/Dao.json \
-            ./abis
+      # - name: Replace ABIs
+      #   run: |
+      #     cp ${{ runner.temp }}/deployment/abis/machine/Dao.json \
+      #       ./abis
 
       - name: Replace Adam Address
         run: | 
