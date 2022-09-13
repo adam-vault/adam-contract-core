@@ -27,21 +27,21 @@ jobs:
           repository: ${{ github.repository_owner }}/adam-backend
           token: ${{ secrets.GH_PAT }}      
       
-      # - name: Fetch Deployment Info
-      #   uses: actions/download-artifact@v3
-      #   with:
-      #     name: deploy_${{ env.GIT_REF }}
-      #     path: ${{ runner.temp }}/deployment
+      - name: Fetch Deployment Info
+        uses: actions/download-artifact@v3
+        with:
+          name: deploy_${{ env.GIT_REF }}
+          path: ${{ runner.temp }}/deployment
 
-      # - name: Replace ABIs
-      #   run: |
-      #     cp ${{ runner.temp }}/deployment/abis/machine/Dao.json \
-      #       ./abis
+      - name: Replace ABIs
+        run: |
+          cp ${{ runner.temp }}/deployment/abis/machine/Dao.json \
+            ./abis
 
       - name: Replace Adam Address
         run: | 
-          ls -a &&
-          sed -i".bak" -e "s/0xbc874Ac1f95Ca461E890e7C1a562FD14b7A5d394/abcd/g" constants/adam.js
+          ADAM_ADDRESS=$(jq -s '.[0].addresses.adam' ${{ runner.temp }}/deployment/deploy-results/results.json) && 
+          sed -i".bak" -e "s/0xbc874Ac1f95Ca461E890e7C1a562FD14b7A5d394/$ADAM_ADDRESS/g" constants/adam.js
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
