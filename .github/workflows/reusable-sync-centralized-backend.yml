@@ -40,7 +40,7 @@ jobs:
 
       - name: Replace Adam Address
         run: | 
-          sed -i .bak -e "s/0xbc874Ac1f95Ca461E890e7C1a562FD14b7A5d394/abcd/g" constants/adam.js
+          sed -i ".bak" -e "s/0xbc874Ac1f95Ca461E890e7C1a562FD14b7A5d394/abcd/g" ./constants/adam.js
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
