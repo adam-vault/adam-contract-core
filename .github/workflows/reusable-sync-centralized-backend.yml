@@ -13,17 +13,18 @@ on:
 
 env:
   GIT_REF: ${{ inputs.GIT_REF }}
+  DEPLOY_ENV: ${{ inputs.DEPLOY_ENV }}
 
 jobs:
-  sync-subgraph-repo:
-    name: Syncrhonize with Discord Integration Repo
+  sync-centralized-backend-repo:
+    name: Syncrhonize with CBE Repo
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout Discord Integration
+      - name: Checkout CBE Repo
         uses: actions/checkout@v3
         with:
-          repository: ${{ github.repository_owner }}/adam-discord-integration
+          repository: ${{ github.repository_owner }}/adam-backend
           token: ${{ secrets.GH_PAT }}      
       
       - name: Fetch Deployment Info
@@ -34,10 +35,12 @@ jobs:
 
       - name: Replace ABIs
         run: |
-          cp ${{ runner.temp }}/deployment/abis/machine/GovernFactory.json \
-            ${{ runner.temp }}/deployment/abis/machine/Govern.json \
-            ${{ runner.temp }}/deployment/abis/machine/Dao.json \
-            ./src/Adam/abis
+          cp ${{ runner.temp }}/deployment/abis/machine/Dao.json \
+            ./abis
+
+      - name: Replace Adam Address
+        run: | 
+          sed -i .bak -e "s/0xbc874Ac1f95Ca461E890e7C1a562FD14b7A5d394/abcd/g" constants/adam.js
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
@@ -52,4 +55,5 @@ jobs:
 
           commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
           reviewers: |
-            eddy17c17c
+            ayame30
+            chikchoi6
