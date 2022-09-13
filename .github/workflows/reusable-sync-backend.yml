@@ -34,6 +34,7 @@ jobs:
           path: ${{ runner.temp }}/deployment
 
       - name: Replace ABIs
+        run: |
           cp ${{ runner.temp }}/deployment/abis/machine/Dao.json
             ./src/abis
 
