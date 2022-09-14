@@ -2,14 +2,17 @@ const { ethers } = require('hardhat');
 const { expect } = require('chai');
 const findEventArgs = require('../../utils/findEventArgs');
 
-const { createAdam, createFeedRegistry, createBudgetApprovals, createTokens } = require('../utils/createContract');
+const { createAdam, createBudgetApprovals, createTokens } = require('../utils/createContract');
 const { parseEther } = ethers.utils;
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 const paramsStruct = require('../../utils/paramsStruct');
 const { BigNumber } = require('ethers');
-describe('UniswapSwapper.sol', () => {
+
+const RECIPIENT_UNISWAP = '0x0000000000000000000000000000000000000002';
+
+describe.only('UniswapSwapper.sol', () => {
   let tokenA, feedRegistry, budgetApprovalAddresses, adam;
   let executor, contract;
 
@@ -179,7 +182,7 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 },
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 }] = await contract.decodeUniswapMulticall(data, 0, '0x');
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('60000000000000000'));
@@ -199,7 +202,7 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 },
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 }] = await contract.decodeUniswapMulticall(data, 0, '0x');
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('59278845877470570'));
@@ -282,7 +285,7 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 },
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 }] = await contract.decodeUniswapMulticall(data, 0, '0x');
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_DAI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('100000000000000000000'));
@@ -302,7 +305,7 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 },
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 }] = await contract.decodeUniswapMulticall(data, 0, '0x');
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('39458910193623'));
@@ -407,13 +410,13 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 },
           { tokenIn: tokenIn3, tokenOut: tokenOut3, amountIn: amountIn3, amountOut: amountOut3, recipient: recipient3 }] = await contract.decodeUniswapMulticall(data, 0, '0x');
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('1500000000000000'));
         expect(amountOut1).to.equal(BigNumber.from('4365832801460657'));
 
-        expect(recipient2).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient2).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn2).to.equal(ADDRESS_UNI);
         expect(tokenOut2).to.equal(ADDRESS_WETH);
         expect(amountIn2).to.equal(BigNumber.from('3500000000000000'));
@@ -434,13 +437,13 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 },
           { tokenIn: tokenIn3, tokenOut: tokenOut3, amountIn: amountIn3, amountOut: amountOut3, recipient: recipient3 }] = await contract.decodeUniswapMulticall(data, 0, '0x');
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('1255334330717177'));
         expect(amountOut1).to.equal(BigNumber.from('4500000000000000'));
 
-        expect(recipient2).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient2).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn2).to.equal(ADDRESS_WETH);
         expect(tokenOut2).to.equal(ADDRESS_UNI);
         expect(amountIn2).to.equal(BigNumber.from('2968521963877183'));
@@ -474,6 +477,9 @@ describe('UniswapSwapper.sol', () => {
         expect(tokenIn).to.equal(ADDRESS_WETH);
         expect(tokenOut).to.equal(ADDRESS_ETH);
         expect(amount).to.equal(parseEther('0.1'));
+      });
+      it('throws "Failed to decode Uniswap bytecode" when bytes not match deposit or withdraw', async () => {
+        await expect(contract.decodeWETH9Call('0x5ae401dc', 0)).to.be.revertedWith('Failed to decode Uniswap bytecode');
       });
     });
 
@@ -548,7 +554,7 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 },
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 }] = await contract.decodeUniswapMulticall(data, 0, mockEncodedResult);
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('60000000000000000'));
@@ -568,7 +574,7 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 },
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 }] = await contract.decodeUniswapMulticall(data, 0, mockEncodedResult);
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('100'));
@@ -653,7 +659,7 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 },
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 }] = await contract.decodeUniswapMulticall(data, 0, mockEncodedResult);
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_DAI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('100000000000000000000'));
@@ -673,7 +679,7 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn1, tokenOut: tokenOut1, amountIn: amountIn1, amountOut: amountOut1, recipient: recipient1 },
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 }] = await contract.decodeUniswapMulticall(data, 0, mockEncodedResult);
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('100'));
@@ -786,13 +792,13 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 },
           { tokenIn: tokenIn3, tokenOut: tokenOut3, amountIn: amountIn3, amountOut: amountOut3, recipient: recipient3 }] = await contract.decodeUniswapMulticall(data, 0, mockEncodedResult);
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('1500000000000000'));
         expect(amountOut1).to.equal(BigNumber.from('50'));
 
-        expect(recipient2).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient2).to.equal(RECIPIENT_UNISWAP);
         expect(amountIn2).to.equal(BigNumber.from('3500000000000000'));
         expect(amountOut2).to.equal(BigNumber.from('50'));
         expect(tokenIn2).to.equal(ADDRESS_UNI);
@@ -813,13 +819,13 @@ describe('UniswapSwapper.sol', () => {
           { tokenIn: tokenIn2, tokenOut: tokenOut2, amountIn: amountIn2, amountOut: amountOut2, recipient: recipient2 },
           { tokenIn: tokenIn3, tokenOut: tokenOut3, amountIn: amountIn3, amountOut: amountOut3, recipient: recipient3 }] = await contract.decodeUniswapMulticall(data, 0, mockEncodedResult);
 
-        expect(recipient1).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient1).to.equal(RECIPIENT_UNISWAP);
         expect(tokenIn1).to.equal(ADDRESS_UNI);
         expect(tokenOut1).to.equal(ADDRESS_WETH);
         expect(amountIn1).to.equal(BigNumber.from('50'));
         expect(amountOut1).to.equal(BigNumber.from('4500000000000000'));
 
-        expect(recipient2).to.equal('0x0000000000000000000000000000000000000002');
+        expect(recipient2).to.equal(RECIPIENT_UNISWAP);
         expect(amountIn2).to.equal(BigNumber.from('50'));
         expect(amountOut2).to.equal(parseEther('0.010500000000000000'));
         expect(tokenIn2).to.equal(ADDRESS_WETH);
@@ -830,6 +836,52 @@ describe('UniswapSwapper.sol', () => {
         expect(amountIn3).to.equal(parseEther('0'));
         expect(amountOut3).to.equal(parseEther('0.015'));
         expect(recipient3).to.equal('0xBfAA947b65A4350f14895980D0c8f420576fC163');
+      });
+      it('DAI => AVA', async () => {
+        const data = '0x5ae401dc00000000000000000000000000000000000000000000000000000000630d78780000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000320000000000000000000000000000000000000000000000000000000000000044000000000000000000000000000000000000000000000000000000000000005a00000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000000000000000086000000000000000000000000000000000000000000000000000000000000000e4472b43f3000000000000000000000000000000000000000000000002b5e3af16b18800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e404e45aaf000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4800000000000000000000000000000000000000000000000000000000000001f40000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000018650127cc3dc80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e404e45aaf000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb480000000000000000000000000000000000000000000000000000000000000bb8000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000001043561a882930000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000124b858183f0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000056bc75e2d6310000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000042c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000bb8dac17f958d2ee523a2206206994597c13d831ec7000064a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000124b858183f000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000002b5e3af16b188000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000042c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2000bb86b175474e89094c44da98b954eedeac495271d0f000064a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000124b858183f000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000002b5e3af16b188000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000042c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f42260fac5e5542a773aa44fbcfedf7c193bc2c599000bb8a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000064df2ab5bb000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000000000000000000000000000000001619766be8e0000000000000000000000003c01e0cdc9d7c3b548b4e6e6a558d78ea52c1f9e00000000000000000000000000000000000000000000000000000000';
+
+        const results = await contract.decodeUniswapMulticall(data, 0, '0x');
+        expect(results[0].recipient).to.equal(RECIPIENT_UNISWAP);
+        expect(results[0].tokenIn).to.equal('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2');
+        expect(results[0].tokenOut).to.equal('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48');
+        expect(results[0].amountIn).to.equal(BigNumber.from('50000000000000000000'));
+        expect(results[0].amountOut).to.equal(BigNumber.from('0'));
+
+        expect(results[1].recipient).to.equal(RECIPIENT_UNISWAP);
+        expect(results[1].tokenIn).to.equal('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2');
+        expect(results[1].tokenOut).to.equal('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48');
+        expect(results[1].amountIn).to.equal(BigNumber.from('450000000000000000000'));
+        expect(results[1].amountOut).to.equal(BigNumber.from('0'));
+
+        expect(results[2].recipient).to.equal(RECIPIENT_UNISWAP);
+        expect(results[2].tokenIn).to.equal('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2');
+        expect(results[2].tokenOut).to.equal('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48');
+        expect(results[2].amountIn).to.equal(BigNumber.from('300000000000000000000'));
+        expect(results[2].amountOut).to.equal(BigNumber.from('0'));
+
+        expect(results[3].recipient).to.equal(RECIPIENT_UNISWAP);
+        expect(results[3].tokenIn).to.equal('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2');
+        expect(results[3].tokenOut).to.equal('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48');
+        expect(results[3].amountIn).to.equal(BigNumber.from('100000000000000000000'));
+        expect(results[3].amountOut).to.equal(BigNumber.from('0'));
+
+        expect(results[4].recipient).to.equal(RECIPIENT_UNISWAP);
+        expect(results[4].tokenIn).to.equal('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2');
+        expect(results[4].tokenOut).to.equal('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48');
+        expect(results[4].amountIn).to.equal(BigNumber.from('50000000000000000000'));
+        expect(results[4].amountOut).to.equal(BigNumber.from('0'));
+
+        expect(results[5].recipient).to.equal(RECIPIENT_UNISWAP);
+        expect(results[5].tokenIn).to.equal('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2');
+        expect(results[5].tokenOut).to.equal('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48');
+        expect(results[5].amountIn).to.equal(BigNumber.from('50000000000000000000'));
+        expect(results[5].amountOut).to.equal(BigNumber.from('0'));
+
+        expect(results[6].recipient).to.equal('0x3c01e0cdc9d7c3b548B4e6E6a558D78eA52C1F9e');
+        expect(results[6].tokenIn).to.equal('0x0000000000000000000000000000000000000000');
+        expect(results[6].tokenOut).to.equal('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48');
+        expect(results[6].amountIn).to.equal(BigNumber.from('0'));
+        expect(results[6].amountOut).to.equal(BigNumber.from('1518663548558'));
       });
     });
   });
