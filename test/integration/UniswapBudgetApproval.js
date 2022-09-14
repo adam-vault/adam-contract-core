@@ -82,12 +82,10 @@ describe('UniswapBudgetApproval.sol', function () {
 
       budgetApproval = await ethers.getContractAt('UniswapBudgetApproval', budgetApprovalAddress);
 
-      expect(await budgetApproval.dao()).to.eq(executee.address);
+      expect(await budgetApproval.executee()).to.eq(executee.address);
       expect(await budgetApproval.executor()).to.eq(executor.address);
       expect(await budgetApproval.approversMapping(approver.address)).to.eq(true);
       expect(await budgetApproval.minApproval()).to.eq(1);
-
-      expect(await budgetApproval.allowAllAddresses()).to.eq(false);
 
       expect(await budgetApproval.fromTokens(0)).to.eq(ADDRESS_ETH);
       expect(await budgetApproval.fromTokens(1)).to.eq(ADDRESS_WETH);
@@ -148,7 +146,7 @@ describe('UniswapBudgetApproval.sol', function () {
           parseEther('10'),
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(parseEther('10'));
       });
@@ -164,7 +162,7 @@ describe('UniswapBudgetApproval.sol', function () {
           0,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(parseEther('0.9'));
       });
@@ -173,7 +171,7 @@ describe('UniswapBudgetApproval.sol', function () {
     context('ETH => tokenA', () => {
       it('executes', async function () {
         const functionCallData = uniswapRouter.interface.encodeFunctionData('exactOutputSingle', [[
-          ADDRESS_ETH,
+          ADDRESS_WETH,
           tokenA.address,
           0,
           executee.address,
@@ -193,7 +191,7 @@ describe('UniswapBudgetApproval.sol', function () {
           100,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await tokenA.balanceOf(executee.address)).to.eq(200);
       });
@@ -223,7 +221,7 @@ describe('UniswapBudgetApproval.sol', function () {
           callData,
           0,
         ]);
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect((await ethers.provider.getBalance(executee.address)).sub(originalBalance)).to.eq(100);
       });
@@ -254,7 +252,7 @@ describe('UniswapBudgetApproval.sol', function () {
           0,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await tokenA.balanceOf(executee.address)).to.eq(200);
       });
@@ -283,7 +281,7 @@ describe('UniswapBudgetApproval.sol', function () {
           callData,
           0,
         ]);
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(100);
       });

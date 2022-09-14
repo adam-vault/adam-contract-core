@@ -41,7 +41,6 @@ function getCreateDaoParams ({
 };
 
 function getCreateTransferERC20BAParams ({
-  dao,
   executor,
   executorTeamId,
   approvers,
@@ -59,12 +58,10 @@ function getCreateTransferERC20BAParams ({
   token = ethers.constants.AddressZero,
   allowAnyAmount,
   totalAmount = 0,
-  amountPercentage = '100',
   team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
-      dao,
       executor,
       executorTeamId,
       approvers,
@@ -84,14 +81,12 @@ function getCreateTransferERC20BAParams ({
     token,
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
-    amountPercentage,
   }).map(([key, value]) => {
     return value;
   });
 }
 
 function getCreateTransferLiquidErc20TokenBAParams ({
-  dao,
   executor,
   executorTeamId,
   approvers = [],
@@ -108,13 +103,11 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   tokens = [],
   allowAnyAmount,
   totalAmount = 0,
-  amountPercentage = 100,
   baseCurrency = ETH,
   team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
-      dao,
       executor,
       executorTeamId,
       approvers,
@@ -133,7 +126,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     tokens,
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
-    amountPercentage,
     baseCurrency,
   }).map(([key, value]) => {
     return value;
@@ -141,7 +133,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
 }
 
 function getCreateUniswapBAParams ({
-  dao,
   executor,
   executorTeamId,
   approvers,
@@ -164,7 +155,6 @@ function getCreateUniswapBAParams ({
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
-      dao,
       executor,
       executorTeamId,
       approvers,
@@ -191,7 +181,6 @@ function getCreateUniswapBAParams ({
 }
 
 function getCreateTransferERC721BAParams ({
-  dao,
   executor,
   executorTeamId,
   approvers,
@@ -213,7 +202,6 @@ function getCreateTransferERC721BAParams ({
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
-      dao,
       executor,
       executorTeamId,
       approvers,
@@ -239,7 +227,6 @@ function getCreateTransferERC721BAParams ({
 }
 
 function getCreateCommonBudgetApprovalParams ({
-  dao,
   executor = ethers.constants.AddressZero,
   executorTeamId = 0,
   approvers = [],
@@ -254,7 +241,6 @@ function getCreateCommonBudgetApprovalParams ({
   team = ethers.constants.AddressZero,
 }) {
   return Object.entries({
-    dao,
     executor,
     executorTeamId,
     approvers,

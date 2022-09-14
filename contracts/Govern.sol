@@ -1,23 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.2;
+pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/governance/GovernorUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/TimersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
 import "./lib/Constant.sol";
-
-import "hardhat/console.sol";
 
 contract Govern is
     Initializable, UUPSUpgradeable, GovernorUpgradeable
 {
-    using SafeCastUpgradeable for uint256;
-    using TimersUpgradeable for TimersUpgradeable.BlockNumber;
 
     enum VoteType {
         Against,
@@ -36,15 +28,17 @@ contract Govern is
     uint public duration;
     uint public quorumThreshold;
     uint public passThreshold;
-    uint[] public voteWeights;
-    address[] public voteTokens;
+    address public voteToken;
     mapping(uint256 => ProposalVote) private _proposalVotes;
-
-    event AddVoteToken(address token, uint weight);
 
     modifier onlyOwner {
         require(msg.sender == owner, "Access denied");
         _;
+    }
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
     }
 
     function initialize(
@@ -53,9 +47,12 @@ contract Govern is
         uint _duration,
         uint _quorum,
         uint _passThreshold,
-        uint[] memory _voteWeights,
-        address[] memory _voteTokens
-    ) public initializer {
+        address _voteToken
+    ) external initializer {
+        require(_isVotableToken(_voteToken),"Govern Token without voting function");
+        require(_owner != address(0),"Owner cannot be empty");
+        require(_voteToken != address(0),"VoteToken cannot be empty");
+
         __Governor_init(_name);
 
         owner = _owner;
@@ -63,11 +60,10 @@ contract Govern is
         duration = _duration;
         quorumThreshold = _quorum; //expecting 2 decimals (i.e. 1000 = 10%)
         passThreshold = _passThreshold; //expecting 2 decimals (i.e. 250 = 2.5%)
-        voteWeights = _voteWeights;
-        voteTokens = _voteTokens;
+        voteToken = _voteToken;
     }
 
-    function getProposalVote(uint256 proposalId, uint8 support) public view returns (uint256) {
+    function getProposalVote(uint256 proposalId, uint8 support) external view returns (uint256) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
         
         if (support == uint8(VoteType.Against)) {
@@ -101,50 +97,28 @@ contract Govern is
         return _proposalVotes[proposalId].hasVoted[account];
     }
 
-    function getVotes(address account, uint256 blockNumber) public view override returns (uint256) {
-        uint256 totalVotes = 0;
-
-        for(uint i=0; i < voteTokens.length; i++) {
-            uint accountVotes = VotesUpgradeable(voteTokens[i]).getPastVotes(account, blockNumber);
-
-            totalVotes = totalVotes + accountVotes * voteWeights[i];
-        }
-
-        return totalVotes;
+    function _getVotes(
+        address account,
+        uint256 blockNumber,
+        bytes memory // params
+    ) internal view override returns (uint256) {
+      return VotesUpgradeable(voteToken).getPastVotes(account, blockNumber);
     }
 
     function quorum(uint256 blockNumber) public view override returns (uint256) {
-        return totalPastSupply(blockNumber) * (quorumThreshold / 100);
+        return totalPastSupply(blockNumber) * (quorumThreshold / 10000);
     }
 
     function totalPastSupply(uint256 blockNumber) public view returns (uint256) {
-        uint256 sum = 0;
-
-        for(uint256 i=0; i<voteTokens.length; i++) {
-            uint accountSupply = VotesUpgradeable(voteTokens[i]).getPastTotalSupply(blockNumber);
-            sum = sum + accountSupply;
-        } 
-
-        return sum;
+        return VotesUpgradeable(voteToken).getPastTotalSupply(blockNumber);
     }
 
-    function quorumReached(uint256 proposalId) public view returns (bool) {
+    function quorumReached(uint256 proposalId) external view returns (bool) {
         return _quorumReached(proposalId);
     }
 
-    function voteSucceeded(uint256 proposalId) public view returns (bool) {
+    function voteSucceeded(uint256 proposalId) external view returns (bool) {
         return _voteSucceeded(proposalId);
-    }
-
-    function addVoteToken(address token, uint weight) public onlyOwner {
-        for(uint256 i=0; i <voteTokens.length; i++) {
-            require(voteTokens[i] != token, "Token already in list");
-        }
-
-        voteTokens.push(token);
-        voteWeights.push(weight);
-
-        emit AddVoteToken(token, weight);
     }
 
     function execute(
@@ -164,7 +138,8 @@ contract Govern is
         uint256 proposalId,
         address account,
         uint8 support,
-        uint256 weight
+        uint256 weight,
+        bytes memory // params
     ) internal override {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
 
@@ -184,15 +159,32 @@ contract Govern is
 
     function _quorumReached(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
-        uint countedVotes = proposalvote.forVotes + proposalvote.abstainVotes;
+        uint countedVotes = proposalvote.forVotes + proposalvote.againstVotes;
 
-        return quorum(proposalSnapshot(proposalId)) <= countedVotes * 100;
+        return quorum(proposalSnapshot(proposalId)) <= countedVotes;
     }
 
     function _voteSucceeded(uint256 proposalId) internal view override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
-        uint totalVotes = proposalvote.forVotes + proposalvote.againstVotes;
-        return (proposalvote.forVotes * 100) >= totalVotes * passThreshold / 100;
+        uint _forVotes = proposalvote.forVotes;
+        uint totalVotes = _forVotes + proposalvote.againstVotes;
+        return totalVotes == 0 ? false : (_forVotes * 100 * 100) >= totalVotes * passThreshold;
     }
+
+    function _isVotableToken(address _voteToken) internal view  returns (bool) {
+        try IVotesUpgradeable(_voteToken).getPastTotalSupply( 0 ) {
+        } catch {
+            return false;
+        }
+
+        try IVotesUpgradeable(_voteToken).getPastVotes(address(this), 0 ) {
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     function _authorizeUpgrade(address) internal view override onlyOwner {}
+
+    uint256[50] private __gap;
 }

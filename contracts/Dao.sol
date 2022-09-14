@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
@@ -19,13 +18,10 @@ import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IMemberToken.sol";
-import "./interface/IBudgetApprovalExecutee.sol";
 import "./interface/ITeam.sol";
 
 import "./lib/Concat.sol";
 import "./lib/InterfaceChecker.sol";
-
-import "hardhat/console.sol";
 
 contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
@@ -63,6 +59,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     struct AdmissionTokenSetting{
         uint256 minTokenToAdmit;
         uint256 tokenId;
+        bool active;
     }
 
     struct DaoSetting {
@@ -101,8 +98,26 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
     event CreateMember(address account, uint256 depositAmount);
     event Deposit(address account, uint256 amount);
+    event UpdateDaoSetting(uint256 minDepositAmount);
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
 
     function initialize(InitializeParams calldata params) public initializer {
+        require( 
+            address(params._creator) != address(0)
+            && address(params._membership) != address(0)
+            && address(params._liquidPool) != address(0)
+            && address(params._governFactory) != address(0)
+            && address(params._team) != address(0)
+            && address(params._memberTokenImplementation) != address(0)
+            && address(params.baseCurrency) != address(0)
+        , "Invaild Dao Setting");
+
+        ___BudgetApprovalExecutee_init(params._team);
+
         adam = msg.sender;
         creator = params._creator;
         membership = params._membership;
@@ -110,7 +125,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         name = params._name;
         locktime = params._locktime;
         governFactory = params._governFactory;
-        team = params._team;
         minDepositAmount = params.daoSetting.minDepositAmount;
         baseCurrency = params.baseCurrency;
         logoCID = params.logoCID;
@@ -120,20 +134,16 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             _createMemberToken(params._memberTokenImplementation, params.tokenInfo, params.tokenAmount);
         }
 
-        uint256[] memory w = new uint256[](1);
-        w[0] = 1;
-        // CAUTION: if later on support create govern with multi token, also need to add VoteType
         _createGovern(
             "General",
             params.generalGovernSetting[0],
             params.generalGovernSetting[1],
             params.generalGovernSetting[2],
-            w,
             params.generalGovernSetting[3]
         );
 
         _setAdmissionToken(params.admissionTokens);
-        _mintMember(creator);
+        _mintMember(params._creator);
         _addAssets(params.depositTokens);
 
     }
@@ -180,6 +190,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function updateDaoSetting(DaoSetting calldata _setting) public onlyGovern("General") {
         minDepositAmount = _setting.minDepositAmount;
+        emit UpdateDaoSetting(_setting.minDepositAmount);
     }
 
     function createGovern(
@@ -187,38 +198,32 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         uint duration,
         uint quorum,
         uint passThreshold,
-        uint[] calldata voteWeights,
         uint voteToken
-    ) public onlyGovern("Govern") {
+    ) public onlyGovern("General") {
         _createGovern(
             _name,
             duration,
             quorum,
             passThreshold,
-            voteWeights,
             voteToken
         );
     }
 
-    function getVoteTypeValues(VoteType voteType) internal view returns (address[] memory) {
+    function getVoteTypeValues(VoteType voteType) internal view returns (address) {
+        address _membership = membership;
+        address _memberToken = memberToken;
         if (VoteType.Membership == voteType) {
-            if (address(membership) == address(0)) {
+            if (address(_membership) == address(0)) {
                 revert("Membership not yet initialized");
             }
-
-            address[] memory values = new address[](1);
-            values[0] = address(membership);
-            return values;
+            return address(_membership);
         }
 
         if (VoteType.MemberToken == voteType) {
-            if (address(memberToken) == address(0)) {
+            if (address(_memberToken) == address(0)) {
                 revert("MemberToken not yet initialized");
             }
-
-            address[] memory values = new address[](1);
-            values[0] = address(memberToken);
-            return values;
+            return address(_memberToken);
         }
 
         if (VoteType.Other == voteType) {
@@ -237,34 +242,42 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("General") {
-      uint256 id = ITeam(team).addTeam(title, minter, members, description);
+      uint256 id = ITeam(team()).addTeam(title, minter, members, description);
       teamWhitelist[id] = true;
 
       emit WhitelistTeam(id);
     }
 
     function _createMemberToken(address memberTokenImplementation, string[] calldata tokenInfo, uint tokenAmount) internal {
+        
         require(memberToken == address(0), "Member token already initialized");
         require(tokenInfo.length == 2, "Insufficient info to create member token");
 
-        ERC1967Proxy _memberToken = new ERC1967Proxy(memberTokenImplementation, "");
-        memberToken = address(_memberToken);
-        IMemberToken(memberToken).initialize(address(this), tokenInfo[0], tokenInfo[1]);
-        _addAsset(memberToken);
+        ERC1967Proxy _memberTokenContract = new ERC1967Proxy(memberTokenImplementation, "");
+        address _memberToken = address(_memberTokenContract);
+        memberToken = _memberToken;
+        IMemberToken(_memberToken).initialize(address(this), tokenInfo[0], tokenInfo[1]);
+        _addAsset(_memberToken);
         _mintMemberToken(tokenAmount);
 
-        emit CreateMemberToken(msg.sender, memberToken);
+        emit CreateMemberToken(msg.sender, _memberToken);
     }
 
     function _setAdmissionToken( AdmissionToken[] memory _admissionTokens) internal {
+        address _memberToken = memberToken;
+
         require(_admissionTokens.length <= 3, "Admission Token length too long." );
         for(uint i = 0 ; i < _admissionTokens.length ; i++){
-            address tokenAddress = _admissionTokens[i].isMemberToken ? memberToken : _admissionTokens[i].token;
+            address tokenAddress = _admissionTokens[i].isMemberToken ? _memberToken : _admissionTokens[i].token;
+            
+            require(admissionTokenSetting[tokenAddress].active == false, "Admission Token existed");      // not exist before 
             require(tokenAddress.isContract(), "Admission Token not Support!");
+
             admissionTokens.push(tokenAddress);
             admissionTokenSetting[tokenAddress] = AdmissionTokenSetting(
                 _admissionTokens[i].minTokenToAdmit,
-                _admissionTokens[i].tokenId
+                _admissionTokens[i].tokenId,
+                true
             );
 
             emit AddAdmissionToken(
@@ -277,9 +290,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
 
     function isPassAdmissionToken(address account) public view returns (bool){
-        for (uint i = 0; i < admissionTokens.length; i++){
+        uint _admissionTokenLength = admissionTokens.length;
+        for (uint i = 0; i < _admissionTokenLength; i++){
             address token = admissionTokens[i];
-            if(admissionTokenSetting[token].minTokenToAdmit > 0 ){
+            uint256 _minTokenToAdmit = admissionTokenSetting[token].minTokenToAdmit;
+
+            if(_minTokenToAdmit > 0 ){
                 uint256 balance;
                 if(token.isERC721()){
                     balance = IERC721(token).balanceOf(account);
@@ -288,7 +304,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
                 }else if(token.isERC20()){
                     balance = IERC20(token).balanceOf(account);
                 }
-                if(balance < admissionTokenSetting[token].minTokenToAdmit){
+                if(balance < _minTokenToAdmit){
                     return false;
                 }
             }
@@ -316,28 +332,31 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         uint duration,
         uint quorum,
         uint passThreshold,
-        uint[] memory voteWeights,
         uint voteToken
     ) internal {
-        address[] memory _voteTokens = getVoteTypeValues(VoteType(voteToken));
+        address _voteToken = getVoteTypeValues(VoteType(voteToken));
         IGovernFactory(governFactory).createGovern(
             _name,
             duration,
             quorum,
             passThreshold,
-            voteWeights,
-            _voteTokens
+            _voteToken
         );
     }
 
     function _mintMemberToken(uint amount) internal {
-        IMemberToken(address(memberToken)).mint(address(this), amount);
+        address _memberToken = memberToken;
+        require(address(_memberToken) != address(0), "Member Token not Exist.");
+        IMemberToken(address(_memberToken)).mint(address(this), amount);
     }
     function _transferMemberToken(address to, uint amount) internal {
-        IMemberToken(address(memberToken)).transfer(to, amount);
+        address _memberToken = memberToken;
+        require(address(_memberToken) != address(0), "Member Token not Exist.");
+        IMemberToken(address(_memberToken)).transfer(to, amount);
     }
     function _addAssets(address[] memory erc20s) internal {
         for (uint256 i = 0; i < erc20s.length; i++) {
+            require(address(erc20s[i]) != address(0), "Not Supported ERC20 Token");
             _addAsset(erc20s[i]);
         }
     }
@@ -348,6 +367,11 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     function _mintMember(address owner) internal {
         IMembership(membership).createMember(owner);
     }
+
+    function admissionTokensLength() external view returns(uint256) {
+        return admissionTokens.length;
+    }
+
     function _authorizeUpgrade(address) internal view override onlyGovern("General") {}
 
     function upgradeImplementations(address[] calldata targets, address[] calldata newImplementations) public onlyGovern("General") {
@@ -367,4 +391,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         emit Deposit(msg.sender, msg.value);
       }
     }
+
+    uint256[50] private __gap;
 }

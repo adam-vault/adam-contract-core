@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.0;
+pragma solidity 0.8.7;
 
 import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import { IERC1155 } from "@openzeppelin/contracts/interfaces/IERC1155.sol";
@@ -22,6 +22,8 @@ library InterfaceChecker {
         }
     }
     function isERC20(address check) internal view returns(bool) {
+        if (isERC721(check)) { return false; }
+
         try IERC20(check).balanceOf(address(0)) returns (uint256) {
             return true;
         } catch {

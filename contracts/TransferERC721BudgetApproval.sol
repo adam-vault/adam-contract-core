@@ -4,7 +4,6 @@ pragma solidity 0.8.7;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
 
@@ -20,6 +19,12 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
     mapping(address => bool) public tokensMapping;
     bool public allowAnyAmount;
     uint256 public totalAmount;
+    event ExecuteTransferERC721Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 tokenId);
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
 
     function initialize(
         InitializeParams calldata params,
@@ -29,7 +34,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         address[] memory _tokens,
         bool _allowAnyAmount,
         uint256 _totalAmount
-    ) public initializer {
+    ) external initializer {
         __BudgetApproval_init(params);
         
         allowAllAddresses = _allowAllAddresses;
@@ -46,7 +51,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         totalAmount = _totalAmount;
     }
 
-    function executeParams() public pure override returns (string[] memory) {
+    function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address token";
         arr[1] = "address to";
@@ -55,13 +60,14 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
     }
 
     function _execute(
-        uint256, 
+        uint256 transactionId, 
         bytes memory data
     ) internal override {
         (address token, address to, uint256 tokenId) = abi.decode(data,(address, address, uint256));
+        address __executee = executee();
 
-        bytes memory executeData = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", executee, to, tokenId);
-        IBudgetApprovalExecutee(executee).executeByBudgetApproval(token, executeData, 0);
+        bytes memory executeData = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", __executee, to, tokenId);
+        IBudgetApprovalExecutee(__executee).executeByBudgetApproval(token, executeData, 0);
 
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(allowAllTokens || tokensMapping[token], "Token not whitelisted in budget");
@@ -70,6 +76,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         if(!allowAnyAmount) {
             totalAmount -= 1;
         }
+        emit ExecuteTransferERC721Transaction(transactionId, msg.sender, to, token, tokenId);
     }
     function _addToken(address token) internal {
         require(!tokensMapping[token], "Duplicated Item in source token list");
@@ -84,4 +91,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         emit AllowAddress(to);
     }
 
+    function tokensLength() public view returns(uint256) {
+        return tokens.length;
+    }
 }

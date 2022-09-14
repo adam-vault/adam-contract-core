@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "./lib/Base64.sol";
 import "./lib/ToString.sol";
 import "./lib/Concat.sol";
-import "hardhat/console.sol";
 
 contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     using Counters for Counters.Counter;
@@ -34,21 +33,28 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         _;
     }
 
-    function initialize(address _dao, string memory _name, uint256 _maxMemberLimit) public initializer
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
+
+    function initialize(address _dao, string memory _name, uint256 _maxMemberLimit) external initializer
     {
+        __EIP712_init(_name.concat(" Membership"), "1");
         __ERC721_init(_name.concat(" Membership"), "MS");
         dao = payable(_dao);
         maxMemberLimit = _maxMemberLimit;
     }
 
-    function createMember(address to) public {
-        require(msg.sender == dao, "access denied");
-        require(totalSupply < maxMemberLimit, "member count exceed limit");
+    function createMember(address to) external onlyDao {
+        uint256 _totalSupply = totalSupply;
+        require(!isMember[to], "Member already created");
+        require(_totalSupply < maxMemberLimit, "member count exceed limit");
 
         _tokenIds.increment();
         uint256 newId = _tokenIds.current();
         _safeMint(to, newId, "");
-        totalSupply++;
+        totalSupply = _totalSupply + 1;
         isMember[to] = true;
 
         emit CreateMember(to);
@@ -73,11 +79,12 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     function _beforeTokenTransfer(
       address from,
       address to,
-      uint256
-    ) internal pure override {
+      uint256 tokenId
+    ) internal override {
         if (from != address(0) && to != address(0)) {
 		    revert("Membership: Transfer of membership is aboundand");
-		} 
+		}
+        super._beforeTokenTransfer(from, to, tokenId); 
     }
 
     function _afterTokenTransfer(
@@ -94,4 +101,6 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     }
 
     function _authorizeUpgrade(address) internal view override onlyDao {}
+
+    uint256[50] private __gap;
 }

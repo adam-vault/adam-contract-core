@@ -8,8 +8,6 @@ import "./dex/UniswapSwapper.sol";
 import "./lib/Constant.sol";
 
 import "./base/PriceResolver.sol";
-import "./interface/IDao.sol";
-import "./interface/IAdam.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
@@ -17,11 +15,12 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     using BytesLib for bytes;
 
     event AllowToToken(address token);
-    event ExecuteUniswapTransaction(uint256 id, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address toAddress);
+    event ExecuteUniswapInTransaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount);
+    event ExecuteUniswapOutTransaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount);
+    event ExecuteWETH9Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address tokenIn, address tokenOut, uint256 amount);
 
     string public constant override name = "Uniswap Budget Approval";
 
-    bool public allowAllAddresses;
     address[] public fromTokens;
     mapping(address => bool) public fromTokensMapping;
     bool public allowAnyAmount;
@@ -29,6 +28,14 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
     uint8 public amountPercentage;
     bool public allowAllToTokens;
     mapping(address => bool) public toTokensMapping;
+
+    mapping(uint256 => mapping(address => uint256)) private _tokenInAmountOfTransaction;
+    mapping(uint256 => address[]) private _tokenInOfTransaction;
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+      _disableInitializers();
+    }
 
     function initialize(
         InitializeParams calldata params,
@@ -39,7 +46,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         uint256 _totalAmount,
         uint8 _amountPercentage,
         address _baseCurrency
-    ) public initializer {
+    ) external initializer {
         __BudgetApproval_init(params);
         
         for(uint i = 0; i < _fromTokens.length; i++) {
@@ -61,14 +68,18 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
 
     function afterInitialized() external override onlyExecutee {
         bytes memory data = abi.encodeWithSignature("approve(address,uint256)", Constant.UNISWAP_ROUTER, type(uint256).max);
+        address _executee = executee();
+
         for(uint i = 0; i < fromTokens.length; i++) {
-            if(fromTokens[i] != ETH_ADDRESS) {
-                IBudgetApprovalExecutee(executee).executeByBudgetApproval(fromTokens[i], data, 0);
+            address _fromToken = fromTokens[i];
+
+            if(_fromToken != Denominations.ETH) {
+                IBudgetApprovalExecutee(_executee).executeByBudgetApproval(_fromToken, data, 0);
             }
         }
     }
 
-    function executeParams() public pure override returns (string[] memory) {
+    function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address to";
         arr[1] = "bytes data";
@@ -81,66 +92,122 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         bytes memory data
     ) internal override {
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
-        require(to == Constant.UNISWAP_ROUTER || to == Constant.WETH_ADDRESS, "Invalid Uniswap address or WETH address");
+        
+        if (to == Constant.UNISWAP_ROUTER) {
+            _executeUniswapCall(transactionId, to, executeData, value);
+        } else if (to == WETH9()) {
+            _executeWETH9Call(transactionId, to, executeData, value);
+        } else {
+            revert("Invalid target address");
+        }
+    }
 
-        uint256 totalBalanceBeforeExecute = totalBalanceInBaseCurrency();
+    function _executeUniswapCall(uint256 transactionId, address to, bytes memory executeData, uint256 value) private {
+        uint256 priceBefore = _fromTokensPrice();
+        address __executee = executee();
 
-        bytes memory result = IBudgetApprovalExecutee(executee).executeByBudgetApproval(to, executeData, value);
+        bytes memory response = IBudgetApprovalExecutee(__executee).executeByBudgetApproval(to, executeData, value);
+        MulticallData[] memory mDataArr = this.decodeUniswapMulticall(executeData, value, response);
 
+        address[] storage _tokenIn = _tokenInOfTransaction[transactionId];
+        mapping(address => uint256) storage _tokenInAmount = _tokenInAmountOfTransaction[transactionId];
+
+        for (uint i = 0; i < mDataArr.length; i++) {
+            MulticallData memory mData = mDataArr[i];
+
+            require(mData.recipient == address(0) || 
+                mData.recipient == RECIPIENT_EXECUTEE || 
+                mData.recipient == RECIPIENT_UNISWAP_ROUTER || 
+                mData.recipient == __executee, "Recipient not whitelisted");
+            
+            if (mData.amountIn > 0) {
+                require(fromTokensMapping[mData.tokenIn], "Source token not whitelisted");
+
+                if (_tokenInAmount[mData.tokenIn] == 0) {
+                    _tokenIn.push(mData.tokenIn);
+                }
+                _tokenInAmount[mData.tokenIn] += mData.amountIn;
+
+                emit ExecuteUniswapInTransaction(transactionId, msg.sender, Constant.UNISWAP_ROUTER, mData.tokenIn, mData.amountIn);
+            }
+
+            if (mData.amountOut > 0 && (mData.recipient == RECIPIENT_EXECUTEE || mData.recipient == __executee)) {
+                require(allowAllToTokens || toTokensMapping[mData.tokenOut], "Target token not whitelisted");
+
+                emit ExecuteUniswapOutTransaction(transactionId, msg.sender, Constant.UNISWAP_ROUTER, mData.tokenOut, mData.amountOut);
+            }
+        }
+
+        if (!allowAnyAmount || amountPercentage < 100) {
+            uint256 amountInPrice;
+
+            for (uint i = 0; i < _tokenIn.length; i++) {
+                address tokenIn = _tokenIn[i];
+                amountInPrice += assetBaseCurrencyPrice(tokenIn, _tokenInAmount[tokenIn]);
+            }
+            require(allowAnyAmount || amountInPrice <= totalAmount, "Exceeded max amount");
+            require(_checkAmountPercentageValid(priceBefore, amountInPrice), "Exceeded percentage");     
+                        
+            if(!allowAnyAmount) {
+                totalAmount -= amountInPrice;
+            }           
+        }
+
+    }
+
+    function _executeWETH9Call(uint256 transactionId, address to, bytes memory executeData, uint256 value) private {
+        uint256 priceBefore = _fromTokensPrice();
+
+        IBudgetApprovalExecutee(executee()).executeByBudgetApproval(to, executeData, value);
         (
             address tokenIn,
             address tokenOut,
-            uint256 amountIn,
-            uint256 amountOut,
-            bool estimatedIn,
-            bool estimatedOut
-        ) = UniswapSwapper.decodeUniswapDataAfterSwap(to, executeData, value, result);
+            uint256 amount
+        ) = this.decodeWETH9Call(executeData, value);
 
-        uint256 amountInBaseCurrency = assetBaseCurrencyPrice(tokenIn, amountIn);
-
-        require(!estimatedIn && !estimatedOut, "Unexpected swap result from Uniswap");
-
-        require(fromTokensMapping[tokenIn], "Source token not whitelisted in budget");
-        require(allowAllToTokens || toTokensMapping[tokenOut], "Target token not whitelisted in budget");
-        require(allowAnyAmount || amountInBaseCurrency <= totalAmount, "Exceeded max budget transferable amount");
-        require(checkAmountPercentageValid(totalBalanceBeforeExecute, amountInBaseCurrency), "Exceeded max budget transferable percentage");
-
-
+        uint256 amountInPrice = assetBaseCurrencyPrice(tokenIn, amount);
+        require(fromTokensMapping[tokenIn], "Source token not whitelisted");
+        require(allowAllToTokens || toTokensMapping[tokenOut], "Target token not whitelisted");
+        require(allowAnyAmount || amountInPrice <= totalAmount, "Exceeded max amount");
+        require(_checkAmountPercentageValid(priceBefore, amountInPrice), "Exceeded percentage");
+        
         if(!allowAnyAmount) {
-            totalAmount -= amountInBaseCurrency;
+            totalAmount -= amountInPrice;
         }
 
-        emit ExecuteUniswapTransaction(transactionId, tokenIn, tokenOut, amountIn, amountOut, Constant.UNISWAP_ROUTER);
+        emit ExecuteWETH9Transaction(transactionId, msg.sender, WETH9(), tokenIn, tokenOut, amount);
     }
 
-    function totalBalanceInBaseCurrency() internal view returns (uint256 totalBalance) {
+    function _fromTokensPrice() private view returns (uint256 totalBalance) {
         for (uint i = 0; i < fromTokens.length; i++) {
             if (fromTokens[i] == Denominations.ETH) {
-                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, executee.balance);
+                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, executee().balance);
             } else {
-                totalBalance += assetBaseCurrencyPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee));
+                totalBalance += assetBaseCurrencyPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee()));
             }
         }
     }
 
-    function checkAmountPercentageValid(uint256 totalBalance, uint256 amount) internal view returns (bool) {
-        if (amountPercentage == 100) return true;
+    function _checkAmountPercentageValid(uint256 totalBalance, uint256 amount) private view returns (bool) {
+        uint8 _amountPercentage = amountPercentage;
+
+        if (_amountPercentage == 100) return true;
 
         if (totalBalance == 0) return false;
 
-        return amount <= totalBalance * amountPercentage / 100;
+        return amount <= totalBalance * _amountPercentage / 100;
     }
 
-    function _addFromToken(address token) internal {
-        require(!fromTokensMapping[token], "Duplicated Item in source token list.");
-        require(canResolvePrice(token), "Unresolvable token in source token list.");
+    function _addFromToken(address token) private {
+        require(!fromTokensMapping[token], "Duplicated token");
+        require(canResolvePrice(token), "Unresolvable token");
         fromTokens.push(token);
         fromTokensMapping[token] = true;
         emit AllowToken(token);
     }
 
-    function _addToToken(address token) internal {
-        require(!toTokensMapping[token], "Duplicated token in target token list");
+    function _addToToken(address token) private {
+        require(!toTokensMapping[token], "Duplicated token");
         toTokensMapping[token] = true;
         emit AllowToToken(token);
     }
