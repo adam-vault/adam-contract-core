@@ -40,8 +40,8 @@ jobs:
 
       - name: Replace Adam Address
         run: | 
-          ADAM_ADDRESS=$(jq -s '.[0].addresses.adam' ${{ runner.temp }}/deployment/deploy-results/results.json) && 
-          sed -i".bak" -e "s/0xbc874Ac1f95Ca461E890e7C1a562FD14b7A5d394/$ADAM_ADDRESS/g" constants/adam.js
+          echo $(jq -s '.[0].address = .[1].addresses.adam | .[0]' \
+            config/${{ env.DEPLOY_ENV }}.json ${{ runner.temp }}/deployment/deploy-results/results.json) > config/${{ env.DEPLOY_ENV }}.json
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
