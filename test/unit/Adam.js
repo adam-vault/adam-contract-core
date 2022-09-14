@@ -67,6 +67,30 @@ describe('Adam.sol', function () {
       ], { kind: 'uups' });
       await expect(tx).to.be.revertedWith('budget approval already whitelisted');
     });
+    it('throws "governFactory is null" if address zero is set as governFactory', async () => {
+      const tx = upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        [],
+        ethers.constants.AddressZero,
+        team.address,
+      ], { kind: 'uups' });
+      await expect(tx).to.be.revertedWith('governFactory is null');
+    });
+    it('throws "team is null" if address zero is set as team', async () => {
+      const tx = upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        [],
+        governFactory.address,
+        ethers.constants.AddressZero,
+      ], { kind: 'uups' });
+      await expect(tx).to.be.revertedWith('team is null');
+    });
   });
 
   describe('upgradeTo()', function () {
@@ -135,6 +159,10 @@ describe('Adam.sol', function () {
         budgetApproval.address,
       ]);
       await expect(tx).to.be.revertedWith('budget approval already whitelisted');
+    });
+    it('throws "budget approval is null" if address zero is set', async () => {
+      const tx = adam.whitelistBudgetApprovals([ethers.constants.AddressZero]);
+      await expect(tx).to.be.revertedWith('budget approval is null');
     });
     it('throws "Ownable: caller is not the owner" if not called by deployer', async () => {
       const tx = adam.connect(unknown).whitelistBudgetApprovals([]);
@@ -303,7 +331,7 @@ describe('Adam.sol', function () {
       expect(result1).to.be.not.eq(result2);
     });
   });
-  describe('versionUpgrade()', async function () {
+  describe('upgradeImplementations()', async function () {
     let adam;
 
     beforeEach(async function () {
@@ -371,6 +399,40 @@ describe('Adam.sol', function () {
         'v2',
       );
       await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+    it('throws "Impl is null" if impl address zero is set', async () => {
+      await expect(adam.upgradeImplementations(
+        ethers.constants.AddressZero,
+        newMembership.address,
+        newLiquidPool.address,
+        newMemberToken.address,
+        newGovern.address,
+        'v2',
+      )).to.be.revertedWith('daoImpl is null');
+      await expect(adam.upgradeImplementations(
+        newDao.address,
+        ethers.constants.AddressZero,
+        newLiquidPool.address,
+        newMemberToken.address,
+        newGovern.address,
+        'v2',
+      )).to.be.revertedWith('membershipImpl is null');
+      await expect(adam.upgradeImplementations(
+        newDao.address,
+        newMembership.address,
+        ethers.constants.AddressZero,
+        newMemberToken.address,
+        newGovern.address,
+        'v2',
+      )).to.be.revertedWith('liquidPoolImpl is null');
+      await expect(adam.upgradeImplementations(
+        newDao.address,
+        newMembership.address,
+        newLiquidPool.address,
+        ethers.constants.AddressZero,
+        newGovern.address,
+        'v2',
+      )).to.be.revertedWith('memberTokenImpl is null');
     });
   });
 });
