@@ -97,4 +97,14 @@ describe('MemberToken.sol', function () {
       await expect(memberToken.connect(member).delegate(minter.address)).to.be.revertedWith('Not support delegate Vote');
     });
   });
+  describe('delegateBySig', function () {
+    it('delegateBySig fail for Member Token', async function () {
+      await memberToken.connect(minter).mint(member.address, 10);
+      await expect(
+        memberToken
+          .connect(member)
+          .delegateBySig(minter.address, 0, 0, 0, ethers.utils.formatBytes32String(''), ethers.utils.formatBytes32String('')))
+        .to.be.revertedWith('Not support delegate Vote');
+    });
+  });
 });

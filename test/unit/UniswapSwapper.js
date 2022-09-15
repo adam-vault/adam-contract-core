@@ -14,7 +14,7 @@ const { BigNumber } = require('ethers');
 
 const RECIPIENT_UNISWAP = '0x0000000000000000000000000000000000000002';
 
-describe.only('UniswapSwapper.sol', () => {
+describe('UniswapSwapper.sol', () => {
   let tokenA, feedRegistry, budgetApprovalAddresses, adam;
   let executor, contract;
 
