@@ -13,13 +13,13 @@ const deployBudgetApprovals = async () => {
   console.log(`Deployed TransferLiquidERC20BudgetApproval ${transferLiquidERC20BudgetApproval.address}`);
 
   const LiquidUniswapBudgetApproval = await hre.ethers.getContractFactory(
-    "LiquidUniswapBudgetApproval"
+    'LiquidUniswapBudgetApproval',
   );
   const liquidUniswapBudgetApproval =
     await LiquidUniswapBudgetApproval.deploy();
   await liquidUniswapBudgetApproval.deployed();
   console.log(
-    `Deployed LiquidUniswapBudgetApproval ${liquidUniswapBudgetApproval.address}`
+    `Deployed LiquidUniswapBudgetApproval ${liquidUniswapBudgetApproval.address}`,
   );
 
   const TransferERC721BudgetApproval = await hre.ethers.getContractFactory('TransferERC721BudgetApproval');
@@ -32,11 +32,22 @@ const deployBudgetApprovals = async () => {
   await transferERC20BudgetApproval.deployed();
   console.log(`Deployed TransferERC20BudgetApproval ${transferERC20BudgetApproval.address}`);
 
+  const UniswapBudgetApproval = await hre.ethers.getContractFactory(
+    'UniswapBudgetApproval',
+  );
+  const uniswapBudgetApproval =
+    await UniswapBudgetApproval.deploy();
+  await uniswapBudgetApproval.deployed();
+  console.log(
+    `Deployed UniswapBudgetApproval ${uniswapBudgetApproval.address}`,
+  );
+
   return [
     transferLiquidERC20BudgetApproval.address,
     liquidUniswapBudgetApproval.address,
     transferERC721BudgetApproval.address,
     transferERC20BudgetApproval.address,
+    uniswapBudgetApproval.address,
   ];
 };
 

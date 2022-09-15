@@ -31,6 +31,7 @@ analyze:
         - contracts/TransferLiquidERC20BudgetApproval.sol
         - contracts/TransferERC20BudgetApproval.sol
         - contracts/LiquidUniswapBudgetApproval.sol
+        - contracts/UniswapBudgetApproval.sol
         - contracts/MemberToken.sol
         - contracts/Membership.sol
         - contracts/lib/ToString.sol
