@@ -52,6 +52,12 @@ describe('Membership.sol', function () {
       await expect(membership.connect(member).createMember(member.address)).to.be.revertedWith('not dao');
     });
 
+    it('throws "Member already created" if member count exceeds limit', async function () {
+      await membership.connect(dao).createMember(member.address);
+
+      await expect(membership.connect(dao).createMember(member.address)).to.be.revertedWith('Member already created');
+    });
+
     it('throws "member count exceed limit" if member count exceeds limit', async function () {
       await membership.connect(dao).createMember(member.address);
       await membership.connect(dao).createMember(member2.address);
