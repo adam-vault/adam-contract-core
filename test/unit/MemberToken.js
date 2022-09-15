@@ -20,6 +20,10 @@ describe('MemberToken.sol', function () {
       expect(await contract.name()).to.equal('MemberTokenName');
       expect(await contract.symbol()).to.equal('MT');
     });
+    it('throws "minter is null" error if set minter as null', async function () {
+      await expect(upgrades.deployProxy(MemberToken, [ethers.constants.AddressZero, 'MemberTokenName', 'MT'], { kind: 'uups', signer: dao }))
+        .to.revertedWith('minter is null');
+    });
   });
 
   describe('upgradeTo()', function () {
