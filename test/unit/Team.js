@@ -46,6 +46,11 @@ describe('Team.sol', function () {
 
   describe('addTeam()', function () {
     it('adds a team', async function () {
+      tx = await team.addTeam('Team Name', member1.address, [member1.address, member2.address], 'Description');
+      const receipt = await tx.wait();
+      const event = receipt.events.find(e => e.event === 'TransferSingle');
+      teamId = event.args.id;
+
       expect(await team.creatorOf(teamId)).to.eq(creator.address);
       expect(await team.minterOf(teamId)).to.eq(member1.address);
       expect(await team.nameOf(teamId)).to.eq('Team Name');
@@ -53,6 +58,9 @@ describe('Team.sol', function () {
     it('mints tokens to member', async function () {
       expect(await team.balanceOf(member1.address, teamId)).to.eq(1);
       expect(await team.balanceOf(member2.address, teamId)).to.eq(1);
+    });
+    it('throws "minter is null" error if null is set', async function () {
+      await expect(team.addTeam('Team Name', ethers.constants.AddressZero, [member1.address, member2.address], 'Description')).to.revertedWith('minter is null');
     });
   });
 
