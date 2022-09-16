@@ -26,7 +26,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
     string public constant override name = "Uniswap Budget Approval";
 
     bool public allowAllFromTokens;
-    mapping(address => bool) public fromTokensMapping;
+    address public fromToken;
     bool public allowAllToTokens;
     mapping(address => bool) public toTokensMapping;
     bool public allowAnyAmount;
@@ -39,7 +39,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
     function initialize(
         InitializeParams calldata params,
         bool _allowAllFromTokens,
-        address[] memory _fromTokens,
+        address _fromToken,
         bool _allowAllToTokens,
         address[] calldata _toTokens,
         bool _allowAnyAmount,
@@ -49,8 +49,9 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         __BudgetApproval_init(params);
         
         allowAllFromTokens = _allowAllFromTokens;
-        for(uint i = 0; i < _fromTokens.length; i++) {
-            _addFromToken(_fromTokens[i]);
+        if(!_allowAllFromTokens) {
+            approveTokenForUniswap(_fromToken);
+            emit AllowToken(_fromToken);
         }
 
         allowAllToTokens = _allowAllToTokens;
@@ -64,9 +65,17 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     }
 
-    function approveTokenForUniswap(address _fromToken) external onlyExecutee {
+    function approveTokenForUniswap(address _fromToken) public {
+
+        address _executee = executee();
+
+        require(msg.sender == _executee ||
+          msg.sender == executor() ||
+          ITeam(team()).balanceOf(msg.sender, executorTeamId()) > 0, "Executor not whitelisted in budget"
+        );
+
         bytes memory data = abi.encodeWithSignature("approve(address,uint256)", Constant.UNISWAP_ROUTER, type(uint256).max);
-        IBudgetApprovalExecutee(executee()).executeByBudgetApproval(_fromToken, data, 0);
+        IBudgetApprovalExecutee(_executee).executeByBudgetApproval(_fromToken, data, 0);
     }
 
     function executeParams() external pure override returns (string[] memory) {
@@ -110,7 +119,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
                 mData.recipient == __executee, "Recipient not whitelisted");
             
             if (mData.amountIn > 0) {
-                require(fromTokensMapping[mData.tokenIn], "Source token not whitelisted");
+                require(allowAllFromTokens || fromToken == mData.tokenIn, "Source token not whitelisted");
 
                 if (_tokenInAmount[mData.tokenIn] == 0) {
                     _tokenIn.push(mData.tokenIn);
@@ -167,7 +176,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
             tokenInBalanceBeforeSwap = IERC20(tokenIn).balanceOf(__executee) + amount;
         }
 
-        require(fromTokensMapping[tokenIn], "Source token not whitelisted");
+        require(allowAllFromTokens || fromToken == tokenIn, "Source token not whitelisted");
         require(allowAllToTokens || toTokensMapping[tokenOut], "Target token not whitelisted");
         require(allowAnyAmount || amount <= totalAmount, "Exceeded max amount");
         require(_checkAmountPercentageValid(tokenInBalanceBeforeSwap, amount), "Exceeded percentage");
@@ -185,12 +194,6 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         if (balanceOfToken == 0) return false;
 
         return amount <= balanceOfToken * amountPercentage / 100;
-    }
-
-    function _addFromToken(address token) private {
-        require(!fromTokensMapping[token], "Duplicated Item in source token list.");
-        fromTokensMapping[token] = true;
-        emit AllowToken(token);
     }
 
     function _addToToken(address token) private {
