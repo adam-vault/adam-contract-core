@@ -15,14 +15,22 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
 
   describe('initialize()', function () {
     it('init with minter, name and symbol', async function () {
-      const contract = await upgrades.deployProxy(MemberToken, [minter.address, 'MemberTokenName', 'MT'], { kind: 'uups', signer: dao });
+      const contract = await upgrades.deployProxy(MemberToken, [
+        minter.address, 'MemberTokenName', 'MT',
+      ], { kind: 'uups', signer: dao });
+
       expect(await contract.minter()).to.equal(minter.address);
       expect(await contract.name()).to.equal('MemberTokenName');
       expect(await contract.symbol()).to.equal('MT');
     });
     it('throws "minter is null" error if set minter as null', async function () {
-      await expect(upgrades.deployProxy(MemberToken, [ethers.constants.AddressZero, 'MemberTokenName', 'MT'], { kind: 'uups', signer: dao }))
-        .to.revertedWith('minter is null');
+      await expect(
+        upgrades.deployProxy(MemberToken, [
+          ethers.constants.AddressZero,
+          'MemberTokenName',
+          'MT',
+        ], { kind: 'uups', signer: dao }),
+      ).to.revertedWith('minter is null');
     });
   });
 
@@ -98,7 +106,11 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
   describe('delegate', function () {
     it('delegate fail for Member Token', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
-      await expect(memberToken.connect(member).delegate(minter.address)).to.be.revertedWith('Not support delegate Vote');
+      await expect(
+        memberToken
+          .connect(member)
+          .delegate(minter.address))
+        .to.be.revertedWith('Not support delegate Vote');
     });
   });
   describe('delegateBySig', function () {
