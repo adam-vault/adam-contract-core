@@ -3,7 +3,7 @@ pragma solidity 0.8.7;
 import "../base/CommonBudgetApproval.sol";
 
 contract MockBudgetApproval is CommonBudgetApproval{
-    function initialize(InitializeParams calldata params) public {
+    function initialize(InitializeParams calldata params) public initializer {
         __BudgetApproval_init(params);
     }
     function afterInitialized() public override {
