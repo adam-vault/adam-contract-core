@@ -38,6 +38,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 
     function initialize(
         InitializeParams calldata params,
+        bool _allowAllFromTokens,
         address[] memory _fromTokens,
         bool _allowAllToTokens,
         address[] calldata _toTokens,
@@ -47,6 +48,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
     ) public initializer {
         __BudgetApproval_init(params);
         
+        allowAllFromTokens = _allowAllFromTokens;
         for(uint i = 0; i < _fromTokens.length; i++) {
             _addFromToken(_fromTokens[i]);
         }
