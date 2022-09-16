@@ -9,7 +9,7 @@ chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC721BudgetApproval.sol', async function () {
+describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetApproval.js', async function () {
   let creator, executor, receiver;
   let mockToken, team, executee;
   let executeeAsSigner, TransferERC721BudgetApproval, ERC1967Proxy, transferErc20BAImpl;

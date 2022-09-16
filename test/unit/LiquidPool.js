@@ -9,7 +9,7 @@ const {
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
-describe('LiquidPool.sol', function () {
+describe('LiquidPool.sol - test/unit/LiquidPool.js', function () {
   let lp, lpAsSigner1, lpAsSigner2, unknown;
   let governAsSigner, daoAsSigner;
   let creator;

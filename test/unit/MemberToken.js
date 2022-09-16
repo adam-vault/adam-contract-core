@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 
-describe('MemberToken.sol', function () {
+describe('MemberToken.sol - test/unit/MemberToken.js', function () {
   let dao, member, minter;
   let memberToken, MemberToken;
 

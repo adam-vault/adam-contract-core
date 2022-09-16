@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const decodeBase64 = require('../utils/decodeBase64');
 
-describe('Team.sol', function () {
+describe('Team.sol - test/unit/Team.js', function () {
   let creator, member1, member2, member3;
   let team;
   let teamId, tx;

@@ -7,7 +7,7 @@ const { parseEther } = ethers.utils;
 chai.should();
 chai.use(smock.matchers);
 
-describe('BudgetApprovalExecutee.sol', async function () {
+describe('BudgetApprovalExecutee.sol - test/unit/BudgetApprovalExecutee.js', async function () {
   let deployer, team, budgetApproval, unknown;
   let executee, weth;
   beforeEach(async function () {

@@ -16,7 +16,7 @@ const {
   ADDRESS_WETH,
 } = require('../utils/constants');
 
-describe('Integration - LiquidPool.sol', function () {
+describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', function () {
   let adam, dao, membership, tokenC721, tokenA, tokenD1155, uniswapRouter;
   let creator, member, anyone, feedRegistry;
 

@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 
-describe('GovernFactory.sol', function () {
+describe('GovernFactory.sol - test/unit/GovernFactory.js', function () {
   let creator, unknown;
   let governFactory, govern;
   let GovernFactory;

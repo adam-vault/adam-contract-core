@@ -6,7 +6,7 @@ const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-describe('Adam.sol', function () {
+describe('Adam.sol - test/unit/Adam.js', function () {
   let deployer, daoCreator, unknown;
 
   let dao, membership, liquidPool, memberToken, govern, governFactory, team;

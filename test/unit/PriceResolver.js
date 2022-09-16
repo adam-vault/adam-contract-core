@@ -9,7 +9,7 @@ const {
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
-describe('PriceResolver.sol', () => {
+describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
   let creator, signer1, signer2;
   let feedRegistry;
   let tokenA, tokenB;
