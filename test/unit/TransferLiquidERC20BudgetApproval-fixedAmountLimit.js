@@ -94,6 +94,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price lim
     await budgetApproval.connect(approver).approveTransaction(id, '');
     await budgetApproval.connect(executor).executeTransaction(id);
 
+    expect(await budgetApproval.tokensLength()).to.eq(ethers.BigNumber.from('2'));
     expect(await receiver.getBalance()).to.eq(
       originalBalance.add(ethers.utils.parseEther('1')),
     );
