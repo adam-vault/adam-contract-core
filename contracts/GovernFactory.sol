@@ -64,6 +64,13 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         );
     }
 
+    function upgradeImplementations(
+        address _governImplementation
+    ) public onlyOwner {
+        require(_governImplementation != address(0), "governImpl is null");
+        governImplementation = _governImplementation;
+    }
+
     function _authorizeUpgrade(address) internal view override onlyOwner {}
 
     uint256[50] private __gap;
