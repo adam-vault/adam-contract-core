@@ -8,10 +8,8 @@ chai.use(smock.matchers);
 
 describe('Adam.sol - test/unit/Adam.js', function () {
   let deployer, daoCreator, unknown;
-
   let dao, membership, liquidPool, memberToken, govern, governFactory, team;
   let budgetApproval;
-  let newDao, newMembership, newLiquidPool, newGovern, newMemberToken;
   let Adam;
   beforeEach(async function () {
     [deployer, daoCreator, unknown] = await ethers.getSigners();
@@ -27,12 +25,6 @@ describe('Adam.sol - test/unit/Adam.js', function () {
     Adam = await ethers.getContractFactory('Adam', { signer: deployer });
 
     governFactory.governImplementation.returns(govern.address);
-
-    newDao = await smock.fake('Dao');
-    newMembership = await smock.fake('Membership');
-    newMemberToken = await smock.fake('MemberToken');
-    newLiquidPool = await smock.fake('LiquidPool');
-    newGovern = await smock.fake('Govern');
   });
 
   describe('initialize()', async function () {
@@ -274,9 +266,10 @@ describe('Adam.sol - test/unit/Adam.js', function () {
   });
 
   describe('hashVersion()', async function () {
-    let adam;
+    let adam, newDao;
 
     beforeEach(async function () {
+      newDao = await smock.fake('Dao');
       adam = await upgrades.deployProxy(Adam, [
         dao.address,
         membership.address,
@@ -333,8 +326,14 @@ describe('Adam.sol - test/unit/Adam.js', function () {
   });
   describe('upgradeImplementations()', async function () {
     let adam;
-
+    let newDao, newMembership, newLiquidPool, newGovern, newMemberToken;
     beforeEach(async function () {
+      newDao = await smock.fake('Dao');
+      newMembership = await smock.fake('Membership');
+      newMemberToken = await smock.fake('MemberToken');
+      newLiquidPool = await smock.fake('LiquidPool');
+      newGovern = await smock.fake('Govern');
+
       adam = await upgrades.deployProxy(Adam, [
         dao.address,
         membership.address,
