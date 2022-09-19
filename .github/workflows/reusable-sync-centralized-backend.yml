@@ -36,6 +36,7 @@ jobs:
       - name: Replace ABIs
         run: |
           cp ${{ runner.temp }}/deployment/abis/machine/Dao.json \
+          ${{ runner.temp }}/deployment/abis/machine/Adam.json \
             ./abis
 
       - name: Replace Adam Address
