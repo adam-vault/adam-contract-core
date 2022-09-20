@@ -79,6 +79,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
         require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
         require(tokensMapping[token], "Token not whitelisted in budget");
+        require(amountInBaseCurrency > 0 , "Transfer amount should not be zero");
         require(_allowAnyAmount || amountInBaseCurrency <= _totalAmount, "Exceeded max budget transferable amount");
 
         if(!_allowAnyAmount) {

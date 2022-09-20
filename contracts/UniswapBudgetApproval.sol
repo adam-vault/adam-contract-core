@@ -145,6 +145,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
                 address tokenIn = _tokenIn[i];
                 amountInPrice += assetBaseCurrencyPrice(tokenIn, _tokenInAmount[tokenIn]);
             }
+            require(amountInPrice > 0 , "Swap amount should not be zero");
             require(allowAnyAmount || amountInPrice <= totalAmount, "Exceeded max amount");
             require(_checkAmountPercentageValid(priceBefore, amountInPrice), "Exceeded percentage");     
                         
@@ -168,6 +169,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         uint256 amountInPrice = assetBaseCurrencyPrice(tokenIn, amount);
         require(fromTokensMapping[tokenIn], "Source token not whitelisted");
         require(allowAllToTokens || toTokensMapping[tokenOut], "Target token not whitelisted");
+        require(amountInPrice > 0 , "Transfer amount should not be zero");
         require(allowAnyAmount || amountInPrice <= totalAmount, "Exceeded max amount");
         require(_checkAmountPercentageValid(priceBefore, amountInPrice), "Exceeded percentage");
         
