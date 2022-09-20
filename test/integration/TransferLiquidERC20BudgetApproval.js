@@ -100,6 +100,8 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol', function () {
         [tokenA.address, receiver.address, parseEther('10')],
       );
 
+      await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, 1);
+
       const tx = await budgetApproval
         .connect(executor)
         .createTransaction([transactionData], Date.now() + 86400, false, '');
@@ -110,6 +112,24 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol', function () {
 
       expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('0'));
       expect(await tokenA.balanceOf(receiver.address)).to.eq(parseEther('10'));
+    });
+
+    it('transfer 0 amount should not success', async function () {
+      await tokenA.mint(lp.address, parseEther('10'));
+      const transactionData = abiCoder.encode(
+        await budgetApproval.executeParams(),
+        [tokenA.address, receiver.address, parseEther('10')],
+      );
+
+      await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, 0);
+
+      const tx = await budgetApproval
+        .connect(executor)
+        .createTransaction([transactionData], Date.now() + 86400, false, '');
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
+
+      await budgetApproval.connect(approver).approveTransaction(id, '');
+      await expect(budgetApproval.connect(executor).executeTransaction(id)).to.be.revertedWith('Transfer amount should not be zero');
     });
 
     it('transfer multiple ETH should success', async function () {
