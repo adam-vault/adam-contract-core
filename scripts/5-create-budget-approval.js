@@ -3,7 +3,7 @@ const _ = require('lodash');
 const fileReader = require('../utils/fileReader');
 const {
   getCreateTransferLiquidErc20TokenBAParams,
-  getCreateUniswapBAParams,
+  getCreateLiquidUniswapBAParams,
   getCreateTransferERC20BAParams,
 } = require('../utils/paramsStruct');
 
@@ -60,7 +60,7 @@ async function main () {
   );
   const dataUniswap = liquidUniswapBudgetApproval.interface.encodeFunctionData(
     "initialize",
-    getCreateUniswapBAParams({
+    getCreateLiquidUniswapBAParams({
       dao: daoAddress,
       executor: "0xBa2c5715A58162D61F08B87D84e7E15DCc40d47A",
       allowUnlimitedUsageCount: true,
