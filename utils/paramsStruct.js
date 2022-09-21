@@ -132,14 +132,14 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   });
 }
 
-function getCreateUniswapBAParams ({
+function getCreateLiquidUniswapBAParams ({
   executor,
   executorTeamId,
   approvers,
   approverTeamId,
   minApproval,
-  text = 'Uniswap',
-  transactionType = 'swap',
+  text = 'Liquid Uniswap',
+  transactionType = 'swapLiquid',
   startTime,
   endTime,
   allowUnlimitedUsageCount,
@@ -175,6 +175,54 @@ function getCreateUniswapBAParams ({
     totalAmount,
     amountPercentage,
     baseCurrency,
+  }).map(([key, value]) => {
+    return value;
+  });
+}
+
+function getCreateUniswapBAParams ({
+  executor,
+  executorTeamId,
+  approvers,
+  approverTeamId,
+  minApproval,
+  text = 'Uniswap',
+  transactionType = 'swap',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  allowAllFromTokens,
+  fromToken = ethers.constants.AddressZero,
+  allowAllToTokens,
+  toTokens = [],
+  allowAnyAmount,
+  totalAmount = 0,
+  amountPercentage = 100,
+  team,
+}) {
+  return Object.entries({
+    params: getCreateCommonBudgetApprovalParams({
+      executor,
+      executorTeamId,
+      approvers,
+      approverTeamId,
+      minApproval,
+      text,
+      transactionType,
+      startTime,
+      endTime,
+      allowUnlimitedUsageCount,
+      usageCount,
+      team,
+    }),
+    allowAllFromTokens: allowAllFromTokens ?? fromToken === ethers.constants.AddressZero,
+    fromToken,
+    allowAllToTokens: allowAllToTokens ?? toTokens.length === 0,
+    toTokens,
+    allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
+    totalAmount,
+    amountPercentage,
   }).map(([key, value]) => {
     return value;
   });
@@ -257,10 +305,12 @@ function getCreateCommonBudgetApprovalParams ({
     return value;
   });
 }
+
 module.exports = {
   getCreateDaoParams,
   getCreateTransferERC20BAParams,
   getCreateTransferLiquidErc20TokenBAParams,
-  getCreateUniswapBAParams,
+  getCreateLiquidUniswapBAParams,
   getCreateTransferERC721BAParams,
+  getCreateUniswapBAParams,
 };
