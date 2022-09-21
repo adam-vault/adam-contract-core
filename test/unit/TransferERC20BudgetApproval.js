@@ -203,48 +203,6 @@ describe('TransferERC20BudgetApproval.sol - test/unit/TransferERC20BudgetApprova
       });
     });
 
-    context('allow limited percentage of token', async function () {
-      let transferErc20BA;
-      beforeEach(async function () {
-        const contract = await ERC1967Proxy.deploy(
-          transferErc20BAImpl.address,
-          TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
-            allowAllToAddresses: true,
-            toAddresses: [],
-            allowAllTokens: true,
-            token: ethers.constants.AddressZero,
-            allowAnyAmount: true,
-            totalAmount: 0,
-          })));
-        transferErc20BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
-        executee.executeByBudgetApproval.returns('0x');
-      });
-
-      it('allows user to transfer under allow percentage amount', async function () {
-        mockToken.balanceOf.returns(200);
-        await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 50),
-        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
-      });
-
-      it('allows user to transfer equal allow percentage amount', async function () {
-        mockToken.balanceOf.returns(100);
-        await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 25),
-        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
-      });
-      it('allows user to transfer percentage amount twice', async function () {
-        mockToken.balanceOf.returns(50);
-        await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 1),
-        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
-
-        await expect(transferErc20BA.connect(executor).createTransaction([
-          encodeTxData(mockToken.address, receiver.address, 1),
-        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
-      });
-    });
-
     context('allow limited toAddresses', async function () {
       let transferErc20BA;
       beforeEach(async function () {

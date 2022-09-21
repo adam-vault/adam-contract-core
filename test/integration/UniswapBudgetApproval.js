@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
-const { getCreateLiquidUniswapBAParams } = require('../../utils/paramsStruct');
+const { getCreateUniswapBAParams } = require('../../utils/paramsStruct');
 
 const {
   ADDRESS_ETH,
@@ -15,25 +15,21 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/LiquidUniswapBudgetApproval.js', function () {
-  let liquidUniswapBAImplementation, budgetApproval, dao, team, uniswapRouter;
-  let executor, approver, receiver;
-  let tokenA, executee, LiquidUniswapBudgetApproval, WETH;
+describe('UniswapBudgetApproval.sol', function () {
+  let uniswapBAImplementation, budgetApproval, uniswapRouter;
+  let executor, approver;
+  let tokenA, executee, UniswapBudgetApproval, WETH;
 
   beforeEach(async function () {
-    [executor, approver, receiver] = await ethers.getSigners();
+    [executor, approver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
 
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
-    LiquidUniswapBudgetApproval = await ethers.getContractFactory('LiquidUniswapBudgetApproval', { signer: executor });
-    liquidUniswapBAImplementation = await LiquidUniswapBudgetApproval.deploy();
-
-    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
-    // const Team = await ethers.getContractFactory('Team', { signer: executor });
-    // team = await Team.deploy();
-    dao = await MockLPDao.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
+
+    UniswapBudgetApproval = await ethers.getContractFactory('UniswapBudgetApproval', { signer: executor });
+    uniswapBAImplementation = await UniswapBudgetApproval.deploy();
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
@@ -62,13 +58,13 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
     it('creates Uniswap Budget Appproval', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = LiquidUniswapBudgetApproval.interface.encodeFunctionData('initialize',
-        getCreateLiquidUniswapBAParams({
+      const initData = UniswapBudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateUniswapBAParams({
           dao: executee.address,
           executor: executor.address,
           allowUnlimitedUsageCount: true,
           approvers: [approver.address],
-          fromTokens: [ADDRESS_ETH, ADDRESS_WETH],
+          fromToken: ADDRESS_ETH,
           toTokens: [ADDRESS_ETH, ADDRESS_WETH],
           allowAnyAmount: true,
           totalAmount: ethers.utils.parseEther('0'),
@@ -77,20 +73,17 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
           endTime,
           minApproval: 1,
         }));
-      const tx = await executee.createBudgetApprovals([liquidUniswapBAImplementation.address], [initData]);
+      const tx = await executee.createBudgetApprovals([uniswapBAImplementation.address], [initData]);
       const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
-      budgetApproval = await ethers.getContractAt('LiquidUniswapBudgetApproval', budgetApprovalAddress);
+      budgetApproval = await ethers.getContractAt('UniswapBudgetApproval', budgetApprovalAddress);
 
       expect(await budgetApproval.executee()).to.eq(executee.address);
       expect(await budgetApproval.executor()).to.eq(executor.address);
       expect(await budgetApproval.approversMapping(approver.address)).to.eq(true);
       expect(await budgetApproval.minApproval()).to.eq(1);
 
-      expect(await budgetApproval.fromTokens(0)).to.eq(ADDRESS_ETH);
-      expect(await budgetApproval.fromTokens(1)).to.eq(ADDRESS_WETH);
-      expect(await budgetApproval.fromTokensMapping(ADDRESS_ETH)).to.eq(true);
-      expect(await budgetApproval.fromTokensMapping(ADDRESS_WETH)).to.eq(true);
+      expect(await budgetApproval.fromToken()).to.eq(ADDRESS_ETH);
 
       expect(await budgetApproval.toTokensMapping(ADDRESS_ETH)).to.eq(true);
       expect(await budgetApproval.toTokensMapping(ADDRESS_WETH)).to.eq(true);
@@ -111,13 +104,13 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
 
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = LiquidUniswapBudgetApproval.interface.encodeFunctionData('initialize',
-        getCreateLiquidUniswapBAParams({
+      const initData = UniswapBudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateUniswapBAParams({
           dao: executee.address,
           executor: executor.address,
           allowUnlimitedUsageCount: true,
           approvers: [],
-          fromTokens: [ADDRESS_ETH, ADDRESS_WETH, tokenA.address],
+          allowAllFromTokens: true,
           toTokens: [ADDRESS_ETH, ADDRESS_WETH, tokenA.address],
           allowAnyAmount: true,
           totalAmount: ethers.utils.parseEther('0'),
@@ -128,11 +121,11 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
         }));
 
       const tx = await executee.createBudgetApprovals(
-        [liquidUniswapBAImplementation.address], [initData],
+        [uniswapBAImplementation.address], [initData],
       );
       const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
 
-      budgetApproval = await ethers.getContractAt('LiquidUniswapBudgetApproval', budgetApprovalAddress);
+      budgetApproval = await ethers.getContractAt('UniswapBudgetApproval', budgetApprovalAddress);
       await executor.sendTransaction({ to: ADDRESS_UNISWAP_ROUTER, value: parseEther('100') });
       await tokenA.mint(ADDRESS_UNISWAP_ROUTER, parseEther('100'));
       await WETH.mint(ADDRESS_UNISWAP_ROUTER, parseEther('100'));
@@ -146,7 +139,7 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
           parseEther('10'),
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(parseEther('10'));
       });
@@ -162,7 +155,7 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
           0,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(parseEther('0.9'));
       });
@@ -181,7 +174,7 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Math.round(Date.now() / 1000) + 86400,
+          Date.now() + 86400,
           [functionCallData],
         ]);
 
@@ -191,7 +184,7 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
           100,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await tokenA.balanceOf(executee.address)).to.eq(200);
       });
@@ -212,7 +205,7 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Math.round(Date.now() / 1000) + 86400,
+          Date.now() + 86400,
           [functionCallData],
         ]);
 
@@ -221,7 +214,9 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
           callData,
           0,
         ]);
-        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
+
+        await budgetApproval.approveTokenForUniswap(tokenA.address);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect((await ethers.provider.getBalance(executee.address)).sub(originalBalance)).to.eq(100);
       });
@@ -242,7 +237,7 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Math.round(Date.now() / 1000) + 86400,
+          Date.now() + 86400,
           [functionCallData],
         ]);
 
@@ -252,7 +247,8 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
           0,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
+        await budgetApproval.approveTokenForUniswap(ADDRESS_WETH);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await tokenA.balanceOf(executee.address)).to.eq(200);
       });
@@ -272,7 +268,7 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Math.round(Date.now() / 1000) + 86400,
+          Date.now() + 86400,
           [functionCallData],
         ]);
 
@@ -281,7 +277,9 @@ describe('Integration - LiquidUniswapBudgetApproval.sol - test/integration/Liqui
           callData,
           0,
         ]);
-        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
+
+        await budgetApproval.approveTokenForUniswap(tokenA.address);
+        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(100);
       });
