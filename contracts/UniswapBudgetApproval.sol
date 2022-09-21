@@ -70,7 +70,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         bytes memory data = abi.encodeWithSignature("approve(address,uint256)", Constant.UNISWAP_ROUTER, type(uint256).max);
         address _executee = executee();
         uint _fromTokenLength = fromTokens.length;
-        
+
         for(uint i = 0; i < _fromTokenLength; i++) {
             address _fromToken = fromTokens[i];
 
@@ -111,7 +111,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         MulticallData[] memory mDataArr = this.decodeUniswapMulticall(executeData, value, response);
 
         address[] storage _tokenIn = _tokenInOfTransaction[transactionId];
-        mapping(address => uint256) storage _tokenInAmount = _tokenInAmountOfTransaction[transactionId];
+        mapping(address => uint256) storage _tokenInAmountMapping = _tokenInAmountOfTransaction[transactionId];
 
         for (uint i = 0; i < mDataArr.length; i++) {
             MulticallData memory mData = mDataArr[i];
@@ -120,14 +120,16 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
                 mData.recipient == RECIPIENT_EXECUTEE || 
                 mData.recipient == RECIPIENT_UNISWAP_ROUTER || 
                 mData.recipient == __executee, "Recipient not whitelisted");
-            
+
+            uint256 _tokenInAmount = _tokenInAmountMapping[mData.tokenIn];
+
             if (mData.amountIn > 0) {
                 require(fromTokensMapping[mData.tokenIn], "Source token not whitelisted");
 
-                if (_tokenInAmount[mData.tokenIn] == 0) {
+                if (_tokenInAmount == 0) {
                     _tokenIn.push(mData.tokenIn);
                 }
-                _tokenInAmount[mData.tokenIn] += mData.amountIn;
+                _tokenInAmountMapping[mData.tokenIn] = _tokenInAmount + mData.amountIn;
 
                 emit ExecuteUniswapInTransaction(transactionId, msg.sender, Constant.UNISWAP_ROUTER, mData.tokenIn, mData.amountIn);
             }
@@ -139,19 +141,23 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
             }
         }
 
-        if (!allowAnyAmount || amountPercentage < 100) {
-            uint256 amountInPrice;
+        bool _allowAnyAmount = allowAnyAmount;
+        uint256 _totalAmount = totalAmount;
 
-            for (uint i = 0; i < _tokenIn.length; i++) {
+        if (!_allowAnyAmount || amountPercentage < 100) {
+            uint256 amountInPrice;
+            uint _tokenInLength = _tokenIn.length;
+
+            for (uint i = 0; i < _tokenInLength; i++) {
                 address tokenIn = _tokenIn[i];
-                amountInPrice += assetBaseCurrencyPrice(tokenIn, _tokenInAmount[tokenIn]);
+                amountInPrice += assetBaseCurrencyPrice(tokenIn, _tokenInAmountMapping[tokenIn]);
             }
             require(amountInPrice > 0 , "Swap amount should not be zero");
-            require(allowAnyAmount || amountInPrice <= totalAmount, "Exceeded max amount");
+            require(_allowAnyAmount || amountInPrice <= _totalAmount, "Exceeded max amount");
             require(_checkAmountPercentageValid(priceBefore, amountInPrice), "Exceeded percentage");     
                         
             if(!allowAnyAmount) {
-                totalAmount -= amountInPrice;
+                totalAmount = _totalAmount - amountInPrice;
             }           
         }
 
@@ -159,6 +165,8 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
 
     function _executeWETH9Call(uint256 transactionId, address to, bytes memory executeData, uint256 value) private {
         uint256 priceBefore = _fromTokensPrice();
+        bool _allowAnyAmount = allowAnyAmount;
+        uint256 _totalAmount = totalAmount;
 
         IBudgetApprovalExecutee(executee()).executeByBudgetApproval(to, executeData, value);
         (
@@ -171,22 +179,26 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceRes
         require(fromTokensMapping[tokenIn], "Source token not whitelisted");
         require(allowAllToTokens || toTokensMapping[tokenOut], "Target token not whitelisted");
         require(amountInPrice > 0 , "Transfer amount should not be zero");
-        require(allowAnyAmount || amountInPrice <= totalAmount, "Exceeded max amount");
+        require(_allowAnyAmount || amountInPrice <= _totalAmount, "Exceeded max amount");
         require(_checkAmountPercentageValid(priceBefore, amountInPrice), "Exceeded percentage");
         
-        if(!allowAnyAmount) {
-            totalAmount -= amountInPrice;
+        if(!_allowAnyAmount) {
+            totalAmount = _totalAmount - amountInPrice;
         }
 
         emit ExecuteWETH9Transaction(transactionId, msg.sender, WETH9(), tokenIn, tokenOut, amount);
     }
 
     function _fromTokensPrice() private view returns (uint256 totalBalance) {
-        for (uint i = 0; i < fromTokens.length; i++) {
-            if (fromTokens[i] == Denominations.ETH) {
-                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, executee().balance);
+        uint _fromTokenLength = fromTokens.length;
+        address _executee = executee();
+
+        for (uint i = 0; i < _fromTokenLength; i++) {
+            address _fromToken = fromTokens[i];
+            if (_fromToken == Denominations.ETH) {
+                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, _executee.balance);
             } else {
-                totalBalance += assetBaseCurrencyPrice(fromTokens[i], IERC20(fromTokens[i]).balanceOf(executee()));
+                totalBalance += assetBaseCurrencyPrice(_fromToken, IERC20(_fromToken).balanceOf(_executee));
             }
         }
     }
