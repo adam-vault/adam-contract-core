@@ -14,7 +14,7 @@ const {
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
-describe('Integration - Adam.sol', function () {
+describe('Integration - Adam.sol - test/integration/Adam.js', function () {
   let creator;
   let token;
   let feedRegistry;

@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 
-describe('GovernFactory.sol', function () {
+describe('GovernFactory.sol - test/unit/GovernFactory.js', function () {
   let creator, unknown;
   let governFactory, govern;
   let GovernFactory;
@@ -22,6 +22,9 @@ describe('GovernFactory.sol', function () {
     it('init with _governImplementation', async function () {
       const contract = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups', signer: creator });
       expect(await contract.governImplementation()).to.equal(govern.address);
+    });
+    it('throws "Govern implementation must not be null" error if Address zero pass as impl', async function () {
+      await expect(upgrades.deployProxy(GovernFactory, [ethers.constants.AddressZero], { kind: 'uups', signer: creator })).to.revertedWith('Govern implementation must not be null');
     });
   });
 

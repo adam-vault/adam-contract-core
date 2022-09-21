@@ -15,7 +15,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('UniswapBudgetApproval.sol', function () {
+describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudgetApproval.js', function () {
   let uniswapBAImplementation, budgetApproval, dao, team, uniswapRouter;
   let executor, approver, receiver;
   let tokenA, executee, UniswapBudgetApproval, WETH;
