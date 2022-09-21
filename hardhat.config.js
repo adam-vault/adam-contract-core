@@ -6,6 +6,7 @@ require('hardhat-gas-reporter');
 require('solidity-coverage');
 require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer');
+require('hardhat-test-utils');
 require('./tasks/interface');
 require('./tasks/export');
 require('./tasks/decodeUniswap');

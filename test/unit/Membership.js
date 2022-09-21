@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 
-describe('Membership.sol', function () {
+describe('Membership.sol - test/unit/Membership.js', function () {
   let dao, creator, member, member2, member3;
   let membership;
   let Membership;
@@ -50,6 +50,12 @@ describe('Membership.sol', function () {
 
     it('throws "not dao" if not called by dao', async function () {
       await expect(membership.connect(member).createMember(member.address)).to.be.revertedWith('not dao');
+    });
+
+    it('throws "Member already created" if member count exceeds limit', async function () {
+      await membership.connect(dao).createMember(member.address);
+
+      await expect(membership.connect(dao).createMember(member.address)).to.be.revertedWith('Member already created');
     });
 
     it('throws "member count exceed limit" if member count exceeds limit', async function () {

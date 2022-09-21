@@ -6,12 +6,10 @@ const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-describe('Adam.sol', function () {
+describe('Adam.sol - test/unit/Adam.js', function () {
   let deployer, daoCreator, unknown;
-
   let dao, membership, liquidPool, memberToken, govern, governFactory, team;
   let budgetApproval;
-  let newDao, newMembership, newLiquidPool, newGovern, newMemberToken;
   let Adam;
   beforeEach(async function () {
     [deployer, daoCreator, unknown] = await ethers.getSigners();
@@ -27,12 +25,6 @@ describe('Adam.sol', function () {
     Adam = await ethers.getContractFactory('Adam', { signer: deployer });
 
     governFactory.governImplementation.returns(govern.address);
-
-    newDao = await smock.fake('Dao');
-    newMembership = await smock.fake('Membership');
-    newMemberToken = await smock.fake('MemberToken');
-    newLiquidPool = await smock.fake('LiquidPool');
-    newGovern = await smock.fake('Govern');
   });
 
   describe('initialize()', async function () {
@@ -66,6 +58,30 @@ describe('Adam.sol', function () {
         team.address,
       ], { kind: 'uups' });
       await expect(tx).to.be.revertedWith('budget approval already whitelisted');
+    });
+    it('throws "governFactory is null" if address zero is set as governFactory', async () => {
+      const tx = upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        [],
+        ethers.constants.AddressZero,
+        team.address,
+      ], { kind: 'uups' });
+      await expect(tx).to.be.revertedWith('governFactory is null');
+    });
+    it('throws "team is null" if address zero is set as team', async () => {
+      const tx = upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        [],
+        governFactory.address,
+        ethers.constants.AddressZero,
+      ], { kind: 'uups' });
+      await expect(tx).to.be.revertedWith('team is null');
     });
   });
 
@@ -135,6 +151,10 @@ describe('Adam.sol', function () {
         budgetApproval.address,
       ]);
       await expect(tx).to.be.revertedWith('budget approval already whitelisted');
+    });
+    it('throws "budget approval is null" if address zero is set', async () => {
+      const tx = adam.whitelistBudgetApprovals([ethers.constants.AddressZero]);
+      await expect(tx).to.be.revertedWith('budget approval is null');
     });
     it('throws "Ownable: caller is not the owner" if not called by deployer', async () => {
       const tx = adam.connect(unknown).whitelistBudgetApprovals([]);
@@ -246,9 +266,10 @@ describe('Adam.sol', function () {
   });
 
   describe('hashVersion()', async function () {
-    let adam;
+    let adam, newDao;
 
     beforeEach(async function () {
+      newDao = await smock.fake('Dao');
       adam = await upgrades.deployProxy(Adam, [
         dao.address,
         membership.address,
@@ -303,10 +324,16 @@ describe('Adam.sol', function () {
       expect(result1).to.be.not.eq(result2);
     });
   });
-  describe('versionUpgrade()', async function () {
+  describe('upgradeImplementations()', async function () {
     let adam;
-
+    let newDao, newMembership, newLiquidPool, newGovern, newMemberToken;
     beforeEach(async function () {
+      newDao = await smock.fake('Dao');
+      newMembership = await smock.fake('Membership');
+      newMemberToken = await smock.fake('MemberToken');
+      newLiquidPool = await smock.fake('LiquidPool');
+      newGovern = await smock.fake('Govern');
+
       adam = await upgrades.deployProxy(Adam, [
         dao.address,
         membership.address,
@@ -371,6 +398,40 @@ describe('Adam.sol', function () {
         'v2',
       );
       await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+    it('throws "Impl is null" if impl address zero is set', async () => {
+      await expect(adam.upgradeImplementations(
+        ethers.constants.AddressZero,
+        newMembership.address,
+        newLiquidPool.address,
+        newMemberToken.address,
+        newGovern.address,
+        'v2',
+      )).to.be.revertedWith('daoImpl is null');
+      await expect(adam.upgradeImplementations(
+        newDao.address,
+        ethers.constants.AddressZero,
+        newLiquidPool.address,
+        newMemberToken.address,
+        newGovern.address,
+        'v2',
+      )).to.be.revertedWith('membershipImpl is null');
+      await expect(adam.upgradeImplementations(
+        newDao.address,
+        newMembership.address,
+        ethers.constants.AddressZero,
+        newMemberToken.address,
+        newGovern.address,
+        'v2',
+      )).to.be.revertedWith('liquidPoolImpl is null');
+      await expect(adam.upgradeImplementations(
+        newDao.address,
+        newMembership.address,
+        newLiquidPool.address,
+        ethers.constants.AddressZero,
+        newGovern.address,
+        'v2',
+      )).to.be.revertedWith('memberTokenImpl is null');
     });
   });
 });

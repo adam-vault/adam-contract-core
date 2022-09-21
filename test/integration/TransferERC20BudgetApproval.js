@@ -15,7 +15,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC20BudgetApproval.sol', function () {
+describe('Integration - TransferERC20BudgetApproval.sol - test/integration/TransferERC20BudgetApproval.js', function () {
   let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
   let tokenA, feedRegistry, budgetApprovalAddresses;
@@ -214,7 +214,7 @@ describe('TransferERC20BudgetApproval.sol', function () {
   });
 });
 
-describe('TransferERC20BudgetApproval.sol', function () {
+describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/TransferERC20BudgetApproval.js', function () {
   let transferErc20BAImplementation, budgetApproval, dao, team;
   let executor, approver, receiver;
   let tokenA, tokenB, executee, TransferERC20BudgetApproval;

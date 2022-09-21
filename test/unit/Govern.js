@@ -4,7 +4,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
 
-describe('Govern.sol', function () {
+describe('Govern.sol - test/unit/Govern.js', function () {
   let adam, dao, governFactory, lp;
   let creator, owner1, owner2;
   let tokenA, tokenC721, budgetApprovalAddresses;
