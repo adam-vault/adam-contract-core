@@ -174,7 +174,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
 
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         const originalBalance = await receiver.getBalance();
@@ -197,7 +197,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
 
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -217,7 +217,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           receiver.address,
           parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData], Date.now() + 86400, false, '');
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         const originalBalance = await receiver.getBalance();
@@ -235,7 +235,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           receiver.address,
           parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -252,7 +252,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           receiver.address,
           parseEther('10'),
         ]);
-        await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false, ''))
+        await expect(budgetApproval.connect(approver).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, ''))
           .to.be.revertedWith('Executor not whitelisted in budget');
       });
     });
@@ -264,7 +264,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           receiver.address,
           parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await expect(
@@ -280,7 +280,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           receiver.address,
           parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(executor).revokeTransaction(id);
@@ -297,7 +297,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           executor.address,
           parseEther('10'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -314,7 +314,7 @@ describe('TransferLiquidERC20BudgetApproval.sol', function () {
           receiver.address,
           parseEther('101'),
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(approver).approveTransaction(id, '');

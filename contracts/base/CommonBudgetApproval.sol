@@ -26,7 +26,7 @@ abstract contract CommonBudgetApproval is Initializable {
         uint256 id;
         bytes[] data;
         Status status;
-        uint256 deadline;
+        uint32 deadline;
         bool isExist;
         uint256 approvedCount;
         mapping(address => bool) approved;
@@ -211,7 +211,7 @@ abstract contract CommonBudgetApproval is Initializable {
         emit ExecuteTransaction(id, data, msg.sender);
     }
 
-    function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute, string calldata comment) external onlyExecutor returns (uint256) {
+    function createTransaction(bytes[] memory _data, uint32 _deadline, bool _isExecute, string calldata comment) external onlyExecutor returns (uint256) {
         _transactionIds.increment();
         uint256 id = _transactionIds.current();
 
