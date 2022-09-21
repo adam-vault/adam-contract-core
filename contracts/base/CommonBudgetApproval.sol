@@ -238,15 +238,19 @@ abstract contract CommonBudgetApproval is Initializable {
 
     function approveTransaction(uint256 id, string calldata comment) external onlyApprover {
         require(_transactionIds.current() >= id, "Invaild TransactionId");
-        require(transactions[id].status == Status.Pending
-            || transactions[id].status == Status.Approved,
+
+        Status _transactionStatus = transactions[id].status;
+        uint256 _transactionApprovedCount = transactions[id].approvedCount + 1;
+
+        require(_transactionStatus == Status.Pending
+            || _transactionStatus == Status.Approved,
             "Unexpected transaction status");
         require(!transactions[id].approved[msg.sender], "Transaction has been approved before");
 
         transactions[id].approved[msg.sender] = true;
-        transactions[id].approvedCount++;
+        transactions[id].approvedCount = _transactionApprovedCount;
 
-        if(transactions[id].approvedCount >= minApproval()) {
+        if(_transactionApprovedCount >= minApproval()) {
             transactions[id].status = Status.Approved;
         }
 
