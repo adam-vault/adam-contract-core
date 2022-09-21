@@ -37,7 +37,7 @@ jobs:
           cp ${{ runner.temp }}/deployment/abis/machine/GovernFactory.json \
             ${{ runner.temp }}/deployment/abis/machine/Govern.json \
             ${{ runner.temp }}/deployment/abis/machine/Dao.json \
-            ./src/Adam/abis
+            ./src/abis
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
