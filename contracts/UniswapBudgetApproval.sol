@@ -50,6 +50,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         
         allowAllFromTokens = _allowAllFromTokens;
         if(!_allowAllFromTokens) {
+            fromToken = _fromToken;
             approveTokenForUniswap(_fromToken);
             emit AllowToken(_fromToken);
         }
