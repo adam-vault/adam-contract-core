@@ -95,7 +95,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
 
     const tx = await budgetApproval
       .connect(executor)
-      .createTransaction([transactionData], Date.now() + 86400, false, '');
+      .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
     const { id } = await findEventArgs(tx, 'CreateTransaction');
 
     const originalBalance = await receiver.getBalance();
@@ -124,7 +124,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
 
     const tx = await budgetApproval
       .connect(executor)
-      .createTransaction([transactionData], Date.now() + 86400, false, '');
+      .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
     const { id } = await findEventArgs(tx, 'CreateTransaction');
 
     await budgetApproval.connect(approver).approveTransaction(id, '');

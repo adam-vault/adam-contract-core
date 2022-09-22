@@ -70,7 +70,7 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
 
       const tx = await budgetApproval
         .connect(executor)
-        .createTransaction([transactionData], Date.now() + 86400, false, '');
+        .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -95,7 +95,7 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
         .connect(executor)
         .createTransaction(
           [transactionDataId1, transactionDataId2],
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           false,
           '',
         );
@@ -237,7 +237,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
 
       const tx = await budgetApproval
         .connect(executor)
-        .createTransaction([transactionData], Date.now() + 86400, false, '');
+        .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -262,7 +262,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
         .connect(executor)
         .createTransaction(
           [transactionData, transactionData2],
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           false,
           '',
         );
@@ -282,7 +282,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
         receiver.address,
         37752,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -300,7 +300,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
         37752,
       ]);
 
-      await expect(budgetApproval.connect(approver).createTransaction([transactionData], Date.now() + 86400, false, ''))
+      await expect(budgetApproval.connect(approver).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, ''))
         .to.be.revertedWith('Executor not whitelisted in budget');
     });
 
@@ -311,7 +311,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
         receiver.address,
         37752,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await expect(
@@ -326,7 +326,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
         receiver.address,
         37752,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await budgetApproval.connect(executor).revokeTransaction(id);
@@ -342,7 +342,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
         executor.address,
         37752,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -372,7 +372,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
         receiver.address,
         37754,
       ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData2, transactionData3], Date.now() + 86400, false, '');
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData, transactionData2, transactionData3], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -543,7 +543,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
           37754,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await tokenC721.ownerOf(37754)).to.eq(receiver.address);
       });

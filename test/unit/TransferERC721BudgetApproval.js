@@ -173,7 +173,7 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
       it('allows user to transfer under allow amount', async function () {
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 1),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
 
         executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
           mockToken.address,
@@ -185,18 +185,18 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 1),
           encodeTxData(mockToken.address, receiver.address, 2),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('allows user to transfer amount twice', async function () {
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 1),
           encodeTxData(mockToken.address, receiver.address, 2),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
 
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 3),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Exceeded max budget transferable amount" error if the 1st time outflow exceeds amount limit', async function () {
@@ -205,19 +205,19 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
           encodeTxData(mockToken.address, receiver.address, 2),
           encodeTxData(mockToken.address, receiver.address, 3),
           encodeTxData(mockToken.address, receiver.address, 4),
-        ], Date.now() + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
       });
 
       it('throws "Exceeded max budget transferable amount" error if the 2nd time outflow exceeds amount limit', async function () {
         await transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 1),
           encodeTxData(mockToken.address, receiver.address, 2),
-        ], Date.now() + 86400, true, '');
+        ], Math.round(Date.now() / 1000) + 86400, true, '');
 
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 3),
           encodeTxData(mockToken.address, receiver.address, 4),
-        ], Date.now() + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
       });
     });
 
@@ -238,13 +238,13 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
       it('allows user to transfer to whitelisted address', async function () {
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 1),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Recipient not whitelisted in budget" error if send to non-permitted receiver', async function () {
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, executor.address, 1),
-        ], Date.now() + 86400, true, '')).to.be.revertedWith('Recipient not whitelisted in budget');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Recipient not whitelisted in budget');
       });
     });
 
@@ -267,13 +267,13 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
       it('allows user to transfer to whitelisted address', async function () {
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 1),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Token not whitelisted in budget" error if send to non-permitted receiver', async function () {
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(unknownToken.address, receiver.address, 1),
-        ], Date.now() + 86400, true, '')).to.be.revertedWith('Token not whitelisted in budget');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Token not whitelisted in budget');
       });
     });
   });
