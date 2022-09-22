@@ -15,10 +15,14 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
+    uint256[] public toTeamIds;
+    mapping(uint256 => bool) public toTeamIdsMapping;
     bool public allowAllTokens;
     address public token;
     bool public allowAnyAmount;
     uint256 public totalAmount;
+
+    event AllowTeam(uint256 indexed teamId);
     event ExecuteTransferERC20Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -30,6 +34,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         InitializeParams calldata params,
         bool _allowAllAddresses,
         address[] memory _toAddresses,
+        uint256[] memory _toTeamIds,
         bool _allowAllTokens,
         address _token,
         bool _allowAnyAmount,
@@ -41,6 +46,10 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         for(uint i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
         }
+        for(uint i = 0; i < _toTeamIds.length; i++) {
+            _addToTeam(_toTeamIds[i]);
+        }
+
         allowAllTokens = _allowAllTokens;
         token = _token;
         allowAnyAmount = _allowAnyAmount;
@@ -66,7 +75,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
 
         IBudgetApprovalExecutee(executee()).executeByBudgetApproval(_token, executeData, 0);
 
-        require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
+        require(allowAllAddresses || addressesMapping[to] || _checkIsToTeamsMember(to), "Recipient not whitelisted in budget");
         require(allowAllTokens || token == _token, "Token not whitelisted in budget");
         require(_allowAnyAmount || value <= _totalAmount, "Exceeded max budget transferable amount");
 
@@ -80,5 +89,21 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         require(!addressesMapping[to], "Duplicated address in target address list");
         addressesMapping[to] = true;
         emit AllowAddress(to);
+    }
+
+    function _checkIsToTeamsMember(address to) internal view returns (bool) {
+        for(uint i = 0; i < toTeamIds.length; i++) {
+            if(ITeam(team()).balanceOf(to, toTeamIds[i]) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function _addToTeam(uint256 teamId) internal {
+        require(!toTeamIdsMapping[teamId], "Duplicated team in target team list");
+        toTeamIdsMapping[teamId] = true;
+        toTeamIds.push(teamId);
+        emit AllowTeam(teamId);
     }
 }

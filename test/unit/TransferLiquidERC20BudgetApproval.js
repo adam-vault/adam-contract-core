@@ -62,6 +62,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
+        [],
         [ADDRESS_ETH, tokenA.address], // allowed token
         false, // allow any amount
         parseEther('100'), // allowed total amount
@@ -113,6 +114,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
         ],
         false, // allow all addresses,
         [receiver.address], // allowed addresses (use when above = false)
+        [],
         [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
         false, // allow any amount
         parseEther('100'), // allowed total amount
@@ -151,6 +153,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
+        [],
         [ADDRESS_ETH, tokenA.address], // allowed token
         false, // allow any amount
         parseEther('100'), // allowed total amount
@@ -342,6 +345,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
+          [],
           [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           parseEther('100'), // allowed total amount
@@ -395,6 +399,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
+          [],
           [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           parseEther('100'), // allowed total amount
@@ -449,6 +454,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
+          [],
           [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           parseEther('100'), // allowed total amount

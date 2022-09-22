@@ -14,11 +14,15 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
+    uint256[] public toTeamIds;
+    mapping(uint256 => bool) public toTeamIdsMapping;
     bool public allowAllTokens;
     address[] public tokens;
     mapping(address => bool) public tokensMapping;
     bool public allowAnyAmount;
     uint256 public totalAmount;
+
+    event AllowTeam(uint256 indexed teamId);
     event ExecuteTransferERC721Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 tokenId);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -30,6 +34,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         InitializeParams calldata params,
         bool _allowAllAddresses,
         address[] memory _toAddresses,
+        uint256[] memory _toTeamIds,
         bool _allowAllTokens,
         address[] memory _tokens,
         bool _allowAnyAmount,
@@ -40,6 +45,9 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         allowAllAddresses = _allowAllAddresses;
         for(uint i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
+        }
+        for(uint i = 0; i < _toTeamIds.length; i++) {
+            _addToTeam(_toTeamIds[i]);
         }
 
         allowAllTokens = _allowAllTokens;
@@ -69,7 +77,7 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
         bytes memory executeData = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", __executee, to, tokenId);
         IBudgetApprovalExecutee(__executee).executeByBudgetApproval(token, executeData, 0);
 
-        require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
+        require(allowAllAddresses || addressesMapping[to] || _checkIsToTeamsMember(to), "Recipient not whitelisted in budget");
         require(allowAllTokens || tokensMapping[token], "Token not whitelisted in budget");
         require(allowAnyAmount || 1 <= totalAmount, "Exceeded max budget transferable amount");
 
@@ -93,5 +101,21 @@ contract TransferERC721BudgetApproval is CommonBudgetApproval {
 
     function tokensLength() public view returns(uint256) {
         return tokens.length;
+    }
+
+    function _checkIsToTeamsMember(address to) internal view returns (bool) {
+        for(uint i = 0; i < toTeamIds.length; i++) {
+            if(ITeam(team()).balanceOf(to, toTeamIds[i]) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function _addToTeam(uint256 teamId) internal {
+        require(!toTeamIdsMapping[teamId], "Duplicated team in target team list");
+        toTeamIdsMapping[teamId] = true;
+        toTeamIds.push(teamId);
+        emit AllowTeam(teamId);
     }
 }

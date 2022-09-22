@@ -264,7 +264,4 @@ abstract contract CommonBudgetApproval is Initializable {
     function _execute(uint256, bytes memory) internal virtual;
     function executeParams() external pure virtual returns (string[] memory);
     function name() external virtual returns (string memory);
-
-    uint256[50] private __gap;
-
 }

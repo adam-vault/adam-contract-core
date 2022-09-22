@@ -31,6 +31,7 @@ describe('TransferERC20BudgetApproval.sol - test/unit/TransferERC20BudgetApprova
     ],
     params.allowAllToAddresses !== undefined ? params.allowAllToAddresses : true,
     params.toAddresses || [],
+    params.toTeamIds || [],
     params.allowAllTokens !== undefined ? params.allowAllTokens : true,
     params.token || ethers.constants.AddressZero,
     params.allowAnyAmount !== undefined ? params.allowAnyAmount : true,
@@ -100,6 +101,7 @@ describe('TransferERC20BudgetApproval.sol - test/unit/TransferERC20BudgetApprova
         TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           allowAllToAddresses: false,
           toAddresses: [],
+          toTeamIds: [1],
           allowAllTokens: false,
           token: mockToken.address,
           allowAnyAmount: false,
@@ -109,6 +111,8 @@ describe('TransferERC20BudgetApproval.sol - test/unit/TransferERC20BudgetApprova
 
       expect(await transferErc20BA.name()).to.be.eq('Transfer ERC20 Budget Approval');
       expect(await transferErc20BA.allowAllAddresses()).to.be.eq(false);
+      expect(await transferErc20BA.toTeamIds(0)).to.be.eq(1);
+      expect(await transferErc20BA.toTeamIdsMapping(1)).to.be.eq(true);
       expect(await transferErc20BA.allowAllTokens()).to.be.eq(false);
       expect(await transferErc20BA.token()).to.be.eq(mockToken.address);
       expect(await transferErc20BA.allowAnyAmount()).to.be.eq(false);
@@ -125,6 +129,14 @@ describe('TransferERC20BudgetApproval.sol - test/unit/TransferERC20BudgetApprova
           allowAnyAmount: true,
           totalAmount: 0,
         })))).to.be.revertedWith('Duplicated address in target address list');
+    });
+    it('throws "Duplicated team in target team list" error if toTeams duplicated', async () => {
+      await expect(ERC1967Proxy.deploy(
+        transferErc20BAImpl.address,
+        TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
+          allowAllToAddresses: false,
+          toTeamIds: [10, 10],
+        })))).to.be.revertedWith('Duplicated team in target team list');
     });
   });
 
@@ -294,6 +306,33 @@ describe('TransferERC20BudgetApproval.sol - test/unit/TransferERC20BudgetApprova
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(unknownToken.address, receiver.address, 25),
         ], Date.now() + 86400, true, '')).to.be.revertedWith('Token not whitelisted in budget');
+      });
+    });
+
+    context('allow limited toTeamIds', async function () {
+      let transferErc20BA;
+      beforeEach(async function () {
+        const contract = await ERC1967Proxy.deploy(
+          transferErc20BAImpl.address,
+          TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
+            allowAllToAddresses: false,
+            toTeamIds: [10],
+          })));
+        transferErc20BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
+      });
+
+      it('allows user to transfer to member of whitelisted team', async function () {
+        team.balanceOf.whenCalledWith(receiver.address, 10).returns(1);
+        await expect(transferErc20BA.connect(executor).createTransaction([
+          encodeTxData(mockToken.address, receiver.address, 50),
+        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+      });
+
+      it('throws "Recipient not whitelisted in budget" error if send to non-member of whitelisted team', async function () {
+        team.balanceOf.whenCalledWith(receiver.address, 10).returns(0);
+        await expect(transferErc20BA.connect(executor).createTransaction([
+          encodeTxData(mockToken.address, receiver.address, 50),
+        ], Date.now() + 86400, true, '')).to.be.revertedWith('Recipient not whitelisted in budget');
       });
     });
   });
