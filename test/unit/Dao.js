@@ -5,7 +5,7 @@ const { getContractAddress } = require('@ethersproject/address');
 const { createTokens } = require('../utils/createContract');
 const findEventArgs = require('../../utils/findEventArgs');
 
-describe('Dao.sol', function () {
+describe('Dao.sol - test/unit/Dao.js', function () {
   let creator, member, mockGovern;
   let dao, mockAdam, mockMemberShip, lpAsSigner;
   let tokenA, tokenC721, tokenD1155;

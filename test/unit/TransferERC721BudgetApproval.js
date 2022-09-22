@@ -9,7 +9,7 @@ chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC721BudgetApproval.sol', async function () {
+describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetApproval.js', async function () {
   let creator, executor, receiver;
   let mockToken, team, executee;
   let executeeAsSigner, TransferERC721BudgetApproval, ERC1967Proxy, transferErc20BAImpl;
@@ -86,15 +86,16 @@ describe('TransferERC721BudgetApproval.sol', async function () {
           allowAllToAddresses: true,
           toAddresses: [],
           allowAllTokens: true,
-          token: ethers.constants.AddressZero,
+          tokens: [],
           allowAnyAmount: true,
           totalAmount: 0,
         })));
-      const transferErc721BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
+      const transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
 
       expect(await transferErc721BA.name()).to.be.eq('Transfer ERC721 Budget Approval');
       expect(await transferErc721BA.allowAllAddresses()).to.be.eq(true);
       expect(await transferErc721BA.allowAllTokens()).to.be.eq(true);
+      expect(await transferErc721BA.tokensLength()).to.be.eq(ethers.BigNumber.from('0'));
       expect(await transferErc721BA.allowAnyAmount()).to.be.eq(true);
       expect(await transferErc721BA.totalAmount()).to.be.eq(ethers.BigNumber.from('0'));
     });
@@ -106,11 +107,11 @@ describe('TransferERC721BudgetApproval.sol', async function () {
           allowAllToAddresses: false,
           toAddresses: [],
           allowAllTokens: false,
-          token: mockToken.address,
+          tokens: [mockToken.address],
           allowAnyAmount: false,
           totalAmount: ethers.BigNumber.from('1000'),
         })));
-      const transferErc721BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
+      const transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
 
       expect(await transferErc721BA.name()).to.be.eq('Transfer ERC721 Budget Approval');
       expect(await transferErc721BA.allowAllAddresses()).to.be.eq(false);
@@ -142,7 +143,7 @@ describe('TransferERC721BudgetApproval.sol', async function () {
       const contract = await ERC1967Proxy.deploy(
         transferErc20BAImpl.address,
         TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser()));
-      transferErc721BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
+      transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
     });
 
     it('describes execute params', async function () {
@@ -164,7 +165,7 @@ describe('TransferERC721BudgetApproval.sol', async function () {
             allowAnyAmount: false,
             totalAmount: 3,
           })));
-        transferErc721BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
+        transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
 
         executee.executeByBudgetApproval.returns('0x');
       });
@@ -229,7 +230,7 @@ describe('TransferERC721BudgetApproval.sol', async function () {
             allowAllToAddresses: false,
             toAddresses: [receiver.address],
           })));
-        transferErc721BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
+        transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
 
         executee.executeByBudgetApproval.returns('0x');
       });
@@ -257,7 +258,7 @@ describe('TransferERC721BudgetApproval.sol', async function () {
             allowAllTokens: false,
             tokens: [mockToken.address],
           })));
-        transferErc721BA = await ethers.getContractAt('TransferERC20BudgetApproval', contract.address);
+        transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
 
         executee.executeByBudgetApproval.returns('0x');
         unknownToken = await smock.fake('ERC721');

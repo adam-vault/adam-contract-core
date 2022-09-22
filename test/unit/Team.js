@@ -1,20 +1,28 @@
 const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
+const { smock } = require('@defi-wonderland/smock');
 const decodeBase64 = require('../utils/decodeBase64');
+const findEventArgs = require('../../utils/findEventArgs');
 
-describe('Team.sol', function () {
+describe('Team.sol - test/unit/Team.js', function () {
   let creator, member1, member2, member3;
   let team;
-  let teamId, tx;
+  let teamId;
 
   beforeEach(async function () {
     [creator, member1, member2, member3] = await ethers.getSigners();
+
+    // contract
     const Team = await ethers.getContractFactory('Team', { signer: creator });
-    team = await upgrades.deployProxy(Team, { kind: 'uups' });
-    tx = await team.addTeam('Team Name', member1.address, [member1.address, member2.address], 'Description');
-    const receipt = await tx.wait();
-    const event = receipt.events.find(e => e.event === 'TransferSingle');
-    teamId = event.args.id;
+    team = await upgrades.deployProxy(Team, [], { kind: 'uups' });
+
+    // create teamId
+    const tx = await team.addTeam(
+      'Team Name',
+      member1.address,
+      [member1.address, member2.address],
+      'Description');
+    teamId = await findEventArgs(tx, 'TransferSingle', 'id');
   });
 
   it('init creator as owner', async function () {
@@ -24,28 +32,44 @@ describe('Team.sol', function () {
   describe('upgradeTo()', function () {
     let mockV2Impl;
     beforeEach(async function () {
-      const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
-      mockV2Impl = await MockUpgrade.deploy();
-      await mockV2Impl.deployed();
+      mockV2Impl = await (await smock.mock('MockVersionUpgrade')).deploy();
     });
     it('allows owner to upgrade', async function () {
       await team.upgradeTo(mockV2Impl.address);
       const v2Contract = await ethers.getContractAt('MockVersionUpgrade', team.address);
+
       expect(await v2Contract.v2()).to.equal(true);
     });
     it('throws "Ownable: caller is not the owner" error if upgrade by non owner', async function () {
-      await expect(team.connect(member2).upgradeTo(mockV2Impl.address)).to.revertedWith('Ownable: caller is not the owner');
+      await expect(team.connect(member2).upgradeTo(mockV2Impl.address))
+        .to.revertedWith('Ownable: caller is not the owner');
     });
   });
 
   describe('safeTransferFrom()', function () {
     it('throws "Team: Transfer of team ownership is aboundand" error if member transfer their token', async function () {
-      await expect(team.connect(member2).safeTransferFrom(member2.address, member3.address, teamId, 1, '0x')).to.revertedWith('Team: Transfer of team ownership is aboundand');
+      await expect(
+        team
+          .connect(member2)
+          .safeTransferFrom(
+            member2.address, // from
+            member3.address, // to
+            teamId, // tokenId
+            1, // amount
+            '0x'),
+      ).to.revertedWith('Team: Transfer of team ownership is aboundand');
     });
   });
 
   describe('addTeam()', function () {
     it('adds a team', async function () {
+      const tx = await team.addTeam(
+        'Team Name',
+        member1.address,
+        [member1.address, member2.address],
+        'Description');
+      teamId = await findEventArgs(tx, 'TransferSingle', 'id');
+
       expect(await team.creatorOf(teamId)).to.eq(creator.address);
       expect(await team.minterOf(teamId)).to.eq(member1.address);
       expect(await team.nameOf(teamId)).to.eq('Team Name');
@@ -54,12 +78,20 @@ describe('Team.sol', function () {
       expect(await team.balanceOf(member1.address, teamId)).to.eq(1);
       expect(await team.balanceOf(member2.address, teamId)).to.eq(1);
     });
+    it('throws "minter is null" error if null is set', async function () {
+      await expect(
+        team.addTeam(
+          'Team Name',
+          ethers.constants.AddressZero,
+          [member1.address, member2.address],
+          'Description'),
+      ).to.revertedWith('minter is null');
+    });
   });
 
   describe('uri()', function () {
     it('returns uri with name, creator, minter', async function () {
-      const uri = await team.uri(teamId);
-      const res = decodeBase64(uri);
+      const res = decodeBase64(await team.uri(teamId));
 
       expect(res.name).to.eq('Team Name');
       expect(res.creator).to.eq(creator.address.toLowerCase());

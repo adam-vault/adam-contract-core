@@ -9,7 +9,7 @@ chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC20BudgetApproval.sol', async function () {
+describe('TransferERC20BudgetApproval.sol - test/unit/TransferERC20BudgetApproval.js', async function () {
   let creator, executor, receiver;
   let mockToken, team, executee, unknownToken;
   let executeeAsSigner, TransferERC20BudgetApproval, ERC1967Proxy, transferErc20BAImpl;
@@ -91,6 +91,8 @@ describe('TransferERC20BudgetApproval.sol', async function () {
       expect(await transferErc20BA.token()).to.be.eq(ethers.constants.AddressZero);
       expect(await transferErc20BA.allowAnyAmount()).to.be.eq(true);
       expect(await transferErc20BA.totalAmount()).to.be.eq(ethers.BigNumber.from('0'));
+      expect(await transferErc20BA.text()).to.be.eq('text');
+      expect(await transferErc20BA.transactionType()).to.be.eq('transactionType');
     });
     it('init with params with complex setting successfully', async () => {
       const contract = await ERC1967Proxy.deploy(

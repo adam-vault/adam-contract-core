@@ -48,3 +48,13 @@ jobs:
       DEPLOY_ENV: dev
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
+
+  sync-centralized-backend:
+    name: Sync Centralized Backend
+    needs: deploy-contracts
+    uses: ./.github/workflows/reusable-sync-centralized-backend.yml
+    with:
+      GIT_REF: ${{ github.ref_name }}
+      DEPLOY_ENV: dev
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}

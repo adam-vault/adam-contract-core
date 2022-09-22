@@ -14,6 +14,7 @@ module.exports = {
         'mocks/MockGovern.sol',
         'mocks/MockMembership.sol',
         'mocks/MockUniswapRouter.sol',
+        'mocks/MockBudgetApproval.sol',
         'tests/TokenA.sol',
         'tests/TokenB.sol',
         'tests/TokenC721.sol',

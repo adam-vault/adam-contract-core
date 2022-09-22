@@ -12,7 +12,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferLiquidERC20BudgetApproval.sol', function () {
+describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20BudgetApproval.js', function () {
   let transferLiquidERC20BAImplementation, budgetApproval, dao, team;
   let executor, approver, receiver;
   let tokenA, executee, TransferLiquidERC20BudgetApproval;

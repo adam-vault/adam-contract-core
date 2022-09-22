@@ -8,7 +8,7 @@ const { getCreateTransferERC721BAParams } = require('../../utils/paramsStruct');
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC721BudgetApproval.sol', function () {
+describe('Integration - TransferERC721BudgetApproval.sol - test/integration/TransferERC721BudgetApproval.js', function () {
   let adam, dao, transferERC721BAImplementation, budgetApproval;
   let executor, approver, receiver;
   let tokenC721, budgetApprovalAddresses;
@@ -113,7 +113,7 @@ describe('TransferERC721BudgetApproval.sol', function () {
   });
 });
 
-describe('TransferERC721BudgetApproval.sol', function () {
+describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/TransferERC721BudgetApproval.js', function () {
   let transferERC721BAImplementation, budgetApproval;
   let executor, approver, receiver;
   let tokenC721, executee, TransferERC721BudgetApproval, team;
