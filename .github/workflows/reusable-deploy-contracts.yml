@@ -14,6 +14,8 @@ on:
         required: true
       KOVAN_URL:
         required: true
+      GOERLI_URL:
+        required: true
       PRIVATE_KEY:
         required: true
 
@@ -22,6 +24,7 @@ env:
   CONTRACT_DEPLOY_NETWORK: ${{ inputs.CONTRACT_DEPLOY_NETWORK }}
   PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
   RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
+  GOERLI_URL: ${{ secrets.GOERLI_URL }}
   KOVAN_URL: ${{ secrets.KOVAN_URL }}
 
 jobs:
