@@ -99,6 +99,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event CreateMember(address account, uint256 depositAmount);
     event Deposit(address account, uint256 amount);
     event UpdateDaoSetting(uint256 minDepositAmount);
+    event UpgradeDao(string remark);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -374,7 +375,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function _authorizeUpgrade(address) internal view override onlyGovern("General") {}
 
-    function upgradeImplementations(address[] calldata targets, address[] calldata newImplementations) public onlyGovern("General") {
+    function upgradeImplementations(address[] calldata targets, address[] calldata newImplementations, string memory remark) public onlyGovern("General") {
         require(targets.length == newImplementations.length, "params length not match");
         for (uint256 i = 0; i < targets.length; i++) {
             if (targets[i] == address(this)) {
@@ -383,6 +384,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
                 UUPSUpgradeable(targets[i]).upgradeTo(newImplementations[i]);
             }
         }
+
+        emit UpgradeDao(remark);
     }
 
 
