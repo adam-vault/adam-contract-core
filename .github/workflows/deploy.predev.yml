@@ -13,8 +13,7 @@ jobs:
       CONTRACT_DEPLOY_NETWORK: rinkeby
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
-      KOVAN_URL: ''
+      GOERLI_URL: ${{ secrets.GOERLI_URL }}
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
   sync-centralized-backend:
     name: Sync Centralized Backend
