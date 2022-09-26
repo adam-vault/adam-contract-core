@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.7;
 
-import "../DaoV2.sol";
+import "../v2/DaoV2.sol";
 
 contract MockDaoV2 is DaoV2 {
     function v2() public pure returns (bool) {

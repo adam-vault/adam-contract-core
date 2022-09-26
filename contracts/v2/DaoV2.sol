@@ -69,7 +69,8 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
     address public baseCurrency;
     string public logoCID;
     address[] public admissionTokens;
-    
+    bool private _initializing;
+
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
     mapping(uint256 => bool) public teamWhitelist;
@@ -83,7 +84,6 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
     event CreateMember(address account, uint256 depositAmount);
     event Deposit(address account, uint256 amount);
 
-    bool private _initializing;
     event RemoveAdmissionToken(address token);
     event UpdateLocktime();
     event UpdateMinDepositAmount();
@@ -138,7 +138,7 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
     }
 
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
-        return IAdam(adam).budgetApprovals(budgetApproval);
+        return IAdamV2(adam).budgetApprovals(budgetApproval);
     }
 
     function govern(string memory gName) public view returns (address) {
@@ -384,5 +384,5 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
       }
     }
 
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 }

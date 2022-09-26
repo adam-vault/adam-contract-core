@@ -29,7 +29,7 @@ describe('Integration - AdamV2.sol - test/integration/v2/AdamV2.js', function ()
     const tokens = await createTokens();
     token = tokens.tokenA;
 
-    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
+    const feedRegistryArticfact = require('../../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
