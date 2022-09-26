@@ -2,7 +2,7 @@
 const { faker } = require('@faker-js/faker');
 const { constants } = require('ethers');
 const { ethers } = require('hardhat');
-const daoV2Artifact = require('../artifacts/contracts/DaoV2.sol/DaoV2.json');
+const daoV2Artifact = require('../artifacts/contracts/v2/DaoV2.sol/DaoV2.json');
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
