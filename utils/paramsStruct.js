@@ -2,6 +2,7 @@
 const { faker } = require('@faker-js/faker');
 const { constants } = require('ethers');
 const { ethers } = require('hardhat');
+const daoV2Artifact = require('../artifacts/contracts/DaoV2.sol/DaoV2.json');
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
@@ -85,6 +86,51 @@ function getCreateTransferERC20BAParams ({
     return value;
   });
 }
+
+function getCreateDaoParamsV2 ({
+  // defaut Dao Setting
+  name = faker.company.companyName(),
+  description = faker.commerce.productDescription(),
+  lockTime = 0,
+  generalGovernSetting = [300, 3000, 5000, 0],
+  tokenName = `${faker.company.companyName()}Token`,
+  tokenSymbol = 'MT',
+  tokenAmount = 100,
+  minDepositAmount = 0,
+  depositTokens = [ETH],
+  mintMemberToken = false,
+  admissionTokens = [],
+  baseCurrency = ETH,
+  logoCID = '',
+  maxMemberLimit = ethers.constants.MaxUint256,
+}) {
+  const iface = new ethers.utils.Interface(daoV2Artifact.abi);
+
+  return [
+    Object.values({
+      name,
+      description,
+      baseCurrency,
+      maxMemberLimit,
+      tokenName,
+      tokenSymbol,
+      depositTokens,
+    }),
+    [
+      lockTime ? iface.encodeFunctionData('setLocktime', [lockTime]) : '',
+      minDepositAmount ? iface.encodeFunctionData('setMinDepositAmount', [minDepositAmount]) : '',
+      iface.encodeFunctionData('createGovern', ['General', ...generalGovernSetting]),
+      tokenAmount ? iface.encodeFunctionData('mintMemberToken', [tokenAmount]) : '',
+      logoCID ? iface.encodeFunctionData('setLogoCID', [logoCID]) : '',
+      ...admissionTokens.map(([token, minTokenToAdmit, tokenId, isMemberToken]) => {
+        if (isMemberToken) {
+          return iface.encodeFunctionData('setMemberTokenAsAdmissionToken', [minTokenToAdmit]);
+        }
+        return iface.encodeFunctionData('addAdmissionToken', [token, minTokenToAdmit, tokenId]);
+      }),
+    ].filter((str) => !!str),
+  ];
+};
 
 function getCreateTransferLiquidErc20TokenBAParams ({
   executor,
@@ -259,6 +305,7 @@ function getCreateCommonBudgetApprovalParams ({
 }
 module.exports = {
   getCreateDaoParams,
+  getCreateDaoParamsV2,
   getCreateTransferERC20BAParams,
   getCreateTransferLiquidErc20TokenBAParams,
   getCreateUniswapBAParams,
