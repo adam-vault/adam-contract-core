@@ -13,6 +13,7 @@
   "function owner() view returns (address)",
   "function proxiableUUID() view returns (bytes32)",
   "function renounceOwnership()",
+  "function setGovernImplementation(address _governImplementation)",
   "function transferOwnership(address newOwner)",
   "function upgradeTo(address newImplementation)",
   "function upgradeToAndCall(address newImplementation, bytes data) payable"
