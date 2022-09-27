@@ -85,9 +85,9 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
     event Deposit(address account, uint256 amount);
 
     event RemoveAdmissionToken(address token);
-    event UpdateLocktime();
-    event UpdateMinDepositAmount();
-    event UpdateLogoCID();
+    event UpdateLocktime(uint256 locktime);
+    event UpdateMinDepositAmount(uint256 amount);
+    event UpdateLogoCID(string logoCID);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -169,17 +169,17 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
 
     function setLocktime(uint256 _locktime) public onlyGovern("General") {
         locktime = _locktime;
-        emit UpdateLocktime();
+        emit UpdateLocktime(_locktime);
     }
 
     function setMinDepositAmount(uint256 _minDepositAmount) public onlyGovern("General") {
         minDepositAmount = _minDepositAmount;
-        emit UpdateMinDepositAmount();
+        emit UpdateMinDepositAmount(_minDepositAmount);
     }
 
     function setLogoCID(string calldata _logoCID) public onlyGovern("General") {
         logoCID = _logoCID;
-        emit UpdateLogoCID();
+        emit UpdateLogoCID(_logoCID);
     }
 
 
