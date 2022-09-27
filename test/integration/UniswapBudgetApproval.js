@@ -15,7 +15,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('UniswapBudgetApproval.sol', function () {
+describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudgetApproval.js', function () {
   let uniswapBAImplementation, budgetApproval, uniswapRouter;
   let executor, approver;
   let tokenA, executee, UniswapBudgetApproval, WETH;
@@ -139,7 +139,7 @@ describe('UniswapBudgetApproval.sol', function () {
           parseEther('10'),
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(parseEther('10'));
       });
@@ -155,7 +155,7 @@ describe('UniswapBudgetApproval.sol', function () {
           0,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(parseEther('0.9'));
       });
@@ -174,7 +174,7 @@ describe('UniswapBudgetApproval.sol', function () {
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           [functionCallData],
         ]);
 
@@ -184,7 +184,7 @@ describe('UniswapBudgetApproval.sol', function () {
           100,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await tokenA.balanceOf(executee.address)).to.eq(200);
       });
@@ -205,7 +205,7 @@ describe('UniswapBudgetApproval.sol', function () {
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           [functionCallData],
         ]);
 
@@ -216,7 +216,7 @@ describe('UniswapBudgetApproval.sol', function () {
         ]);
 
         await budgetApproval.approveTokenForUniswap(tokenA.address);
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect((await ethers.provider.getBalance(executee.address)).sub(originalBalance)).to.eq(100);
       });
@@ -237,7 +237,7 @@ describe('UniswapBudgetApproval.sol', function () {
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           [functionCallData],
         ]);
 
@@ -248,7 +248,7 @@ describe('UniswapBudgetApproval.sol', function () {
         ]);
 
         await budgetApproval.approveTokenForUniswap(ADDRESS_WETH);
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await tokenA.balanceOf(executee.address)).to.eq(200);
       });
@@ -268,7 +268,7 @@ describe('UniswapBudgetApproval.sol', function () {
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           [functionCallData],
         ]);
 
@@ -279,7 +279,7 @@ describe('UniswapBudgetApproval.sol', function () {
         ]);
 
         await budgetApproval.approveTokenForUniswap(tokenA.address);
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(100);
       });
