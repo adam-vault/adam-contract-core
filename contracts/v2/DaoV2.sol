@@ -83,6 +83,7 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
     event CreateMember(address account, uint256 depositAmount);
     event Deposit(address account, uint256 amount);
+    event UpgradeDao(string remark);
 
     event RemoveAdmissionToken(address token);
     event UpdateLocktime();
@@ -366,7 +367,7 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
 
     function _authorizeUpgrade(address) internal view override onlyGovern("General") {}
 
-    function upgradeImplementations(address[] calldata targets, address[] calldata newImplementations) public onlyGovern("General") {
+    function upgradeImplementations(address[] calldata targets, address[] calldata newImplementations, string memory remark) public onlyGovern("General") {
         require(targets.length == newImplementations.length, "params length not match");
         for (uint256 i = 0; i < targets.length; i++) {
             if (targets[i] == address(this)) {
@@ -375,6 +376,8 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
                 UUPSUpgradeable(targets[i]).upgradeTo(newImplementations[i]);
             }
         }
+        
+        emit UpgradeDao(remark);
     }
 
 
