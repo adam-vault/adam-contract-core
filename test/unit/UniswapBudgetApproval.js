@@ -13,7 +13,7 @@ chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('UniswapBudgetApproval.sol', async function () {
+describe('UniswapBudgetApproval.sol - test/unit/UniswapBudgetApproval.js', async function () {
   let executor;
   let mockToken, mockTokenB, team, executee, mockUniswapRouter;
   let executeeAsSigner, UniswapBudgetApproval, ERC1967Proxy, uniswapBAImpl;
@@ -177,7 +177,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
 
         executee.executeByBudgetApproval.atCall(0).should.be.calledWith(
           ADDRESS_UNISWAP_ROUTER,
@@ -190,7 +190,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('allows user to swap amount twice', async function () {
@@ -198,11 +198,11 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Exceeded max budget transferable amount" error if the 1st time outflow exceeds amount limit', async function () {
@@ -210,7 +210,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.be.revertedWith('Exceeded max amount');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded max amount');
       });
 
       it('throws "Exceeded max budget transferable amount" error if the 2nd time outflow exceeds amount limit', async function () {
@@ -218,13 +218,13 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '');
+        ], Math.round(Date.now() / 1000) + 86400, true, '');
 
         const callData2 = encodeExactInputSwapData(mockToken.address, mockTokenB.address, executee.address, 51, 10);
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData2, 0),
-        ], Date.now() + 86400, true, '')).to.be.revertedWith('Exceeded max amount');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded max amount');
       });
     });
 
@@ -246,7 +246,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('allows user to swap equal allow percentage amount', async function () {
@@ -255,7 +255,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('allows user to swap percentage amount twice', async function () {
@@ -264,11 +264,11 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Exceeded percentage" if swap exceeds percentage limit', async function () {
@@ -277,7 +277,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.be.revertedWith('Exceeded percentage');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded percentage');
       });
     });
 
@@ -299,7 +299,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Source token not whitelisted" if swap not whitelisted token', async function () {
@@ -307,7 +307,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.be.revertedWith('Source token not whitelisted');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Source token not whitelisted');
       });
     });
 
@@ -328,7 +328,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.not.be.reverted;
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Target token not whitelisted" error if swap to not whitelisted token', async function () {
@@ -336,7 +336,7 @@ describe('UniswapBudgetApproval.sol', async function () {
 
         await expect(uniswapBA.connect(executor).createTransaction([
           encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0),
-        ], Date.now() + 86400, true, '')).to.be.revertedWith('Target token not whitelisted');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Target token not whitelisted');
       });
     });
   });
