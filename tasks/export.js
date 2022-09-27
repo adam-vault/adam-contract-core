@@ -35,7 +35,7 @@ task('export-abi-human', 'Generate Human Readable ABIs for contracts', async fun
   }
   return exportABI({
     artifacts: './artifacts/contracts',
-    contracts: 'contracts/*.sol',
+    contracts: 'contracts/{v2,}/*.sol',
     outputPath: './abis/human',
   }, hre);
 });
