@@ -4,6 +4,7 @@ const fileReader = require('../utils/fileReader');
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get } = deployments;
   const { deployer } = await getNamedAccounts();
+  const deployNetwork = hre.network.name || 'kovan';
   const adamDeployment = await get('Adam');
   const governFactoryDeployment = await get('GovernFactory');
 
@@ -57,7 +58,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   
     fileReader.save('deploy-results', 'results.json', {
       network: deployNetwork,
-      block_number: adam.receipt.blockNumber,
+      block_number: adamDeployment.receipt.blockNumber,
       addresses: contractAddresses,
       initdata_addresses: {},
     });
