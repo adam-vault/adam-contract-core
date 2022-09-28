@@ -102,6 +102,7 @@ jobs:
             Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
           commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployments"
+          base: ${{ github.head_ref }}
           reviewers: |
             chikchoi6
             ayame30
