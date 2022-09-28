@@ -31,7 +31,7 @@ jobs:
   deploy-contracts:
     name: Deploy Contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3.0.0
