@@ -19,6 +19,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       get('LiquidUniswapBudgetApproval'),
       get('TransferERC721BudgetApproval'),
       get('TransferERC20BudgetApproval'),
+      get('UniswapBudgetApproval'),
     ])
   ).map((deployment) => deployment.address);
 
@@ -60,6 +61,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     liquidUniswapBudgetApproval: budgetApprovalsAddress[1],
     transferErc721BudgetApproval: budgetApprovalsAddress[2],
     transferERC20BudgetApproval: budgetApprovalsAddress[3],
+    uniswapBudgetApproval: budgetApprovalsAddress[4],
     team: team.address,
   };
 
