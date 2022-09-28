@@ -20,6 +20,7 @@ analyze:
         - contracts/interface/ICommonBudgetApproval.sol
         - contracts/interface/IBudgetApprovalExecutee.sol
         - contracts/interface/ITransferERC20BudgetApproval.sol
+        - contracts/interface/IUniswapBudgetApproval.sol
         - contracts/interface/ILiquidUniswapBudgetApproval.sol
         - contracts/interface/IGovern.sol
         - contracts/interface/ITeam.sol
