@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.7;
 
-import "../Dao.sol";
+import "../v2/DaoV2.sol";
 
-contract MockDaoV2 is Dao {
+contract MockDaoV2 is DaoV2 {
     function v2() public pure returns (bool) {
         return true;
     }
-    function exposedCreateMemberToken(address imple, string[] calldata tokenInfo, uint amount) public {
-        _createMemberToken(imple, tokenInfo, amount);
+    function exposedCreateMemberToken(address imple, string calldata name, string calldata symbol, uint amount) public {
+        _createMemberToken(imple, name, symbol);
     }
     function exposedMintMemberToken(uint amount) public {
         _mintMemberToken(amount);
