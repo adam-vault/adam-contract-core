@@ -13,4 +13,5 @@ module.exports.tags = [
   'Membership',
   'LiquidPool',
   'MemberToken',
+  'phase3',
 ];
