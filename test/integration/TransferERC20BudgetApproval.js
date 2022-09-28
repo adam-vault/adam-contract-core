@@ -84,7 +84,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
         [tokenA.address, receiver.address, parseEther('10')],
       );
 
-      const deadline = Date.now() + 86400;
+      const deadline = Math.round(Date.now() / 1000) + 86400;
       const tx = await budgetApproval
         .connect(executor)
         .createTransaction([transactionData], deadline, false, '');
@@ -116,7 +116,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
         .connect(executor)
         .createTransaction(
           [transactionData, transactionData],
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           false,
           '',
         );
@@ -174,7 +174,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
 
       const tx = await budgetApproval
         .connect(executor)
-        .createTransaction([transactionData], Date.now() + 86400, false, '');
+        .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
       const orgReceiverBalance = await tokenA.balanceOf(receiver.address);
 
@@ -196,7 +196,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
         .connect(executor)
         .createTransaction(
           [transactionData, transactionData],
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           false,
           '',
         );
@@ -342,7 +342,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
 
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         const originalBalance = await tokenA.balanceOf(receiver.address);
         await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -362,7 +362,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         );
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -379,7 +379,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
           receiver.address,
           '10',
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await expect(budgetApproval.connect(approver).approveTransaction(id + 1, ''))
@@ -396,7 +396,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         await expect(
           budgetApproval
             .connect(approver)
-            .createTransaction([transactionData], Date.now() + 86400, false, ''),
+            .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, ''),
         ).to.be.revertedWith('Executor not whitelisted in budget');
       });
     });
@@ -409,7 +409,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         );
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await expect(
@@ -426,7 +426,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         );
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(executor).revokeTransaction(id);
@@ -443,7 +443,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
           receiver.address,
           '10',
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         ;
         await expect(budgetApproval.connect(executor).revokeTransaction(id + 1))
@@ -459,7 +459,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         );
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -476,7 +476,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
           receiver.address,
           '101',
         ]);
-        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Date.now() + 86400, false, '');
+        const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         await budgetApproval.connect(approver).approveTransaction(id, '');
         await expect(budgetApproval.connect(executor).executeTransaction(id))
@@ -688,7 +688,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
 
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         const originalBalance = await tokenA.balanceOf(receiver.address);
         await budgetApproval.connect(approver).approveTransaction(id, '');
@@ -707,7 +707,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
 
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         await expect(
           budgetApproval.connect(executor).approveTransaction(id, ''),
@@ -722,7 +722,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
 
         const tx = await budgetApproval
           .connect(executor)
-          .createTransaction([transactionData], Date.now() + 86400, false, '');
+          .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         await budgetApproval.connect(approver).approveTransaction(id, '');
         await expect(
@@ -769,7 +769,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         const originalBalanceA = await tokenA.balanceOf(receiver.address);
         const originalBalanceB = await tokenB.balanceOf(receiver.address);
 
-        await budgetApproval.connect(executor).createTransaction([transactionData1, transactionData2], Date.now() + 86400, true, '');
+        await budgetApproval.connect(executor).createTransaction([transactionData1, transactionData2], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await tokenA.balanceOf(receiver.address)).to.eq(originalBalanceA.add('10'));
         expect(await tokenB.balanceOf(receiver.address)).to.eq(originalBalanceB.add('10'));

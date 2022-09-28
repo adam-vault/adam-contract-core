@@ -146,7 +146,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
           parseEther('10'),
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(parseEther('10'));
       });
@@ -162,7 +162,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
           0,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(parseEther('0.9'));
       });
@@ -181,7 +181,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           [functionCallData],
         ]);
 
@@ -191,7 +191,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
           100,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await tokenA.balanceOf(executee.address)).to.eq(200);
       });
@@ -212,7 +212,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           [functionCallData],
         ]);
 
@@ -221,7 +221,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
           callData,
           0,
         ]);
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect((await ethers.provider.getBalance(executee.address)).sub(originalBalance)).to.eq(100);
       });
@@ -242,7 +242,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           [functionCallData],
         ]);
 
@@ -252,7 +252,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
           0,
         ]);
 
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await tokenA.balanceOf(executee.address)).to.eq(200);
       });
@@ -272,7 +272,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
         ]]);
 
         const callData = uniswapRouter.interface.encodeFunctionData('multicall(uint256,bytes[])', [
-          Date.now() + 86400,
+          Math.round(Date.now() / 1000) + 86400,
           [functionCallData],
         ]);
 
@@ -281,7 +281,7 @@ describe('Integration - UniswapBudgetApproval.sol - test/integration/UniswapBudg
           callData,
           0,
         ]);
-        await budgetApproval.createTransaction([transactionData], Date.now() + 86400, true, '');
+        await budgetApproval.createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, true, '');
 
         expect(await WETH.balanceOf(executee.address)).to.eq(100);
       });

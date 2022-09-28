@@ -90,7 +90,7 @@ contract Govern is
     }
 
     function COUNTING_MODE() public pure override returns (string memory) {
-        return "support=bravo&quorum=bravo";
+        return "support=bravo&quorum=for,against";
     }
 
     function hasVoted(uint256 proposalId, address account) public view override returns (bool) {

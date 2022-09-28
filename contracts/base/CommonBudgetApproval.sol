@@ -26,7 +26,7 @@ abstract contract CommonBudgetApproval is Initializable {
         uint256 id;
         bytes[] data;
         Status status;
-        uint256 deadline;
+        uint32 deadline;
         bool isExist;
         uint256 approvedCount;
         mapping(address => bool) approved;
@@ -211,7 +211,7 @@ abstract contract CommonBudgetApproval is Initializable {
         emit ExecuteTransaction(id, data, msg.sender);
     }
 
-    function createTransaction(bytes[] memory _data, uint256 _deadline, bool _isExecute, string calldata comment) external onlyExecutor returns (uint256) {
+    function createTransaction(bytes[] memory _data, uint32 _deadline, bool _isExecute, string calldata comment) external onlyExecutor returns (uint256) {
         _transactionIds.increment();
         uint256 id = _transactionIds.current();
 
@@ -238,15 +238,19 @@ abstract contract CommonBudgetApproval is Initializable {
 
     function approveTransaction(uint256 id, string calldata comment) external onlyApprover {
         require(_transactionIds.current() >= id, "Invaild TransactionId");
-        require(transactions[id].status == Status.Pending
-            || transactions[id].status == Status.Approved,
+
+        Status _transactionStatus = transactions[id].status;
+        uint256 _transactionApprovedCount = transactions[id].approvedCount + 1;
+
+        require(_transactionStatus == Status.Pending
+            || _transactionStatus == Status.Approved,
             "Unexpected transaction status");
         require(!transactions[id].approved[msg.sender], "Transaction has been approved before");
 
         transactions[id].approved[msg.sender] = true;
-        transactions[id].approvedCount++;
+        transactions[id].approvedCount = _transactionApprovedCount;
 
-        if(transactions[id].approvedCount >= minApproval()) {
+        if(_transactionApprovedCount >= minApproval()) {
             transactions[id].status = Status.Approved;
         }
 
