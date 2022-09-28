@@ -15,23 +15,23 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const budgetApprovalsAddress = (
     await Promise.all([
-      get("TransferLiquidERC20BudgetApproval"),
-      get("LiquidUniswapBudgetApproval"),
-      get("TransferERC721BudgetApproval"),
-      get("TransferERC20BudgetApproval"),
+      get('TransferLiquidERC20BudgetApproval'),
+      get('LiquidUniswapBudgetApproval'),
+      get('TransferERC721BudgetApproval'),
+      get('TransferERC20BudgetApproval'),
     ])
   ).map((deployment) => deployment.address);
 
-  const adam = await deploy("Adam", {
+  const adam = await deploy('Adam', {
     from: deployer,
     log: true,
     args: [],
     proxy: {
-      proxyContract: "ERC1967Proxy",
-      proxyArgs: ["{implementation}", "{data}"],
+      proxyContract: 'ERC1967Proxy',
+      proxyArgs: ['{implementation}', '{data}'],
       execute: {
         init: {
-          methodName: "initialize",
+          methodName: 'initialize',
           args: [
             dao.address,
             membership.address,
