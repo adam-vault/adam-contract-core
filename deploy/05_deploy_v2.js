@@ -1,4 +1,5 @@
 const { ethers } = require('hardhat');
+const fileReader = require('../utils/fileReader');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, execute, get } = deployments;

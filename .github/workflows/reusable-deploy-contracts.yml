@@ -4,6 +4,9 @@ on:
       GIT_REF:
         required: true
         type: string
+      LIB_CONSTANT_NETWORK:
+        required: true
+        type: string
       CONTRACT_DEPLOY_NETWORK:
         required: true
         type: string
@@ -21,6 +24,7 @@ on:
 
 env:
   GIT_REF: ${{ inputs.GIT_REF }}
+  LIB_CONSTANT_NETWORK: ${{ inputs.LIB_CONSTANT_NETWORK }}
   CONTRACT_DEPLOY_NETWORK: ${{ inputs.CONTRACT_DEPLOY_NETWORK }}
   PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
   RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
@@ -47,7 +51,7 @@ jobs:
         run: npm install
       
       - name: Prepare env constant 
-        run: npm run prepare:$CONTRACT_DEPLOY_NETWORK
+        run: npm run prepare:$LIB_CONSTANT_NETWORK
 
       - name: Compile Contracts # This also copies Machine ABIs to "abis/machine"
         run: |
@@ -77,6 +81,9 @@ jobs:
       - name: Deploy Contracts
         run: npx hardhat deploy --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
 
+      - name: Verify Contracts
+        run: npx hardhat etherscan-verify --network $CONTRACT_DEPLOY_NETWORK
+
       - name: Upload Deployment Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -84,6 +91,26 @@ jobs:
           path: |
             abis/
             deploy-results/results.json
+            deployments/
+
+      - name: Make Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          branch: autosync/contract_deploy_${{ env.GIT_REF }}
+          title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs for ${{ env.CONTRACT_DEPLOY_NETWORK }}
+          body: |
+            Syncrhonizing Contract Addresses and ABIs from adam-contract-core
+            Version: ${{ env.GIT_REF }}
+            Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployments"
+          reviewers: |
+            chikchoi6
+            ayame30
+            lokwkin
+            eddy17c17c
+            ckc981103
 
       - name: Slack Notification
         id: slack

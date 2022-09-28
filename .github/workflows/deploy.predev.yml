@@ -10,7 +10,8 @@ jobs:
     uses: ./.github/workflows/reusable-deploy-contracts.yml
     with:
       GIT_REF: ${{ github.ref_name }}
-      CONTRACT_DEPLOY_NETWORK: goerli
+      LIB_CONSTANT_NETWORK: goerli
+      CONTRACT_DEPLOY_NETWORK: goerli-predev
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
