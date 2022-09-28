@@ -26,6 +26,7 @@ env:
   RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
   GOERLI_URL: ${{ secrets.GOERLI_URL }}
   KOVAN_URL: ${{ secrets.KOVAN_URL }}
+  LATEST_VERSION: ${{ inputs.GIT_REF }}
 
 jobs:
   deploy-contracts:
@@ -74,7 +75,7 @@ jobs:
         run: npx hardhat export-abi-human # This generates json files into "abis/human" folder
       
       - name: Deploy Contracts
-        run: npx hardhat run scripts/1-deploy.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
+        run: npx hardhat deploy --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
 
       - name: Upload Deployment Artifacts
         uses: actions/upload-artifact@v3

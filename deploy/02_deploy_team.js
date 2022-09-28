@@ -4,7 +4,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await deploy('Team', {
     from: deployer,
     log: true,
+    skipIfAlreadyDeployed: true,
     args: [],
+    gasLimit: 6000000,
     proxy: {
       proxyContract: 'ERC1967Proxy',
       proxyArgs: ['{implementation}', '{data}'],
