@@ -36,7 +36,7 @@ jobs:
   deploy-contracts:
     name: Deploy Contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3.0.0
@@ -81,9 +81,6 @@ jobs:
       - name: Deploy Contracts
         run: npx hardhat deploy --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
 
-      - name: Verify Contracts
-        run: npx hardhat etherscan-verify --network $CONTRACT_DEPLOY_NETWORK
-
       - name: Upload Deployment Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -111,6 +108,9 @@ jobs:
             lokwkin
             eddy17c17c
             ckc981103
+
+      - name: Verify Contracts
+        run: npx hardhat etherscan-verify --network $CONTRACT_DEPLOY_NETWORK
 
       - name: Slack Notification
         id: slack
