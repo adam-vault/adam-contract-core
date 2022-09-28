@@ -131,6 +131,7 @@ async function main () {
     liquidUniswapBudgetApproval: budgetApprovalsAddress[1],
     transferErc721BudgetApproval: budgetApprovalsAddress[2],
     transferERC20BudgetApproval: budgetApprovalsAddress[3],
+    uniswapBudgetApproval: budgetApprovalsAddress[4],
     team,
   };
   console.log('Contract Addresses', contractAddresses);
