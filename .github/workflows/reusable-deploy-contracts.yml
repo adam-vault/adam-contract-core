@@ -92,6 +92,21 @@ jobs:
             deploy-results/results.json
             deployments/
 
+      - name: Verify Contracts
+        run: npx hardhat etherscan-verify --network $CONTRACT_DEPLOY_NETWORK
+
+      - name: Slack Notification
+        id: slack
+        uses: slackapi/slack-github-action@v1.18.0
+        with:
+          payload: |
+            {
+              "text": "*Contracts Deployed*\n*version*: ${{ env.GIT_REF }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+  
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
@@ -112,19 +127,3 @@ jobs:
             lokwkin
             eddy17c17c
             ckc981103
-
-      - name: Verify Contracts
-        run: npx hardhat etherscan-verify --network $CONTRACT_DEPLOY_NETWORK
-
-      - name: Slack Notification
-        id: slack
-        uses: slackapi/slack-github-action@v1.18.0
-        with:
-          payload: |
-            {
-              "text": "*Contracts Deployed*\n*version*: ${{ env.GIT_REF }}\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-  
