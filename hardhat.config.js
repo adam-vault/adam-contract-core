@@ -71,9 +71,7 @@ module.exports = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
       verify: {
-        etherscan: {
-          apiUrl: 'https://goerli.etherscan.io/',
-        },
+        etherscan: 'https://goerli.etherscan.io',
       },
     },
     'goerli-predev': {
@@ -81,8 +79,8 @@ module.exports = {
       url: process.env.GOERLI_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      etherscan: {
-        apiUrl: 'https://goerli.etherscan.io/',
+      verify: {
+        etherscan: 'https://goerli.etherscan.io',
       },
     },
     'goerli-dev': {
@@ -90,8 +88,8 @@ module.exports = {
       url: process.env.GOERLI_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      etherscan: {
-        apiUrl: 'https://goerli.etherscan.io/',
+      verify: {
+        etherscan: 'https://goerli.etherscan.io',
       },
     },
     'goerli-qa': {
@@ -99,8 +97,8 @@ module.exports = {
       url: process.env.GOERLI_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      etherscan: {
-        apiUrl: 'https://goerli.etherscan.io/',
+      verify: {
+        etherscan: 'https://goerli.etherscan.io',
       },
     },
   },
