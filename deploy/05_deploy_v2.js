@@ -57,7 +57,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     console.log(contractAddresses);
   
     fileReader.save('deploy-results', 'results.json', {
-      network: deployNetwork,
+      network: deployNetwork.split('-')[0],
       block_number: adamDeployment.receipt.blockNumber,
       addresses: contractAddresses,
       initdata_addresses: {},
