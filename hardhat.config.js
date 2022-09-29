@@ -70,6 +70,36 @@ module.exports = {
       url: process.env.GOERLI_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      verify: {
+        etherscan: 'https://goerli.etherscan.io',
+      },
+    },
+    'goerli-predev': {
+      chainId: 5,
+      url: process.env.GOERLI_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      verify: {
+        etherscan: 'https://goerli.etherscan.io',
+      },
+    },
+    'goerli-dev': {
+      chainId: 5,
+      url: process.env.GOERLI_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      verify: {
+        etherscan: 'https://goerli.etherscan.io',
+      },
+    },
+    'goerli-qa': {
+      chainId: 5,
+      url: process.env.GOERLI_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      verify: {
+        etherscan: 'https://goerli.etherscan.io',
+      },
     },
   },
   gasReporter: {
@@ -84,7 +114,7 @@ module.exports = {
   },
   verify: {
     etherscan: {
-      apiKey: 'S25GZYUMGEB97YGGSF8BQ64K5XG7AYXZBV',
+      apiKey: process.env.ETHERSCAN_API_KEY,
     },
   },
   namedAccounts: {

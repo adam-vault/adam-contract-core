@@ -24,6 +24,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
     args: [],
+    skipIfAlreadyDeployed: true,
+    gasLimit: 5000000,
     proxy: {
       proxyContract: 'ERC1967Proxy',
       proxyArgs: ['{implementation}', '{data}'],
@@ -71,4 +73,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
 module.exports.tags = [
   'Adam',
+  'phase5',
 ];
