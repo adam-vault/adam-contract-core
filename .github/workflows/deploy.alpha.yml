@@ -18,6 +18,7 @@ jobs:
       KOVAN_URL: ${{ secrets.KOVAN_URL }}
       GOERLI_URL: ${{ secrets.GOERLI_URL }}
       PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
   sync-subgraph:
     name: Sync Subgraph
