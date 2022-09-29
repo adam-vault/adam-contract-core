@@ -21,6 +21,8 @@ on:
         required: true
       PRIVATE_KEY:
         required: true
+      GH_PAT:
+        required: true
 
 env:
   GIT_REF: ${{ inputs.GIT_REF }}
