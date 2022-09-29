@@ -40,4 +40,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   }
 };
 
-module.exports.tags = budgetApprovals;
+module.exports.tags = [
+  'phase4',
+];
