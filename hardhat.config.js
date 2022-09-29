@@ -114,7 +114,7 @@ module.exports = {
   },
   verify: {
     etherscan: {
-      apiKey: 'S25GZYUMGEB97YGGSF8BQ64K5XG7AYXZBV',
+      apiKey: process.env.ETHERSCAN_API_KEY,
     },
   },
   namedAccounts: {
