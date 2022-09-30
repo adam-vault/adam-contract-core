@@ -79,9 +79,6 @@ module.exports = {
       url: process.env.MAINNET_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      verify: {
-        etherscan: 'https://etherscan.io',
-      },
     },
     'goerli-predev': {
       chainId: 5,
