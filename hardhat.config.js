@@ -74,6 +74,12 @@ module.exports = {
         etherscan: 'https://goerli.etherscan.io',
       },
     },
+    mainnet: {
+      chainId: 1,
+      url: process.env.MAINNET_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
     'goerli-predev': {
       chainId: 5,
       url: process.env.GOERLI_URL || '',
