@@ -97,6 +97,9 @@ describe('Govern.sol - test/unit/Govern.js', function () {
         const hasVoted = await govern.hasVoted(proposalId, creator.address);
         expect(hasVoted).to.eq(true);
         expect(await govern.state(proposalId)).to.eq(1); // Active
+        expect(await govern.getProposalVote(proposalId, 0)).to.eq(1);
+        expect(await govern.getProposalVote(proposalId, 1)).to.eq(0);
+        expect(await govern.getProposalVote(proposalId, 2)).to.eq(0);
 
         const descriptionHash = ethers.utils.id('Proposal #1: Transfer token');
 
@@ -137,7 +140,9 @@ describe('Govern.sol - test/unit/Govern.js', function () {
         const hasVoted = await govern.hasVoted(proposalId, creator.address);
         expect(hasVoted).to.eq(true);
         expect(await govern.state(proposalId)).to.eq(1); // Active
+        expect(await govern.getProposalVote(proposalId, 0)).to.eq(0);
         expect(await govern.getProposalVote(proposalId, 1)).to.eq(1);
+        expect(await govern.getProposalVote(proposalId, 2)).to.eq(0);
 
         await ethers.provider.send('hardhat_mine', ['0x100']); // mine 256 blocks
         await ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);

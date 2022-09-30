@@ -45,6 +45,24 @@ describe('GovernFactory.sol - test/unit/GovernFactory.js', function () {
     });
   });
 
+  describe('setGovernImplementation()', function () {
+    let newGovernImpl;
+    beforeEach(async function () {
+      const Govern = await ethers.getContractFactory('Govern');
+      newGovernImpl = await Govern.deploy();
+    });
+    it('allows owner to setGovernImplementation', async function () {
+      await governFactory.connect(creator).setGovernImplementation(newGovernImpl.address);
+      expect(await governFactory.governImplementation()).to.eq(newGovernImpl.address);
+    });
+    it('throws "governImpl is null" error if govern set with 0x Address', async function () {
+      await expect(governFactory.connect(creator).setGovernImplementation(ethers.constants.AddressZero)).to.revertedWith('governImpl is null');
+    });
+    it('throws "Ownable: caller is not the owner" error if upgrade by non dao', async function () {
+      await expect(governFactory.connect(unknown).setGovernImplementation(newGovernImpl.address)).to.revertedWith('Ownable: caller is not the owner');
+    });
+  });
+
   describe('createGovern()', function () {
     it('creates a new govern', async function () {
       const tx = await governFactory.createGovern('mockName', 0, 0, 0, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE');
