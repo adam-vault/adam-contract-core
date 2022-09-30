@@ -23,7 +23,7 @@ contract UniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper {
     event ExecuteUniswapOutTransaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount);
     event ExecuteWETH9Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address tokenIn, address tokenOut, uint256 amount);
 
-    string public constant override name = "Uniswap Budget Approval";
+    string public constant override name = "Swap On Uniswap Budget Approval";
 
     bool public allowAllFromTokens;
     address public fromToken;
