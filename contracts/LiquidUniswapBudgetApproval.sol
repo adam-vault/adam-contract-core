@@ -19,7 +19,7 @@ contract LiquidUniswapBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
     event ExecuteUniswapOutTransaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount);
     event ExecuteWETH9Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address tokenIn, address tokenOut, uint256 amount);
 
-    string public constant override name = "Liquid Uniswap Budget Approval";
+    string public constant override name = "Liquid Swap On Uniswap Budget Approval";
 
     address[] public fromTokens;
     mapping(address => bool) public fromTokensMapping;
