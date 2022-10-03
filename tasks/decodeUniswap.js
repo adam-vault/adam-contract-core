@@ -1,18 +1,3 @@
-// const { extendConfig, extendEnvironment } = require('hardhat/config');
-const util = require('util');
-const fs = require('fs');
-const axios = require('axios');
-const glob = require('glob');
-const minimatch = require('minimatch');
-
-const globPromise = util.promisify(glob);
-const writeFile = util.promisify(fs.writeFile);
-
-const wait = (ms) => new Promise((resolve, reject) => {
-  setTimeout(() => {
-    resolve();
-  }, ms);
-});
 
 const knownSignatures = {
   '0xd0e30db0': 'deposit()',
