@@ -193,9 +193,15 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
         uint duration,
         uint quorum,
         uint passThreshold,
-        uint voteToken
+        VoteType voteType,
+        address externalVoteToken
     ) public onlyGovern("General") {
-        address _voteToken = _getVoteTypeValues(VoteType(voteToken));
+        address _voteToken;
+        if(voteType == VoteType.Other) {
+            _voteToken = externalVoteToken;
+        } else {
+            _voteToken = _getVoteTypeValues(voteType);
+        }
         IGovernFactory(governFactory).createGovern(
             _name,
             duration,
@@ -267,7 +273,7 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
         }
 
         if (VoteType.Other == voteType) {
-            // TODO: Other tokens e.g. outside ERC721 Votes
+            revert("Get value of 'Other' type is not supported");
         }
 
         revert("Unsupported Token type");
