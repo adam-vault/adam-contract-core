@@ -402,7 +402,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     });
 
     context('not approved by approver', () => {
-      it('throws "status invalid"', async function () {
+      it('throws "Transaction status invalid"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
           [tokenA.address, receiver.address, '10'],
@@ -414,12 +414,12 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
 
         await expect(
           budgetApproval.connect(executor).executeTransaction(id),
-        ).to.be.revertedWith('status invalid');
+        ).to.be.revertedWith('Transaction status invalid');
       });
     });
 
     context('revoked by executor', () => {
-      it('throws "status invalid"', async function () {
+      it('throws "Transaction status invalid"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
           [tokenA.address, receiver.address, '10'],
@@ -432,7 +432,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         await budgetApproval.connect(executor).revokeTransaction(id);
         await expect(
           budgetApproval.connect(executor).executeTransaction(id),
-        ).to.be.revertedWith('status invalid');
+        ).to.be.revertedWith('Transaction status invalid');
       });
     });
 
