@@ -41,10 +41,8 @@ contract PriceResolver is Initializable {
             return ethAssetPrice(__baseCurrency, amount);
         }
 
-        address baseCurrencyETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(__baseCurrency, Denominations.ETH));
-        address assetETHFeed = address(FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH));
         uint8 baseDecimals = baseCurrencyDecimals();
-        int price = getDerivedPrice(assetETHFeed, baseCurrencyETHFeed, 18 /* ETH decimals */);
+        int price = getDerivedPrice(asset, __baseCurrency, 18 /* ETH decimals */);
 
         if (price > 0) {
             return uint256(scalePrice(int256(price) * int256(amount), 18 + IERC20Metadata(asset).decimals(), baseDecimals));
@@ -100,20 +98,19 @@ contract PriceResolver is Initializable {
         require(_decimals > uint8(0) && _decimals <= uint8(18), "Invalid _decimals");
         int256 decimals = int256(10 ** uint256(_decimals));
         (uint80 _baseRoundID, int basePrice, , uint256 _baseUpdatedAt, uint80 _baseAnsweredInRound) = 
-        AggregatorV3Interface(_base).latestRoundData();
+            FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(_base, Denominations.ETH);
 
         require(_baseAnsweredInRound >= _baseRoundID, "Stale price in Chainlink 104");
         require(block.timestamp <= _baseUpdatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink 105");
 
-        uint8 baseDecimals = AggregatorV3Interface(_base).decimals();
+        uint8 baseDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY).decimals(_base, Denominations.ETH);
         basePrice = scalePrice(basePrice, baseDecimals, _decimals);
         (uint80 _quoteRoundID, int quotePrice, , uint256 _quoteUpdatedAt, uint80 _quoteAnsweredInRound) = 
-        AggregatorV3Interface(_quote).latestRoundData();
-
+            FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(_quote, Denominations.ETH);
         require(_quoteAnsweredInRound >= _quoteRoundID, "Stale price in Chainlink 112");
         require(block.timestamp <= _quoteUpdatedAt + Constant.STALE_PRICE_DELAY, "Stale price in Chainlink 113");
 
-        uint8 quoteDecimals = AggregatorV3Interface(_quote).decimals();
+        uint8 quoteDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY).decimals(_quote, Denominations.ETH);
         quotePrice = scalePrice(quotePrice, quoteDecimals, _decimals);
 
         return basePrice * decimals / quotePrice;

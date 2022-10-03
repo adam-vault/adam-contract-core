@@ -28,6 +28,7 @@ contract MockAggregatorV3 {
     uint256 updatedAt,
     uint80 answeredInRound
     ) {
+        revert('No access');
         return (18446744073709580067, price, block.timestamp, block.timestamp, 18446744073709580067);
     }
 }
