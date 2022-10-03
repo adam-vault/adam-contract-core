@@ -258,7 +258,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
     });
 
     context('not approved by approver', () => {
-      it('throws "status invalid"', async function () {
+      it('throws "Transaction status invalid"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -269,12 +269,12 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
 
         await expect(
           budgetApproval.connect(executor).executeTransaction(id),
-        ).to.be.revertedWith('status invalid');
+        ).to.be.revertedWith('Transaction status invalid');
       });
     });
 
     context('revoked by executor', () => {
-      it('throws "status invalid"', async function () {
+      it('throws "Transaction status invalid"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
           receiver.address,
@@ -286,7 +286,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
         await budgetApproval.connect(executor).revokeTransaction(id);
         await expect(
           budgetApproval.connect(executor).executeTransaction(id),
-        ).to.be.revertedWith('status invalid');
+        ).to.be.revertedWith('Transaction status invalid');
       });
     });
 

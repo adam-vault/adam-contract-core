@@ -1,5 +1,4 @@
 const hre = require('hardhat');
-const { faker } = require('@faker-js/faker');
 const fileReader = require('../utils/fileReader');
 const deploymentResult = fileReader.load('deploy-results/results.json', 'utf8');
 
