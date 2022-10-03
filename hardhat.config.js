@@ -2,7 +2,6 @@ require('dotenv').config();
 require('hardhat-deploy');
 require('@nomiclabs/hardhat-etherscan');
 require('@nomicfoundation/hardhat-toolbox');
-require('hardhat-gas-reporter');
 require('solidity-coverage');
 require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer');
