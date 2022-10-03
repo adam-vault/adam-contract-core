@@ -29,7 +29,7 @@
   "function baseCurrency() view returns (address)",
   "function baseCurrencyDecimals() view returns (uint8)",
   "function canResolvePrice(address asset) view returns (bool)",
-  "function createTransaction(bytes[] _data, uint256 _deadline, bool _isExecute, string comment) returns (uint256)",
+  "function createTransaction(bytes[] _data, uint32 _deadline, bool _isExecute, string comment) returns (uint256)",
   "function decodeUniswapMulticall(bytes rawData, uint256 value, bytes response) view returns (tuple(address recipient, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint8 resultType)[] multicalData)",
   "function decodeWETH9Call(bytes data, uint256 value) pure returns (address tokenIn, address tokenOut, uint256 amount)",
   "function endTime() view returns (uint256)",
@@ -60,7 +60,7 @@
   "function toTokensMapping(address) view returns (bool)",
   "function totalAmount() view returns (uint256)",
   "function transactionType() view returns (string)",
-  "function transactions(uint256) view returns (uint256 id, uint8 status, uint256 deadline, bool isExist, uint256 approvedCount)",
+  "function transactions(uint256) view returns (uint256 id, uint8 status, uint32 deadline, bool isExist, uint256 approvedCount)",
   "function unwrapWETH9(uint256 amountMinimum, address recipient) pure returns (tuple(address recipient, address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, uint8 resultType))",
   "function usageCount() view returns (uint256)"
 ]
