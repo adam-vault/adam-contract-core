@@ -15,7 +15,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   await budgetApprovals.reduce(async (pm, contractName) => {
     await pm;
-    const existing = getOrNull(contractName);
+    const existing = await getOrNull(contractName);
     const result = await deploy(contractName, {
       from: deployer,
       log: true,
