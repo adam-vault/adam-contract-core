@@ -304,7 +304,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
         .to.be.revertedWith('Executor not whitelisted in budget');
     });
 
-    it('throws "status invalid"', async function () {
+    it('throws "Transaction status invalid"', async function () {
       await tokenC721.mint(executee.address, 37752);
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
         tokenC721.address,
@@ -316,10 +316,10 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
 
       await expect(
         budgetApproval.connect(executor).executeTransaction(id),
-      ).to.be.revertedWith('status invalid');
+      ).to.be.revertedWith('Transaction status invalid');
     });
 
-    it('throws "status invalid"', async function () {
+    it('throws "Transaction status invalid"', async function () {
       await tokenC721.mint(executee.address, 37752);
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
         tokenC721.address,
@@ -332,7 +332,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
       await budgetApproval.connect(executor).revokeTransaction(id);
       await expect(
         budgetApproval.connect(executor).executeTransaction(id),
-      ).to.be.revertedWith('status invalid');
+      ).to.be.revertedWith('Transaction status invalid');
     });
 
     it('throws "Recipient not whitelisted in budget"', async function () {

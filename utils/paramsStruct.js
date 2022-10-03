@@ -1,5 +1,4 @@
 
-const { faker } = require('@faker-js/faker');
 const { constants } = require('ethers');
 const { ethers } = require('hardhat');
 const daoV2Artifact = require('../artifacts/contracts/v2/DaoV2.sol/DaoV2.json');
@@ -8,11 +7,11 @@ const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 function getCreateDaoParams ({
   // defaut Dao Setting
-  name = faker.company.companyName(),
-  description = faker.commerce.productDescription(),
+  name = 'Company Name',
+  description = 'Description',
   lockTime = 0,
   generalGovernSetting = [300, 3000, 5000, 0],
-  tokenInfo = [`${faker.company.companyName()}Token`, 'MT'],
+  tokenInfo = ['Member Token', 'MT'],
   tokenAmount = 100,
   minDepositAmount = 0,
   depositTokens = [ETH],
@@ -89,11 +88,11 @@ function getCreateTransferERC20BAParams ({
 
 function getCreateDaoParamsV2 ({
   // defaut Dao Setting
-  name = faker.company.companyName(),
-  description = faker.commerce.productDescription(),
+  name = 'Company Name',
+  description = 'Description',
   lockTime = 0,
   generalGovernSetting = [300, 3000, 5000, 0],
-  tokenName = `${faker.company.companyName()}Token`,
+  tokenName = 'Member Token',
   tokenSymbol = 'MT',
   tokenAmount = 100,
   minDepositAmount = 0,

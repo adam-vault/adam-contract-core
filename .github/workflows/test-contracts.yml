@@ -11,6 +11,7 @@ on:
     paths:
       - "contracts/**"
       - "test/**"
+      - ".github/**"
 
 concurrency:
   group: ${{github.workflow}}-${{github.ref}}
@@ -20,21 +21,32 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_index: [0, 1, 2, 3, 4]
+        ci_total: [5]
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3.0.0
       
       - name: Setup Node
+        id: setup_node
         uses: actions/setup-node@v3
         with:
           node-version: 16
-          cache: 'npm'
+          cache: npm
       
       - name: Install Dependencies
-        run: npm install
+        run: npm install --prefer-offline --no-audit
       
       - name: Run Tests
-        run: npm run test
+        run: node .github/split.js | xargs npm run test
+        env:
+          CI_TOTAL: ${{ matrix.ci_total }}
+          CI_INDEX: ${{ matrix.ci_index }}
 
   # analyze:
   #   runs-on: ubuntu-latest

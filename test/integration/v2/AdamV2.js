@@ -69,13 +69,13 @@ describe('Integration - AdamV2.sol - test/integration/v2/AdamV2.js', function ()
       )).to.not.be.reverted;
     });
 
-    it('throws "Admission Token not Support!" error when set non-contract address as admission token', async function () {
+    it('throws "init fail - Admission Token not Support!" error when set non-contract address as admission token', async function () {
       await expect(adam.createDao(
         ...paramsStruct.getCreateDaoParamsV2({
           mintMemberToken: true,
           admissionTokens: [[creator.address, 50, 0, false]],
         }),
-      )).to.be.revertedWith('Admission Token not Support!');
+      )).to.be.revertedWith('init fail - Admission Token not Support!');
     });
   });
 });
