@@ -8,7 +8,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 chai.should();
 chai.use(smock.matchers);
 
-describe('DaoV2.sol - test/unit/DaoV2.js', function () {
+describe.only('DaoV2.sol - test/unit/DaoV2.js', function () {
   let creator, member, mockGovern;
   let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam;
   let tokenA, tokenC721, tokenD1155;
@@ -57,7 +57,7 @@ describe('DaoV2.sol - test/unit/DaoV2.js', function () {
       'tokenName', 'T1',
       ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'],
     ], [
-      Dao.interface.encodeFunctionData('createGovern', ['General', 0, 0, 0, 0]),
+      Dao.interface.encodeFunctionData('createGovern', ['General', 0, 0, 0, 0, ethers.constants.AddressZero]),
       Dao.interface.encodeFunctionData('addAdmissionToken', [tokenA.address, 10, 0]),
       Dao.interface.encodeFunctionData('addAdmissionToken', [tokenC721.address, 1, 1]),
       Dao.interface.encodeFunctionData('addAdmissionToken', [tokenD1155.address, 1, 1])
@@ -156,13 +156,10 @@ describe('DaoV2.sol - test/unit/DaoV2.js', function () {
   describe('createGovern()', function () {
     it('calls governFactory and create govern', async function () {
       mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
-      await dao.connect(mockGovern).createGovern('governA', 1, 2, 3, 0);
-      await dao.connect(mockGovern).createGovern('governB', 4, 5, 6, 1);
+      await dao.connect(mockGovern).createGovern('governA', 1, 2, 3, 0, ethers.constants.AddressZero);
+      await dao.connect(mockGovern).createGovern('governB', 4, 5, 6, 1, ethers.constants.AddressZero);
       mockGovernFactory.createGovern.atCall(1).should.be.calledWith('governA', 1, 2, 3, await dao.membership());
       mockGovernFactory.createGovern.atCall(2).should.be.calledWith('governB', 4, 5, 6, await dao.memberToken());
-    });
-    it('throws error if token enum not supported', async function () {
-      await expect(dao.connect(mockGovern).createGovern('governA', 1, 2, 3, 2)).to.be.revertedWith('Unsupported Token type');
     });
   });
 
