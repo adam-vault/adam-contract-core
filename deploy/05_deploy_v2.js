@@ -43,7 +43,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       adam: adamDeployment.address,
       dao: daoV2.address,
       membership: membershipImplementation,
-      governFactory: liquidPoolImplementation,
+      governFactory: governFactoryDeployment.address,
       govern: governImplementation,
       memberToken: memberTokenImplementation,
       liquidPool: liquidPoolImplementation,
