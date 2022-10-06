@@ -101,7 +101,7 @@ describe('UniswapBudgetApproval.sol - test/unit/UniswapBudgetApproval.js', async
         UniswapBudgetApproval.interface.encodeFunctionData('initialize', initializeParser()));
       const uniswapBA = await ethers.getContractAt('UniswapBudgetApproval', contract.address);
 
-      expect(await uniswapBA.name()).to.be.eq('Uniswap Budget Approval');
+      expect(await uniswapBA.name()).to.be.eq('Swap On Uniswap Budget Approval');
       expect(await uniswapBA.allowAllFromTokens()).to.be.eq(true);
       expect(await uniswapBA.fromToken()).to.be.eq(ethers.constants.AddressZero);
       expect(await uniswapBA.allowAllToTokens()).to.be.eq(true);
@@ -123,7 +123,7 @@ describe('UniswapBudgetApproval.sol - test/unit/UniswapBudgetApproval.js', async
         })));
       const uniswapBA = await ethers.getContractAt('UniswapBudgetApproval', contract.address);
 
-      expect(await uniswapBA.name()).to.be.eq('Uniswap Budget Approval');
+      expect(await uniswapBA.name()).to.be.eq('Swap On Uniswap Budget Approval');
       expect(await uniswapBA.allowAllFromTokens()).to.be.eq(false);
       expect(await uniswapBA.fromToken()).to.be.eq(mockToken.address);
       expect(await uniswapBA.allowAllToTokens()).to.be.eq(false);
