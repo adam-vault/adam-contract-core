@@ -51,7 +51,6 @@ contract UniswapAnyTokenBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         allowAllFromTokens = _allowAllFromTokens;
         if(!_allowAllFromTokens) {
             fromToken = _fromToken;
-            approveTokenForUniswap(_fromToken);
             emit AllowToken(_fromToken);
         }
 
@@ -64,6 +63,12 @@ contract UniswapAnyTokenBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
 
+    }
+
+    function afterInitialized() external override onlyExecutee {
+         if(!allowAllFromTokens) {
+            approveTokenForUniswap(fromToken);
+        }
     }
 
     function approveTokenForUniswap(address _fromToken) public {
