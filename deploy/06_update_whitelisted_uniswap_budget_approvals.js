@@ -8,7 +8,7 @@ const toBeRemoveBudgetApprovals = [
 ];
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, getOrNull, execute } = deployments;
+  const { deploy, getOrNull, execute, read } = deployments;
   const { deployer } = await getNamedAccounts();
 
   const adam = await getOrNull('Adam');
@@ -35,7 +35,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     await pm;
     const existing = await getOrNull(contractName);
     if (existing) {
-      toBeRemove.push(existing.address);
+      const isWhitelisted = await read('Adam', 'budgetApprovals', existing.address);
+      if (isWhitelisted) {
+        toBeRemove.push(existing.address);
+      }
     }
   }, Promise.resolve());
 
