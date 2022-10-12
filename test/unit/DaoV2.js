@@ -8,7 +8,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 chai.should();
 chai.use(smock.matchers);
 
-describe.only('DaoV2.sol - test/unit/DaoV2.js', function () {
+describe('DaoV2.sol - test/unit/DaoV2.js', function () {
   let creator, member, mockGovern;
   let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam;
   let tokenA, tokenC721, tokenD1155;

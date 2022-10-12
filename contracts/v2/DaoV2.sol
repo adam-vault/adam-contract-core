@@ -198,6 +198,7 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
     ) public onlyGovern("General") {
         address _voteToken;
         if(voteType == VoteType.Other) {
+            require(externalVoteToken != address(0), "Vote token not exist");
             _voteToken = externalVoteToken;
         } else {
             _voteToken = _getVoteTypeValues(voteType);
