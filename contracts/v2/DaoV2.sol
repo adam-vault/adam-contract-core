@@ -54,7 +54,7 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
     enum VoteType {
         Membership,
         MemberToken,
-        Other
+        ExistingToken
     }
 
     address public memberToken;
@@ -197,12 +197,20 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
         address externalVoteToken
     ) public onlyGovern("General") {
         address _voteToken;
-        if(voteType == VoteType.Other) {
+
+        if (voteType == VoteType.Membership) {
+            address _membership = membership;
+            require(_membership != address(0), "Membership not yet initialized");
+            _voteToken = _membership;
+        } else if (voteType ==  VoteType.MemberToken) {
+            address _memberToken = memberToken;
+            require(_memberToken != address(0), "MemberToken not yet initialized");
+            _voteToken = _memberToken;
+        } else if (voteType == VoteType.ExistingToken) {
             require(externalVoteToken != address(0), "Vote token not exist");
             _voteToken = externalVoteToken;
-        } else {
-            _voteToken = _getVoteTypeValues(voteType);
         }
+
         IGovernFactory(governFactory).createGovern(
             _name,
             duration,
@@ -254,30 +262,6 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
       teamWhitelist[id] = true;
 
       emit WhitelistTeam(id);
-    }
-
-    function _getVoteTypeValues(VoteType voteType) internal view returns (address) {
-        address _membership = membership;
-        address _memberToken = memberToken;
-        if (VoteType.Membership == voteType) {
-            if (address(_membership) == address(0)) {
-                revert("Membership not yet initialized");
-            }
-            return address(_membership);
-        }
-
-        if (VoteType.MemberToken == voteType) {
-            if (address(_memberToken) == address(0)) {
-                revert("MemberToken not yet initialized");
-            }
-            return address(_memberToken);
-        }
-
-        if (VoteType.Other == voteType) {
-            revert("Get value of 'Other' type is not supported");
-        }
-
-        revert("Unsupported Token type");
     }
 
     function _createMemberToken(address memberTokenImplementation, string memory _name, string memory _symbol) internal {
