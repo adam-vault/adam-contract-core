@@ -91,7 +91,7 @@ function getCreateDaoParamsV2 ({
   name = 'Company Name',
   description = 'Description',
   lockTime = 0,
-  generalGovernSetting = [300, 3000, 5000, 0],
+  generalGovernSetting = [300, 3000, 5000, 0, constants.AddressZero],
   tokenName = 'Member Token',
   tokenSymbol = 'MT',
   tokenAmount = 100,
