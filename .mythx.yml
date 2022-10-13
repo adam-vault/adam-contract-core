@@ -21,6 +21,8 @@ analyze:
         - contracts/interface/IBudgetApprovalExecutee.sol
         - contracts/interface/ITransferERC20BudgetApproval.sol
         - contracts/interface/IUniswapBudgetApproval.sol
+        - contracts/interface/IUniswapLiquidBudgetApproval.sol
+        - contracts/interface/IUniswapAnyTokenBudgetApproval.sol
         - contracts/interface/IGovern.sol
         - contracts/interface/ITeam.sol
         - contracts/interface/IMemberToken.sol
@@ -31,6 +33,8 @@ analyze:
         - contracts/TransferLiquidERC20BudgetApproval.sol
         - contracts/TransferERC20BudgetApproval.sol
         - contracts/UniswapBudgetApproval.sol
+        - contracts/UniswapLiquidBudgetApproval.sol
+        - contracts/UniswapAnyTokenBudgetApproval.sol
         - contracts/MemberToken.sol
         - contracts/Membership.sol
         - contracts/lib/ToString.sol
