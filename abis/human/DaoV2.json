@@ -12,9 +12,10 @@
   "event Initialized(uint8 version)",
   "event RemoveAdmissionToken(address token)",
   "event SetFirstDepositTime(address owner, uint256 time)",
-  "event UpdateLocktime()",
-  "event UpdateLogoCID()",
-  "event UpdateMinDepositAmount()",
+  "event UpdateLocktime(uint256 locktime)",
+  "event UpdateLogoCID(string logoCID)",
+  "event UpdateMinDepositAmount(uint256 amount)",
+  "event UpgradeDao(string remark)",
   "event Upgraded(address indexed implementation)",
   "event WhitelistTeam(uint256 tokenId)",
   "function adam() view returns (address)",
@@ -62,7 +63,7 @@
   "function team() view returns (address)",
   "function teamWhitelist(uint256) view returns (bool)",
   "function transferMemberToken(address to, uint256 amount)",
-  "function upgradeImplementations(address[] targets, address[] newImplementations)",
+  "function upgradeImplementations(address[] targets, address[] newImplementations, string remark)",
   "function upgradeTo(address newImplementation)",
   "function upgradeToAndCall(address newImplementation, bytes data) payable"
 ]
