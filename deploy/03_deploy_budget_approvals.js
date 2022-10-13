@@ -1,43 +1,11 @@
-const budgetApprovals = [
-  'TransferLiquidERC20BudgetApproval',
-  'UniswapBudgetApproval',
-  'TransferERC721BudgetApproval',
-  'TransferERC20BudgetApproval',
-];
-
 module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, getOrNull, execute } = deployments;
+  const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const adam = await getOrNull('Adam');
-  const toBeRemove = [];
-  const toBeAdd = [];
-
-  await budgetApprovals.reduce(async (pm, contractName) => {
-    await pm;
-    const existing = await getOrNull(contractName);
-    const result = await deploy(contractName, {
-      from: deployer,
-      log: true,
-      gasLimit: 6000000,
-    });
-    if (result.newlyDeployed) {
-      toBeAdd.push(result.address);
-      if (existing) {
-        toBeRemove.push(existing.address);
-      }
-    }
-  }, Promise.resolve());
-
-  if (adam) {
-    if (toBeRemove.length) {
-      await execute('Adam', { from: deployer, log: true }, 'abandonBudgetApprovals', toBeRemove);
-    }
-
-    if (toBeAdd.length) {
-      await execute('Adam', { from: deployer, log: true }, 'whitelistBudgetApprovals', toBeAdd);
-    }
-  }
+  await deploy('TransferLiquidERC20BudgetApproval', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 6000000 });
+  await deploy('UniswapBudgetApproval', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 6000000 });
+  await deploy('TransferERC721BudgetApproval', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 6000000 });
+  await deploy('TransferERC20BudgetApproval', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 6000000 });
 };
 
 module.exports.tags = [
