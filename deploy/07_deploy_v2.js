@@ -14,31 +14,33 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   }
 
   const daoV2 = await deploy('DaoV2', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 5000000 });
-  if (daoV2.newlyDeployed) {
+  const liquidPoolV2 = await deploy('LiquidPoolV2', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 5000000 });
+
+  if (daoV2.newlyDeployed || liquidPoolV2.newlyDeployed) {
     const adam = await ethers.getContractAt('Adam', adamDeployment.address);
     const governFactory = await ethers.getContractAt('GovernFactory', governFactoryDeployment.address);
 
     const membershipImplementation = await adam.membershipImplementation();
-    const liquidPoolImplementation = await adam.liquidPoolImplementation();
     const memberTokenImplementation = await adam.memberTokenImplementation();
     const governImplementation = await governFactory.governImplementation();
 
     await execute('Adam', { from: deployer, log: true }, 'upgradeImplementations',
       daoV2.address,
       membershipImplementation,
-      liquidPoolImplementation,
+      liquidPoolV2.address,
       memberTokenImplementation,
       governImplementation,
-      process.env.LATEST_VERSION || 'v2.0.0'
+      process.env.LATEST_VERSION || 'v2.0.0',
     );
 
     const budgetApprovalsAddress = (await Promise.all([
       get('TransferLiquidERC20BudgetApproval'),
-      get('UniswapBudgetApproval'),
+      get('UniswapLiquidBudgetApproval'),
       get('TransferERC721BudgetApproval'),
       get('TransferERC20BudgetApproval'),
+      get('UniswapAnyTokenBudgetApproval'),
     ])).map((deployment) => deployment.address);
-  
+
     const contractAddresses = {
       adam: adamDeployment.address,
       dao: daoV2.address,
@@ -46,16 +48,17 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       governFactory: governFactoryDeployment.address,
       govern: governImplementation,
       memberToken: memberTokenImplementation,
-      liquidPool: liquidPoolImplementation,
+      liquidPool: liquidPoolV2.address,
       transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
-      uniswapBudgetApproval: budgetApprovalsAddress[1],
+      uniswapLiquidBudgetApproval: budgetApprovalsAddress[1],
       transferErc721BudgetApproval: budgetApprovalsAddress[2],
       transferERC20BudgetApproval: budgetApprovalsAddress[3],
+      uniswapAnyTokenBudgetApproval: budgetApprovalsAddress[4],
       team: (await get('Team')).address,
     };
-  
+
     console.log(contractAddresses);
-  
+
     fileReader.save('deploy-results', 'results.json', {
       network: deployNetwork.split('-')[0],
       block_number: adamDeployment.receipt.blockNumber,
