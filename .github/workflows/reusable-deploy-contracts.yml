@@ -42,7 +42,7 @@ jobs:
   deploy-contracts:
     name: Deploy Contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3.0.0
@@ -75,6 +75,8 @@ jobs:
             artifacts/contracts/TransferERC721BudgetApproval.sol/TransferERC721BudgetApproval.json\
             artifacts/contracts/TransferLiquidERC20BudgetApproval.sol/TransferLiquidERC20BudgetApproval.json\
             artifacts/contracts/UniswapBudgetApproval.sol/UniswapBudgetApproval.json\
+            artifacts/contracts/UniswapAnyTokenBudgetApproval.sol/UniswapAnyTokenBudgetApproval.json\
+            artifacts/contracts/UniswapLiquidBudgetApproval.sol/UniswapLiquidBudgetApproval.json\
             artifacts/contracts/LiquidPool.sol/LiquidPool.json\
             artifacts/contracts/Team.sol/Team.json\
             abis/machine
