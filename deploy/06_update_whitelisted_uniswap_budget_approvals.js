@@ -22,6 +22,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       from: deployer,
       log: true,
       gasLimit: 6000000,
+      skipIfAlreadyDeployed: true,
     });
     if (result.newlyDeployed) {
       toBeAdd.push(result.address);
