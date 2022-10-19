@@ -88,6 +88,7 @@ jobs:
       
       - name: Deploy Contracts
         run: npx hardhat deploy --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
+        timeout-minutes: 60
 
       - name: Upload Deployment Artifacts
         uses: actions/upload-artifact@v3
@@ -100,6 +101,8 @@ jobs:
 
       - name: Verify Contracts
         run: npx hardhat etherscan-verify --network $CONTRACT_DEPLOY_NETWORK
+        timeout-minutes: 15
+        continue-on-error: true
 
       - name: Slack Notification
         id: slack
@@ -114,6 +117,7 @@ jobs:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
   
       - name: Make Pull Request
+        if: success() || failure()
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GH_PAT }}
