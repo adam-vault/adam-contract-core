@@ -65,14 +65,6 @@ module.exports = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
-    goerli: {
-      url: process.env.GOERLI_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      verify: {
-        etherscan: 'https://goerli.etherscan.io',
-      },
-    },
     mainnet: {
       chainId: 1,
       url: process.env.MAINNET_URL || '',
@@ -98,6 +90,15 @@ module.exports = {
       },
     },
     'goerli-qa': {
+      chainId: 5,
+      url: process.env.GOERLI_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      verify: {
+        etherscan: 'https://goerli.etherscan.io',
+      },
+    },
+    'goerli-alpha': {
       chainId: 5,
       url: process.env.GOERLI_URL || '',
       accounts:
