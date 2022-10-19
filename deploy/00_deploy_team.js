@@ -10,12 +10,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     proxy: {
       proxyContract: 'ERC1967Proxy',
       proxyArgs: ['{implementation}', '{data}'],
-    //   execute: {
-    //     init: {
-    //       methodName: 'initialize',
-    //       args: [],
-    //     },
-    //   },
+      execute: {
+        init: {
+          methodName: 'initialize',
+          args: [],
+        },
+      },
     },
   });
 };
