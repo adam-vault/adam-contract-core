@@ -158,8 +158,10 @@ describe('DaoV2.sol - test/unit/DaoV2.js', function () {
       mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       await dao.connect(mockGovern).createGovern('governA', 1, 2, 3, 0, ethers.constants.AddressZero);
       await dao.connect(mockGovern).createGovern('governB', 4, 5, 6, 1, ethers.constants.AddressZero);
+      await dao.connect(mockGovern).createGovern('governC', 7, 8, 9, 2, tokenA.address);
       mockGovernFactory.createGovern.atCall(1).should.be.calledWith('governA', 1, 2, 3, await dao.membership());
       mockGovernFactory.createGovern.atCall(2).should.be.calledWith('governB', 4, 5, 6, await dao.memberToken());
+      mockGovernFactory.createGovern.atCall(3).should.be.calledWith('governC', 7, 8, 9, tokenA.address);
     });
   });
 
