@@ -36,7 +36,7 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
     adam = await createAdam(budgetApprovalAddresses);
 
     const tx1 = await adam.createDao(
-      getCreateDaoParams({}),
+      ...getCreateDaoParams({}),
     );
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     dao = await ethers.getContractAt('Dao', daoAddr);

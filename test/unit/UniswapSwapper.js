@@ -43,7 +43,7 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
     await feedRegistry.setPrice(ADDRESS_UNI, ADDRESS_ETH, parseEther('1'));
     budgetApprovalAddresses = await createBudgetApprovals(executor);
     adam = await createAdam(budgetApprovalAddresses);
-    const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
+    const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
       budgetApproval: [13, 3000, 5000, 0], // budgetApproval
       revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
       general: [13, 3000, 5000, 0], // general,

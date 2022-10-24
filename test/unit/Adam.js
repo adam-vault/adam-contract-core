@@ -1,6 +1,9 @@
 const chai = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
+const {
+  ADDRESS_ETH,
+} = require('../utils/constants');
 
 const { expect } = chai;
 chai.should();
@@ -210,9 +213,9 @@ describe('Adam.sol - test/unit/Adam.js', function () {
     let daoForCreatrDao, membershipForCreatrDao, liquidPoolForCreatrDao;
 
     beforeEach(async function () {
-      daoForCreatrDao = await (await ethers.getContractFactory('MockLPDao')).deploy();
-      membershipForCreatrDao = await (await ethers.getContractFactory('MockMembership')).deploy();
-      liquidPoolForCreatrDao = await (await ethers.getContractFactory('MockLiquidPool')).deploy();
+      daoForCreatrDao = await (await ethers.getContractFactory('Dao')).deploy();
+      membershipForCreatrDao = await (await ethers.getContractFactory('Membership')).deploy();
+      liquidPoolForCreatrDao = await (await ethers.getContractFactory('LiquidPool')).deploy();
 
       adamForCreatrDao = await upgrades.deployProxy(Adam, [
         daoForCreatrDao.address,
@@ -228,35 +231,23 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       await expect(adamForCreatrDao.createDao([
         'name',
         'description',
-        0,
-        [0, 0, 0, 0],
-        ['name', 'symbol'],
-        0,
-        0,
-        [],
-        0,
-        [],
-        ethers.constants.AddressZero,
-        '',
+        ADDRESS_ETH,
         2,
-      ])).to.not.be.reverted;
+        'name',
+        'symbol',
+        [],
+      ], [])).to.not.be.reverted;
     });
     it('emits createDao event', async () => {
       const tx = await adamForCreatrDao.createDao([
         'name',
         'description',
-        0,
-        [0, 0, 0, 0],
-        ['name', 'symbol'],
-        0,
-        0,
-        [],
-        0,
-        [],
-        ethers.constants.AddressZero,
-        '',
+        ADDRESS_ETH,
         2,
-      ]);
+        'name',
+        'symbol',
+        [],
+      ], []);
       const receipt = await tx.wait();
       const event = receipt.events.find(e => e.event === 'CreateDao');
 

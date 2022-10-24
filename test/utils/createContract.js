@@ -80,52 +80,6 @@ const createAdam = async (budgetApprovalAddresses) => {
   return adam;
 };
 
-const createAdamV2 = async (budgetApprovalAddresses) => {
-  const [creator] = await ethers.getSigners();
-
-  const Dao = await ethers.getContractFactory('DaoV2', { signer: creator });
-  const Membership = await ethers.getContractFactory('Membership', { signer: creator });
-  const Adam = await ethers.getContractFactory('AdamV2', { signer: creator });
-  const GovernFactory = await ethers.getContractFactory('GovernFactory', { signer: creator });
-  const Govern = await ethers.getContractFactory('Govern', { signer: creator });
-  const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
-  const Team = await ethers.getContractFactory('Team', { signer: creator });
-
-  const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
-
-  const dao = await Dao.deploy();
-  if (!budgetApprovalAddresses) {
-    budgetApprovalAddresses = await createBudgetApprovals(creator);
-  }
-  const membership = await Membership.deploy();
-  const liquidPool = await LiquidPool.deploy();
-  const team = await Team.deploy();
-
-  const govern = await Govern.deploy();
-  const memberToken = await MemberToken.deploy();
-  await dao.deployed();
-  await membership.deployed();
-  await govern.deployed();
-  await liquidPool.deployed();
-  await memberToken.deployed();
-  await team.deployed();
-
-  const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
-  await governFactory.deployed();
-  const adam = await upgrades.deployProxy(Adam, [
-    dao.address,
-    membership.address,
-    liquidPool.address,
-    memberToken.address,
-    budgetApprovalAddresses,
-    governFactory.address,
-    team.address,
-  ], { kind: 'uups' });
-
-  await adam.deployed();
-  return adam;
-};
-
 const createTokens = async () => {
   const TokenA = await ethers.getContractFactory('TokenA');
   const tokenA = await TokenA.deploy();
@@ -171,7 +125,6 @@ const createGovern = async () => {
 module.exports = {
   createFeedRegistry,
   createAdam,
-  createAdamV2,
   createTokens,
   createGovern,
   createBudgetApprovals,
