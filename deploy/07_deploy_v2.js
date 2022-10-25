@@ -8,12 +8,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const adamDeployment = await get('Adam');
   const governFactoryDeployment = await get('GovernFactory');
 
-  const adamV2Implementation = await deploy('AdamV2', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 3000000 });
+  const adamV2Implementation = await deploy('Adam', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 3000000 });
   if (adamV2Implementation.newlyDeployed) {
     await execute('Adam', { from: deployer, log: true }, 'upgradeTo', adamV2Implementation.address);
   }
 
-  const daoV2 = await deploy('DaoV2', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 5000000 });
+  const daoV2 = await deploy('Dao', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 5000000 });
   if (daoV2.newlyDeployed) {
     const adam = await ethers.getContractAt('Adam', adamDeployment.address);
     const governFactory = await ethers.getContractAt('GovernFactory', governFactoryDeployment.address);
@@ -29,7 +29,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       liquidPoolImplementation,
       memberTokenImplementation,
       governImplementation,
-      process.env.LATEST_VERSION || 'v2.0.0'
+      process.env.LATEST_VERSION || 'v2.0.0',
     );
 
     const budgetApprovalsAddress = (await Promise.all([
@@ -38,7 +38,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       get('TransferERC721BudgetApproval'),
       get('TransferERC20BudgetApproval'),
     ])).map((deployment) => deployment.address);
-  
+
     const contractAddresses = {
       adam: adamDeployment.address,
       dao: daoV2.address,
@@ -53,9 +53,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       transferERC20BudgetApproval: budgetApprovalsAddress[3],
       team: (await get('Team')).address,
     };
-  
+
     console.log(contractAddresses);
-  
+
     fileReader.save('deploy-results', 'results.json', {
       network: deployNetwork.split('-')[0],
       block_number: adamDeployment.receipt.blockNumber,
