@@ -91,7 +91,7 @@ describe('BudgetApprovalExecutee.sol - test/unit/BudgetApprovalExecutee.js', asy
     it('throws "Incorrect Calldata" if params length not match', async () => {
       await expect(executee.createBudgetApprovals(
         [mockBudgetApproval.address, mockBudgetApproval.address],
-        [mockBudgetApproval.interface.encodeFunctionData('initialize', params)])
+        [mockBudgetApproval.interface.encodeFunctionData('initialize', params)]),
       ).to.be.revertedWith('Incorrect Calldata');
     });
   });

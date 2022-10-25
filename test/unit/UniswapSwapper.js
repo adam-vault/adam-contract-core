@@ -51,9 +51,9 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
     }));
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     const dao = await ethers.getContractAt('Dao', daoAddr);
-    const uniswapBAImplementationAddr = budgetApprovalAddresses[1];
-    const uniswapBAImplementation = await ethers.getContractAt('UniswapBudgetApproval', uniswapBAImplementationAddr);
-    const initData = uniswapBAImplementation.interface.encodeFunctionData('initialize', [
+    const uniswapLiquidBAImplementationAddr = budgetApprovalAddresses[1];
+    const uniswapLiquidBAImplementation = await ethers.getContractAt('UniswapLiquidBudgetApproval', uniswapLiquidBAImplementationAddr);
+    const initData = uniswapLiquidBAImplementation.interface.encodeFunctionData('initialize', [
       [
         // executor
         AddressZero,
@@ -85,10 +85,10 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
       ADDRESS_ETH, // base currency
     ]);
     const tx = await dao.createBudgetApprovals(
-      [uniswapBAImplementationAddr], [initData],
+      [uniswapLiquidBAImplementationAddr], [initData],
     );
     const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-    contract = await ethers.getContractAt('UniswapBudgetApproval', budgetApprovalAddress);
+    contract = await ethers.getContractAt('UniswapLiquidBudgetApproval', budgetApprovalAddress);
   });
 
   it('decode transaction data without swap result', async () => {
