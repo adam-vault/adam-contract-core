@@ -63,10 +63,8 @@ jobs:
         run: |
           npm run compile && mkdir -p abis/machine && cp \
             artifacts/contracts/Adam.sol/Adam.json\
-            artifacts/contracts/v2/AdamV2.sol/AdamV2.json\
             artifacts/contracts/base/CommonBudgetApproval.sol/CommonBudgetApproval.json\
             artifacts/contracts/Dao.sol/Dao.json\
-            artifacts/contracts/v2/DaoV2.sol/DaoV2.json\
             artifacts/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol/IERC20Metadata.json\
             artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json\
             artifacts/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol/IERC721Metadata.json\
