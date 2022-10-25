@@ -32,16 +32,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     }
   }, Promise.resolve());
 
-  await toBeRemoveBudgetApprovals.reduce(async (pm, contractName) => {
-    await pm;
-    const existing = await getOrNull(contractName);
-    if (existing) {
-      const isWhitelisted = await read('Adam', 'budgetApprovals', existing.address);
-      if (isWhitelisted) {
-        toBeRemove.push(existing.address);
+  if (adam) {
+    await toBeRemoveBudgetApprovals.reduce(async (pm, contractName) => {
+      await pm;
+      const existing = await getOrNull(contractName);
+      if (existing) {
+        const isWhitelisted = await read('Adam', 'budgetApprovals', existing.address);
+        if (isWhitelisted) {
+          toBeRemove.push(existing.address);
+        }
       }
-    }
-  }, Promise.resolve());
+    }, Promise.resolve());
+  }
 
   if (adam) {
     if (toBeRemove.length) {

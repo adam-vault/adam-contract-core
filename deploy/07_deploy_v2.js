@@ -34,9 +34,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
     const budgetApprovalsAddress = (await Promise.all([
       get('TransferLiquidERC20BudgetApproval'),
-      get('UniswapBudgetApproval'),
       get('TransferERC721BudgetApproval'),
       get('TransferERC20BudgetApproval'),
+      get('UniswapAnyTokenBudgetApproval'),
+      get('UniswapLiquidBudgetApproval'),
     ])).map((deployment) => deployment.address);
 
     const contractAddresses = {
@@ -48,9 +49,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       memberToken: memberTokenImplementation,
       liquidPool: liquidPoolImplementation,
       transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
-      uniswapBudgetApproval: budgetApprovalsAddress[1],
-      transferErc721BudgetApproval: budgetApprovalsAddress[2],
-      transferERC20BudgetApproval: budgetApprovalsAddress[3],
+      transferErc721BudgetApproval: budgetApprovalsAddress[1],
+      transferERC20BudgetApproval: budgetApprovalsAddress[2],
+      uniswapAnyTokenBudgetApproval: budgetApprovalsAddress[3],
+      uniswapLiquidBudgetApproval: budgetApprovalsAddress[4],
       team: (await get('Team')).address,
     };
 
