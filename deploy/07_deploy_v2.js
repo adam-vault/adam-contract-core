@@ -8,12 +8,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const adamDeployment = await get('Adam');
   const governFactoryDeployment = await get('GovernFactory');
 
-  const adamV2Implementation = await deploy('Adam', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 3000000 });
+  const adamV2Implementation = await deploy('AdamV2', { contract: 'Adam', from: deployer, log: true, gasLimit: 3000000 });
   if (adamV2Implementation.newlyDeployed) {
     await execute('Adam', { from: deployer, log: true }, 'upgradeTo', adamV2Implementation.address);
   }
 
-  const daoV2 = await deploy('Dao', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 5000000 });
+  const daoV2 = await deploy('DaoV2', { contract: 'Dao', from: deployer, log: true, gasLimit: 5000000 });
   if (daoV2.newlyDeployed) {
     const adam = await ethers.getContractAt('Adam', adamDeployment.address);
     const governFactory = await ethers.getContractAt('GovernFactory', governFactoryDeployment.address);
