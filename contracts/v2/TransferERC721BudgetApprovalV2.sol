@@ -14,13 +14,15 @@ contract TransferERC721BudgetApprovalV2 is CommonBudgetApprovalV2 {
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
-    uint256[] public toTeamIds;
-    mapping(uint256 => bool) public toTeamIdsMapping;
     bool public allowAllTokens;
     address[] public tokens;
     mapping(address => bool) public tokensMapping;
     bool public allowAnyAmount;
     uint256 public totalAmount;
+
+    // v2
+    uint256[] public toTeamIds;
+    mapping(uint256 => bool) public toTeamIdsMapping;
 
     event AllowTeam(uint256 indexed teamId);
     event ExecuteTransferERC721Transaction(
@@ -40,11 +42,12 @@ contract TransferERC721BudgetApprovalV2 is CommonBudgetApprovalV2 {
         InitializeParams calldata params,
         bool _allowAllAddresses,
         address[] memory _toAddresses,
-        uint256[] memory _toTeamIds,
         bool _allowAllTokens,
         address[] memory _tokens,
         bool _allowAnyAmount,
-        uint256 _totalAmount
+        uint256 _totalAmount,
+        // v2
+        uint256[] memory _toTeamIds
     ) external initializer {
         __BudgetApproval_init(params);
 
@@ -146,8 +149,18 @@ contract TransferERC721BudgetApprovalV2 is CommonBudgetApprovalV2 {
     }
 
     function _checkIsToTeamsMember(address to) internal view returns (bool) {
+        address[] memory toArray;
         for (uint256 i = 0; i < toTeamIds.length; i++) {
-            if (ITeam(team()).balanceOf(to, toTeamIds[i]) > 0) {
+            toArray[i] = to;
+        }
+
+        uint256[] memory balances = ITeam(team()).balanceOfBatch(
+            toArray,
+            toTeamIds
+        );
+
+        for (uint256 i = 0; i < balances.length; i++) {
+            if (balances[i] > 0) {
                 return true;
             }
         }
@@ -162,5 +175,9 @@ contract TransferERC721BudgetApprovalV2 is CommonBudgetApprovalV2 {
         toTeamIdsMapping[teamId] = true;
         toTeamIds.push(teamId);
         emit AllowTeam(teamId);
+    }
+
+    function toTeamsLength() public view returns (uint256) {
+        return toTeamIds.length;
     }
 }
