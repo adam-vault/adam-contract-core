@@ -322,14 +322,14 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
       });
 
       it('allows user to transfer to member of whitelisted team', async function () {
-        team.balanceOf.whenCalledWith(receiver.address, 10).returns(1);
+        team.balanceOfBatch.whenCalledWith([receiver.address], [10]).returns([1]);
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
       it('throws "Recipient not whitelisted in budget" error if send to non-member of whitelisted team', async function () {
-        team.balanceOf.whenCalledWith(receiver.address, 10).returns(0);
+        team.balanceOfBatch.whenCalledWith([receiver.address], [10]).returns([0]);
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Recipient not whitelisted in budget');

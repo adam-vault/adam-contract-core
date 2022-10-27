@@ -166,8 +166,9 @@ contract TransferLiquidERC20BudgetApprovalV2 is
     }
 
     function _checkIsToTeamsMember(address to) internal view returns (bool) {
-        address[] memory toArray;
-        for (uint256 i = 0; i < toTeamIds.length; i++) {
+        uint256 _toTeamIdsLength = toTeamIds.length;
+        address[] memory toArray = new address[](_toTeamIdsLength);
+        for (uint256 i = 0; i < _toTeamIdsLength; i++) {
             toArray[i] = to;
         }
 
