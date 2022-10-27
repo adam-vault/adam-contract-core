@@ -62,11 +62,11 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Percentage li
       ],
       false, // allow all addresses
       [receiver.address], // allowed addresses (use when above = false)
-      [],
       [ADDRESS_ETH, tokenA.address], // allowed token
       true, // allow any amount
       0, // allowed total amount
       ADDRESS_ETH, // base currency
+      [],
     ]);
 
     const tx = await executee.createBudgetApprovals(

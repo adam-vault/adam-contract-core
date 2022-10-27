@@ -31,11 +31,12 @@ describe('TransferERC721BudgetApprovalV2.sol - test/unit/v2/TransferERC721Budget
     ],
     params.allowAllToAddresses !== undefined ? params.allowAllToAddresses : true,
     params.toAddresses || [],
-    params.toTeamIds || [],
     params.allowAllTokens !== undefined ? params.allowAllTokens : true,
     params.tokens || [],
     params.allowAnyAmount !== undefined ? params.allowAnyAmount : true,
-    params.totalAmount || 0];
+    params.totalAmount || 0,
+    params.toTeamIds || [],
+    ];
   }
 
   function encodeTxData (token, receiver, tokenId) {

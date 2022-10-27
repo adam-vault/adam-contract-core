@@ -62,11 +62,11 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
-        [],
         [ADDRESS_ETH, tokenA.address], // allowed token
         false, // allow any amount
         parseEther('100'), // allowed total amount
         ADDRESS_ETH, // base currency
+        [],
       ]);
 
       const tx = await executee.createBudgetApprovals([transferLiquidERC20BAImplementation.address], [initData]);
@@ -114,11 +114,11 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
         ],
         false, // allow all addresses,
         [receiver.address], // allowed addresses (use when above = false)
-        [],
         [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
         false, // allow any amount
         parseEther('100'), // allowed total amount
         ADDRESS_ETH, // base currency
+        [],
       ]);
 
       await expect(
@@ -153,11 +153,11 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
-        [],
         [ADDRESS_ETH, tokenA.address], // allowed token
         false, // allow any amount
         parseEther('100'), // allowed total amount
         ADDRESS_ETH, // base currency
+        [],
       ]);
 
       const tx = await executee.createBudgetApprovals(
@@ -345,11 +345,11 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
-          [],
           [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           parseEther('100'), // allowed total amount
           ADDRESS_ETH, // base currency
+          [],
         ]);
 
         const tx = await executee.createBudgetApprovals(
@@ -399,11 +399,11 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
-          [],
           [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           parseEther('100'), // allowed total amount
           ADDRESS_ETH, // base currency
+          [],
         ]);
 
         const tx = await executee.createBudgetApprovals(
@@ -454,11 +454,11 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
-          [],
           [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
           false, // allow any amount
           parseEther('100'), // allowed total amount
           ADDRESS_ETH, // base currency
+          [],
         ]);
 
         const tx = await executee.createBudgetApprovals(

@@ -31,11 +31,11 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
     ],
     params.allowAllToAddresses !== undefined ? params.allowAllToAddresses : true,
     params.toAddresses || [],
-    params.toTeamIds || [],
     params.allowAllTokens !== undefined ? params.allowAllTokens : true,
     params.token || ethers.constants.AddressZero,
     params.allowAnyAmount !== undefined ? params.allowAnyAmount : true,
     params.totalAmount || 0,
+    params.toTeamIds || [],
     ];
   }
 
