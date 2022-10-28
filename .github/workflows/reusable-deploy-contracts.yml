@@ -76,6 +76,10 @@ jobs:
             artifacts/contracts/TransferERC20BudgetApproval.sol/TransferERC20BudgetApproval.json\
             artifacts/contracts/TransferERC721BudgetApproval.sol/TransferERC721BudgetApproval.json\
             artifacts/contracts/TransferLiquidERC20BudgetApproval.sol/TransferLiquidERC20BudgetApproval.json\
+            artifacts/contracts/v2/base/CommonBudgetApprovalV2.sol/CommonBudgetApprovalV2.json\
+            artifacts/contracts/v2/TransferERC20BudgetApprovalV2.sol/TransferERC20BudgetApprovalV2.json\
+            artifacts/contracts/v2/TransferERC721BudgetApprovalV2.sol/TransferERC721BudgetApprovalV2.json\
+            artifacts/contracts/v2/TransferLiquidERC20BudgetApprovalV2.sol/TransferLiquidERC20BudgetApprovalV2.json\
             artifacts/contracts/UniswapBudgetApproval.sol/UniswapBudgetApproval.json\
             artifacts/contracts/UniswapAnyTokenBudgetApproval.sol/UniswapAnyTokenBudgetApproval.json\
             artifacts/contracts/UniswapLiquidBudgetApproval.sol/UniswapLiquidBudgetApproval.json\
