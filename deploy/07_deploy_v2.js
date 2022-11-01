@@ -14,7 +14,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   }
 
   const daoV2 = await deploy('DaoV2', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 5000000 });
-  const liquidPoolV2 = await deploy('LiquidPoolV2', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 5000000 });
+  const liquidPoolV2 = await deploy('LiquidPoolV2', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 7000000 });
 
   if (daoV2.newlyDeployed || liquidPoolV2.newlyDeployed) {
     const adam = await ethers.getContractAt('Adam', adamDeployment.address);
