@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "../base/BudgetApprovalExecutee.sol";
+import "./base/BudgetApprovalExecuteeV2.sol";
 
 import "../interface/IAdamV2.sol";
 import "../interface/IMembership.sol";
@@ -25,7 +25,7 @@ import "../lib/InterfaceChecker.sol";
 import "../lib/ToString.sol";
 import "../lib/RevertMsg.sol";
 
-contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
+contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecuteeV2 {
     using Concat for string;
     using AddressUpgradeable for address;
     using InterfaceChecker for address;
@@ -318,6 +318,9 @@ contract DaoV2 is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC11
     function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {
         require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
     }
+
+    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {}
+
 
     function _addAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId) internal {
         require(admissionTokenSetting[token].active == false, "Admission Token existed");
