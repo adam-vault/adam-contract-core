@@ -2,6 +2,7 @@
 
 pragma solidity 0.8.7;
 
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
 import "./dex/UniswapSwapper.sol";
@@ -48,7 +49,7 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         address _baseCurrency
     ) external initializer {
         __BudgetApproval_init(params);
-        
+        __PriceResolver_init(IBudgetApprovalExecutee(executee()).priceRouter(), _baseCurrency);
         for(uint i = 0; i < _fromTokens.length; i++) {
             _addFromToken(_fromTokens[i]);
         }
@@ -61,9 +62,6 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
-
-        __PriceResolver_init(_baseCurrency);
-
     }
 
     function afterInitialized() external override onlyExecutee {
@@ -154,7 +152,7 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
             }
             require(amountInPrice > 0 , "Swap amount should not be zero");
             require(_allowAnyAmount || amountInPrice <= _totalAmount, "Exceeded max amount");
-            require(_checkAmountPercentageValid(priceBefore, amountInPrice), "Exceeded percentage");     
+            require(_checkAmountPercentageValid(priceBefore, amountInPrice), "Exceeded percentage");
                         
             if(!allowAnyAmount) {
                 totalAmount = _totalAmount - amountInPrice;

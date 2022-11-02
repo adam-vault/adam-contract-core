@@ -11,6 +11,7 @@ import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
 import "./interface/IGovernFactory.sol";
+import "./interface/IPriceRouter.sol";
 
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
@@ -34,6 +35,9 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
+    
+    //v2
+    address public priceRouterImplementation;
 
     event CreateDao(address indexed dao, string name, string description, address creator);
     event WhitelistBudgetApproval(address budgetApproval);
@@ -45,6 +49,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address liquidPoolImplementation,
         address memberTokenImplementation,
         address governImplementation,
+        address priceRouterImplementation,
         address adamImplementation,
         string description
     );
@@ -60,6 +65,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _liquidPoolImplementation,
         address _memberTokenImplementation,
         address[] calldata _budgetApprovalImplementations,
+        address _priceRouterImplementation,
         address _governFactory,
         address _team
     )
@@ -77,6 +83,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             _membershipImplementation,
             _liquidPoolImplementation,
             _memberTokenImplementation,
+            _priceRouterImplementation,
             IGovernFactory(governFactory).governImplementation(),
             "");
     }
@@ -102,7 +109,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
-
+        ERC1967Proxy _priceRouter = new ERC1967Proxy(priceRouterImplementation, "");
         daos[address(_dao)] = true;
 
         IMembership(address(_membership)).initialize(
@@ -110,10 +117,14 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             params._name,
             params.maxMemberLimit
         );
+        IPriceRouter(address(_priceRouter)).initialize(
+            address(_dao)
+        );
         ILiquidPool(payable(address(_liquidPool))).initialize(
             address(_dao),
             params.depositTokens,
-            params.baseCurrency
+            params.baseCurrency,
+            address(_priceRouter)
         );
         IDao(payable(address(_dao))).initialize(
             IDao.InitializeParams(
@@ -123,6 +134,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 address(governFactory),
                 address(team),
                 address(memberTokenImplementation),
+                address(_priceRouter),
                 params._name,
                 params._description,
                 params.baseCurrency,
@@ -142,14 +154,16 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _membershipImplementation,
         address _liquidPoolImplementation,
         address _memberTokenImplementation,
-        address _governImplementation
+        address _governImplementation,
+        address _priceRouterImplementation
     ) public pure returns (uint256) {
         return uint256(keccak256(abi.encode(
             _daoImplementation,
             _membershipImplementation,
             _liquidPoolImplementation,
             _memberTokenImplementation,
-            _governImplementation
+            _governImplementation,
+            _priceRouterImplementation
        )));
     }
 
@@ -158,6 +172,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address _membershipImplementation,
         address _liquidPoolImplementation,
         address _memberTokenImplementation,
+        address _priceRouterImplementation,
         address _governImplementation,
         string memory description
     ) public onlyOwner {
@@ -165,19 +180,22 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         require(_membershipImplementation != address(0), "membershipImpl is null");
         require(_liquidPoolImplementation != address(0), "liquidPoolImpl is null");
         require(_memberTokenImplementation != address(0), "memberTokenImpl is null");
+        require(_priceRouterImplementation != address(0), "priceRouterImpl is null");
         require(IGovernFactory(governFactory).governImplementation() == _governImplementation, "governImpl not match");
 
         daoImplementation = _daoImplementation;
         membershipImplementation = _membershipImplementation;
         liquidPoolImplementation = _liquidPoolImplementation;
         memberTokenImplementation = _memberTokenImplementation;
+        priceRouterImplementation = _priceRouterImplementation;
 
         uint256 versionId = hashVersion(
             _daoImplementation,
             _membershipImplementation,
             _liquidPoolImplementation,
             _memberTokenImplementation,
-            _governImplementation
+            _governImplementation,
+            _priceRouterImplementation
         );
 
         emit ImplementationUpgrade(
@@ -187,6 +205,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             _liquidPoolImplementation,
             _memberTokenImplementation,
             _governImplementation,
+            _priceRouterImplementation,
             _getImplementation(),
             description
         );
@@ -194,5 +213,5 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function _authorizeUpgrade(address) internal view override onlyOwner {}
 
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 }

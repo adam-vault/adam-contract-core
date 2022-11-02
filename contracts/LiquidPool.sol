@@ -48,15 +48,16 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     function initialize(
         address owner,
         address[] memory depositTokens,
-        address _baseCurrency
+        address _baseCurrency,
+        address _priceRouter
     )
         public initializer
     {
         __ERC20_init("LiquidPool", "LP");
-        __PriceResolver_init(_baseCurrency);
+        __PriceResolver_init(_priceRouter, _baseCurrency);
         dao = IDao(payable(owner));
         _addAssets(depositTokens);
-        ___BudgetApprovalExecutee_init(IDao(payable(owner)).team());
+        ___BudgetApprovalExecutee_init(dao.team(), _priceRouter);
     }
 
     function assetsShares(address asset, uint256 amount) public view returns (uint256) {
@@ -142,7 +143,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     function depositToken(address receiver, address asset, uint256 amount) public {
         require(isAssetSupported(asset), "Asset not support");
         require(IERC20MetadataUpgradeable(asset).allowance(msg.sender, address(this)) >= amount, "not approve");
-
+  
         uint256 assetPriceInBaseCurrency = assetBaseCurrencyPrice(asset, amount);
         _mint(receiver, quote(assetPriceInBaseCurrency));
         IERC20MetadataUpgradeable(asset).safeTransferFrom(msg.sender, address(this), amount);

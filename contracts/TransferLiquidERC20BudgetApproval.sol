@@ -38,7 +38,7 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
         address _baseCurrency
     ) external initializer {
         __BudgetApproval_init(params);
-
+        __PriceResolver_init(IBudgetApprovalExecutee(executee()).priceRouter(), _baseCurrency);
         allowAllAddresses = _allowAllAddresses;
         for(uint i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
@@ -49,7 +49,6 @@ contract TransferLiquidERC20BudgetApproval is CommonBudgetApproval, PriceResolve
 
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
-        __PriceResolver_init(_baseCurrency);
     }
 
     function executeParams() external pure override returns (string[] memory) {
