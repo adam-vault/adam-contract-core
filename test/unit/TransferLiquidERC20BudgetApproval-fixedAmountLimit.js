@@ -13,7 +13,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price limit - test/unit/TransferLiquidERC20BudgetApproval-fixedAmountLimit.js', function () {
+describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Fixed Price limit - test/unit/v2/TransferLiquidERC20BudgetApprovalV2-fixedAmountLimit.js', function () {
   let transferLiquidERC20BAImplementation, budgetApproval;
   let executor, executee, approver, receiver, dao, team;
   let tokenA, feedRegistry;
@@ -64,6 +64,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Fixed Price lim
       false, // allow any amount
       ethers.utils.parseEther('1'), // allowed total amount
       ADDRESS_ETH, // base currency
+      [],
     ]);
 
     const tx = await executee.createBudgetApprovals(

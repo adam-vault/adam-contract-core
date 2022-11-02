@@ -24,6 +24,7 @@ function getCreateTransferERC20BAParams ({
   allowAnyAmount,
   totalAmount = 0,
   team,
+  toTeamIds = [],
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -46,6 +47,7 @@ function getCreateTransferERC20BAParams ({
     token,
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
+    toTeamIds,
   }).map(([key, value]) => {
     return value;
   });
@@ -114,6 +116,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   totalAmount = 0,
   baseCurrency = ETH,
   team,
+  toTeamIds = [],
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -136,6 +139,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
     baseCurrency,
+    toTeamIds,
   }).map(([key, value]) => {
     return value;
   });
@@ -208,6 +212,7 @@ function getCreateTransferERC721BAParams ({
   allowAnyAmount,
   totalAmount = 0,
   team,
+  toTeamIds = [],
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -230,6 +235,7 @@ function getCreateTransferERC721BAParams ({
     tokens,
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
+    toTeamIds,
   }).map(([key, value]) => {
     return value;
   });

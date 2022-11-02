@@ -19,11 +19,23 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     address public token;
     bool public allowAnyAmount;
     uint256 public totalAmount;
-    event ExecuteTransferERC20Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount);
+
+    // v2
+    uint256[] public toTeamIds;
+    mapping(uint256 => bool) public toTeamIdsMapping;
+
+    event AllowTeam(uint256 indexed teamId);
+    event ExecuteTransferERC20Transaction(
+        uint256 indexed id,
+        address indexed executor,
+        address indexed toAddress,
+        address token,
+        uint256 amount
+    );
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
-      _disableInitializers();
+        _disableInitializers();
     }
 
     function initialize(
@@ -33,14 +45,21 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         bool _allowAllTokens,
         address _token,
         bool _allowAnyAmount,
-        uint256 _totalAmount
+        uint256 _totalAmount,
+        // v2
+        uint256[] memory _toTeamIds
     ) external initializer {
         __BudgetApproval_init(params);
 
         allowAllAddresses = _allowAllAddresses;
-        for(uint i = 0; i < _toAddresses.length; i++) {
+        for (uint256 i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
         }
+
+        for (uint256 i = 0; i < _toTeamIds.length; i++) {
+            _addToTeam(_toTeamIds[i]);
+        }
+
         allowAllTokens = _allowAllTokens;
         token = _token;
         allowAnyAmount = _allowAnyAmount;
@@ -55,30 +74,95 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         return arr;
     }
 
-    function _execute(
-        uint256 transactionId,
-        bytes memory data
-    ) internal override {
-        (address _token, address to, uint256 value) = abi.decode(data,(address, address, uint256));
-        bytes memory executeData = abi.encodeWithSelector(IERC20.transfer.selector, to, value);
+    function _execute(uint256 transactionId, bytes memory data)
+        internal
+        override
+    {
+        (address _token, address to, uint256 value) = abi.decode(
+            data,
+            (address, address, uint256)
+        );
+        bytes memory executeData = abi.encodeWithSelector(
+            IERC20.transfer.selector,
+            to,
+            value
+        );
         bool _allowAnyAmount = allowAnyAmount;
         uint256 _totalAmount = totalAmount;
 
-        IBudgetApprovalExecutee(executee()).executeByBudgetApproval(_token, executeData, 0);
+        IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
+            _token,
+            executeData,
+            0
+        );
 
-        require(allowAllAddresses || addressesMapping[to], "Recipient not whitelisted in budget");
-        require(allowAllTokens || token == _token, "Token not whitelisted in budget");
-        require(_allowAnyAmount || value <= _totalAmount, "Exceeded max budget transferable amount");
+        require(
+            allowAllAddresses ||
+                addressesMapping[to] ||
+                _checkIsToTeamsMember(to),
+            "Recipient not whitelisted in budget"
+        );
+        require(
+            allowAllTokens || token == _token,
+            "Token not whitelisted in budget"
+        );
+        require(
+            _allowAnyAmount || value <= _totalAmount,
+            "Exceeded max budget transferable amount"
+        );
 
-        if(!_allowAnyAmount) {
+        if (!_allowAnyAmount) {
             totalAmount = _totalAmount - value;
         }
-        emit ExecuteTransferERC20Transaction(transactionId, msg.sender, to, _token, value);
+        emit ExecuteTransferERC20Transaction(
+            transactionId,
+            msg.sender,
+            to,
+            _token,
+            value
+        );
     }
 
     function _addToAddress(address to) internal {
-        require(!addressesMapping[to], "Duplicated address in target address list");
+        require(
+            !addressesMapping[to],
+            "Duplicated address in target address list"
+        );
         addressesMapping[to] = true;
         emit AllowAddress(to);
+    }
+
+    function _checkIsToTeamsMember(address to) internal view returns (bool) {
+        uint256 _toTeamIdsLength = toTeamIds.length;
+        address[] memory toArray = new address[](_toTeamIdsLength);
+        for (uint256 i = 0; i < _toTeamIdsLength; i++) {
+            toArray[i] = to;
+        }
+
+        uint256[] memory balances = ITeam(team()).balanceOfBatch(
+            toArray,
+            toTeamIds
+        );
+
+        for (uint256 i = 0; i < balances.length; i++) {
+            if (balances[i] > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function _addToTeam(uint256 teamId) internal {
+        require(
+            !toTeamIdsMapping[teamId],
+            "Duplicated team in target team list"
+        );
+        toTeamIdsMapping[teamId] = true;
+        toTeamIds.push(teamId);
+        emit AllowTeam(teamId);
+    }
+
+    function toTeamsLength() public view returns (uint256) {
+        return toTeamIds.length;
     }
 }
