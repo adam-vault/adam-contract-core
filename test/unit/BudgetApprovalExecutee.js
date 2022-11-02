@@ -7,7 +7,7 @@ const { parseEther } = ethers.utils;
 chai.should();
 chai.use(smock.matchers);
 
-describe('BudgetApprovalExecutee.sol - test/unit/BudgetApprovalExecutee.js', async function () {
+describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', async function () {
   let deployer, team, budgetApproval, unknown;
   let executee, weth;
   beforeEach(async function () {
@@ -93,6 +93,17 @@ describe('BudgetApprovalExecutee.sol - test/unit/BudgetApprovalExecutee.js', asy
         [mockBudgetApproval.address, mockBudgetApproval.address],
         [mockBudgetApproval.interface.encodeFunctionData('initialize', params)]),
       ).to.be.revertedWith('Incorrect Calldata');
+    });
+  });
+
+  describe('revokeBudgetApprovals()', async () => {
+    it('revokes target budget approvals', async () => {
+      const tx = await executee.revokeBudgetApprovals([budgetApproval.address]);
+      await expect(tx).to.emit(executee, 'RevokeBudgetApproval');
+    });
+
+    it('throws "BudgetApprovalExecutee: budget approval is not valid"', async () => {
+      await expect(executee.revokeBudgetApprovals([unknown.address])).to.be.revertedWith('BudgetApprovalExecutee: budget approval is not valid');
     });
   });
 });

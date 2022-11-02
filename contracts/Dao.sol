@@ -319,6 +319,9 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
     }
 
+    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {}
+
+
     function _addAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId) internal {
         require(admissionTokenSetting[token].active == false, "Admission Token existed");
         require(token.isContract(), "Admission Token not Support!");
@@ -339,7 +342,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     }
     function _transferMemberToken(address to, uint amount) internal {
         address _memberToken = memberToken;
-       require(address(_memberToken) != address(0), "Member Token not Exist.");
+        require(address(_memberToken) != address(0), "Member Token not Exist.");
         
         IMemberToken(address(_memberToken)).transfer(to, amount);
     }
