@@ -16,7 +16,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('UniswapLiquidBudgetApproval.sol - test/unit/UniswapLiquidBudgetApproval.js', async function () {
   let executor;
-  let mockToken, mockTokenB, team, executee, mockUniswapRouter;
+  let mockToken, mockTokenB, team, executee, mockUniswapRouter, mockPriceRouter;
   let executeeAsSigner, UniswapLiquidBudgetApproval, ERC1967Proxy, uniswapBAImpl;
 
   function initializeParser (params = {}) {
@@ -74,6 +74,7 @@ describe('UniswapLiquidBudgetApproval.sol - test/unit/UniswapLiquidBudgetApprova
 
     team = await smock.fake('Team');
     executee = await smock.fake('MockBudgetApprovalExecutee');
+    mockPriceRouter = await smock.fake('PriceRouter');
     mockToken = await smock.fake('ERC20');
     mockTokenB = await smock.fake('ERC20');
     mockUniswapRouter = await smock.fake('MockUniswapRouter');
@@ -87,7 +88,11 @@ describe('UniswapLiquidBudgetApproval.sol - test/unit/UniswapLiquidBudgetApprova
         executee.address,
         '0x10000000000000000000000000000',
       ]);
-
+    await executee.priceRouter.returns(mockPriceRouter.address);
+    await mockPriceRouter.canResolvePrice.returns(true);
+    await mockPriceRouter.assetBaseCurrencyPrice.returns(([asset, amount, baseCurrency]) => {
+      return amount;
+    });
     executeeAsSigner = await ethers.getSigner(executee.address);
     UniswapLiquidBudgetApproval = await ethers.getContractFactory('UniswapLiquidBudgetApproval', { signer: executeeAsSigner });
     ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy', { signer: executeeAsSigner });

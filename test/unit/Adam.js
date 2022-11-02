@@ -11,7 +11,7 @@ chai.use(smock.matchers);
 
 describe('Adam.sol - test/unit/Adam.js', function () {
   let deployer, daoCreator, unknown;
-  let dao, membership, liquidPool, memberToken, govern, governFactory, team;
+  let dao, membership, liquidPool, memberToken, govern, governFactory, team, priceRouter;
   let budgetApproval;
   let Adam;
   beforeEach(async function () {
@@ -23,6 +23,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
     liquidPool = await smock.fake('LiquidPool');
     budgetApproval = await smock.fake('TransferERC20BudgetApproval');
     governFactory = await smock.fake('GovernFactory');
+    priceRouter = await smock.fake('PriceRouter');
     govern = await smock.fake('Govern');
     team = await smock.fake('Team');
     Adam = await ethers.getContractFactory('Adam', { signer: deployer });
@@ -38,6 +39,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         [budgetApproval.address],
+        priceRouter.address,
         governFactory.address,
         team.address,
       ], { kind: 'uups' });
@@ -57,6 +59,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         [budgetApproval.address, budgetApproval.address],
+        priceRouter.address,
         governFactory.address,
         team.address,
       ], { kind: 'uups' });
@@ -69,6 +72,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         [],
+        priceRouter.address,
         ethers.constants.AddressZero,
         team.address,
       ], { kind: 'uups' });
@@ -81,6 +85,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         [],
+        priceRouter.address,
         governFactory.address,
         ethers.constants.AddressZero,
       ], { kind: 'uups' });
@@ -98,6 +103,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         [budgetApproval.address],
+        priceRouter.address,
         governFactory.address,
         team.address,
       ], { kind: 'uups' });
@@ -126,6 +132,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         [budgetApproval.address],
+        priceRouter.address,
         governFactory.address,
         team.address,
       ], { kind: 'uups' });
@@ -177,6 +184,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         [budgetApproval.address, newBudgetApproval1.address],
+        priceRouter.address,
         governFactory.address,
         team.address,
       ], { kind: 'uups' });
@@ -223,6 +231,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPoolForCreatrDao.address,
         memberToken.address,
         [budgetApproval.address],
+        priceRouter.address,
         governFactory.address,
         team.address,
       ], { signer: daoCreator, kind: 'uups' });
@@ -267,6 +276,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         [budgetApproval.address],
+        priceRouter.address,
         governFactory.address,
         team.address,
       ], { kind: 'uups' });
@@ -278,7 +288,8 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         '0xb82b10f47575851E3a912948bDf6c3655b1CFC4f',
         '0x1d4869f51a31267A9d5559fD912363be4D0ce31e',
         '0x5058FeB1C38b22A65D7EdEc4a9ceB82fbE4f83cA',
-      )).to.be.eq('32919423783003673811383815689130257884015569893028878289448265004450515186029');
+        '0x8E63fE9091F0490736Fe72F61fC4eC9afcfD6665',
+      )).to.be.eq('75986554316185766737074578866274304862592010800061810950530389259212362724779');
     });
     it('generates same hash if implementation addresses are same', async () => {
       const result1 = await adam.hashVersion(
@@ -287,6 +298,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         govern.address,
+        priceRouter.address,
       );
       const result2 = await adam.hashVersion(
         dao.address,
@@ -294,6 +306,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         govern.address,
+        priceRouter.address,
       );
       expect(result1).to.be.eq(result2);
     });
@@ -304,6 +317,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         govern.address,
+        priceRouter.address,
       );
       const result2 = await adam.hashVersion(
         newDao.address,
@@ -311,19 +325,21 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         govern.address,
+        priceRouter.address,
       );
       expect(result1).to.be.not.eq(result2);
     });
   });
   describe('upgradeImplementations()', async function () {
     let adam;
-    let newDao, newMembership, newLiquidPool, newGovern, newMemberToken;
+    let newDao, newMembership, newLiquidPool, newGovern, newMemberToken, newPriceRouter;
     beforeEach(async function () {
       newDao = await smock.fake('Dao');
       newMembership = await smock.fake('Membership');
       newMemberToken = await smock.fake('MemberToken');
       newLiquidPool = await smock.fake('LiquidPool');
       newGovern = await smock.fake('Govern');
+      newPriceRouter = await smock.fake('PriceRouter');
 
       adam = await upgrades.deployProxy(Adam, [
         dao.address,
@@ -331,6 +347,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         liquidPool.address,
         memberToken.address,
         [budgetApproval.address],
+        priceRouter.address,
         governFactory.address,
         team.address,
       ], { kind: 'uups' });
@@ -341,6 +358,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         newMembership.address,
         newLiquidPool.address,
         newMemberToken.address,
+        newPriceRouter.address,
         govern.address,
         'v2',
       );
@@ -348,6 +366,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       expect(await adam.membershipImplementation()).to.be.eq(newMembership.address);
       expect(await adam.liquidPoolImplementation()).to.be.eq(newLiquidPool.address);
       expect(await adam.memberTokenImplementation()).to.be.eq(newMemberToken.address);
+      expect(await adam.priceRouterImplementation()).to.be.eq(newPriceRouter.address);
     });
 
     it('emits ImplementationUpgrade event', async () => {
@@ -357,16 +376,18 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         '0x569c8A65E18461A7a1E3799c5B1A83d84123BE47',
         '0xb82b10f47575851E3a912948bDf6c3655b1CFC4f',
         '0x1d4869f51a31267A9d5559fD912363be4D0ce31e',
+        '0x8E63fE9091F0490736Fe72F61fC4eC9afcfD6665',
         '0x5058FeB1C38b22A65D7EdEc4a9ceB82fbE4f83cA',
         'v2',
       );
       const receipt = await tx.wait();
       const event = receipt.events.find(e => e.event === 'ImplementationUpgrade');
-      expect(event.args.versionId).to.be.equal('32919423783003673811383815689130257884015569893028878289448265004450515186029');
+      expect(event.args.versionId).to.be.equal('75986554316185766737074578866274304862592010800061810950530389259212362724779');
       expect(await adam.daoImplementation()).to.be.equal('0x27C8F912A49A9C049D6C9f054c935ba2afd7a685');
       expect(await adam.membershipImplementation()).to.be.equal('0x569c8A65E18461A7a1E3799c5B1A83d84123BE47');
       expect(await adam.liquidPoolImplementation()).to.be.equal('0xb82b10f47575851E3a912948bDf6c3655b1CFC4f');
       expect(await adam.memberTokenImplementation()).to.be.equal('0x1d4869f51a31267A9d5559fD912363be4D0ce31e');
+      expect(await adam.priceRouterImplementation()).to.be.equal('0x8E63fE9091F0490736Fe72F61fC4eC9afcfD6665');
     });
     it('throws "governImpl not match" if governImplementation not match current governFactory.governImplementation()', async () => {
       const tx = adam.upgradeImplementations(
@@ -374,6 +395,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         newMembership.address,
         newLiquidPool.address,
         newMemberToken.address,
+        newPriceRouter.address,
         newGovern.address,
         'v2',
       );
@@ -385,6 +407,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         newMembership.address,
         newLiquidPool.address,
         newMemberToken.address,
+        newPriceRouter.address,
         govern.address,
         'v2',
       );
@@ -396,6 +419,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         newMembership.address,
         newLiquidPool.address,
         newMemberToken.address,
+        newPriceRouter.address,
         newGovern.address,
         'v2',
       )).to.be.revertedWith('daoImpl is null');
@@ -404,6 +428,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         ethers.constants.AddressZero,
         newLiquidPool.address,
         newMemberToken.address,
+        newPriceRouter.address,
         newGovern.address,
         'v2',
       )).to.be.revertedWith('membershipImpl is null');
@@ -412,6 +437,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         newMembership.address,
         ethers.constants.AddressZero,
         newMemberToken.address,
+        newPriceRouter.address,
         newGovern.address,
         'v2',
       )).to.be.revertedWith('liquidPoolImpl is null');
@@ -420,9 +446,19 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         newMembership.address,
         newLiquidPool.address,
         ethers.constants.AddressZero,
+        newPriceRouter.address,
         newGovern.address,
         'v2',
       )).to.be.revertedWith('memberTokenImpl is null');
+      await expect(adam.upgradeImplementations(
+        newDao.address,
+        newMembership.address,
+        newLiquidPool.address,
+        newMemberToken.address,
+        ethers.constants.AddressZero,
+        newGovern.address,
+        'v2',
+      )).to.be.revertedWith('priceRouterImpl is null');
     });
   });
 });
