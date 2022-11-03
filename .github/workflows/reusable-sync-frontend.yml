@@ -33,9 +33,6 @@ jobs:
           name: deploy_${{ env.GIT_REF }}
           path: ${{ runner.temp }}/deployment
 
-      - name: Replace Frontend ABIs
-        run: cp ${{ runner.temp }}/deployment/abis/human/* ./src/contracts/v2
-
       - name: Replace SDK ABIs
         run: cp ${{ runner.temp }}/deployment/abis/human/* ./packages/adam-sdk/src/abis/v2
 
