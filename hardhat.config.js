@@ -71,6 +71,28 @@ module.exports = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    arbitrum: {
+      url: process.env.ARBITRUM_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      verify: {
+        etherscan: {
+          apiKey: process.env.ETHERSCAN_ARBITRUM_API_KEY,
+          apiUrl: 'https://api.arbiscan.io',
+        },
+      },
+    },
+    'arbitrum-goerli': {
+      url: process.env.ARBITRUM_GOERLI_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      verify: {
+        etherscan: {
+          apiKey: process.env.ETHERSCAN_ARBITRUM_API_KEY,
+          apiUrl: 'https://api-goerli.arbiscan.io',
+        },
+      },
+    },
     'goerli-predev': {
       chainId: 5,
       url: process.env.GOERLI_URL || '',
