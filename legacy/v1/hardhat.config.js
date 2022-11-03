@@ -44,7 +44,7 @@ module.exports = {
     },
   },
   paths: {
-    deployments: '../deployments',
+    deployments: '../../deployments',
   },
   networks: {
     hardhat: {
