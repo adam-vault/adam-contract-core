@@ -8,6 +8,8 @@
     "prepare:rinkeby": "mustache constant/rinkeby.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "prepare:goerli": "mustache constant/goerli.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "prepare:mainnet": "mustache constant/mainnet.json constant/Constant.template.sol > contracts/lib/Constant.sol",
+    "prepare:arbitrum-goerli": "mustache constant/arbitrum-goerli.json constant/Constant.template.sol > contracts/lib/Constant.sol",
+    "prepare:arbitrum": "mustache constant/arbitrum.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "compile": "hardhat compile",
     "coverage": "hardhat coverage && COVERAGE=true npm run test",
     "size": "hardhat size-contracts",
@@ -41,6 +43,7 @@
     "solidity-coverage": "^0.8.2"
   },
   "dependencies": {
+    "@arbitrum/sdk": "^3.0.0",
     "@chainlink/contracts": "^0.3.1",
     "@defi-wonderland/smock": "^2.3.0",
     "@ethersproject/experimental": "^5.5.0",
