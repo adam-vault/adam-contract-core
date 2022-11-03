@@ -7,6 +7,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "./interface/IDao.sol";
+
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
 import "./interface/IGovernFactory.sol";
@@ -16,24 +17,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     struct CreateDaoParams {
         string _name;
         string _description;
-        uint256 _locktime;
-        uint256[4] generalGovernSetting;
-        string[] tokenInfo;
-        uint256 tokenAmount;
-        uint256 minDepositAmount;
-        address[] depositTokens;
-        bool mintMemberToken;
-        IDao.AdmissionToken[] admissionTokens;
         address baseCurrency;
-        string logoCID;
         uint256 maxMemberLimit;
-    }
-
-    struct AdmissionToken {
-        address token;
-        uint256 minTokenToAdmit;
-        uint256 tokenId;
-        bool isMemberToken;
+        string _memberTokenName;
+        string _memberTokenSymbol;
+        address[] depositTokens;
     }
 
     address public daoImplementation;
@@ -110,7 +98,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function createDao(CreateDaoParams calldata params) external returns (address) {
+    function createDao(CreateDaoParams memory params, bytes[] memory data) external returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
         ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
         ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
@@ -137,19 +125,12 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 address(memberTokenImplementation),
                 params._name,
                 params._description,
-                params._locktime,
-                params.generalGovernSetting,
-                params.tokenInfo,
-                params.tokenAmount,
-                IDao.DaoSetting(
-                    params.minDepositAmount
-                ),
-                params.depositTokens,
-                params.mintMemberToken,
-                params.admissionTokens,
                 params.baseCurrency,
-                params.logoCID
-            )
+                params._memberTokenName,
+                params._memberTokenSymbol,
+                params.depositTokens
+            ),
+            data
         );
 
         emit CreateDao(address(_dao), params._name, params._description, msg.sender);

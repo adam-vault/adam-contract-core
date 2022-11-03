@@ -1,44 +1,9 @@
 
 const { constants } = require('ethers');
 const { ethers } = require('hardhat');
-const daoV2Artifact = require('../artifacts/contracts/v2/DaoV2.sol/DaoV2.json');
+const daoArtifact = require('../artifacts/contracts/Dao.sol/Dao.json');
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-
-function getCreateDaoParams ({
-  // defaut Dao Setting
-  name = 'Company Name',
-  description = 'Description',
-  lockTime = 0,
-  generalGovernSetting = [300, 3000, 5000, 0],
-  tokenInfo = ['Member Token', 'MT'],
-  tokenAmount = 100,
-  minDepositAmount = 0,
-  depositTokens = [ETH],
-  mintMemberToken = false,
-  admissionTokens = [],
-  baseCurrency = ETH,
-  logoCID = '',
-  maxMemberLimit = ethers.constants.MaxUint256,
-}) {
-  return Object.entries({
-    name,
-    description,
-    lockTime,
-    generalGovernSetting,
-    tokenInfo,
-    tokenAmount,
-    minDepositAmount,
-    depositTokens,
-    mintMemberToken,
-    admissionTokens,
-    baseCurrency,
-    logoCID,
-    maxMemberLimit,
-  }).map(([key, value]) => {
-    return value;
-  });
-};
 
 function getCreateTransferERC20BAParams ({
   executor,
@@ -59,6 +24,7 @@ function getCreateTransferERC20BAParams ({
   allowAnyAmount,
   totalAmount = 0,
   team,
+  toTeamIds = [],
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -81,12 +47,13 @@ function getCreateTransferERC20BAParams ({
     token,
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
+    toTeamIds,
   }).map(([key, value]) => {
     return value;
   });
 }
 
-function getCreateDaoParamsV2 ({
+function getCreateDaoParams ({
   // defaut Dao Setting
   name = 'Company Name',
   description = 'Description',
@@ -97,13 +64,12 @@ function getCreateDaoParamsV2 ({
   tokenAmount = 100,
   minDepositAmount = 0,
   depositTokens = [ETH],
-  mintMemberToken = false,
   admissionTokens = [],
   baseCurrency = ETH,
   logoCID = '',
   maxMemberLimit = ethers.constants.MaxUint256,
 }) {
-  const iface = new ethers.utils.Interface(daoV2Artifact.abi);
+  const iface = new ethers.utils.Interface(daoArtifact.abi);
 
   return [
     Object.values({
@@ -150,6 +116,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   totalAmount = 0,
   baseCurrency = ETH,
   team,
+  toTeamIds = [],
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -172,6 +139,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
     baseCurrency,
+    toTeamIds,
   }).map(([key, value]) => {
     return value;
   });
@@ -244,6 +212,7 @@ function getCreateTransferERC721BAParams ({
   allowAnyAmount,
   totalAmount = 0,
   team,
+  toTeamIds = [],
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -266,6 +235,7 @@ function getCreateTransferERC721BAParams ({
     tokens,
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
+    toTeamIds,
   }).map(([key, value]) => {
     return value;
   });
@@ -304,7 +274,6 @@ function getCreateCommonBudgetApprovalParams ({
 }
 module.exports = {
   getCreateDaoParams,
-  getCreateDaoParamsV2,
   getCreateTransferERC20BAParams,
   getCreateTransferLiquidErc20TokenBAParams,
   getCreateUniswapBAParams,

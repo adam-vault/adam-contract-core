@@ -9,10 +9,10 @@ chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetApproval.js', async function () {
+describe('TransferERC721BudgetApprovalV2.sol - test/unit/v2/TransferERC721BudgetApprovalV2.js', async function () {
   let creator, executor, receiver;
   let mockToken, team, executee;
-  let executeeAsSigner, TransferERC721BudgetApproval, ERC1967Proxy, transferErc20BAImpl;
+  let executeeAsSigner, TransferERC721BudgetApproval, ERC1967Proxy, transferErc721BAImpl;
 
   function initializeParser (params = {}) {
     return [[
@@ -34,7 +34,9 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
     params.allowAllTokens !== undefined ? params.allowAllTokens : true,
     params.tokens || [],
     params.allowAnyAmount !== undefined ? params.allowAnyAmount : true,
-    params.totalAmount || 0];
+    params.totalAmount || 0,
+    params.toTeamIds || [],
+    ];
   }
 
   function encodeTxData (token, receiver, tokenId) {
@@ -75,13 +77,13 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
     TransferERC721BudgetApproval = await ethers.getContractFactory('TransferERC721BudgetApproval', { signer: executeeAsSigner });
     ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy', { signer: executeeAsSigner });
 
-    transferErc20BAImpl = await TransferERC721BudgetApproval.deploy();
+    transferErc721BAImpl = await TransferERC721BudgetApproval.deploy();
   });
 
   describe('initialize()', async function () {
     it('init with params with the least setting successfully', async () => {
       const contract = await ERC1967Proxy.deploy(
-        transferErc20BAImpl.address,
+        transferErc721BAImpl.address,
         TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           allowAllToAddresses: true,
           toAddresses: [],
@@ -102,10 +104,11 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
 
     it('init with params with complex setting successfully', async () => {
       const contract = await ERC1967Proxy.deploy(
-        transferErc20BAImpl.address,
+        transferErc721BAImpl.address,
         TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           allowAllToAddresses: false,
           toAddresses: [],
+          toTeamIds: [1],
           allowAllTokens: false,
           tokens: [mockToken.address],
           allowAnyAmount: false,
@@ -115,6 +118,8 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
 
       expect(await transferErc721BA.name()).to.be.eq('Transfer ERC721 Budget Approval');
       expect(await transferErc721BA.allowAllAddresses()).to.be.eq(false);
+      expect(await transferErc721BA.toTeamIds(0)).to.be.eq(1);
+      expect(await transferErc721BA.toTeamIdsMapping(1)).to.be.eq(true);
       expect(await transferErc721BA.allowAllTokens()).to.be.eq(false);
       expect(await transferErc721BA.allowAnyAmount()).to.be.eq(false);
       expect(await transferErc721BA.totalAmount()).to.be.eq(ethers.BigNumber.from('1000'));
@@ -122,7 +127,7 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
 
     it('throws "Duplicated address in target address list" error if toAddresses duplicated', async () => {
       await expect(ERC1967Proxy.deploy(
-        transferErc20BAImpl.address,
+        transferErc721BAImpl.address,
         TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           toAddresses: [creator.address, creator.address],
         })))).to.be.revertedWith('Duplicated address in target address list');
@@ -130,10 +135,19 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
 
     it('throws "Duplicated Item in source token list" error if tokens duplicated', async () => {
       await expect(ERC1967Proxy.deploy(
-        transferErc20BAImpl.address,
+        transferErc721BAImpl.address,
         TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           tokens: [mockToken.address, mockToken.address],
         })))).to.be.revertedWith('Duplicated Item in source token list');
+    });
+
+    it('throws "Duplicated team in target team list" error if toTeams duplicated', async () => {
+      await expect(ERC1967Proxy.deploy(
+        transferErc721BAImpl.address,
+        TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
+          allowAllToAddresses: false,
+          toTeamIds: [10, 10],
+        })))).to.be.revertedWith('Duplicated team in target team list');
     });
   });
 
@@ -141,7 +155,7 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
     let transferErc721BA;
     beforeEach(async function () {
       const contract = await ERC1967Proxy.deploy(
-        transferErc20BAImpl.address,
+        transferErc721BAImpl.address,
         TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser()));
       transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
     });
@@ -156,7 +170,7 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
       let transferErc721BA;
       beforeEach(async function () {
         const contract = await ERC1967Proxy.deploy(
-          transferErc20BAImpl.address,
+          transferErc721BAImpl.address,
           TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
             allowAllToAddresses: true,
             toAddresses: [],
@@ -225,7 +239,7 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
       let transferErc721BA;
       beforeEach(async function () {
         const contract = await ERC1967Proxy.deploy(
-          transferErc20BAImpl.address,
+          transferErc721BAImpl.address,
           TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
             allowAllToAddresses: false,
             toAddresses: [receiver.address],
@@ -253,7 +267,7 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
 
       beforeEach(async function () {
         const contract = await ERC1967Proxy.deploy(
-          transferErc20BAImpl.address,
+          transferErc721BAImpl.address,
           TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
             allowAllTokens: false,
             tokens: [mockToken.address],
@@ -274,6 +288,33 @@ describe('TransferERC721BudgetApproval.sol - test/unit/TransferERC721BudgetAppro
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(unknownToken.address, receiver.address, 1),
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Token not whitelisted in budget');
+      });
+    });
+
+    context('allow limited toTeamIds', async function () {
+      let transferErc721BA;
+      beforeEach(async function () {
+        const contract = await ERC1967Proxy.deploy(
+          transferErc721BAImpl.address,
+          TransferERC721BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
+            allowAllToAddresses: false,
+            toTeamIds: [10],
+          })));
+        transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
+      });
+
+      it('allows user to transfer to member of whitelisted team', async function () {
+        team.balanceOfBatch.whenCalledWith([receiver.address], [10]).returns([1]);
+        await expect(transferErc721BA.connect(executor).createTransaction([
+          encodeTxData(mockToken.address, receiver.address, 50),
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
+      });
+
+      it('throws "Recipient not whitelisted in budget" error if send to non-member of whitelisted team', async function () {
+        team.balanceOfBatch.whenCalledWith([receiver.address], [10]).returns([0]);
+        await expect(transferErc721BA.connect(executor).createTransaction([
+          encodeTxData(mockToken.address, receiver.address, 50),
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Recipient not whitelisted in budget');
       });
     });
   });

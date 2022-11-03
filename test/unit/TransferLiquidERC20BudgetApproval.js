@@ -12,7 +12,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20BudgetApproval.js', function () {
+describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC20BudgetApprovalV2.js', function () {
   let transferLiquidERC20BAImplementation, budgetApproval, dao, team;
   let executor, approver, receiver;
   let tokenA, executee, TransferLiquidERC20BudgetApproval;
@@ -66,6 +66,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
         false, // allow any amount
         parseEther('100'), // allowed total amount
         ADDRESS_ETH, // base currency
+        [],
       ]);
 
       const tx = await executee.createBudgetApprovals([transferLiquidERC20BAImplementation.address], [initData]);
@@ -117,6 +118,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
         false, // allow any amount
         parseEther('100'), // allowed total amount
         ADDRESS_ETH, // base currency
+        [],
       ]);
 
       await expect(
@@ -155,6 +157,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
         false, // allow any amount
         parseEther('100'), // allowed total amount
         ADDRESS_ETH, // base currency
+        [],
       ]);
 
       const tx = await executee.createBudgetApprovals(
@@ -346,6 +349,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
           false, // allow any amount
           parseEther('100'), // allowed total amount
           ADDRESS_ETH, // base currency
+          [],
         ]);
 
         const tx = await executee.createBudgetApprovals(
@@ -399,6 +403,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
           false, // allow any amount
           parseEther('100'), // allowed total amount
           ADDRESS_ETH, // base currency
+          [],
         ]);
 
         const tx = await executee.createBudgetApprovals(
@@ -453,6 +458,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test/unit/TransferLiquidERC20B
           false, // allow any amount
           parseEther('100'), // allowed total amount
           ADDRESS_ETH, // base currency
+          [],
         ]);
 
         const tx = await executee.createBudgetApprovals(
