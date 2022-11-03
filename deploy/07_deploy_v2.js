@@ -1,3 +1,4 @@
+const hre = require('hardhat');
 const { ethers } = require('hardhat');
 const fileReader = require('../utils/fileReader');
 
