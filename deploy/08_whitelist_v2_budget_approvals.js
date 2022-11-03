@@ -1,9 +1,8 @@
-const toBeAddBudgetApprovals = [
-  'TransferLiquidERC20BudgetApprovalV2',
-  'TransferERC721BudgetApprovalV2',
-  'TransferERC20BudgetApprovalV2',
-];
 
+const toBeAddBudgetApprovals = [
+  { name: 'TransferLiquidERC20BudgetApprovalV2', contract: 'TransferLiquidERC20BudgetApproval' },
+  { name: 'TransferERC721BudgetApprovalV2', contract: 'TransferERC721BudgetApproval' },
+  { name: 'TransferERC20BudgetApprovalV2', contract: 'TransferERC20BudgetApproval' }];
 const toBeRemoveBudgetApprovals = [
   'TransferLiquidERC20BudgetApproval',
   'TransferERC721BudgetApproval',
@@ -18,14 +17,14 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const toBeRemove = [];
   const toBeAdd = [];
 
-  await toBeAddBudgetApprovals.reduce(async (pm, contractName) => {
+  await toBeAddBudgetApprovals.reduce(async (pm, { name, contract }) => {
     await pm;
-    const existing = await getOrNull(contractName);
-    const result = await deploy(contractName, {
+    const existing = await getOrNull(name);
+    const result = await deploy(name, {
+      contract,
       from: deployer,
       log: true,
       gasLimit: 6000000,
-      skipIfAlreadyDeployed: true,
     });
     if (result.newlyDeployed) {
       toBeAdd.push(result.address);
@@ -38,8 +37,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await toBeRemoveBudgetApprovals.reduce(async (pm, contractName) => {
     await pm;
     const existing = await getOrNull(contractName);
+    console.log(`${contractName} is ${existing ? 'existing.' : 'not existing.'}${existing ? existing.address : ''}`);
     if (existing) {
       const isWhitelisted = await read('Adam', 'budgetApprovals', existing.address);
+      console.log(`${contractName} is ${isWhitelisted ? 'whitelisted.' : 'not whitelisted.'}`);
       if (isWhitelisted) {
         toBeRemove.push(existing.address);
       }
@@ -48,10 +49,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   if (adam) {
     if (toBeRemove.length) {
+      console.log(`${toBeRemove} to be abandoned.`);
       await execute('Adam', { from: deployer, log: true }, 'abandonBudgetApprovals', toBeRemove);
     }
 
     if (toBeAdd.length) {
+      console.log(`${toBeAdd} to be whitelisted.`);
       await execute('Adam', { from: deployer, log: true }, 'whitelistBudgetApprovals', toBeAdd);
     }
   }
