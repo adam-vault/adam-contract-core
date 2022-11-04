@@ -14,15 +14,15 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   }
 
   const daoV2 = await deploy('DaoV2', { contract: 'Dao', from: deployer, log: true, gasLimit: 5000000 });
+  const adam = await ethers.getContractAt('Adam', adamDeployment.address);
+  const governFactory = await ethers.getContractAt('GovernFactory', governFactoryDeployment.address);
+
+  const liquidPoolImplementation = await adam.liquidPoolImplementation();
+  const membershipImplementation = await adam.membershipImplementation();
+  const memberTokenImplementation = await adam.memberTokenImplementation();
+  const governImplementation = await governFactory.governImplementation();
+
   if (daoV2.newlyDeployed) {
-    const adam = await ethers.getContractAt('Adam', adamDeployment.address);
-    const governFactory = await ethers.getContractAt('GovernFactory', governFactoryDeployment.address);
-
-    const liquidPoolImplementation = await adam.liquidPoolImplementation();
-    const membershipImplementation = await adam.membershipImplementation();
-    const memberTokenImplementation = await adam.memberTokenImplementation();
-    const governImplementation = await governFactory.governImplementation();
-
     await execute('Adam', { from: deployer, log: true }, 'upgradeImplementations',
       daoV2.address,
       membershipImplementation,
@@ -31,40 +31,40 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       governImplementation,
       process.env.LATEST_VERSION || 'v2.0.0',
     );
-
-    const budgetApprovalsAddress = (await Promise.all([
-      get('TransferLiquidERC20BudgetApproval'),
-      get('TransferERC721BudgetApproval'),
-      get('TransferERC20BudgetApproval'),
-      get('UniswapAnyTokenBudgetApproval'),
-      get('UniswapLiquidBudgetApproval'),
-    ])).map((deployment) => deployment.address);
-
-    const contractAddresses = {
-      adam: adamDeployment.address,
-      dao: daoV2.address,
-      membership: membershipImplementation,
-      governFactory: governFactoryDeployment.address,
-      govern: governImplementation,
-      memberToken: memberTokenImplementation,
-      liquidPool: liquidPoolImplementation,
-      transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
-      transferErc721BudgetApproval: budgetApprovalsAddress[1],
-      transferERC20BudgetApproval: budgetApprovalsAddress[2],
-      uniswapAnyTokenBudgetApproval: budgetApprovalsAddress[3],
-      uniswapLiquidBudgetApproval: budgetApprovalsAddress[4],
-      team: (await get('Team')).address,
-    };
-
-    console.log(contractAddresses);
-
-    fileReader.save('deploy-results', 'results.json', {
-      network: deployNetwork.split('-')[0],
-      block_number: adamDeployment.receipt.blockNumber,
-      addresses: contractAddresses,
-      initdata_addresses: {},
-    });
   }
+
+  const budgetApprovalsAddress = (await Promise.all([
+    get('TransferLiquidERC20BudgetApproval'),
+    get('TransferERC721BudgetApproval'),
+    get('TransferERC20BudgetApproval'),
+    get('UniswapAnyTokenBudgetApproval'),
+    get('UniswapLiquidBudgetApproval'),
+  ])).map((deployment) => deployment.address);
+
+  const contractAddresses = {
+    adam: adamDeployment.address,
+    dao: daoV2.address,
+    membership: membershipImplementation,
+    governFactory: governFactoryDeployment.address,
+    govern: governImplementation,
+    memberToken: memberTokenImplementation,
+    liquidPool: liquidPoolImplementation,
+    transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
+    transferErc721BudgetApproval: budgetApprovalsAddress[1],
+    transferERC20BudgetApproval: budgetApprovalsAddress[2],
+    uniswapAnyTokenBudgetApproval: budgetApprovalsAddress[3],
+    uniswapLiquidBudgetApproval: budgetApprovalsAddress[4],
+    team: (await get('Team')).address,
+  };
+
+  console.log(contractAddresses);
+
+  fileReader.save('deploy-results', 'results.json', {
+    network: deployNetwork.split('-')[0],
+    block_number: adamDeployment.receipt.blockNumber,
+    addresses: contractAddresses,
+    initdata_addresses: {},
+  });
 };
 
 module.exports.tags = [
