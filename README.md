@@ -1,4 +1,4 @@
-## ADAM Vault Smart Contracts
+# ADAM Vault Smart Contracts
 
 This repository contains the source codes of the smart contracts developed for the [ADAM Vault Project](https://adamvault.com). It is currently being actively maintained by the ADAM development team. 
 
