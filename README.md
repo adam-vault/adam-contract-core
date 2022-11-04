@@ -2,7 +2,7 @@
 
 This repository contains the source codes of the smart contracts developed for the [ADAM Vault Project](https://adamvault.com). It is currently being actively maintained by the ADAM development team. 
 
-For detailed documentation about ADAM Vault, please see here https://docs.adamvault.com/
+For detailed documentation about ADAM Vault, please see https://docs.adamvault.com/
 
 ## Usage
 
@@ -29,4 +29,6 @@ npx hardhat etherscan-verify --network <network>
 
 
 ## Audit
-That latest smart contract audit was conducted on by HashEx team on September 2022.  [View Audit Report](audits/audit-report-hashex.pdf)
+That latest smart contract audit was conducted on by HashEx team on September 2022.
+
+[View Audit Report](audits/audit-report-hashex.pdf)
