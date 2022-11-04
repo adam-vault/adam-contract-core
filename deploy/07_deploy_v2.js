@@ -18,6 +18,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const adam = await ethers.getContractAt('Adam', adamDeployment.address);
     const governFactory = await ethers.getContractAt('GovernFactory', governFactoryDeployment.address);
 
+    const liquidPoolImplementation = await adam.liquidPoolImplementation();
     const membershipImplementation = await adam.membershipImplementation();
     const memberTokenImplementation = await adam.memberTokenImplementation();
     const governImplementation = await governFactory.governImplementation();
@@ -25,7 +26,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     await execute('Adam', { from: deployer, log: true }, 'upgradeImplementations',
       daoV2.address,
       membershipImplementation,
-      liquidPoolV2.address,
+      liquidPoolImplementation,
       memberTokenImplementation,
       governImplementation,
       process.env.LATEST_VERSION || 'v2.0.0',
@@ -46,7 +47,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       governFactory: governFactoryDeployment.address,
       govern: governImplementation,
       memberToken: memberTokenImplementation,
-      liquidPool: liquidPoolV2.address,
+      liquidPool: liquidPoolImplementation,
       transferLiquidERC20BudgetApproval: budgetApprovalsAddress[0],
       transferErc721BudgetApproval: budgetApprovalsAddress[1],
       transferERC20BudgetApproval: budgetApprovalsAddress[2],
