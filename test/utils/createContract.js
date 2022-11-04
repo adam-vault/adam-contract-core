@@ -10,9 +10,9 @@ const createBudgetApprovals = async (signer) => {
   const transferLiquidERC20BudgetApproval = await TransferLiquidERC20BudgetApproval.deploy();
   await transferLiquidERC20BudgetApproval.deployed();
 
-  const UniswapBudgetApproval = await ethers.getContractFactory('UniswapBudgetApproval');
-  const uniswapBudgetApproval = await UniswapBudgetApproval.deploy();
-  await uniswapBudgetApproval.deployed();
+  const UniswapLiquidBudgetApproval = await ethers.getContractFactory('UniswapLiquidBudgetApproval');
+  const uniswapLiquidBudgetApproval = await UniswapLiquidBudgetApproval.deploy();
+  await uniswapLiquidBudgetApproval.deployed();
 
   const TransferERC721BudgetApproval = await ethers.getContractFactory('TransferERC721BudgetApproval', { signer });
   const transferERC721BudgetApproval = await TransferERC721BudgetApproval.deploy();
@@ -22,7 +22,7 @@ const createBudgetApprovals = async (signer) => {
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
   await transferERC20BudgetApproval.deployed();
 
-  return [transferLiquidERC20BudgetApproval.address, uniswapBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address];
+  return [transferLiquidERC20BudgetApproval.address, uniswapLiquidBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address];
 };
 
 const createFeedRegistry = async (token, signer) => {
@@ -40,52 +40,6 @@ const createAdam = async (budgetApprovalAddresses) => {
 
   const Membership = await ethers.getContractFactory('Membership', { signer: creator });
   const Adam = await ethers.getContractFactory('Adam', { signer: creator });
-  const GovernFactory = await ethers.getContractFactory('GovernFactory', { signer: creator });
-  const Govern = await ethers.getContractFactory('Govern', { signer: creator });
-  const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
-  const Team = await ethers.getContractFactory('Team', { signer: creator });
-
-  const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
-
-  const dao = await Dao.deploy();
-  if (!budgetApprovalAddresses) {
-    budgetApprovalAddresses = await createBudgetApprovals(creator);
-  }
-  const membership = await Membership.deploy();
-  const liquidPool = await LiquidPool.deploy();
-  const team = await Team.deploy();
-
-  const govern = await Govern.deploy();
-  const memberToken = await MemberToken.deploy();
-  await dao.deployed();
-  await membership.deployed();
-  await govern.deployed();
-  await liquidPool.deployed();
-  await memberToken.deployed();
-  await team.deployed();
-
-  const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
-  await governFactory.deployed();
-  const adam = await upgrades.deployProxy(Adam, [
-    dao.address,
-    membership.address,
-    liquidPool.address,
-    memberToken.address,
-    budgetApprovalAddresses,
-    governFactory.address,
-    team.address,
-  ], { kind: 'uups' });
-
-  await adam.deployed();
-  return adam;
-};
-
-const createAdamV2 = async (budgetApprovalAddresses) => {
-  const [creator] = await ethers.getSigners();
-
-  const Dao = await ethers.getContractFactory('DaoV2', { signer: creator });
-  const Membership = await ethers.getContractFactory('Membership', { signer: creator });
-  const Adam = await ethers.getContractFactory('AdamV2', { signer: creator });
   const GovernFactory = await ethers.getContractFactory('GovernFactory', { signer: creator });
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
   const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
@@ -171,7 +125,6 @@ const createGovern = async () => {
 module.exports = {
   createFeedRegistry,
   createAdam,
-  createAdamV2,
   createTokens,
   createGovern,
   createBudgetApprovals,

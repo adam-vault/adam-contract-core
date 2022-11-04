@@ -18,7 +18,7 @@ describe('Govern.sol - test/unit/Govern.js', function () {
   };
 
   function createDao () {
-    return adam.createDao(paramsStruct.getCreateDaoParams({ mintMemberToken: true }));
+    return adam.createDao(...paramsStruct.getCreateDaoParams({ mintMemberToken: true }));
   }
 
   beforeEach(async function () {
@@ -44,6 +44,7 @@ describe('Govern.sol - test/unit/Govern.js', function () {
         category.quorum,
         category.passThreshold,
         0, // membership,
+        ethers.constants.AddressZero,
       )).to.emit(governFactory, 'CreateGovern');
 
       expect(await governFactory.governMap(dao.address, 'General')).to.be.exist;
@@ -163,7 +164,7 @@ describe('Govern.sol - test/unit/Govern.js', function () {
 
     context('For voting with membership ERC721Vote tokens', function () {
       it('success due to 10% pass threshold (1 against 1 for)', async function () {
-        const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
+        const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
           budgetApproval: [300, 1000, 1000, 0], // budgetApproval
           revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
           general: [13, 3000, 5000, 0], // general,
@@ -222,8 +223,8 @@ describe('Govern.sol - test/unit/Govern.js', function () {
       });
 
       it('fails due to 51% pass threshold (1 against 1 for)', async function () {
-        const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
-          generalGovernSetting: [300, 1000, 5100, 0],
+        const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
+          generalGovernSetting: [300, 1000, 5100, 0, ethers.constants.AddressZero],
           mintMemberToken: true,
         }),
         );
@@ -282,15 +283,15 @@ describe('Govern.sol - test/unit/Govern.js', function () {
   });
 
   it('return false in voteSucceeded if no one has voted', async function () {
-    const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
-      generalGovernSetting: [300, 1000, 5100, 0],
+    const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
+      generalGovernSetting: [300, 1000, 5100, 0, ethers.constants.AddressZero],
       mintMemberToken: true,
     }),
     );
 
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
-    dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+    dao = await ethers.getContractAt('MockDao', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     const governFactoryAddr = await dao.governFactory();
     governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);
@@ -318,15 +319,15 @@ describe('Govern.sol - test/unit/Govern.js', function () {
   });
 
   it('counts quorum correctly', async function () {
-    const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
-      generalGovernSetting: [300, 1000, 4900, 0],
+    const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
+      generalGovernSetting: [300, 1000, 4900, 0, ethers.constants.AddressZero],
       mintMemberToken: true,
     }),
     );
 
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
-    dao = await ethers.getContractAt('MockDaoV2', daoAddr);
+    dao = await ethers.getContractAt('MockDao', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
     const governFactoryAddr = await dao.governFactory();
     governFactory = await ethers.getContractAt('GovernFactory', governFactoryAddr);

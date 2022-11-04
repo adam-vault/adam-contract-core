@@ -21,7 +21,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
   let creator, member, anyone, feedRegistry;
 
   function createDao () {
-    return adam.createDao(paramsStruct.getCreateDaoParams({ name: 'A Company' }));
+    return adam.createDao(...paramsStruct.getCreateDaoParams({ name: 'A Company' }));
   };
 
   beforeEach(async function () {
@@ -80,7 +80,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
       let memberTokenImpl;
       beforeEach(async function () {
         const tx1 = await adam.createDao(
-          paramsStruct.getCreateDaoParams({
+          ...paramsStruct.getCreateDaoParams({
             mintMemberToken: false,
           }),
         );
@@ -130,7 +130,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
 
       beforeEach(async function () {
         const tx1 = await adam.createDao(
-          paramsStruct.getCreateDaoParams({
+          ...paramsStruct.getCreateDaoParams({
             admissionTokens: [[tokenC721.address, 1, 0, false]],
           }),
         );
@@ -157,7 +157,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
       let memberTokenImpl;
       beforeEach(async function () {
         const tx1 = await adam.createDao(
-          paramsStruct.getCreateDaoParams({
+          ...paramsStruct.getCreateDaoParams({
             admissionTokens: [[tokenA.address, 1, 0, false]],
           }),
         );
@@ -193,7 +193,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
       beforeEach(async function () {
         ({ tokenD1155 } = await createTokens());
         const tx1 = await adam.createDao(
-          paramsStruct.getCreateDaoParams({
+          ...paramsStruct.getCreateDaoParams({
             admissionTokens: [[tokenD1155.address, 1, 0, false]],
           }),
         );
@@ -216,8 +216,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
       let memberTokenImpl;
       beforeEach(async function () {
         const tx1 = await adam.createDao(
-          paramsStruct.getCreateDaoParams({
-            mintMemberToken: true,
+          ...paramsStruct.getCreateDaoParams({
             admissionTokens: [[ethers.constants.AddressZero, 50, 0, true]],
           }),
         );
@@ -251,7 +250,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     context('when using mutiple ERC20 and 721 Admission Token', async function () {
       beforeEach(async function () {
         const tx1 = await adam.createDao(
-          paramsStruct.getCreateDaoParams({
+          ...paramsStruct.getCreateDaoParams({
             admissionTokens: [
               [tokenC721.address, 1, 0, false],
               [tokenA.address, 2, 0, false],
@@ -295,7 +294,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const nonERC20Contract = await MockUpgrade.deploy();
 
         const tx1 = await adam.createDao(
-          paramsStruct.getCreateDaoParams({
+          ...paramsStruct.getCreateDaoParams({
             admissionTokens: [
               [nonERC20Contract.address, 1, 0, false],
             ],
@@ -312,21 +311,21 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     });
 
     context('when using non contract Admission Token', async function () {
-      it('throws "Admission Token not support!" error', async function () {
+      it('throws "init fail - Admission Token not Support!" error', async function () {
         await expect(adam.createDao(
-          paramsStruct.getCreateDaoParams({
+          ...paramsStruct.getCreateDaoParams({
             admissionTokens: [
               [ethers.constants.AddressZero, 1, 0, false],
             ],
           }),
-        )).to.be.revertedWith('Admission Token not Support!');
+        )).to.be.revertedWith('init fail - Admission Token not Support!');
       });
     });
 
     context('when minDepositAmount is set', async function () {
       beforeEach(async function () {
         const tx1 = await adam.createDao(
-          paramsStruct.getCreateDaoParams({
+          ...paramsStruct.getCreateDaoParams({
             minDepositAmount: 50,
           }),
         );
@@ -350,7 +349,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     context('when maxMemberLimit is set', async function () {
       beforeEach(async function () {
         const tx1 = await adam.createDao(
-          paramsStruct.getCreateDaoParams({
+          ...paramsStruct.getCreateDaoParams({
             maxMemberLimit: 1,
           }),
         );
@@ -377,7 +376,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
   context('when redeem() called', async function () {
     let dao, lp, membership;
     beforeEach(async function () {
-      const tx1 = await adam.createDao(paramsStruct.getCreateDaoParams({
+      const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
         lockTime: 1000,
         depositTokens: [ADDRESS_ETH, tokenA.address], // depositTokens
       }),

@@ -4,15 +4,17 @@ pragma solidity 0.8.7;
 import "../Dao.sol";
 
 contract MockDao is Dao {
-    
-    function exposedCreateMemberToken(address imple, string[] calldata tokenInfo, uint amount) public {
-        _createMemberToken(imple, tokenInfo, amount);
+    function v2() public pure returns (bool) {
+        return true;
+    }
+    function exposedCreateMemberToken(address imple, string calldata name, string calldata symbol, uint amount) public {
+        _createMemberToken(imple, name, symbol);
     }
     function exposedMintMemberToken(uint amount) public {
         _mintMemberToken(amount);
     }
 
     function exposedTransferMemberToken(address to, uint amount) public {
-        _transferMemberToken(to, amount);
+       _transferMemberToken(to, amount);
     }
 }

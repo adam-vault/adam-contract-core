@@ -20,9 +20,8 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
 
     budgetApprovalAddresses = await createBudgetApprovals(executor);
     adam = await createAdam(budgetApprovalAddresses);
-
     const tx1 = await adam.createDao(
-      paramsStruct.getCreateDaoParams({}),
+      ...paramsStruct.getCreateDaoParams({}),
     );
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     dao = await ethers.getContractAt('Dao', daoAddr);

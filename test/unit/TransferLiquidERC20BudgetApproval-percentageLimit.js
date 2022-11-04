@@ -14,7 +14,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limit - test/unit/TransferLiquidERC20BudgetApproval-percentageLimit.js', function () {
+describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Percentage limit - test/unit/TransferLiquidERC20BudgetApprovalV2-percentageLimit.js', function () {
   let transferLiquidERC20BAImplementation, budgetApproval, dao, team;
   let executor, executee, approver, receiver;
   let tokenA, feedRegistry;
@@ -66,6 +66,7 @@ describe('TransferLiquidERC20BudgetApproval.sol - test Chainlink Percentage limi
       true, // allow any amount
       0, // allowed total amount
       ADDRESS_ETH, // base currency
+      [],
     ]);
 
     const tx = await executee.createBudgetApprovals(

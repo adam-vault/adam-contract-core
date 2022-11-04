@@ -21,7 +21,7 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
   let adam;
 
   function createDao () {
-    return adam.createDao(paramsStruct.getCreateDaoParams({ name: 'A Company' }));
+    return adam.createDao(...paramsStruct.getCreateDaoParams({ name: 'A Company' }));
   };
 
   beforeEach(async function () {
@@ -50,40 +50,32 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
       const tx1 = await createDao();
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
-      const MockDaoV2 = await ethers.getContractFactory('MockDaoV2');
-      const mockDaoV2 = await MockDaoV2.deploy();
-      await mockDaoV2.deployed();
+      const MockDao = await ethers.getContractFactory('MockDao');
+      const mockDao = await MockDao.deploy();
+      await mockDao.deployed();
       const dao = await ethers.getContractAt('Dao', daoAddr);
-      await dao.upgradeTo(mockDaoV2.address);
-
-      // console.log(mockDaoV2.address);
-      // const EIP1967_STORAGE_SLOT = ethers.utils.hexlify(
-      //   ethers.BigNumber.from(ethers.utils.id('eip1967.proxy.implementation')).sub(1));
-      // const a = await ethers.provider.getStorageAt(dao.address, EIP1967_STORAGE_SLOT);
-      // const b = ethers.utils.hexStripZeros(a);
-      // console.log(b);
-
-      const daoUpgraded = await ethers.getContractAt('MockDaoV2', daoAddr);
+      await dao.upgradeTo(mockDao.address);
+      const daoUpgraded = await ethers.getContractAt('MockDao', daoAddr);
 
       expect(await daoUpgraded.v2()).to.equal(true);
     });
 
     it('creates successfully when set 0x0 as admission token', async function () {
       await expect(adam.createDao(
-        paramsStruct.getCreateDaoParams({
+        ...paramsStruct.getCreateDaoParams({
           mintMemberToken: true,
           admissionTokens: [[ethers.constants.AddressZero, 50, 0, true]],
         }),
       )).to.not.be.reverted;
     });
 
-    it('throws "Admission Token not Support!" error when set non-contract address as admission token', async function () {
+    it('throws "init fail - Admission Token not Support!" error when set non-contract address as admission token', async function () {
       await expect(adam.createDao(
-        paramsStruct.getCreateDaoParams({
+        ...paramsStruct.getCreateDaoParams({
           mintMemberToken: true,
-          admissionTokens: [[await creator.getAddress(), 50, 0, false]],
+          admissionTokens: [[creator.address, 50, 0, false]],
         }),
-      )).to.be.revertedWith('Admission Token not Support!');
+      )).to.be.revertedWith('init fail - Admission Token not Support!');
     });
   });
 });

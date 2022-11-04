@@ -32,9 +32,24 @@ abstract contract CommonBudgetApproval is Initializable {
         mapping(address => bool) approved;
     }
 
-    event CreateTransaction(uint256 indexed id, bytes[] data, uint256 deadline, Status status, string comment, address creator);
-    event ApproveTransaction(uint256 indexed id, address approver, string comment);
-    event ExecuteTransaction(uint256 indexed id, bytes[] data, address _executor);
+    event CreateTransaction(
+        uint256 indexed id,
+        bytes[] data,
+        uint256 deadline,
+        Status status,
+        string comment,
+        address creator
+    );
+    event ApproveTransaction(
+        uint256 indexed id,
+        address approver,
+        string comment
+    );
+    event ExecuteTransaction(
+        uint256 indexed id,
+        bytes[] data,
+        address _executor
+    );
     event RevokeTransaction(uint256 indexed id);
     event AllowAddress(address target);
     event AllowToken(address token);
@@ -85,88 +100,116 @@ abstract contract CommonBudgetApproval is Initializable {
     }
 
     modifier matchStatus(uint256 id, Status status) {
-        require(transactions[id].status == status, "Transaction status invalid");
+        require(
+            transactions[id].status == status,
+            "Transaction status invalid"
+        );
         _;
     }
 
     modifier checkTime(uint256 id) {
-        require(block.timestamp <= transactions[id].deadline, "Transaction expired");
-        require(block.timestamp >= startTime(), "Budget usage period not started");
+        require(
+            block.timestamp <= transactions[id].deadline,
+            "Transaction expired"
+        );
+        require(
+            block.timestamp >= startTime(),
+            "Budget usage period not started"
+        );
 
         uint256 __endtime = endTime();
         if (__endtime != 0) {
-            require(block.timestamp < __endtime, "Budget usage period has ended");
+            require(
+                block.timestamp < __endtime,
+                "Budget usage period has ended"
+            );
         }
         _;
     }
 
     modifier onlyApprover() {
         require(
-          approversMapping(msg.sender) ||
-          ITeam(team()).balanceOf(msg.sender, approverTeamId()) > 0, "Approver not whitelisted in budget"
+            approversMapping(msg.sender) ||
+                ITeam(team()).balanceOf(msg.sender, approverTeamId()) > 0,
+            "Approver not whitelisted in budget"
         );
         _;
     }
 
     modifier onlyExecutor() {
-        require(msg.sender == executor() ||
-          ITeam(team()).balanceOf(msg.sender, executorTeamId()) > 0, "Executor not whitelisted in budget"
+        require(
+            msg.sender == executor() ||
+                ITeam(team()).balanceOf(msg.sender, executorTeamId()) > 0,
+            "Executor not whitelisted in budget"
         );
         _;
     }
 
-     /// @custom:oz-upgrades-unsafe-allow constructor
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
-      _disableInitializers();
+        _disableInitializers();
     }
 
     function executor() public view returns (address) {
         return _executor;
     }
+
     function executorTeamId() public view returns (uint256) {
         return _executorTeamId;
     }
+
     function executee() public view returns (address) {
         return _executee;
     }
+
     function approversMapping(address eoa) public view returns (bool) {
         return _approversMapping[eoa];
     }
+
     function approverTeamId() public view returns (uint256) {
         return _approverTeamId;
     }
+
     function minApproval() public view returns (uint256) {
         return _minApproval;
     }
+
     function text() public view returns (string memory) {
         return _text;
     }
+
     function transactionType() public view returns (string memory) {
         return _transactionType;
     }
+
     function allowUnlimitedUsageCount() public view returns (bool) {
         return _allowUnlimitedUsageCount;
     }
+
     function usageCount() public view returns (uint256) {
         return _usageCount;
     }
+
     function startTime() public view returns (uint256) {
         return _startTime;
     }
+
     function endTime() public view returns (uint256) {
         return _endTime;
     }
+
     function team() public view returns (address) {
         return _team;
     }
 
-    function __BudgetApproval_init(
-        InitializeParams calldata params
-        ) internal onlyInitializing {
-
+    function __BudgetApproval_init(InitializeParams calldata params)
+        internal
+        onlyInitializing
+    {
         require(
-          params.approverTeamId > 0 || (params.minApproval <= params.approvers.length),
-          "Invalid approver list"
+            params.approverTeamId > 0 ||
+                (params.minApproval <= params.approvers.length),
+            "Invalid approver list"
         );
 
         _executee = msg.sender;
@@ -185,20 +228,25 @@ abstract contract CommonBudgetApproval is Initializable {
         _executorTeamId = params.executorTeamId;
         _approverTeamId = params.approverTeamId;
 
-        for (uint i = 0; i < params.approvers.length; i++) {
+        for (uint256 i = 0; i < params.approvers.length; i++) {
             _approversMapping[params.approvers[i]] = true;
             emit SetApprover(params.approvers[i]);
         }
     }
 
-    function afterInitialized() virtual external onlyExecutee {}
+    function afterInitialized() external virtual onlyExecutee {}
 
-    function executeTransaction(uint256 id) public matchStatus(id, Status.Approved) checkTime(id) onlyExecutor {
+    function executeTransaction(uint256 id)
+        public
+        matchStatus(id, Status.Approved)
+        checkTime(id)
+        onlyExecutor
+    {
         bool unlimited = allowUnlimitedUsageCount();
         uint256 count = usageCount();
         bytes[] memory data = transactions[id].data;
 
-        for (uint i = 0; i < data.length; i++) {
+        for (uint256 i = 0; i < data.length; i++) {
             require(unlimited || count > 0, "Exceeded budget usage limit");
             if (!unlimited) {
                 count--;
@@ -211,7 +259,12 @@ abstract contract CommonBudgetApproval is Initializable {
         emit ExecuteTransaction(id, data, msg.sender);
     }
 
-    function createTransaction(bytes[] memory _data, uint32 _deadline, bool _isExecute, string calldata comment) external onlyExecutor returns (uint256) {
+    function createTransaction(
+        bytes[] memory _data,
+        uint32 _deadline,
+        bool _isExecute,
+        string calldata comment
+    ) external onlyExecutor returns (uint256) {
         _transactionIds.increment();
         uint256 id = _transactionIds.current();
 
@@ -228,7 +281,14 @@ abstract contract CommonBudgetApproval is Initializable {
             transactions[id].status = Status.Pending;
         }
 
-        emit CreateTransaction(id, _data, _deadline,  newTransaction.status, comment, msg.sender);
+        emit CreateTransaction(
+            id,
+            _data,
+            _deadline,
+            newTransaction.status,
+            comment,
+            msg.sender
+        );
 
         if (_isExecute) {
             executeTransaction(id);
@@ -236,21 +296,29 @@ abstract contract CommonBudgetApproval is Initializable {
         return id;
     }
 
-    function approveTransaction(uint256 id, string calldata comment) external onlyApprover {
+    function approveTransaction(uint256 id, string calldata comment)
+        external
+        onlyApprover
+    {
         require(_transactionIds.current() >= id, "Invaild TransactionId");
 
         Status _transactionStatus = transactions[id].status;
         uint256 _transactionApprovedCount = transactions[id].approvedCount + 1;
 
-        require(_transactionStatus == Status.Pending
-            || _transactionStatus == Status.Approved,
-            "Unexpected transaction status");
-        require(!transactions[id].approved[msg.sender], "Transaction has been approved before");
+        require(
+            _transactionStatus == Status.Pending ||
+                _transactionStatus == Status.Approved,
+            "Unexpected transaction status"
+        );
+        require(
+            !transactions[id].approved[msg.sender],
+            "Transaction has been approved before"
+        );
 
         transactions[id].approved[msg.sender] = true;
         transactions[id].approvedCount = _transactionApprovedCount;
 
-        if(_transactionApprovedCount >= minApproval()) {
+        if (_transactionApprovedCount >= minApproval()) {
             transactions[id].status = Status.Approved;
         }
 
@@ -259,16 +327,18 @@ abstract contract CommonBudgetApproval is Initializable {
 
     function revokeTransaction(uint256 id) external onlyExecutor {
         require(_transactionIds.current() >= id, "Invaild TransactionId");
-        require(transactions[id].status != Status.Completed, "Transaction has been completed before");
+        require(
+            transactions[id].status != Status.Completed,
+            "Transaction has been completed before"
+        );
         transactions[id].status = Status.Cancelled;
 
         emit RevokeTransaction(id);
     }
 
     function _execute(uint256, bytes memory) internal virtual;
+
     function executeParams() external pure virtual returns (string[] memory);
+
     function name() external virtual returns (string memory);
-
-    uint256[50] private __gap;
-
 }
