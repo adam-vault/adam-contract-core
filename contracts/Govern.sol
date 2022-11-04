@@ -25,11 +25,14 @@ contract Govern is
     }
 
     address public owner;
-    uint public duration;
-    uint public quorumThreshold;
-    uint public passThreshold;
+    uint256 public duration;
+    uint256 public quorumThreshold;
+    uint256 public passThreshold;
     address public voteToken;
     mapping(uint256 => ProposalVote) private _proposalVotes;
+
+    // v2
+    uint256 public durationInBlock;
 
     modifier onlyOwner {
         require(msg.sender == owner, "Access denied");
@@ -44,10 +47,11 @@ contract Govern is
     function initialize(
         address _owner,
         string memory _name,
-        uint _duration,
-        uint _quorum,
-        uint _passThreshold,
-        address _voteToken
+        uint256 _duration,
+        uint256 _quorum,
+        uint256 _passThreshold,
+        address _voteToken,
+        uint256 _durationInBlock
     ) external initializer {
         require(_isVotableToken(_voteToken),"Govern Token without voting function");
         require(_owner != address(0),"Owner cannot be empty");
@@ -61,6 +65,7 @@ contract Govern is
         quorumThreshold = _quorum; //expecting 2 decimals (i.e. 1000 = 10%)
         passThreshold = _passThreshold; //expecting 2 decimals (i.e. 250 = 2.5%)
         voteToken = _voteToken;
+        durationInBlock = _durationInBlock;
     }
 
     function getProposalVote(uint256 proposalId, uint8 support) external view returns (uint256) {
@@ -78,7 +83,9 @@ contract Govern is
     }
 
     function votingPeriod() public view override returns (uint256) {
-        return duration / Constant.BLOCK_NUMBER_IN_SECOND;
+        // Fading out duration;
+        // Suggest to use durationInBlock instead of duration(in second);
+        return (duration / Constant.BLOCK_NUMBER_IN_SECOND) + durationInBlock;
     }
 
     function votingDelay() public pure override returns (uint256) {
@@ -186,5 +193,5 @@ contract Govern is
 
     function _authorizeUpgrade(address) internal view override onlyOwner {}
 
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 }

@@ -18,7 +18,7 @@ contract MockBudgetApproval is CommonBudgetApproval{
         return r;
     }
 
-    function name() external override returns (string memory) {
+    function name() external pure override returns (string memory) {
         return "Mock";
     }
 }

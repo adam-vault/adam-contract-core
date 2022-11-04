@@ -192,11 +192,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function createGovern(
         string calldata _name,
-        uint duration,
-        uint quorum,
-        uint passThreshold,
+        uint256 duration,
+        uint256 quorum,
+        uint256 passThreshold,
         VoteType voteType,
-        address externalVoteToken
+        address externalVoteToken,
+        uint256 durationInBlock
     ) public onlyGovern("General") {
         address _voteToken;
 
@@ -218,7 +219,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             duration,
             quorum,
             passThreshold,
-            _voteToken
+            _voteToken,
+            durationInBlock
         );
     }
 

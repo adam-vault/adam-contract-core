@@ -23,7 +23,8 @@ interface IGovernFactory {
         uint256 duration,
         uint256 quorum,
         uint256 passThreshold,
-        address voteToken
+        address voteToken,
+        uint256 durationInBlock
     ) external;
 
     function governImplementation() external view returns (address);

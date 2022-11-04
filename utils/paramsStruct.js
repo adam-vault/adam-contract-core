@@ -58,7 +58,7 @@ function getCreateDaoParams ({
   name = 'Company Name',
   description = 'Description',
   lockTime = 0,
-  generalGovernSetting = [300, 3000, 5000, 0, constants.AddressZero],
+  generalGovernSetting = [300, 3000, 5000, 0, constants.AddressZero, 5],
   tokenName = 'Member Token',
   tokenSymbol = 'MT',
   tokenAmount = 100,
