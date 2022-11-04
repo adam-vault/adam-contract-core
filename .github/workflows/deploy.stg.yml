@@ -11,7 +11,7 @@ jobs:
     with:
       GIT_REF: ${{ github.ref_name }}
       LIB_CONSTANT_NETWORK: goerli
-      CONTRACT_DEPLOY_NETWORK: goerli
+      CONTRACT_DEPLOY_NETWORK: goerli-stg
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
