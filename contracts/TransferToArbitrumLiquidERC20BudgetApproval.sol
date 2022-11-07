@@ -9,7 +9,7 @@ import "./base/PriceResolver.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
-import "./TransferLiquidERC20BudgetApproval.sol";
+import "./TransferERC20BudgetApproval.sol";
 
 
 interface IInbox {
@@ -35,10 +35,10 @@ interface L1GatewayRouter {
         bytes calldata _data
     ) public payable returns (bytes memory);
 }
-contract TransferToArbitrumLiquidERC20BudgetApproval is
-    TransferLiquidERC20BudgetApproval
+contract TransferToArbitrumERC20BudgetApproval is
+    TransferERC20BudgetApproval
 {
-    event ExecuteTransferToArbitrumLiquidERC20Transaction(
+    event ExecuteTransferToArbitrumERC20Transaction(
         uint256 indexed id,
         address indexed executor,
         address indexed toAddress,
@@ -66,7 +66,7 @@ contract TransferToArbitrumLiquidERC20BudgetApproval is
             data,
             (address, address, uint256, uint256, uint256, uint256)
         );
-        uint256 amountInBaseCurrency;
+
         uint256 _totalAmount = totalAmount;
         bool _allowAnyAmount = allowAnyAmount;
 
@@ -98,14 +98,12 @@ contract TransferToArbitrumLiquidERC20BudgetApproval is
                 gasPriceBid,
                 gatewayData
             );
-            BudgetApprovalExecutee(executee()).executeByBudgetApproval(
+            IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
                 to,
                 executeData,
                 maxSubmissionCost + (maxGas * gasPriceBid)
             );
         }
-
-        amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
 
         require(
             allowAllAddresses ||
@@ -113,17 +111,20 @@ contract TransferToArbitrumLiquidERC20BudgetApproval is
                 _checkIsToTeamsMember(to),
             "Recipient not whitelisted in budget"
         );
-        require(tokensMapping[token], "Token not whitelisted in budget");
-        require(amountInBaseCurrency > 0, "Transfer amount should not be zero");
         require(
-            _allowAnyAmount || amountInBaseCurrency <= _totalAmount,
+            allowAllTokens || token == _token,
+            "Token not whitelisted in budget"
+        );
+        require(
+            _allowAnyAmount || value <= _totalAmount,
             "Exceeded max budget transferable amount"
         );
 
         if (!_allowAnyAmount) {
-            totalAmount = _totalAmount - amountInBaseCurrency;
+            totalAmount = _totalAmount - value;
         }
-        emit ExecuteTransferToArbitrumLiquidERC20Transaction(
+
+        emit ExecuteTransferToArbitrumERC20Transaction(
             transactionId,
             msg.sender,
             to,

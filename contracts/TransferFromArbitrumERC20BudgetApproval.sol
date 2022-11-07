@@ -4,12 +4,13 @@ pragma solidity 0.8.7;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
+import "./lib/Constant.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./base/PriceResolver.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
-import "./TransferLiquidERC20BudgetApproval.sol";
+import "./TransferERC20BudgetApproval.sol";
 
 
 interface IInbox {
@@ -38,11 +39,11 @@ interface ArbSys {
     function withdrawEth(address to) external payable;
 }
 
-contract TransferFromArbitrumLiquidERC20BudgetApproval is
-    TransferLiquidERC20BudgetApproval
+contract TransferFromArbitrumERC20BudgetApproval is
+    TransferERC20BudgetApproval
 {
     
-    event ExecuteTransferFromArbitrumLiquidERC20Transaction(
+    event ExecuteTransferFromArbitrumERC20Transaction(
         uint256 indexed id,
         address indexed executor,
         address indexed toAddress,
@@ -67,9 +68,9 @@ contract TransferFromArbitrumLiquidERC20BudgetApproval is
             data,
             (address, address, uint256)
         );
-        uint256 amountInBaseCurrency;
-        uint256 _totalAmount = totalAmount;
+
         bool _allowAnyAmount = allowAnyAmount;
+        uint256 _totalAmount = totalAmount;
 
         if (token == Denominations.ETH) {
             bytes memory executeData = abi.encodeWithSelector(
@@ -77,7 +78,7 @@ contract TransferFromArbitrumLiquidERC20BudgetApproval is
                 to
             );
             IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
-                to,
+                address(100),
                 executeData,
                 value,
                 ""
@@ -91,32 +92,33 @@ contract TransferFromArbitrumLiquidERC20BudgetApproval is
                 value,
                 ""
             );
-            BudgetApprovalExecutee(executee()).executeByBudgetApproval(
-                to,
+            IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
+                Constant.ARBITRUM_L2_GATEWAY_ROUTER,
                 executeData,
                 0
             );
         }
 
-        amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
-        
         require(
             allowAllAddresses ||
                 addressesMapping[to] ||
                 _checkIsToTeamsMember(to),
             "Recipient not whitelisted in budget"
         );
-        require(tokensMapping[token], "Token not whitelisted in budget");
-        require(amountInBaseCurrency > 0, "Transfer amount should not be zero");
         require(
-            _allowAnyAmount || amountInBaseCurrency <= _totalAmount,
+            allowAllTokens || token == _token,
+            "Token not whitelisted in budget"
+        );
+        require(
+            _allowAnyAmount || value <= _totalAmount,
             "Exceeded max budget transferable amount"
         );
 
         if (!_allowAnyAmount) {
-            totalAmount = _totalAmount - amountInBaseCurrency;
+            totalAmount = _totalAmount - value;
         }
-        emit ExecuteTransferFromArbitrumLiquidERC20Transaction(
+
+        emit ExecuteTransferFromArbitrumERC20Transaction(
             transactionId,
             msg.sender,
             to,
