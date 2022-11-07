@@ -22,7 +22,7 @@ contract GMXAnyTokenBudgetApproval is CommonBudgetApproval {
         uint256 indexed id,
         address indexed executor,
         address indexed toAddress,
-        address token,
+        bytes data,
         uint256 amount
     );
 
@@ -54,7 +54,7 @@ contract GMXAnyTokenBudgetApproval is CommonBudgetApproval {
           msg.sender == executor() ||
           ITeam(team()).balanceOf(msg.sender, executorTeamId()) > 0, "Executor not whitelisted in budget"
         );
-        
+
         require(_to == Constant.GMX_ROUTER || IGMXRouter(Constant.GMX_ROUTER).plugins(_to), "unsupported gmx plugin");
 
         bytes memory data = abi.encodeWithSignature("approve(address,uint256)", _to, type(uint256).max);
@@ -82,18 +82,19 @@ contract GMXAnyTokenBudgetApproval is CommonBudgetApproval {
     {
         (address to, bytes memory executeData, uint256 value) = abi.decode(data,(address, bytes, uint256));
 
+        require(to == Constant.GMX_ROUTER || IGMXRouter(Constant.GMX_ROUTER).plugins(to), "unsupported gmx plugin");
 
         IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
-            _token,
+            to,
             executeData,
             0
         );
 
-        emit ExecuteTransferERC20Transaction(
+        emit ExecuteGMXAnyTokenTransaction(
             transactionId,
             msg.sender,
             to,
-            _token,
+            executeData,
             value
         );
     }

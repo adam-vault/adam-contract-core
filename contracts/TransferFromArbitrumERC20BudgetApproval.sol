@@ -32,7 +32,7 @@ interface L2GatewayRouter {
         address _to,
         uint256 _amount,
         bytes calldata _data
-    ) public payable returns (bytes memory);
+    ) external payable returns (bytes memory);
 }
 
 interface ArbSys {
@@ -72,7 +72,7 @@ contract TransferFromArbitrumERC20BudgetApproval is
         bool _allowAnyAmount = allowAnyAmount;
         uint256 _totalAmount = totalAmount;
 
-        if (token == Denominations.ETH) {
+        if (l1token == Denominations.ETH) {
             bytes memory executeData = abi.encodeWithSelector(
                 ArbSys.withdrawEth.selector,
                 to
@@ -80,14 +80,12 @@ contract TransferFromArbitrumERC20BudgetApproval is
             IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
                 address(100),
                 executeData,
-                value,
-                ""
+                value
             );
         } else {
-            bytes gatewayData = abi.encode(maxSubmissionCost, 0x);
             bytes memory executeData = abi.encodeWithSelector(
                 L2GatewayRouter.outboundTransfer.selector,
-                token,
+                l1token,
                 to,
                 value,
                 ""
@@ -106,7 +104,7 @@ contract TransferFromArbitrumERC20BudgetApproval is
             "Recipient not whitelisted in budget"
         );
         require(
-            allowAllTokens || token == _token,
+            allowAllTokens || token == l1token,
             "Token not whitelisted in budget"
         );
         require(
@@ -122,7 +120,7 @@ contract TransferFromArbitrumERC20BudgetApproval is
             transactionId,
             msg.sender,
             to,
-            token,
+            l1token,
             value
         );
     }

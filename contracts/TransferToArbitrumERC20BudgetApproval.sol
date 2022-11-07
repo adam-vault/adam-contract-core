@@ -4,6 +4,7 @@ pragma solidity 0.8.7;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
+import "./lib/Constant.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./base/PriceResolver.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
@@ -33,7 +34,7 @@ interface L1GatewayRouter {
         uint256 _maxGas,
         uint256 _gasPriceBid,
         bytes calldata _data
-    ) public payable returns (bytes memory);
+    ) external payable returns (bytes memory);
 }
 contract TransferToArbitrumERC20BudgetApproval is
     TransferERC20BudgetApproval
@@ -62,7 +63,7 @@ contract TransferToArbitrumERC20BudgetApproval is
         internal
         override
     {
-        (address token, address to, uint256 value, uint256 maxSubmissionCost, uint256 maxGas, uint256 gasPriceBid) = abi.decode(
+        (address l1token, address to, uint256 value, uint256 maxSubmissionCost, uint256 maxGas, uint256 gasPriceBid) = abi.decode(
             data,
             (address, address, uint256, uint256, uint256, uint256)
         );
@@ -70,7 +71,7 @@ contract TransferToArbitrumERC20BudgetApproval is
         uint256 _totalAmount = totalAmount;
         bool _allowAnyAmount = allowAnyAmount;
 
-        if (token == Denominations.ETH) {
+        if (l1token == Denominations.ETH) {
             bytes memory executeData = abi.encodeWithSelector(
                 IInbox.createRetryableTicket.selector,
                 to,
@@ -83,15 +84,15 @@ contract TransferToArbitrumERC20BudgetApproval is
                 ""
             );
             IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
-                to,
+                Constant.ARBITRUM_L1_INBOX,
                 executeData,
                 value + maxSubmissionCost + (maxGas * gasPriceBid)
             );
         } else {
-            bytes gatewayData = abi.encode(maxSubmissionCost, "");
+            bytes memory gatewayData = abi.encode(maxSubmissionCost, "");
             bytes memory executeData = abi.encodeWithSelector(
                 L1GatewayRouter.outboundTransfer.selector,
-                token,
+                l1token,
                 to,
                 value,
                 maxGas,
@@ -99,7 +100,7 @@ contract TransferToArbitrumERC20BudgetApproval is
                 gatewayData
             );
             IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
-                to,
+                Constant.ARBITRUM_L1_GATEWAY_ROUTER,
                 executeData,
                 maxSubmissionCost + (maxGas * gasPriceBid)
             );
@@ -112,7 +113,7 @@ contract TransferToArbitrumERC20BudgetApproval is
             "Recipient not whitelisted in budget"
         );
         require(
-            allowAllTokens || token == _token,
+            allowAllTokens || token == l1token,
             "Token not whitelisted in budget"
         );
         require(
@@ -128,7 +129,7 @@ contract TransferToArbitrumERC20BudgetApproval is
             transactionId,
             msg.sender,
             to,
-            token,
+            l1token,
             value
         );
     }
