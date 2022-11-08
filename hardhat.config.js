@@ -106,6 +106,15 @@ module.exports = {
         etherscan: 'https://goerli.etherscan.io',
       },
     },
+    'goerli-stg': {
+      chainId: 5,
+      url: process.env.GOERLI_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      verify: {
+        etherscan: 'https://goerli.etherscan.io',
+      },
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
