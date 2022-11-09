@@ -10,7 +10,7 @@ chai.use(smock.matchers);
 
 describe('DaoV2.sol - test/unit/DaoV2.js', function () {
   let creator, member, mockGovern;
-  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam;
+  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam, mockPriceRouter;
   let tokenA, tokenC721, tokenD1155;
 
   beforeEach(async function () {
@@ -23,6 +23,7 @@ describe('DaoV2.sol - test/unit/DaoV2.js', function () {
     const mockLiquidPool = await smock.fake('LiquidPool');
     mockGovernFactory = await smock.fake('GovernFactory');
     mockTeam = await smock.fake('Team');
+    mockPriceRouter = await smock.fake('PriceRouter');
     mockMemberToken = await (await smock.mock('MemberToken')).deploy();
 
     const adamAsSigner = await testUtils.address.impersonate(mockAdam.address);
@@ -51,6 +52,7 @@ describe('DaoV2.sol - test/unit/DaoV2.js', function () {
       mockGovernFactory.address,
       mockTeam.address,
       mockMemberToken.address,
+      mockPriceRouter.address,
       'Name',
       'Description',
       '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',

@@ -11,6 +11,7 @@ contract MockBudgetApprovalExecutee {
     using Concat for string;
     mapping(address => bool) public budgetApprovals;
     address public memberToken; 
+    address public _priceRouter;
     //todo workaround for AS-834 , need to remove it when split memeber token outflow BA
     event CreateBudgetApproval(address budgetApproval, bytes data);
 
@@ -40,6 +41,14 @@ contract MockBudgetApprovalExecutee {
 
     function setMemberToken(address _memberToken) public {
         memberToken = _memberToken;
+    }
+
+    function setPriceRouter(address __priceRouter) public {
+        _priceRouter = __priceRouter;
+    } 
+
+    function priceRouter() public view virtual returns (address) {
+        return _priceRouter;
     }
     receive() external payable {
 

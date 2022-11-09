@@ -14,7 +14,7 @@ const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Fixed Price limit - test/unit/v2/TransferLiquidERC20BudgetApprovalV2-fixedAmountLimit.js', function () {
-  let transferLiquidERC20BAImplementation, budgetApproval;
+  let transferLiquidERC20BAImplementation, budgetApproval, priceRouter;
   let executor, executee, approver, receiver, dao, team;
   let tokenA, feedRegistry;
 
@@ -31,6 +31,11 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Fixed Price l
     dao = await MockLPDao.deploy();
     transferLiquidERC20BAImplementation = await TransferLiquidERC20BudgetApproval.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
+
+    const MockPriceRouter = await ethers.getContractFactory('PriceRouter', { signer: executor });
+    priceRouter = await MockPriceRouter.deploy();
+    await executee.setPriceRouter(priceRouter.address);
+
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,

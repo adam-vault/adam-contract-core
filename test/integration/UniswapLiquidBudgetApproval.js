@@ -16,12 +16,12 @@ const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/UniswapLiquidBudgetApproval.js', function () {
-  let uniswapLiquidBAImplementation, budgetApproval, dao, team, uniswapRouter;
-  let executor, approver, receiver;
+  let uniswapLiquidBAImplementation, budgetApproval, uniswapRouter, priceRouter;
+  let executor, approver;
   let tokenA, executee, UniswapLiquidBudgetApproval, WETH;
 
   beforeEach(async function () {
-    [executor, approver, receiver] = await ethers.getSigners();
+    [executor, approver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
 
@@ -29,11 +29,10 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
     UniswapLiquidBudgetApproval = await ethers.getContractFactory('UniswapLiquidBudgetApproval', { signer: executor });
     uniswapLiquidBAImplementation = await UniswapLiquidBudgetApproval.deploy();
 
-    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
-    // const Team = await ethers.getContractFactory('Team', { signer: executor });
-    // team = await Team.deploy();
-    dao = await MockLPDao.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
+    const MockPriceRouter = await ethers.getContractFactory('PriceRouter', { signer: executor });
+    priceRouter = await MockPriceRouter.deploy();
+    await executee.setPriceRouter(priceRouter.address);
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [

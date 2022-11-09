@@ -44,6 +44,7 @@ const createAdam = async (budgetApprovalAddresses) => {
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
   const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
   const Team = await ethers.getContractFactory('Team', { signer: creator });
+  const PriceRouter = await ethers.getContractFactory('PriceRouter', { signer: creator });
 
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
 
@@ -54,6 +55,7 @@ const createAdam = async (budgetApprovalAddresses) => {
   const membership = await Membership.deploy();
   const liquidPool = await LiquidPool.deploy();
   const team = await Team.deploy();
+  const priceRouter = await PriceRouter.deploy();
 
   const govern = await Govern.deploy();
   const memberToken = await MemberToken.deploy();
@@ -63,6 +65,7 @@ const createAdam = async (budgetApprovalAddresses) => {
   await liquidPool.deployed();
   await memberToken.deployed();
   await team.deployed();
+  await priceRouter.deployed();
 
   const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
@@ -72,6 +75,7 @@ const createAdam = async (budgetApprovalAddresses) => {
     liquidPool.address,
     memberToken.address,
     budgetApprovalAddresses,
+    priceRouter.address,
     governFactory.address,
     team.address,
   ], { kind: 'uups' });
