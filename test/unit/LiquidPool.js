@@ -15,13 +15,14 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
   let creator;
   let signer1, signer2;
   let token, token2, tokenAsSigner1, tokenAsSigner2, govern, budgetApproval;
-  let feedRegistry, dao, memberToken, team;
+  let feedRegistry, dao, memberToken, team, priceRouter;
 
   beforeEach(async function () {
     [creator, signer1, signer2, unknown] = await ethers.getSigners();
     const MockToken = await ethers.getContractFactory('MockToken', { signer: creator });
     dao = await smock.fake('Dao');
     govern = await smock.fake('Govern');
+    priceRouter = await smock.fake('PriceRouter');
     budgetApproval = await smock.fake('MockBudgetApproval');
 
     await network.provider.request({
@@ -63,8 +64,22 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     dao.team.returns(team.address);
     dao.isPassAdmissionToken.returns(true);
     dao.govern.returns(govern.address);
-
-    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [ADDRESS_ETH, token.address], ADDRESS_ETH], { kind: 'uups' });
+    priceRouter.canResolvePrice.whenCalledWith(token.address).returns(true);
+    priceRouter.canResolvePrice.whenCalledWith(ADDRESS_ETH).returns(true);
+    priceRouter.canResolvePrice.whenCalledWith(token2.address).returns(true);
+    priceRouter.assetBaseCurrencyPrice.returns(([asset, amount, _baseCurrency]) => {
+      if (asset === token.address) {
+        return amount * 0.0046;
+      }
+      return amount;
+    });
+    priceRouter.assetEthPrice.returns(([asset, amount, _baseCurrency]) => {
+      if (asset === token.address) {
+        return amount * 0.0046;
+      }
+      return amount;
+    });
+    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [ADDRESS_ETH, token.address], ADDRESS_ETH, priceRouter.address], { kind: 'uups' });
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);
@@ -212,6 +227,12 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
 
     it('answers correctly with different token deposit, according to feed resolver price', async function () {
       await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0'));
+      priceRouter.assetBaseCurrencyPrice.returns(([asset, amount, _baseCurrency]) => {
+        if (asset === token.address) {
+          return amount * 0;
+        }
+        return amount;
+      });
       await lpAsSigner1.deposit(signer1.address, { value: parseEther('1') }); // 1 ETH
       await tokenAsSigner1.transfer(lp.address, parseEther('1')); // 0 ETH
       await lpAsSigner2.deposit(signer2.address, { value: parseEther('1.0046') }); // 1.0046 ETH
@@ -220,18 +241,9 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
   });
 
   describe('assetBaseCurrencyPrice()', function () {
-    it('returns price based on feed registry', async function () {
-      expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0.0046'));
-      expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1000'))).to.eq(parseEther('4.6'));
-      expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('0.0001'))).to.eq(parseEther('0.00000046'));
-    });
-    it('returns price based on feed registry, even 0 value', async function () {
-      await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('0'));
-      expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
-    });
-    it('returns 0 if feed registry returns -1', async function () {
-      await feedRegistry.setPrice(token.address, ADDRESS_ETH, parseEther('-1'));
-      expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('0'));
+    it('calls assetBaseCurrencyPrice() price router once', async function () {
+      await lp.assetBaseCurrencyPrice(token.address, parseEther('1'));
+      expect(priceRouter.assetBaseCurrencyPrice).to.have.been.calledWith(token.address, parseEther('1'), ADDRESS_ETH);
     });
   });
 
@@ -277,28 +289,28 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
 
     it('mints shares based on pool value, even 1 ETH != 1 shares', async function () {
-      await tokenAsSigner1.approve(lp.address, parseEther('1'));
-      await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'));
+      await tokenAsSigner1.approve(lp.address, parseEther('0.1'));
+      await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('0.1'));
 
-      await tokenAsSigner1.transfer(lp.address, parseEther('1'));
+      await tokenAsSigner1.transfer(lp.address, parseEther('0.1'));
 
-      await tokenAsSigner2.approve(lp.address, parseEther('2'));
-      await lpAsSigner2.depositToken(signer2.address, token.address, parseEther('2'));
-      expect(await lp.balanceOf(signer2.address)).to.eq(parseEther('0.0046'));
+      await tokenAsSigner2.approve(lp.address, parseEther('0.2'));
+      await lpAsSigner2.depositToken(signer2.address, token.address, parseEther('0.2'));
+      expect(await lp.balanceOf(signer2.address)).to.eq(parseEther('0.00046'));
     });
 
     it('mints shares based on pool value, includes ETH & ERC20 Token', async function () {
-      await tokenAsSigner1.approve(lp.address, parseEther('1'));
-      await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'));
+      await tokenAsSigner1.approve(lp.address, parseEther('0.1'));
+      await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('0.1'));
 
-      await creator.sendTransaction({ to: lp.address, value: parseEther('1') });
-      await tokenAsSigner2.approve(lp.address, parseEther('12.123'));
-      await lpAsSigner2.depositToken(signer2.address, token.address, parseEther('12.123'));
+      await creator.sendTransaction({ to: lp.address, value: parseEther('0.1') });
+      await tokenAsSigner2.approve(lp.address, parseEther('1.2123'));
+      await lpAsSigner2.depositToken(signer2.address, token.address, parseEther('1.2123'));
 
-      // LP price = 1.0046 / 0.0046 = ~218 eth per LP
-      // TOKEN price = 12.123 * 0.0046 = ~0.055 eth
-      // Quote = 0.055 / 218 = ~0.000255 eth
-      expect(await lp.balanceOf(signer2.address)).to.eq(parseEther('0.000255348078837348'));
+      // LP price = 0.10046 / 0.00046 = ~218 eth per LP
+      // TOKEN price = 1.2123 * 0.0046 = ~0.0055 eth
+      // Quote = 0.0055 / 218 = ~0.0000255 eth
+      expect(await lp.balanceOf(signer2.address)).to.eq(parseEther('0.000025534807883734'));
     });
 
     it('allows eoa to deposit with enough minDeposit amount & minTokenToJoin', async function () {
@@ -423,7 +435,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
       expect(await lp.canAddAsset(token.address)).to.eq(true);
     });
     it('returns false if feed registry unresolvable', async function () {
-      await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ethers.constants.AddressZero);
+      priceRouter.canResolvePrice.whenCalledWith(token.address).returns(false);
       expect(await lp.canAddAsset(token.address)).to.eq(false);
     });
     it('throws "Dao: only Govern" errors if non govern called', async function () {
@@ -481,13 +493,12 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
   let creator;
   let signer1, signer2;
   let token, tokenAsSigner1, tokenAsSigner2;
-  let feedRegistry, dao, memberToken;
+  let feedRegistry, dao, memberToken, priceRouter;
 
   beforeEach(async function () {
     [creator, signer1, signer2] = await ethers.getSigners();
     const MockToken = await ethers.getContractFactory('MockToken', { signer: creator });
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: creator });
-
     const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
@@ -508,7 +519,14 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
     await dao.setIsPassAdmissionToken(true);
-    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [token.address], token.address], { kind: 'uups' });
+
+    priceRouter = await smock.fake('PriceRouter');
+    priceRouter.canResolvePrice.whenCalledWith(token.address).returns(true);
+    priceRouter.canResolvePrice.whenCalledWith(ADDRESS_ETH).returns(true);
+    priceRouter.assetBaseCurrencyPrice.returns(([asset, amount, _baseCurrency]) => {
+      return amount;
+    });
+    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [token.address], token.address, priceRouter.address], { kind: 'uups' });
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);

@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.7;
 
-
 contract MockFeedRegistry {
 
   // int256 private _price;
@@ -48,9 +47,9 @@ contract MockFeedRegistry {
     ) {
         if( _timestamp[base][quote] > 0 ){
           return (18446744073709580067, _price[base][quote], _timestamp[base][quote], _timestamp[base][quote], 18446744073709580067);
-        }else{
+         }else{
           return (18446744073709580067, _price[base][quote], block.timestamp, block.timestamp, 18446744073709580067);
-        }
+         }
     }
 
   function getFeed(address base, address quote) external view returns (address aggregator) {

@@ -15,7 +15,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApproval.js', async function () {
   let executor;
-  let mockToken, mockTokenB, team, executee, mockUniswapRouter;
+  let mockToken, mockTokenB, team, executee, mockUniswapRouter, mockPriceRouter;
   let executeeAsSigner, UniswapAnyTokenBudgetApproval, ERC1967Proxy, uniswapBAImpl;
 
   function initializeParser (params = {}) {
@@ -73,6 +73,11 @@ describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApp
 
     team = await smock.fake('Team');
     executee = await smock.fake('MockBudgetApprovalExecutee');
+    mockPriceRouter = await smock.fake('PriceRouter');
+
+    await mockPriceRouter.assetBaseCurrencyPrice.returns(([asset, amount, baseCurrency]) => {
+      return amount;
+    });
     mockToken = await smock.fake('ERC20');
     mockTokenB = await smock.fake('ERC20');
     mockUniswapRouter = await smock.fake('MockUniswapRouter');

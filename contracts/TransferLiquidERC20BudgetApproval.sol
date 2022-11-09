@@ -56,7 +56,7 @@ contract TransferLiquidERC20BudgetApproval is
         uint256[] memory _toTeamIds
     ) external initializer {
         __BudgetApproval_init(params);
-
+        __PriceResolver_init(IBudgetApprovalExecutee(executee()).priceRouter(), _baseCurrency);
         allowAllAddresses = _allowAllAddresses;
         for (uint256 i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
@@ -72,7 +72,6 @@ contract TransferLiquidERC20BudgetApproval is
 
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
-        __PriceResolver_init(_baseCurrency);
     }
 
     function executeParams() external pure override returns (string[] memory) {

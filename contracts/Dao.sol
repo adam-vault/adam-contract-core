@@ -37,6 +37,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         address _governFactory;
         address _team;
         address _memberTokenImplementation;
+        address _priceRouter;
         string _name;
         string _description;
         address baseCurrency;
@@ -103,11 +104,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             && address(params._governFactory) != address(0)
             && address(params._team) != address(0)
             && address(params._memberTokenImplementation) != address(0)
+            && address(params._priceRouter) != address(0)
             && address(params.baseCurrency) != address(0)
         , "Invaild Dao Setting");
         _initializing = true;
 
-        ___BudgetApprovalExecutee_init(params._team);
+        ___BudgetApprovalExecutee_init(params._team, params._priceRouter);
 
         adam = msg.sender;
         name = params._name;

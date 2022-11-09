@@ -13,7 +13,7 @@ const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC20BudgetApprovalV2.js', function () {
-  let transferLiquidERC20BAImplementation, budgetApproval, dao, team;
+  let transferLiquidERC20BAImplementation, budgetApproval, dao, team, priceRouter;
   let executor, approver, receiver;
   let tokenA, executee, TransferLiquidERC20BudgetApproval;
 
@@ -30,6 +30,11 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
     team = await Team.deploy();
     dao = await MockLPDao.deploy();
     executee = await MockBudgetApprovalExecutee.deploy();
+
+    const MockPriceRouter = await ethers.getContractFactory('PriceRouter', { signer: executor });
+    priceRouter = await MockPriceRouter.deploy();
+    await executee.setPriceRouter(priceRouter.address);
+
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
