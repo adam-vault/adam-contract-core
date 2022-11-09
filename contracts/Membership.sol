@@ -100,6 +100,11 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         }
     }
 
+    function burn(uint256 tokenId) public onlyDao {
+      _burn(tokenId);
+      isMember[ownerOf(tokenId)] = false;
+    }
+
     function _authorizeUpgrade(address) internal view override onlyDao {}
 
     uint256[50] private __gap;

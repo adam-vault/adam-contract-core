@@ -375,6 +375,15 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         emit UpgradeDao(remark);
     }
 
+    function quit(address account) public {
+      require(msg.sender === account, "Permission denied");
+      require(IMembership(membership).isMember(account) === true, "Not a member");
+
+      if (ILiquidPool(_liquidPool).balanceOf(account) === 0) {
+        IMembership(membership).burn()
+        emit Quit(account);
+      }
+    }
 
     receive() external payable {
       if (msg.sender != address(0) && msg.value != 0) {
