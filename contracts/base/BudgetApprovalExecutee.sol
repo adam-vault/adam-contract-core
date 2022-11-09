@@ -15,6 +15,9 @@ contract BudgetApprovalExecutee is Initializable {
 
     mapping(address => bool) private _budgetApprovals;
 
+    //v2
+    address private _priceRouter;
+
     event CreateBudgetApproval(address budgetApproval, bytes data);
     event ExecuteByBudgetApproval(address budgetApproval, bytes data);
     event RevokeBudgetApproval(address budgetApproval);
@@ -29,12 +32,17 @@ contract BudgetApprovalExecutee is Initializable {
       _disableInitializers();
     }
 
-    function ___BudgetApprovalExecutee_init(address __team) internal onlyInitializing {
+    function ___BudgetApprovalExecutee_init(address __team, address __priceRouter) internal onlyInitializing {
         _team = __team;
+        _priceRouter = __priceRouter;
     }
 
     function team() public view virtual returns (address) {
         return _team;
+    }
+
+    function priceRouter() public view virtual returns (address) {
+        return _priceRouter;
     }
 
     function budgetApprovals(address template) public view virtual returns (bool) {
@@ -79,5 +87,5 @@ contract BudgetApprovalExecutee is Initializable {
         }
     }
 
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 }
