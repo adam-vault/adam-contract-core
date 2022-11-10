@@ -103,6 +103,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     function removeMember(uint256 tokenId) public onlyDao {
         _burn(tokenId);
         isMember[ownerOf(tokenId)] = false;
+        totalSupply = totalSupply - 1;
     }
 
     function _authorizeUpgrade(address) internal view override onlyDao {}
