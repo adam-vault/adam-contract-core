@@ -22,7 +22,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const memberTokenImplementation = await adam.memberTokenImplementation();
   const governImplementation = await governFactory.governImplementation();
 
-  if (daoV2.newlyDeployed || liquidPoolV2.newlyDeployed) {
+  if (daoV2.newlyDeployed || liquidPoolV2.newlyDeployed || membershipV2.newlyDeployed) {
     await execute('Adam', { from: deployer, log: true }, 'upgradeImplementations',
       daoV2.address,
       membershipV2.address,
