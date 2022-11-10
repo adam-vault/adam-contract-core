@@ -27,6 +27,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
     mapping(address => bool) public isMember;
 
     event CreateMember(address to);
+    event RemoveMember(address member, uint256 tokenId);
 
     modifier onlyDao() {
         require(msg.sender == dao, "not dao");
@@ -102,8 +103,11 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
 
     function removeMember(uint256 tokenId) public onlyDao {
         _burn(tokenId);
-        isMember[ownerOf(tokenId)] = false;
+        address owner = ownerOf(tokenId);
+        isMember[owner] = false;
         totalSupply = totalSupply - 1;
+
+        emit RemoveMember(owner, tokenId);
     }
 
     function _authorizeUpgrade(address) internal view override onlyDao {}
