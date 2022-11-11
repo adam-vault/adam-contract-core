@@ -51,6 +51,10 @@ contract TransferFromArbitrumERC20BudgetApproval is
         uint256 amount
     );
 
+    function name() external pure override returns (string memory) {
+        return "Transfer From Arbitrum ERC20 Budget Approval";
+    }
+
     function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address l1token";

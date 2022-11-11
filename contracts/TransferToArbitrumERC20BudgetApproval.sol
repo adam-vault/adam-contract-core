@@ -35,6 +35,7 @@ interface L1GatewayRouter {
         uint256 _gasPriceBid,
         bytes calldata _data
     ) external payable returns (bytes memory);
+    function getGateway(address token) external view returns (address);
 }
 contract TransferToArbitrumERC20BudgetApproval is
     TransferERC20BudgetApproval
@@ -46,6 +47,10 @@ contract TransferToArbitrumERC20BudgetApproval is
         address token,
         uint256 amount
     );
+
+    function name() external pure override returns (string memory) {
+        return "Transfer To Arbitrum ERC20 Budget Approval";
+    }
 
     function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](6);
@@ -89,6 +94,18 @@ contract TransferToArbitrumERC20BudgetApproval is
                 value + maxSubmissionCost + (maxGas * gasPriceBid)
             );
         } else {
+            address gateway = L1GatewayRouter(Constant.ARBITRUM_L1_GATEWAY_ROUTER).getGateway(l1token);
+            bytes memory approveExecuteData = abi.encodeWithSelector(
+                IERC20.approve.selector,
+                gateway,
+                value
+            );
+            IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
+                l1token,
+                approveExecuteData,
+                0
+            );
+
             bytes memory gatewayData = abi.encode(maxSubmissionCost, "");
             bytes memory executeData = abi.encodeWithSelector(
                 L1GatewayRouter.outboundTransfer.selector,

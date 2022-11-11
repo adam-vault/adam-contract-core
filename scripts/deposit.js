@@ -13,9 +13,23 @@ const toBigNumber = (val, decimals) => {
 };
 
 async function main () {
+  const { get } = hre.deployments;
+  const adamDeployment = await get('Adam');
+  const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);
+  const events = await adam.queryFilter(adam.filters.CreateDao());
+  const daos = events.map(e => ({ dao: e.args.dao, name: e.args.name }));
+
   inquirer
     .prompt([
-      { type: 'input', name: 'daoAddress', message: 'Dao contract address?', default: '0xC6e1Ca4b8e9ceAa7A0cC82Cc13A6F991bcB48453' },
+      {
+        type: 'list',
+        name: 'daoAddress',
+        message: 'Dao?',
+        choices: daos.map(({ dao, name }) => ({
+          name: `${dao} - ${name}`,
+          value: dao,
+        })),
+      },
       {
         type: 'list',
         name: 'dest',
@@ -35,7 +49,7 @@ async function main () {
       { type: 'input', name: 'amount', message: 'How much?', default: '0.001' },
     ])
     .then(async ({
-      dest, tokenAddress, token, daoAddress, amount
+      dest, tokenAddress, token, daoAddress, amount,
     }) => {
       if (dest === 'Treasury') {
         if (token === 'ETH') {

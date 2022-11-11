@@ -4,9 +4,10 @@ const inquirer = require('inquirer');
 const paramsStruct = require('../utils/paramsStruct');
 const ETH = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 async function main () {
+  const { get } = hre.deployments;
+
   inquirer
     .prompt([
-      { type: 'input', name: 'adamAddress', message: 'Adam contract address?', default: '0x987747FC7D299500EeaC00B59554515a6E3bBA3f' },
       { type: 'input', name: 'name', message: 'Dao name?', default: 'New Dao' },
       { type: 'input', name: 'description', message: 'Dao description?', default: 'New description' },
       { type: 'input', name: 'logoCID', message: 'Dao logo CID?', default: '' },
@@ -46,7 +47,8 @@ async function main () {
       { type: 'number', name: 'generalGovernSetting.5', message: 'Govern proposal duration? (in block)', default: 600 },
     ])
     .then(async (answers) => {
-      const adam = await hre.ethers.getContractAt('Adam', answers.adamAddress);
+      const adamDeployment = await get('Adam');
+      const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);
       const tx = await adam.createDao(...paramsStruct.getCreateDaoParams(answers));
       console.log(tx);
     });
