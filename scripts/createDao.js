@@ -51,6 +51,8 @@ async function main () {
       const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);
       const tx = await adam.createDao(...paramsStruct.getCreateDaoParams(answers));
       console.log(tx);
+      const receipt = await tx.wait();
+      console.log('Dao created at', receipt.events.find(e => e.event === 'CreateDao').args.dao);
     });
 }
 

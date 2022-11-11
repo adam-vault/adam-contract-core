@@ -26,3 +26,4 @@ build
 #Deploy result
 deploy-results/results.json
 deployments/goerli-predev
+deployments/arbitrum-goerli

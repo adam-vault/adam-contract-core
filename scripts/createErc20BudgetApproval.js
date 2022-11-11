@@ -87,7 +87,7 @@ async function main () {
         })),
       },
     ]);
-  const answers2 = await inquirer.prompt(questions[answers.baType]);
+  const answers2 = await inquirer.prompt(questions[answers.budgetApprovalOptions.key]);
 
   const transferERC20BudgetApproval = await hre.ethers.getContractAt(answers.budgetApprovalOptions.key, answers.budgetApprovalOptions.address);
   const dataErc20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
