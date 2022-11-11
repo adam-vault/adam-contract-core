@@ -15,17 +15,17 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const daoV2 = await deploy('DaoV2', { contract: 'Dao', from: deployer, log: true, gasLimit: 5000000 });
   const liquidPoolV2 = await deploy('LiquidPoolV2', { contract: 'LiquidPool', from: deployer, log: true, gasLimit: 7000000 });
+  const membershipV2 = await deploy('MembershipV2', { contract: 'Membership', from: deployer, log: true, gasLimit: 5000000 });
   const adam = await ethers.getContractAt('Adam', adamDeployment.address);
   const governFactory = await ethers.getContractAt('GovernFactory', governFactoryDeployment.address);
 
-  const membershipImplementation = await adam.membershipImplementation();
   const memberTokenImplementation = await adam.memberTokenImplementation();
   const governImplementation = await governFactory.governImplementation();
 
-  if (daoV2.newlyDeployed || liquidPoolV2.newlyDeployed) {
+  if (daoV2.newlyDeployed || liquidPoolV2.newlyDeployed || membershipV2.newlyDeployed) {
     await execute('Adam', { from: deployer, log: true }, 'upgradeImplementations',
       daoV2.address,
-      membershipImplementation,
+      membershipV2.address,
       liquidPoolV2.address,
       memberTokenImplementation,
       governImplementation,
@@ -44,7 +44,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const contractAddresses = {
     adam: adamDeployment.address,
     dao: daoV2.address,
-    membership: membershipImplementation,
+    membership: membershipV2.address,
     governFactory: governFactoryDeployment.address,
     govern: governImplementation,
     memberToken: memberTokenImplementation,

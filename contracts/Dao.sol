@@ -19,6 +19,7 @@ import "./interface/IMembership.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IMemberToken.sol";
 import "./interface/ITeam.sol";
+import "./interface/ILiquidPool.sol";
 
 import "./lib/Concat.sol";
 import "./lib/InterfaceChecker.sol";
@@ -89,6 +90,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event UpdateLocktime(uint256 locktime);
     event UpdateMinDepositAmount(uint256 amount);
     event UpdateLogoCID(string logoCID);
+    event MemberQuit(address member);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -375,6 +377,17 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         emit UpgradeDao(remark);
     }
 
+    function quit(uint256 membershipTokenId) public {
+        address _membership = membership;
+        address _member = IMembership(_membership).ownerOf(membershipTokenId);
+
+        require(msg.sender == _member, "Permission denied");
+        require(ILiquidPool(payable(liquidPool)).balanceOf(_member) == 0, "LP balance is not zero");
+        require(IMembership(_membership).isMember(_member) == true, "Not a member");
+    
+        IMembership(_membership).removeMember(membershipTokenId);
+        emit MemberQuit(_member);
+    }
 
     receive() external payable {
       if (msg.sender != address(0) && msg.value != 0) {
