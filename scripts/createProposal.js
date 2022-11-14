@@ -24,9 +24,10 @@ async function main () {
         description,
       });
       const tx = await govern.propose([target], [value], [calldata], json);
+      const event = tx.events.find(e => e.event === 'ProposalCreated');
 
       console.log(tx);
-      console.log('Description Hash', ethers.utils.id(json));
+      console.log(event.args);
     });
 }
 
