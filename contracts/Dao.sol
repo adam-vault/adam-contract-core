@@ -386,6 +386,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         require(IMembership(_membership).isMember(_member) == true, "Not a member");
     
         IMembership(_membership).removeMember(membershipTokenId);
+        firstDepositTime[_member] = 0;
+
         emit MemberQuit(_member);
     }
 
