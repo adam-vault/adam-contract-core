@@ -68,6 +68,7 @@ function getCreateDaoParams ({
   baseCurrency = ETH,
   logoCID = '',
   maxMemberLimit = ethers.constants.MaxUint256,
+  referer = constants.AddressZero,
 }) {
   const iface = new ethers.utils.Interface(daoArtifact.abi);
 
@@ -80,6 +81,7 @@ function getCreateDaoParams ({
       tokenName,
       tokenSymbol,
       depositTokens,
+      referer,
     }),
     [
       lockTime ? iface.encodeFunctionData('setLocktime', [lockTime]) : '',
