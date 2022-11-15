@@ -10,15 +10,18 @@ const {
 } = require('../utils/constants');
 
 describe('PriceRouter.sol - test/unit/PriceRouter.js', function () {
-  let signer, dao;
-  let PriceRouter, priceRouter, executee, baseCurrency, asset, feedRegistry;
+  let signer, dao, mockDao;
+  let PriceRouter, priceRouter, baseCurrency, asset, feedRegistry, notSupportedTokenA, notSupportedTokenB, generalGovern;
 
   beforeEach(async function () {
-    [dao, signer] = await ethers.getSigners();
-    executee = await smock.fake('MockBudgetApprovalExecutee');
+    [dao, signer, generalGovern] = await ethers.getSigners();
     PriceRouter = await ethers.getContractFactory('PriceRouter');
     baseCurrency = await smock.fake('TokenB');
     asset = await smock.fake('TokenA');
+    notSupportedTokenA = await smock.fake('TokenA');
+    notSupportedTokenB = await smock.fake('TokenB');
+    mockDao = await smock.fake('Dao', { address: dao.address });
+    mockDao.govern.whenCalledWith('General').returns(generalGovern.address);
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
@@ -58,13 +61,22 @@ describe('PriceRouter.sol - test/unit/PriceRouter.js', function () {
       expect(await v2Contract.v2()).to.equal(true);
     });
     it('throws "Not dao" error if upgrade by non dao', async function () {
-      await expect(priceRouter.connect(signer).upgradeTo(mockV2Impl.address)).to.revertedWith('Not dao');
+      await expect(priceRouter.connect(signer).upgradeTo(mockV2Impl.address)).to.revertedWith('not dao');
     });
   });
 
   describe('assetBaseCurrencyPrice() - asset = baseCurrency', function () {
     it('returns amount if asset = baseCurrency', async function () {
       expect(await priceRouter.assetBaseCurrencyPrice(baseCurrency.address, 1000, baseCurrency.address)).eq(1000);
+    });
+  });
+
+  describe('assetBaseCurrencyPrice() - Have Marked Price', function () {
+    it('returns amount with most updated marked price', async function () {
+      await expect(priceRouter.assetBaseCurrencyPrice(notSupportedTokenA.address, 1000, notSupportedTokenB.address)).to.be.reverted;
+      // notSupportedTokenA : notSupportedTokenB = 1:1
+      await priceRouter.connect(generalGovern).setMarkedPrice(notSupportedTokenA.address, notSupportedTokenB.address, ethers.utils.parseEther('1.124314'));
+      expect(await priceRouter.assetBaseCurrencyPrice(notSupportedTokenA.address, 1000, notSupportedTokenB.address)).eq(1124);
     });
   });
 
@@ -113,14 +125,30 @@ describe('PriceRouter.sol - test/unit/PriceRouter.js', function () {
 
   describe('canResolvePrice()', function () {
     it('returns true if ETH / WETH', async function () {
-      expect(await priceRouter.canResolvePrice(ADDRESS_WETH)).eq(true);
-      expect(await priceRouter.canResolvePrice(ADDRESS_ETH)).eq(true);
+      expect(await priceRouter.canResolvePrice(ADDRESS_WETH, ADDRESS_ETH)).eq(true);
+      expect(await priceRouter.canResolvePrice(ADDRESS_ETH, ADDRESS_WETH)).eq(true);
     });
-    it('returns true if can resolver price', async function () {
-      expect(await priceRouter.canResolvePrice(asset.address)).eq(true);
+    it('returns true if asset can resolve price, baseCurrency = ETH / WETH', async function () {
+      expect(await priceRouter.canResolvePrice(asset.address, ADDRESS_ETH)).eq(true);
     });
-    it('returns false if cannot resolver price', async function () {
-      expect(await priceRouter.canResolvePrice(executee.address)).eq(false);
+    it('returns true if baseCurrency can resolve price, asset = ETH / WETH', async function () {
+      expect(await priceRouter.canResolvePrice(ADDRESS_ETH, asset.address)).eq(true);
+    });
+    it('returns true if asset = baseCurrency', async function () {
+      expect(await priceRouter.canResolvePrice(asset.address, asset.address)).eq(true);
+    });
+    it('returns true if asset = baseCurrency', async function () {
+      expect(await priceRouter.canResolvePrice(asset.address, baseCurrency.address)).eq(true);
+    });
+    it('returns false if asset cannot resolve price, baseCurrency = ETH / WETH', async function () {
+      expect(await priceRouter.canResolvePrice(notSupportedTokenA.address, ADDRESS_ETH)).eq(false);
+    });
+    it('returns false if baseCurrency cannot resolve price, asset = ETH / WETH', async function () {
+      expect(await priceRouter.canResolvePrice(ADDRESS_ETH, notSupportedTokenA.address)).eq(false);
+    });
+    it('returns true if price is set by govern', async function () {
+      await priceRouter.connect(generalGovern).setMarkedPrice(notSupportedTokenA.address, ADDRESS_ETH, ethers.utils.parseEther('1'));
+      expect(await priceRouter.canResolvePrice(notSupportedTokenA.address, ADDRESS_ETH)).eq(true);
     });
   });
 
@@ -131,12 +159,13 @@ describe('PriceRouter.sol - test/unit/PriceRouter.js', function () {
     });
   });
 
-  describe('baseCurrencyDecimals()', function () { // most of the logic is covered in assetBaseCurrencyPrice()
+  describe('assetDecimals()', function () { // most of the logic is covered in assetBaseCurrencyPrice()
     it('returns baseCurrency for ETH and ERC20', async function () {
-      expect(await priceRouter.baseCurrencyDecimals(ADDRESS_ETH)).eq(18);
-      expect(await priceRouter.baseCurrencyDecimals(asset.address)).eq(0);
+      expect(await priceRouter.assetDecimals(ADDRESS_ETH)).eq(18);
       asset.decimals.returns(12);
-      expect(await priceRouter.baseCurrencyDecimals(asset.address)).eq(12);
+      expect(await priceRouter.assetDecimals(asset.address)).eq(12);
+      asset.decimals.reverts('Something went wrong');
+      expect(await priceRouter.assetDecimals(asset.address)).eq(0);
     });
   });
 });

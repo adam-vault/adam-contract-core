@@ -48,12 +48,12 @@ contract PriceResolver is Initializable {
     }
 
     function baseCurrencyDecimals() public view virtual priceRouterExist returns (uint8) {
-        return _priceRouter.baseCurrencyDecimals(_baseCurrency);
+        return _priceRouter.assetDecimals(_baseCurrency);
     }
 
     /// @notice This function is imported by other contract, thus cannot be external
     function canResolvePrice(address asset) public view virtual priceRouterExist returns (bool) {
-        return _priceRouter.canResolvePrice(asset);
+       return _priceRouter.canResolvePrice(asset, _baseCurrency);
     }
 
     uint256[49] private __gap;

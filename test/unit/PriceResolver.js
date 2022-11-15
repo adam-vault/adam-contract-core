@@ -91,7 +91,7 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
       await priceResolver.baseCurrencyDecimals();
     });
     it('redirects the call to Price Router', async function () {
-      expect(priceRouter.baseCurrencyDecimals).to.be.calledWith(ADDRESS_ETH);
+      expect(priceRouter.assetDecimals).to.be.calledWith(ADDRESS_ETH);
     });
   });
 
@@ -100,7 +100,7 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
       await priceResolver.canResolvePrice(tokenA.address);
     });
     it('redirects the call to Price Router', async function () {
-      expect(priceRouter.canResolvePrice).to.be.calledWith(tokenA.address);
+      expect(priceRouter.canResolvePrice).to.be.calledWith(tokenA.address, ADDRESS_ETH);
     });
   });
 });
