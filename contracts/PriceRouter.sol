@@ -11,7 +11,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "./lib/Constant.sol";
 import "./lib/Concat.sol";
 import "./interface/IDao.sol";
-import "hardhat/console.sol";
 
 contract PriceRouter is Initializable, UUPSUpgradeable{
     using Concat for string;
