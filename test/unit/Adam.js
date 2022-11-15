@@ -9,7 +9,7 @@ const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-describe('Adam.sol - test/unit/Adam.js', function () {
+describe.only('Adam.sol - test/unit/Adam.js', function () {
   let deployer, daoCreator, unknown;
   let dao, membership, liquidPool, memberToken, govern, governFactory, team;
   let budgetApproval;
@@ -236,7 +236,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         'name',
         'symbol',
         [],
-        'referer',
+        ethers.constants.AddressZero,
       ], [])).to.not.be.reverted;
     });
     it('emits createDao event', async () => {
@@ -248,7 +248,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         'name',
         'symbol',
         [],
-        'referer',
+        ethers.constants.AddressZero,
       ], []);
       const receipt = await tx.wait();
       const event = receipt.events.find(e => e.event === 'CreateDao');
