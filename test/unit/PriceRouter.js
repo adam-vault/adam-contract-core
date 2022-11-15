@@ -2,6 +2,8 @@ const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 
+const findEventArgs = require('../../utils/findEventArgs');
+
 const {
   ADDRESS_ETH,
   ADDRESS_MOCK_FEED_REGISTRY,
@@ -166,6 +168,17 @@ describe('PriceRouter.sol - test/unit/PriceRouter.js', function () {
       expect(await priceRouter.assetDecimals(asset.address)).eq(12);
       asset.decimals.reverts('Something went wrong');
       expect(await priceRouter.assetDecimals(asset.address)).eq(0);
+    });
+  });
+
+  describe('setMarkedPrice()', function () {
+    it('Emits correct Marked Price info', async function () {
+      const tx = await priceRouter.connect(generalGovern).setMarkedPrice(notSupportedTokenA.address, notSupportedTokenB.address, ethers.utils.parseEther('1.124314'));
+
+      const { asset, baseCurrency, price } = await findEventArgs(tx, 'MarkedPriceSet');
+      await expect(asset).to.equal(notSupportedTokenA.address);
+      await expect(baseCurrency).to.equal(notSupportedTokenB.address);
+      await expect(price).to.equal(ethers.utils.parseEther('1.124314'));
     });
   });
 });

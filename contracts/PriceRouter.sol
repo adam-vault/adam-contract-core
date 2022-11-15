@@ -19,6 +19,8 @@ contract PriceRouter is Initializable, UUPSUpgradeable{
     mapping(address => mapping(address => int)) private markedPrice;        // in 18 decimal
     mapping(address => mapping(address => bool)) private isAssetSupported;
 
+    event MarkedPriceSet(address asset, address baseCurrency, int price);
+
     modifier onlyDao() {
         require(msg.sender == address(dao), "not dao");
         _;
@@ -48,6 +50,7 @@ contract PriceRouter is Initializable, UUPSUpgradeable{
     function setMarkedPrice(address asset, address baseCurrency, int price) external onlyGovern("General") {
         markedPrice[asset][baseCurrency] = price;
         isAssetSupported[asset][baseCurrency] = true;
+        emit MarkedPriceSet(asset, baseCurrency, price);
     }
 
     /// @notice This function is imported by other contract, thus cannot be external
