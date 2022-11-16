@@ -16,7 +16,7 @@ const RECIPIENT_UNISWAP = '0x0000000000000000000000000000000000000002';
 
 describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
   let tokenA, feedRegistry, budgetApprovalAddresses, adam;
-  let executor, contract;
+  let executor, contract, daoCreator;
 
   const {
     ADDRESS_ETH,
@@ -30,7 +30,7 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
 
   beforeEach(async () => {
     ({ tokenA } = await createTokens());
-    [executor] = await ethers.getSigners();
+    [executor, daoCreator] = await ethers.getSigners();
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
@@ -43,7 +43,7 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
     await feedRegistry.setPrice(ADDRESS_UNI, ADDRESS_ETH, parseEther('1'));
     budgetApprovalAddresses = await createBudgetApprovals(executor);
     adam = await createAdam(budgetApprovalAddresses);
-    const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
+    const tx1 = await adam.connect(daoCreator).createDao(...paramsStruct.getCreateDaoParams({
       budgetApproval: [13, 3000, 5000, 0], // budgetApproval
       revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
       general: [13, 3000, 5000, 0], // general,
@@ -84,11 +84,15 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
       '100',
       ADDRESS_ETH, // base currency
     ]);
-    const tx = await dao.createBudgetApprovals(
+    console.log('MC: ~ file: UniswapSwapper.js ~ line 90 ~ beforeEach ~ initData');
+    const tx = await dao.connect(daoCreator).createBudgetApprovals(
       [uniswapLiquidBAImplementationAddr], [initData],
     );
+    console.log('MC: ~ file: UniswapSwapper.js ~ line 94 ~ beforeEach ~ tx');
     const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
+    console.log('MC: ~ file: UniswapSwapper.js ~ line 96 ~ beforeEach ~ budgetApprovalAddress');
     contract = await ethers.getContractAt('UniswapLiquidBudgetApproval', budgetApprovalAddress);
+    console.log('MC: ~ file: UniswapSwapper.js ~ line 98 ~ beforeEach ~ contract');
   });
 
   it('decode transaction data without swap result', async () => {

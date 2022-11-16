@@ -64,9 +64,9 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     dao.team.returns(team.address);
     dao.isPassAdmissionToken.returns(true);
     dao.govern.returns(govern.address);
-    priceRouter.canResolvePrice.whenCalledWith(token.address).returns(true);
-    priceRouter.canResolvePrice.whenCalledWith(ADDRESS_ETH).returns(true);
-    priceRouter.canResolvePrice.whenCalledWith(token2.address).returns(true);
+    priceRouter.canResolvePrice.whenCalledWith(token.address, ADDRESS_ETH).returns(true);
+    priceRouter.canResolvePrice.whenCalledWith(ADDRESS_ETH, ADDRESS_ETH).returns(true);
+    priceRouter.canResolvePrice.whenCalledWith(token2.address, ADDRESS_ETH).returns(true);
     priceRouter.assetBaseCurrencyPrice.returns(([asset, amount, _baseCurrency]) => {
       if (asset === token.address) {
         return amount * 0.0046;
@@ -435,7 +435,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
       expect(await lp.canAddAsset(token.address)).to.eq(true);
     });
     it('returns false if feed registry unresolvable', async function () {
-      priceRouter.canResolvePrice.whenCalledWith(token.address).returns(false);
+      priceRouter.canResolvePrice.whenCalledWith(token.address, ADDRESS_ETH).returns(false);
       expect(await lp.canAddAsset(token.address)).to.eq(false);
     });
     it('throws "Dao: only Govern" errors if non govern called', async function () {
@@ -521,8 +521,8 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     await dao.setIsPassAdmissionToken(true);
 
     priceRouter = await smock.fake('PriceRouter');
-    priceRouter.canResolvePrice.whenCalledWith(token.address).returns(true);
-    priceRouter.canResolvePrice.whenCalledWith(ADDRESS_ETH).returns(true);
+    priceRouter.canResolvePrice.whenCalledWith(token.address, token.address).returns(true);
+    priceRouter.canResolvePrice.whenCalledWith(ADDRESS_ETH, token.address).returns(true);
     priceRouter.assetBaseCurrencyPrice.returns(([asset, amount, _baseCurrency]) => {
       return amount;
     });

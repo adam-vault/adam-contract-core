@@ -7,13 +7,29 @@ import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
 import "./lib/Constant.sol";
+import "./lib/Concat.sol";
+import "./interface/IDao.sol";
 
 contract PriceRouter is Initializable, UUPSUpgradeable{
-    address payable public dao;
+    using Concat for string;
+    IDao public dao;
+    mapping(address => mapping(address => int)) private markedPrice;        // in 18 decimal
+    mapping(address => mapping(address => bool)) private isAssetSupported;
+
+    event MarkedPriceSet(address asset, address baseCurrency, int price);
 
     modifier onlyDao() {
-        require(msg.sender == dao, "Not dao");
+        require(msg.sender == address(dao), "not dao");
+        _;
+    }
+
+    modifier onlyGovern(string memory category) {
+        IDao _dao = dao;
+        require(
+            (_dao.byPassGovern(msg.sender)) || msg.sender == _dao.govern(category),
+            string("Dao: only Govern").concat(category));
         _;
     }
 
@@ -23,11 +39,17 @@ contract PriceRouter is Initializable, UUPSUpgradeable{
     }
 
     function initialize(address _dao) external initializer{
-        dao = payable(_dao);
+        dao = IDao(payable(_dao));
     }
 
     function _WETH9() internal pure returns (address) {
         return Constant.WETH_ADDRESS;
+    }
+
+    function setMarkedPrice(address asset, address baseCurrency, int price) external onlyGovern("General") {
+        markedPrice[asset][baseCurrency] = price;
+        isAssetSupported[asset][baseCurrency] = true;
+        emit MarkedPriceSet(asset, baseCurrency, price);
     }
 
     /// @notice This function is imported by other contract, thus cannot be external
@@ -36,6 +58,9 @@ contract PriceRouter is Initializable, UUPSUpgradeable{
         if (asset == baseCurrency){
             return amount;
         }
+        if (isAssetSupported[asset][baseCurrency]){
+            return scaleAmount(asset, baseCurrency, markedPrice[asset][baseCurrency], amount);
+        }
         if(baseCurrency == Denominations.ETH || baseCurrency == _WETH9()) {
             return assetEthPrice(asset, amount);
         }
@@ -43,14 +68,7 @@ contract PriceRouter is Initializable, UUPSUpgradeable{
         if(asset == Denominations.ETH || asset == _WETH9()) {
             return ethAssetPrice(baseCurrency, amount);
         }
-
-        uint8 baseDecimals = baseCurrencyDecimals(baseCurrency);
-        int price = getDerivedPrice(asset, baseCurrency, 18 /* ETH decimals */);
-
-        if (price > 0) {
-            return uint256(scalePrice(int256(price) * int256(amount), 18 + IERC20Metadata(asset).decimals(), baseDecimals));
-        }
-        return 0;
+        return scaleAmount(asset, baseCurrency, getDerivedPrice(asset, baseCurrency, 18 /* ETH decimals */), amount);
     }
 
     function ethAssetPrice(address asset, uint256 ethAmount) public view virtual returns (uint256) {
@@ -134,9 +152,18 @@ contract PriceRouter is Initializable, UUPSUpgradeable{
         return _price;
     }
 
-    function baseCurrencyDecimals(address baseCurrency) public view virtual returns (uint8) {
-        if (baseCurrency == Denominations.ETH) return 18;
-        try IERC20Metadata(baseCurrency).decimals() returns (uint8 _decimals) {
+    function scaleAmount(address asset, address baseCurrency, int price, uint256 amount) internal view returns(uint256){
+        uint8 baseDecimals = assetDecimals(baseCurrency);
+
+        if (price > 0) {
+            return uint256(scalePrice(int256(price) * int256(amount), 18 + IERC20Metadata(asset).decimals(), baseDecimals));
+        }
+        return 0;
+    }
+
+    function assetDecimals(address asset) public  view virtual returns (uint8) {
+        if (asset == Denominations.ETH) return 18;
+        try IERC20Metadata(asset).decimals() returns (uint8 _decimals) {
             return _decimals;
         } catch {
             return 0;
@@ -144,9 +171,32 @@ contract PriceRouter is Initializable, UUPSUpgradeable{
     }
 
     /// @notice This function is imported by other contract, thus cannot be external
-    function canResolvePrice(address asset) public view virtual returns (bool) {
-        if (asset == Denominations.ETH || asset == _WETH9())
+    function canResolvePrice(address asset, address baseCurrency) public view virtual returns (bool) {
+
+        if (isAssetSupported[asset][baseCurrency] || asset == baseCurrency){ // if asset = baseCurrency return true
             return true;
+        }
+
+        bool isETHAsset = (asset == Denominations.ETH || asset == _WETH9());
+        bool isETHBaseCurrency = (baseCurrency == Denominations.ETH || baseCurrency == _WETH9());
+
+        if(isETHAsset && isETHBaseCurrency){ // asset= ETH and baseCurrency = ETH
+            return true;
+        }
+
+        bool isSupportedAsset = isFeedRegistrySupported(asset);
+        if(isSupportedAsset && isETHBaseCurrency){ // asset = ETH and baseCurrency can get feed
+            return true;
+        }
+
+        bool isSupportedBaseCurrency = isFeedRegistrySupported(baseCurrency);
+        if(isSupportedBaseCurrency && isETHAsset){ // baseCurrency = ETH and asset can get feed
+            return true;
+        }
+        return isSupportedAsset && isSupportedBaseCurrency; // both asset and baseCurrency can get feed
+    }
+
+    function isFeedRegistrySupported(address asset) internal view returns (bool){
         try FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(asset, Denominations.ETH) {
             return true;
         } catch (bytes memory) {

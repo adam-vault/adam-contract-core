@@ -3,6 +3,7 @@ const { smock } = require('@defi-wonderland/smock');
 const { expect } = require('chai');
 const { ethers, testUtils } = require('hardhat');
 const { createTokens } = require('../utils/createContract');
+const { createV1Dao } = require('../utils/createV1Contract');
 const findEventArgs = require('../../utils/findEventArgs');
 
 chai.should();
@@ -10,7 +11,7 @@ chai.use(smock.matchers);
 
 describe('DaoV2.sol - test/unit/DaoV2.js', function () {
   let creator, member, mockGovern;
-  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam, mockPriceRouter;
+  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam, mockPriceRouter, mockLiquidPool;
   let tokenA, tokenC721, tokenD1155;
 
   beforeEach(async function () {
@@ -20,7 +21,7 @@ describe('DaoV2.sol - test/unit/DaoV2.js', function () {
 
     mockAdam = await smock.fake('Adam');
     mockMembership = await (await smock.mock('Membership')).deploy();
-    const mockLiquidPool = await smock.fake('LiquidPool');
+    mockLiquidPool = await smock.fake('LiquidPool');
     mockGovernFactory = await smock.fake('GovernFactory');
     mockTeam = await smock.fake('Team');
     mockPriceRouter = await smock.fake('PriceRouter');
@@ -209,6 +210,49 @@ describe('DaoV2.sol - test/unit/DaoV2.js', function () {
     });
     it('returns false when lack all tokens', async function () {
       expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
+    });
+  });
+
+  describe('createPriceRouter()', function () {
+    let adamAsSigner, daoV1, daoV2;
+
+    beforeEach(async function () {
+      // Deploy a V1 Dao
+      adamAsSigner = await testUtils.address.impersonate(mockAdam.address);
+      daoV1 = await createV1Dao(
+        mockAdam.address,
+        creator.address,
+        mockMembership.address,
+        mockLiquidPool.address,
+        mockGovernFactory.address,
+        mockTeam.address,
+        mockMemberToken.address,
+        tokenA.address,
+      );
+      // Upgrade to V2
+      const DaoV2 = await ethers.getContractFactory('Dao', { signer: adamAsSigner });
+      const implDaoV2 = await DaoV2.deploy();
+      await daoV1.upgradeImplementations([daoV1.address], [implDaoV2.address], 'just for test');
+      daoV2 = await ethers.getContractAt('Dao', daoV1.address, adamAsSigner);
+    });
+
+    it('creates price router success', async function () {
+      mockGovernFactory.governMap.whenCalledWith(daoV2.address, 'General').returns(mockGovern.address);
+      const tx = await daoV2.connect(mockGovern).createPriceRouter(mockPriceRouter.address);
+
+      const { priceRouter: _priceRouter } = await findEventArgs(tx, 'CreatePriceRouter');
+      expect(await daoV2.priceRouter()).to.be.equal(_priceRouter);
+    });
+
+    it('reverts if dao create directly from V2', async function () {
+      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
+      await expect(dao.connect(mockGovern).createPriceRouter(mockPriceRouter.address)).to.be.revertedWith('Price Router already initialized');
+    });
+
+    it('reverts if dao upgrade from V1 and Price Router is created', async function () {
+      await expect(daoV2.connect(mockGovern).createPriceRouter(mockPriceRouter.address)).not.to.reverted;
+      mockGovernFactory.governMap.whenCalledWith(daoV2.address, 'General').returns(mockGovern.address);
+      await expect(daoV2.connect(mockGovern).createPriceRouter(mockPriceRouter.address)).to.be.revertedWith('Price Router already initialized');
     });
   });
 });
