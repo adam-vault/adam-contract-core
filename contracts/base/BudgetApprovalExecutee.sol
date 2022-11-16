@@ -45,6 +45,10 @@ contract BudgetApprovalExecutee is Initializable {
         return _priceRouter;
     }
 
+    function _setPriceRouter(address __priceRouter) virtual internal {
+        _priceRouter = __priceRouter;
+    }
+
     function budgetApprovals(address template) public view virtual returns (bool) {
         return _budgetApprovals[template];
     }

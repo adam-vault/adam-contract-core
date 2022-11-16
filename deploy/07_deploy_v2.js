@@ -15,6 +15,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const daoV2 = await deploy('DaoV2', { contract: 'Dao', from: deployer, log: true, gasLimit: 5000000 });
   const liquidPoolV2 = await deploy('LiquidPoolV2', { contract: 'LiquidPool', from: deployer, log: true, gasLimit: 7000000 });
+  const priceRouterV2 = await deploy('PriceRouterV2', { contract: 'PriceRouter', from: deployer, log: true, gasLimit: 7000000 });
   const adam = await ethers.getContractAt('Adam', adamDeployment.address);
   const governFactory = await ethers.getContractAt('GovernFactory', governFactoryDeployment.address);
 
@@ -28,6 +29,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       membershipImplementation,
       liquidPoolV2.address,
       memberTokenImplementation,
+      priceRouterV2.address,
       governImplementation,
       process.env.LATEST_VERSION || 'v2.0.0',
     );
@@ -55,6 +57,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     uniswapAnyTokenBudgetApproval: budgetApprovalsAddress[3],
     uniswapLiquidBudgetApproval: budgetApprovalsAddress[4],
     team: (await get('Team')).address,
+    priceRouter: priceRouterV2.address,
   };
 
   console.log(contractAddresses);
@@ -72,4 +75,5 @@ module.exports.tags = [
   'Membership',
   'LiquidPool',
   'MemberToken',
+  'PriceRouter',
 ];

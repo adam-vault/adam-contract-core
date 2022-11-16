@@ -19,6 +19,7 @@ import "./interface/IMembership.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IMemberToken.sol";
 import "./interface/ITeam.sol";
+import "./interface/IPriceRouter.sol";
 
 import "./lib/Concat.sol";
 import "./lib/InterfaceChecker.sol";
@@ -90,6 +91,7 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     event UpdateLocktime(uint256 locktime);
     event UpdateMinDepositAmount(uint256 amount);
     event UpdateLogoCID(string logoCID);
+    event CreatePriceRouter(address creator, address priceRouter);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -264,6 +266,17 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
       teamWhitelist[id] = true;
 
       emit WhitelistTeam(id);
+    }
+
+    function createPriceRouter(address priceRouterImplementation) public onlyGovern("General") {
+        require(priceRouter() == address(0), "Price Router already initialized");
+
+        ERC1967Proxy _priceRouterContract = new ERC1967Proxy(priceRouterImplementation, "");
+        address _priceRouter = address(_priceRouterContract);
+        _setPriceRouter(_priceRouter);
+        IPriceRouter(_priceRouter).initialize(address(this));
+
+        emit CreatePriceRouter(msg.sender, _priceRouter);
     }
 
     function _createMemberToken(address memberTokenImplementation, string memory _name, string memory _symbol) internal {
