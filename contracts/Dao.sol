@@ -22,9 +22,24 @@ import "./interface/ITeam.sol";
 import "./interface/ILiquidPool.sol";
 
 import "./lib/Concat.sol";
+import "./lib/Constant.sol";
+
 import "./lib/InterfaceChecker.sol";
 import "./lib/ToString.sol";
 import "./lib/RevertMsg.sol";
+
+interface IInbox {
+    function createRetryableTicket(
+        address destAddr,
+        uint256 l2CallValue,
+        uint256 maxSubmissionCost,
+        address excessFeeRefundAddress,
+        address callValueRefundAddress,
+        uint256 maxGas,
+        uint256 gasPriceBid,
+        bytes calldata data
+    ) external payable returns (uint256);
+}
 
 contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
@@ -389,6 +404,24 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
     
         IMembership(_membership).removeMember(membershipTokenId);
         emit MemberQuit(_member);
+    }
+
+    function createArbRetryableTicket(address l2Target, uint256 value, bytes calldata data, uint256 maxSubmissionCost, uint256 maxGas, uint256 gasPriceBid) public onlyGovern("General") returns (bytes memory) {
+        bytes memory executeData = abi.encodeWithSelector(
+            IInbox.createRetryableTicket.selector,
+            l2Target,
+            0,
+            maxSubmissionCost,
+            address(this),
+            address(this),
+            maxGas,
+            gasPriceBid,
+            data
+        );
+        (bool success, bytes memory result) = Constant.ARBITRUM_L1_INBOX.call{ value: value + maxSubmissionCost + (maxGas * gasPriceBid) }(executeData);
+        require(success, "fail");
+
+        return result;
     }
 
     receive() external payable {

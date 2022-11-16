@@ -6,7 +6,7 @@ const ETH = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 async function main () {
   const { get } = hre.deployments;
 
-  inquirer
+  const answers = await inquirer
     .prompt([
       { type: 'input', name: 'name', message: 'Dao name?', default: 'New Dao' },
       { type: 'input', name: 'description', message: 'Dao description?', default: 'New description' },
@@ -45,15 +45,14 @@ async function main () {
         default: ethers.constants.AddressZero,
       },
       { type: 'number', name: 'generalGovernSetting.5', message: 'Govern proposal duration? (in block)', default: 600 },
-    ])
-    .then(async (answers) => {
-      const adamDeployment = await get('Adam');
-      const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);
-      const tx = await adam.createDao(...paramsStruct.getCreateDaoParams(answers));
-      console.log(tx);
-      const receipt = await tx.wait();
-      console.log('Dao created at', receipt.events.find(e => e.event === 'CreateDao').args.dao);
-    });
+    ]);
+
+  const adamDeployment = await get('Adam');
+  const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);
+  const tx = await adam.createDao(...paramsStruct.getCreateDaoParams(answers));
+  console.log(tx);
+  const receipt = await tx.wait();
+  console.log('Dao created at', receipt.events.find(e => e.event === 'CreateDao').args.dao);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

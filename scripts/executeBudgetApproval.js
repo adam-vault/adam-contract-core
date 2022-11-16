@@ -27,6 +27,7 @@ const BA_TYPES_MAPPING = {
   'Uniswap Any Token Budget Approval': 'UniswapAnyTokenBudgetApproval',
   'Uniswap Liquid Budget Approval': 'UniswapLiquidBudgetApproval',
   'GMX Any Token Budget Approval': 'GMXAnyTokenBudgetApproval',
+  'Create Arbitrum Dao Budget Approval': 'CreateArbitrumDaoBudgetApproval',
 };
 
 async function main () {
@@ -83,7 +84,54 @@ async function main () {
     message: pKey,
   })));
 
-  if (budgetApprovalOptions.key === 'TransferToArbitrumERC20BudgetApproval') {
+  if (budgetApprovalOptions.key === 'CreateArbitrumDaoBudgetApproval') {
+    const l1Provider = new ethers.providers.JsonRpcProvider(process.env.GOERLI_URL);
+    const l2Provider = new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_GOERLI_URL);
+    const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
+    const gasPriceBid = await l2Provider.getGasPrice();
+    const executee = await budgetApproval.executee();
+
+    const Adam = await hre.ethers.getContractFactory('Adam');
+    console.log(answers);
+
+    const data = Adam.interface.encodeFunctionData('createDao', [
+      [
+        answers.name,
+        answers.description,
+        answers.baseCurrency,
+        answers.maxMemberLimit,
+        answers.memberTokenName,
+        answers.memberTokenSymbol,
+        answers.depositTokens.split(','),
+      ],
+      answers.data.split(','),
+    ]);
+
+    const newDaoBytesLength = hexDataLength(data);
+    const _submissionPriceWei = await l1ToL2MessageGasEstimate.estimateSubmissionFee(
+      l1Provider,
+      await l1Provider.getGasPrice(),
+      newDaoBytesLength);
+    const submissionPriceWei = _submissionPriceWei.mul(5);
+    const maxGas = await l1ToL2MessageGasEstimate.estimateRetryableTicketGasLimit({
+      from: executee,
+      to: '0xC103eafa82a3F9C4a7405f7787184aA6C1848F39', // TODO change based on network
+      l2CallValue: 0,
+      excessFeeRefundAddress: executee,
+      callValueRefundAddress: executee,
+      data,
+    }, ethers.utils.parseEther('1'));
+
+    answers = {
+      ...answers,
+      depositTokens: answers.depositTokens.split(','),
+      data: answers.data.split(','),
+      maxSubmissionCost: submissionPriceWei,
+      maxGas,
+      gasPriceBid,
+    };
+    console.log(answers);
+  } else if (budgetApprovalOptions.key === 'TransferToArbitrumERC20BudgetApproval') {
     const l1Provider = new ethers.providers.JsonRpcProvider(process.env.GOERLI_URL);
     const l2Provider = new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_GOERLI_URL);
     const l1ToL2MessageGasEstimate = new L1ToL2MessageGasEstimator(l2Provider);
@@ -110,6 +158,7 @@ async function main () {
 
       answers = {
         ...answers,
+        value: ethers.utils.parseEther(answers.value),
         maxSubmissionCost: submissionPriceWei,
         maxGas,
         gasPriceBid,
@@ -122,9 +171,25 @@ async function main () {
       answers = {
         ...answers,
         value: amountBN,
-        maxSubmissionCost: 3000000000000,
-        maxGas: 120473,
+        maxSubmissionCost: 134745111621500,
+        maxGas: 100000,
         gasPriceBid: 300000000,
+      };
+    }
+  } else if (budgetApprovalOptions.key === 'TransferFromArbitrumERC20BudgetApproval') {
+    if (answers.l1token.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee') {
+      answers = {
+        ...answers,
+        value: toBigNumber(answers.value, 18),
+      };
+    } else {
+      const l1Provider = new ethers.providers.JsonRpcProvider(process.env.GOERLI_URL);
+      const ERC20 = await hre.ethers.getContractFactory('ERC20');
+      const erc20 = new ethers.Contract(answers.l1token, ERC20.interface, l1Provider);
+      const decimals = await erc20.decimals();
+      answers = {
+        ...answers,
+        value: toBigNumber(answers.value, decimals),
       };
     }
   }

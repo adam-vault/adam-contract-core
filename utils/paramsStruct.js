@@ -272,10 +272,42 @@ function getCreateCommonBudgetApprovalParams ({
     return value;
   });
 }
+
+
+function getCreateBasicBudgetApprovalParams ({
+  executor,
+  executorTeamId,
+  approvers,
+  approverTeamId,
+  minApproval,
+  text = 'Transfer ERC721',
+  transactionType = '721outflow',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  team,
+}) {
+  return [getCreateCommonBudgetApprovalParams({
+    executor,
+    executorTeamId,
+    approvers,
+    approverTeamId,
+    minApproval,
+    text,
+    transactionType,
+    startTime,
+    endTime,
+    allowUnlimitedUsageCount,
+    usageCount,
+    team,
+  })];
+}
 module.exports = {
   getCreateDaoParams,
   getCreateTransferERC20BAParams,
   getCreateTransferLiquidErc20TokenBAParams,
   getCreateUniswapBAParams,
   getCreateTransferERC721BAParams,
+  getCreateBasicBudgetApprovalParams,
 };

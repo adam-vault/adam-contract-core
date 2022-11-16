@@ -7,6 +7,7 @@ const {
   getCreateTransferLiquidErc20TokenBAParams,
   getCreateTransferERC721BAParams,
   getCreateUniswapBAParams,
+  getCreateBasicBudgetApprovalParams,
 } = require('../utils/paramsStruct');
 
 const commonTransferERC20Prompts = [
@@ -63,6 +64,14 @@ const questions = {
     { type: 'input', name: 'team', message: 'Team address?', default: ethers.constants.AddressZero },
     { type: 'input', name: 'toTeamIds', message: 'Team Ids? (Comma sep)' },
   ],
+  CreateArbitrumDaoBudgetApproval: [
+    { type: 'input', name: 'text', message: 'Text', default: 'Create Arb Dao' },
+    { type: 'input', name: 'transactionType', message: 'Transaction Type', default: 'others' },
+  ],
+  GMXAnyTokenBudgetApproval: [
+    { type: 'input', name: 'text', message: 'Text', default: 'GMX Any token' },
+    { type: 'input', name: 'transactionType', message: 'Transaction Type', default: 'others' },
+  ],
 };
 
 const encodeFn = {
@@ -72,6 +81,9 @@ const encodeFn = {
   TransferLiquidERC20BudgetApproval: getCreateTransferLiquidErc20TokenBAParams,
   TransferERC721BudgetApproval: getCreateTransferERC721BAParams,
   UniswapLiquidBudgetApproval: getCreateUniswapBAParams,
+  CreateArbitrumDaoBudgetApproval: getCreateBasicBudgetApprovalParams,
+  GMXAnyTokenBudgetApproval: getCreateBasicBudgetApprovalParams,
+
 };
 
 const BA_TYPES = [
@@ -83,10 +95,11 @@ const BA_TYPES = [
   'UniswapAnyTokenBudgetApproval',
   'UniswapLiquidBudgetApproval',
   'GMXAnyTokenBudgetApproval',
+  'CreateArbitrumDaoBudgetApproval',
 ];
 
-function toArray(str) {
- return (str || '').split(',').filter(str => !!str);
+function toArray (str) {
+  return (str || '').split(',').filter(str => !!str);
 }
 
 async function main () {
@@ -120,7 +133,6 @@ async function main () {
       { type: 'list', name: 'budgetApprovalOptions', message: 'Budget Approval Type?', choices: baTypeAddresses.map(([key, address]) => ({ name: key, value: { key, address } })) },
     ]);
   const answers2 = await inquirer.prompt(questions[answers.budgetApprovalOptions.key]);
-
   const transferERC20BudgetApproval = await hre.ethers.getContractAt(answers.budgetApprovalOptions.key, answers.budgetApprovalOptions.address);
   const dataErc20 = transferERC20BudgetApproval.interface.encodeFunctionData('initialize',
     encodeFn[answers.budgetApprovalOptions.key]({
@@ -148,9 +160,13 @@ async function main () {
 
   const tx1 = await target.createBudgetApprovals(
     [answers.budgetApprovalOptions.address],
-    [dataErc20]);
+    [dataErc20]); console.log(tx1);
+
   const receipt1 = await tx1.wait();
+  console.log(receipt1);
   const creationEventLogs1 = _.filter(receipt1.events, { event: 'CreateBudgetApproval' });
+  console.log(creationEventLogs1);
+
   creationEventLogs1.forEach(({ args }) => {
     console.log('budget approval created at:', args.budgetApproval);
   });
