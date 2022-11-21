@@ -9,6 +9,7 @@ import "../lib/BytesLib.sol";
 
 import "../interface/ITeam.sol";
 import "../interface/IBudgetApprovalExecutee.sol";
+import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 abstract contract CommonBudgetApproval is Initializable {
 
