@@ -22,7 +22,11 @@ const createBudgetApprovals = async (signer) => {
   const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
   await transferERC20BudgetApproval.deployed();
 
-  return [transferLiquidERC20BudgetApproval.address, uniswapLiquidBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address];
+  const SelfClaimERC20BudgetApproval = await ethers.getContractFactory('SelfClaimERC20BudgetApproval', { signer });
+  const selfClaimERC20BudgetApproval = await SelfClaimERC20BudgetApproval.deploy();
+  await selfClaimERC20BudgetApproval.deployed();
+
+  return [transferLiquidERC20BudgetApproval.address, uniswapLiquidBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address, selfClaimERC20BudgetApproval.address];
 };
 
 const createFeedRegistry = async (token, signer) => {

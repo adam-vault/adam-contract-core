@@ -5,6 +5,53 @@ const daoArtifact = require('../artifacts/contracts/Dao.sol/Dao.json');
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
+function getCreateSelfClaimERC20BAParams({
+  executor = null,
+  executorTeamId = null,
+  approvers = [],
+  approverTeamId = null,
+  minApproval = 0,
+  text = 'SelfClaim ERC20 Budget Approval',
+  transactionType = 'selfClaim',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  team,
+  allowAllAddresses,
+  toAddresses = [],
+  token = ethers.constants.AddressZero,
+  // allowAllTokens,  would not allow all token in self claim, only support single token
+  totalAmount = 0,
+  fixClaimAmount = 0,
+  allowAnyAmount,
+}) {
+  return Object.entries({
+    params: getCreateCommonBudgetApprovalParams({
+      executor,
+      executorTeamId,
+      approvers,
+      approverTeamId,
+      minApproval,
+      text,
+      transactionType,
+      startTime,
+      endTime,
+      allowUnlimitedUsageCount,
+      usageCount,
+      team,
+    }),
+    allowAllAddresses: allowAllAddresses ?? toAddresses.length === 0,
+    toAddresses,
+    token,
+    allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
+    totalAmount,
+    fixClaimAmount,
+  }).map(([key, value]) => {
+    return value;
+  });
+}
+
 function getCreateTransferERC20BAParams ({
   executor,
   executorTeamId,
@@ -278,4 +325,5 @@ module.exports = {
   getCreateTransferLiquidErc20TokenBAParams,
   getCreateUniswapBAParams,
   getCreateTransferERC721BAParams,
+  getCreateSelfClaimERC20BAParams,
 };
