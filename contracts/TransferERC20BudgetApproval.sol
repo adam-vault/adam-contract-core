@@ -11,6 +11,8 @@ import "./interface/IBudgetApprovalExecutee.sol";
 contract TransferERC20BudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;
 
+    string public constant override name = "Transfer ERC20 Budget Approval";
+
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
     bool public allowAllTokens;
@@ -62,10 +64,6 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         token = _token;
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
-    }
-
-    function name() external pure override virtual returns (string memory) {
-        return "Transfer ERC20 Budget Approval";
     }
 
     function executeParams() external pure override virtual returns (string[] memory) {
