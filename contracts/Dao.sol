@@ -406,24 +406,6 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         emit MemberQuit(_member);
     }
 
-    function createArbRetryableTicket(address l2Target, uint256 value, bytes calldata data, uint256 maxSubmissionCost, uint256 maxGas, uint256 gasPriceBid) public onlyGovern("General") returns (bytes memory) {
-        bytes memory executeData = abi.encodeWithSelector(
-            IInbox.createRetryableTicket.selector,
-            l2Target,
-            0,
-            maxSubmissionCost,
-            address(this),
-            address(this),
-            maxGas,
-            gasPriceBid,
-            data
-        );
-        (bool success, bytes memory result) = Constant.ARBITRUM_L1_INBOX.call{ value: value + maxSubmissionCost + (maxGas * gasPriceBid) }(executeData);
-        require(success, "fail");
-
-        return result;
-    }
-
     function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) public onlyGovern("General") returns (bytes[] memory) {
         require(targets.length == values.length ||
             targets.length == data.length , "length not match");
