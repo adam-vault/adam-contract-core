@@ -25,7 +25,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     await execute('GovernFactory', { from: deployer, log: true }, 'setGovernImplementation', governV2.address);
   }
 
-  const daoV2 = await deploy('DaoV2', { contract: 'Dao', from: deployer, log: true, gasLimit: 5000000 });
+  const daoV2 = await deploy('DaoV2', { contract: 'Dao', from: deployer, log: true });
   const liquidPoolV2 = await deploy('LiquidPoolV2', { contract: 'LiquidPool', from: deployer, log: true, gasLimit: 7000000 });
   const membershipV2 = await deploy('MembershipV2', { contract: 'Membership', from: deployer, log: true, gasLimit: 5000000 });
 

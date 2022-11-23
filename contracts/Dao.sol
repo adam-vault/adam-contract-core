@@ -424,6 +424,19 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         return result;
     }
 
+    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) public onlyGovern("General") returns (bytes[] memory) {
+        require(targets.length == values.length ||
+            targets.length == data.length , "length not match");
+
+        bytes[] memory results = new bytes[](targets.length);
+        for (uint256 i = 0; i< targets.length; i++) {
+            (bool success, bytes memory result) = address(targets[i]).call{value: values[i]}(data[i]);
+            require(success, "executionFail");
+            results[i] = result;
+        }
+        return results;
+    }
+
     receive() external payable {
       if (msg.sender != address(0) && msg.value != 0) {
         emit Deposit(msg.sender, msg.value);
