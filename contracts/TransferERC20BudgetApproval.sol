@@ -66,7 +66,7 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         totalAmount = _totalAmount;
     }
 
-    function executeParams() external pure override virtual returns (string[] memory) {
+    function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address token";
         arr[1] = "address to";
@@ -77,7 +77,6 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     function _execute(uint256 transactionId, bytes memory data)
         internal
         override
-        virtual
     {
         (address _token, address to, uint256 value) = abi.decode(
             data,
