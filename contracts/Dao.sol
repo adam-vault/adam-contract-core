@@ -22,9 +22,24 @@ import "./interface/ITeam.sol";
 import "./interface/ILiquidPool.sol";
 
 import "./lib/Concat.sol";
+import "./lib/Constant.sol";
+
 import "./lib/InterfaceChecker.sol";
 import "./lib/ToString.sol";
 import "./lib/RevertMsg.sol";
+
+interface IInbox {
+    function createRetryableTicket(
+        address destAddr,
+        uint256 l2CallValue,
+        uint256 maxSubmissionCost,
+        address excessFeeRefundAddress,
+        address callValueRefundAddress,
+        uint256 maxGas,
+        uint256 gasPriceBid,
+        bytes calldata data
+    ) external payable returns (uint256);
+}
 
 contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
@@ -192,11 +207,12 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
 
     function createGovern(
         string calldata _name,
-        uint duration,
-        uint quorum,
-        uint passThreshold,
+        uint256 duration,
+        uint256 quorum,
+        uint256 passThreshold,
         VoteType voteType,
-        address externalVoteToken
+        address externalVoteToken,
+        uint256 durationInBlock
     ) public onlyGovern("General") {
         address _voteToken;
 
@@ -218,7 +234,8 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
             duration,
             quorum,
             passThreshold,
-            _voteToken
+            _voteToken,
+            durationInBlock
         );
     }
 
@@ -389,6 +406,19 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         firstDepositTime[_member] = 0;
 
         emit MemberQuit(_member);
+    }
+
+    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) public onlyGovern("General") returns (bytes[] memory) {
+        require(targets.length == values.length ||
+            targets.length == data.length , "length not match");
+
+        bytes[] memory results = new bytes[](targets.length);
+        for (uint256 i = 0; i< targets.length; i++) {
+            (bool success, bytes memory result) = address(targets[i]).call{value: values[i]}(data[i]);
+            require(success, "executionFail");
+            results[i] = result;
+        }
+        return results;
     }
 
     receive() external payable {

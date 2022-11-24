@@ -5,10 +5,11 @@ contract MockGovern {
         function initialize(
         address _owner,
         string memory _name,
-        uint _duration,
-        uint _quorum,
-        uint _passThreshold,
-        address voteToken
+        uint256 _duration,
+        uint256 _quorum,
+        uint256 _passThreshold,
+        address _voteToken,
+        uint256 _durationInBlock
     ) public {
     }
 }

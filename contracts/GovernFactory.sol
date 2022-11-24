@@ -36,10 +36,11 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function createGovern(
         string calldata name,
-        uint duration,
-        uint quorum,
-        uint passThreshold,
-        address voteToken
+        uint256 duration,
+        uint256 quorum,
+        uint256 passThreshold,
+        address voteToken,
+        uint256 durationInBlock
     ) external {
         require(governMap[msg.sender][name] == address(0), "error");
 
@@ -51,7 +52,8 @@ contract GovernFactory is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             duration,
             quorum,
             passThreshold,
-            voteToken
+            voteToken,
+            durationInBlock
         );
 
         governMap[msg.sender][name] = address(_govern);

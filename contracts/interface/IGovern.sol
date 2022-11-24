@@ -121,7 +121,8 @@ interface IGovern {
         uint256 _duration,
         uint256 _quorum,
         uint256 _passThreshold,
-        address _voteToken
+        address _voteToken,
+        uint256 _durationInBlock
     ) external;
 
     function name() external view returns (string memory);

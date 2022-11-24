@@ -6,6 +6,8 @@ require('solidity-coverage');
 require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer');
 require('hardhat-test-utils');
+require('hardhat-storage-layout');
+
 require('./tasks/interface');
 require('./tasks/export');
 require('./tasks/decodeUniswap');
@@ -30,6 +32,29 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
  * `smoddit` requires access to the internal storage layout of your smart contracts.
  * The Solidity compiler exposes this via the `storageLayout` flag, which you need to enable at your hardhat config.
  */
+
+const arbitrumGoerliConfig = {
+  url: process.env.ARBITRUM_GOERLI_URL || '',
+  accounts:
+    process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+  verify: {
+    etherscan: {
+      apiKey: process.env.ETHERSCAN_ARBITRUM_API_KEY,
+      apiUrl: 'https://api-goerli.arbiscan.io',
+    },
+  },
+};
+
+const goerliConfig = {
+  chainId: 5,
+  url: process.env.GOERLI_URL || '',
+  accounts:
+    process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+  verify: {
+    etherscan: 'https://goerli.etherscan.io',
+  },
+};
+
 module.exports = {
   defaultNetwork: 'hardhat',
   solidity: {
@@ -50,72 +75,35 @@ module.exports = {
     hardhat: {
       chainId: 1337,
     },
-    ropsten: {
-      url: process.env.ROPSTEN_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    rinkeby: {
-      url: process.env.RINKEBY_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    kovan: {
-      url: process.env.KOVAN_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
     mainnet: {
       chainId: 1,
       url: process.env.MAINNET_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
-    'goerli-predev': {
-      chainId: 5,
-      url: process.env.GOERLI_URL || '',
+    'arbitrum-one': {
+      url: process.env.ARBITRUM_URL || '',
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
       verify: {
-        etherscan: 'https://goerli.etherscan.io',
+        etherscan: {
+          apiKey: process.env.ETHERSCAN_ARBITRUM_API_KEY,
+          apiUrl: 'https://api.arbiscan.io',
+        },
       },
     },
-    'goerli-dev': {
-      chainId: 5,
-      url: process.env.GOERLI_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      verify: {
-        etherscan: 'https://goerli.etherscan.io',
-      },
-    },
-    'goerli-qa': {
-      chainId: 5,
-      url: process.env.GOERLI_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      verify: {
-        etherscan: 'https://goerli.etherscan.io',
-      },
-    },
-    'goerli-stg': {
-      chainId: 5,
-      url: process.env.GOERLI_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      verify: {
-        etherscan: 'https://goerli.etherscan.io',
-      },
-    },
-    'goerli-alpha': {
-      chainId: 5,
-      url: process.env.GOERLI_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      verify: {
-        etherscan: 'https://goerli.etherscan.io',
-      },
-    },
+
+    'arbitrum-goerli-predev': arbitrumGoerliConfig,
+    'arbitrum-goerli-dev': arbitrumGoerliConfig,
+    'arbitrum-goerli-qa': arbitrumGoerliConfig,
+    'arbitrum-goerli-stg': arbitrumGoerliConfig,
+    'arbitrum-goerli-alpha': arbitrumGoerliConfig,
+
+    'goerli-predev': goerliConfig,
+    'goerli-dev': goerliConfig,
+    'goerli-qa': goerliConfig,
+    'goerli-stg': goerliConfig,
+    'goerli-alpha': goerliConfig,
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
