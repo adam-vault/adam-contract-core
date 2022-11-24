@@ -6,14 +6,9 @@ const paramsStruct = require('../../utils/paramsStruct');
 const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
 const { getCreateSelfClaimERC20BAParams } = require('../../utils/paramsStruct');
 
-const {
-  ADDRESS_ETH,
-} = require('../utils/constants');
-
-const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('Integration - SelfClaimERC20BudgetApproval.sol - test/integration/SelfClaimERC20BudgetApproval.js', function () {
+describe.only('Integration - SelfClaimERC20BudgetApproval.sol - test/integration/SelfClaimERC20BudgetApproval.js', function () {
   let adam, dao, selfClaimERC20BAImplementation, budgetApproval, lp;
   let creator, receiver;
   let tokenA;
@@ -78,7 +73,8 @@ describe('Integration - SelfClaimERC20BudgetApproval.sol - test/integration/Self
     });
 
     it('self claim ERC20 Token should success', async function () {
-      await tokenA._burn(lp.address);
+      const originalLpBalance = await tokenA.balanceOf(lp.address);
+      const originalReceiverBalance = await tokenA.balanceOf(tokenA.address);
       await tokenA.mint(lp.address, '100');
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
@@ -93,12 +89,12 @@ describe('Integration - SelfClaimERC20BudgetApproval.sol - test/integration/Self
 
       expect((await budgetApproval.transactions(id)).status).to.eq(2);
       expect((await budgetApproval.transactions(id)).deadline).to.eq(deadline);
-      expect(await tokenA.balanceOf(lp.address)).to.eq('99');
-      expect(await tokenA.balanceOf(receiver.address)).to.eq('1');
+      expect(await tokenA.balanceOf(lp.address)).to.eq(ethers.BigNumber.from(originalLpBalance).add(99));
+      expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.BigNumber.from(originalReceiverBalance).add(1));
     });
 
     it('self claim ERC20 Token could not be claimed twice', async function () {
-      await tokenA.mint(dao.address, '100');
+      await tokenA.mint(lp.address, '100');
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
         [tokenA.address, receiver.address],
@@ -155,7 +151,8 @@ describe('Integration - SelfClaimERC20BudgetApproval.sol - test/integration/Self
     });
 
     it('self claim ERC20 Token should success', async function () {
-      await tokenA._burn(dao.address);
+      const originalDaoBalance = await tokenA.balanceOf(dao.address);
+      const originalReceiverBalance = await tokenA.balanceOf(receiver.address);
       await tokenA.mint(dao.address, '100');
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
@@ -170,8 +167,8 @@ describe('Integration - SelfClaimERC20BudgetApproval.sol - test/integration/Self
 
       expect((await budgetApproval.transactions(id)).status).to.eq(2);
       expect((await budgetApproval.transactions(id)).deadline).to.eq(deadline);
-      expect(await tokenA.balanceOf(dao.address)).to.eq('99');
-      expect(await tokenA.balanceOf(receiver.address)).to.eq('1');
+      expect(await tokenA.balanceOf(dao.address)).to.eq(ethers.BigNumber.from(originalDaoBalance).add(99));
+      expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.BigNumber.from(originalReceiverBalance).add(1));
     });
 
     it('self claim ERC20 Token could not be claimed twice', async function () {
@@ -193,12 +190,12 @@ describe('Integration - SelfClaimERC20BudgetApproval.sol - test/integration/Self
 });
 
 describe('Integration - SelfClaimERC20BudgetApproval.sol 2 - test/integration/SelfClaimERC20BudgetApproval.js', function () {
-  let selfClaimERC20BAImplementation, budgetApproval, dao, team;
-  let executor, receiver;
+  let selfClaimERC20BAImplementation, budgetApproval, team;
+  let executor;
   let tokenA, executee, SelfClaimERC20BudgetApproval;
 
   beforeEach(async function () {
-    [executor, receiver] = await ethers.getSigners();
+    [executor] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
