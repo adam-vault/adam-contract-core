@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interface/IBudgetApprovalExecutee.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
+import "hardhat/console.sol";
+
 
 contract SelfClaimERC20BudgetApproval is Initializable {
   using BytesLib for bytes;
@@ -17,9 +19,12 @@ contract SelfClaimERC20BudgetApproval is Initializable {
 
   string public constant name = "SelfClaim ERC20 Budget Approval";
 
+  // !!Caution Approved and Cancelled should not be used in this budgetApproval
   enum Status {
     Pending,
-    Completed
+    Approved,
+    Completed,
+    Cancelled
   }
 
   struct Transaction {

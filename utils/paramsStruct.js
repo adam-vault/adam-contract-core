@@ -6,10 +6,10 @@ const daoArtifact = require('../artifacts/contracts/Dao.sol/Dao.json');
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 function getCreateSelfClaimERC20BAParams({
-  executor = null,
-  executorTeamId = null,
+  executor = ethers.constants.AddressZero,
+  executorTeamId = 0,
   approvers = [],
-  approverTeamId = null,
+  approverTeamId = 0,
   minApproval = 0,
   text = 'SelfClaim ERC20 Budget Approval',
   transactionType = 'selfClaim',
