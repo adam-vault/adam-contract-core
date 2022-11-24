@@ -22,6 +22,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string _memberTokenName;
         string _memberTokenSymbol;
         address[] depositTokens;
+        address _referer;
     }
 
     address public daoImplementation;
@@ -35,7 +36,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
 
-    event CreateDao(address indexed dao, string name, string description, address creator);
+    event CreateDao(address indexed dao, string name, string description, address creator, address referer);
     event WhitelistBudgetApproval(address budgetApproval);
     event AbandonBudgetApproval(address budgetApproval);
     event ImplementationUpgrade(
@@ -133,7 +134,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             data
         );
 
-        emit CreateDao(address(_dao), params._name, params._description, msg.sender);
+        emit CreateDao(address(_dao), params._name, params._description, msg.sender, params._referer);
         return address(_dao);
     }
     

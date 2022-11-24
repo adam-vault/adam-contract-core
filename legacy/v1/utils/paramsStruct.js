@@ -115,7 +115,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   baseCurrency = ETH,
   team,
 }) {
-  return Object.entries({
+  return Object.values({
     params: getCreateCommonBudgetApprovalParams({
       executor,
       executorTeamId,
@@ -136,8 +136,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
     baseCurrency,
-  }).map(([key, value]) => {
-    return value;
   });
 }
 
@@ -162,7 +160,7 @@ function getCreateUniswapBAParams ({
   baseCurrency = ETH,
   team,
 }) {
-  return Object.entries({
+  return Object.values({
     params: getCreateCommonBudgetApprovalParams({
       executor,
       executorTeamId,
@@ -184,8 +182,6 @@ function getCreateUniswapBAParams ({
     totalAmount,
     amountPercentage,
     baseCurrency,
-  }).map(([key, value]) => {
-    return value;
   });
 }
 
@@ -209,7 +205,7 @@ function getCreateTransferERC721BAParams ({
   totalAmount = 0,
   team,
 }) {
-  return Object.entries({
+  return Object.values({
     params: getCreateCommonBudgetApprovalParams({
       executor,
       executorTeamId,
@@ -230,8 +226,6 @@ function getCreateTransferERC721BAParams ({
     tokens,
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
-  }).map(([key, value]) => {
-    return value;
   });
 }
 
@@ -249,7 +243,7 @@ function getCreateCommonBudgetApprovalParams ({
   usageCount = 0,
   team = ethers.constants.AddressZero,
 }) {
-  return Object.entries({
+  return Object.values({
     executor,
     executorTeamId,
     approvers,
@@ -262,8 +256,6 @@ function getCreateCommonBudgetApprovalParams ({
     allowUnlimitedUsageCount: allowUnlimitedUsageCount ?? usageCount === 0,
     usageCount,
     team,
-  }).map(([key, value]) => {
-    return value;
   });
 }
 module.exports = {

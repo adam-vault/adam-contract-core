@@ -10,7 +10,7 @@ import "./MockWETH9.sol";
 contract MockUniswapRouter {
     using BytesLib for bytes;
 
-    function multicall(uint256 deadline, bytes[] calldata data)
+    function multicall(uint256, bytes[] calldata data)
         external
         payable
         returns (bytes[] memory)
@@ -54,14 +54,15 @@ contract MockUniswapRouter {
             MockWETH9(params.tokenIn).deposit{value: msg.value}();
         }
 
-        if(params.tokenIn == Constant.WETH_ADDRESS && msg.value > 0) {
+        if (params.tokenIn == Constant.WETH_ADDRESS && msg.value > 0) {
             require(msg.value == amountIn, "value not match"); 
         } else {
             IERC20(params.tokenIn).transferFrom(msg.sender, address(this), amountIn);
         }
 
-        if(params.tokenOut == Denominations.ETH) {
-            params.recipient.call{ value: params.amountOut }("");
+        if (params.tokenOut == Denominations.ETH) {
+            (bool success,) = params.recipient.call{ value: params.amountOut }("");
+            require(success, "not success");
         } else {
             IERC20(params.tokenOut).transfer(params.recipient, params.amountOut);
         }
@@ -108,9 +109,9 @@ contract MockUniswapRouter {
 
     // From Uniswap/swap-router-contracts/contracts/V2SwapRouter.sol
     function swapTokensForExactTokens(
-        uint256 amountOut,
+        uint256,
         uint256 amountInMax,
-        address[] calldata path,
+        address[] calldata,
         address //to
     ) public pure returns (uint256 amountIn) {
         amountIn = amountInMax;
@@ -118,9 +119,9 @@ contract MockUniswapRouter {
 
     // From Uniswap/swap-router-contracts/contracts/V2SwapRouter.sol
     function swapExactTokensForTokens(
-        uint256 amountIn,
+        uint256,
         uint256 amountOutMin,
-        address[] calldata path,
+        address[] calldata,
         address //to
     ) public pure returns (uint256 amountOut) {
         amountOut = amountOutMin;

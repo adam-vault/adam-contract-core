@@ -105,7 +105,7 @@ function getCreateDaoParams ({
   name = 'Company Name',
   description = 'Description',
   lockTime = 0,
-  generalGovernSetting = [300, 3000, 5000, 0, constants.AddressZero],
+  generalGovernSetting = [300, 3000, 5000, 0, constants.AddressZero, 5],
   tokenName = 'Member Token',
   tokenSymbol = 'MT',
   tokenAmount = 100,
@@ -115,6 +115,7 @@ function getCreateDaoParams ({
   baseCurrency = ETH,
   logoCID = '',
   maxMemberLimit = ethers.constants.MaxUint256,
+  referer = constants.AddressZero,
 }) {
   const iface = new ethers.utils.Interface(daoArtifact.abi);
 
@@ -127,6 +128,7 @@ function getCreateDaoParams ({
       tokenName,
       tokenSymbol,
       depositTokens,
+      referer,
     }),
     [
       lockTime ? iface.encodeFunctionData('setLocktime', [lockTime]) : '',
@@ -319,6 +321,37 @@ function getCreateCommonBudgetApprovalParams ({
     return value;
   });
 }
+
+
+function getCreateBasicBudgetApprovalParams ({
+  executor,
+  executorTeamId,
+  approvers,
+  approverTeamId,
+  minApproval,
+  text = 'Transfer ERC721',
+  transactionType = '721outflow',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  team,
+}) {
+  return [getCreateCommonBudgetApprovalParams({
+    executor,
+    executorTeamId,
+    approvers,
+    approverTeamId,
+    minApproval,
+    text,
+    transactionType,
+    startTime,
+    endTime,
+    allowUnlimitedUsageCount,
+    usageCount,
+    team,
+  })];
+}
 module.exports = {
   getCreateDaoParams,
   getCreateTransferERC20BAParams,
@@ -326,4 +359,5 @@ module.exports = {
   getCreateUniswapBAParams,
   getCreateTransferERC721BAParams,
   getCreateSelfClaimERC20BAParams,
+  getCreateBasicBudgetApprovalParams,
 };

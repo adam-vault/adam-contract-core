@@ -8,6 +8,8 @@
     "prepare:rinkeby": "mustache constant/rinkeby.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "prepare:goerli": "mustache constant/goerli.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "prepare:mainnet": "mustache constant/mainnet.json constant/Constant.template.sol > contracts/lib/Constant.sol",
+    "prepare:arbitrum-goerli": "mustache constant/arbitrum-goerli.json constant/Constant.template.sol > contracts/lib/Constant.sol",
+    "prepare:arbitrum-one": "mustache constant/arbitrum-one.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "compile": "hardhat compile",
     "coverage": "hardhat coverage && COVERAGE=true npm run test",
     "size": "hardhat size-contracts",
@@ -53,7 +55,9 @@
     "hardhat": "^2.11.2",
     "hardhat-abi-exporter": "^2.8.0",
     "hardhat-contract-sizer": "^2.4.0",
+    "hardhat-storage-layout": "^0.1.7",
     "hardhat-test-utils": "^0.1.1",
+    "inquirer": "^8.2.5",
     "lodash": "^4.17.21",
     "minimatch": "^5.0.1"
   }

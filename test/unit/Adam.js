@@ -236,6 +236,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         'name',
         'symbol',
         [],
+        ethers.constants.AddressZero,
       ], [])).to.not.be.reverted;
     });
     it('emits createDao event', async () => {
@@ -247,6 +248,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         'name',
         'symbol',
         [],
+        ethers.constants.AddressZero,
       ], []);
       const receipt = await tx.wait();
       const event = receipt.events.find(e => e.event === 'CreateDao');

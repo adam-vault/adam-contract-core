@@ -1,3 +1,4 @@
+const ethers = require('ethers');
 
 const toBeAddBudgetApprovals = [
   { name: 'TransferLiquidERC20BudgetApprovalV2', contract: 'TransferLiquidERC20BudgetApproval' },
@@ -5,6 +6,7 @@ const toBeAddBudgetApprovals = [
   { name: 'TransferERC20BudgetApprovalV2', contract: 'TransferERC20BudgetApproval' },
   { name: 'SelfClaimERC20BudgetApproval', contract: 'SelfClaimERC20BudgetApproval' },
 ];
+
 const toBeRemoveBudgetApprovals = [
   'TransferLiquidERC20BudgetApproval',
   'TransferERC721BudgetApproval',
@@ -15,7 +17,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, getOrNull, execute, read } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const adam = await getOrNull('Adam');
   const toBeRemove = [];
   const toBeAdd = [];
 
@@ -28,10 +29,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       log: true,
       gasLimit: 6000000,
     });
-    if (result.newlyDeployed) {
-      toBeAdd.push(result.address);
-      if (existing) {
+    if (!existing || existing.address !== result.address) {
+      if (existing && await read('Adam', 'budgetApprovals', existing.address)) {
         toBeRemove.push(existing.address);
+      }
+      if (!await read('Adam', 'budgetApprovals', result.address)) {
+        toBeAdd.push(result.address);
       }
     }
   }, Promise.resolve());
@@ -49,17 +52,16 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     }
   }, Promise.resolve());
 
-  if (adam) {
-    if (toBeRemove.length) {
-      console.log(`${toBeRemove} to be abandoned.`);
-      await execute('Adam', { from: deployer, log: true }, 'abandonBudgetApprovals', toBeRemove);
-    }
-
-    if (toBeAdd.length) {
-      console.log(`${toBeAdd} to be whitelisted.`);
-      await execute('Adam', { from: deployer, log: true }, 'whitelistBudgetApprovals', toBeAdd);
-    }
+  if (toBeRemove.length) {
+    console.log(`${toBeRemove} to be abandoned.`);
+    await execute('Adam', { from: deployer, log: true }, 'abandonBudgetApprovals', toBeRemove);
   }
+
+  if (toBeAdd.length) {
+    console.log(`${toBeAdd} to be whitelisted.`);
+    await execute('Adam', { from: deployer, log: true }, 'whitelistBudgetApprovals', toBeAdd);
+  }
+  
 };
 
 module.exports.tags = [
