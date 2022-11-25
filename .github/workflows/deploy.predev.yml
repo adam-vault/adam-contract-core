@@ -9,6 +9,7 @@ concurrency:
 
 jobs:
   config-network-const:
+    id: config
     runs-on: ubuntu-latest
     steps:
       - uses: jungwinter/split@v2
@@ -16,34 +17,12 @@ jobs:
         with:
           msg: ${{ github.ref_name }}
           separator: '-'
-      - name: Configuration for etherum-dev
-        if: ${{ steps.split.outputs._2 == 'etherum'}}
+      - name: Export Network Info
+        id: network
         run: |
-          echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_ENV \
-          && echo "CONTRACT_DEPLOY_NETWORK=goerli-dev" >> $GITHUB_ENV \
-      - name: Configuration for arbitrum-dev
-        if: ${{steps.split.outputs._2 == 'arbitrum'}}
-        run: |
-          echo "LIB_CONSTANT_NETWORK=arbitrum-goerli" >> $GITHUB_ENV \
-          && echo "CONTRACT_DEPLOY_NETWORK=arbitrum-goerli-dev" >> $GITHUB_ENV \
-  deploy-contracts-etherum:
-    if: ${{ steps.split.outputs._2 == 'etherum'}}
-    name: Deploy Etherum
-    uses: ./.github/workflows/reusable-deploy-contracts.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-      LIB_CONSTANT_NETWORK: goerli
-      CONTRACT_DEPLOY_NETWORK: goerli-dev
-    secrets:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
-      KOVAN_URL: ${{ secrets.KOVAN_URL }}
-      GOERLI_URL: ${{ secrets.GOERLI_URL }}
-      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-      GH_PAT: ${{ secrets.GH_PAT }}
-      ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          echo "NETWORK=${{steps.split.outputs._2}}" >> $GITHUB_OUTPUT
   deploy-contracts-arbitrum:
-    if: ${{ steps.split.outputs._2 == 'arbitrum'}}
+    if: ${{ jobs.config.network.outputs.NETWORK == 'arbitrum'}}
     name: Deploy Arbitrum
     uses: ./.github/workflows/reusable-deploy-contracts.yml
     with:
