@@ -2,19 +2,37 @@ name: Deploy Predev
 on:
   push:
     tags:    
-      - 'v[0-9].[0-9]+.[0-9]+\-predev'
+      - 'v[0-9].[0-9]+.[0-9]+\-predev\-(etherum|arbitrum)'
 
 concurrency:
   group: goerli-deployment
 
 jobs:
+  example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: jungwinter/split@v2
+        id: split
+        with:
+          msg: ${{ github.ref_name }}
+          separator: '-'
+      - name: Configuration for etherum-dev
+        if: ${{ steps.split.outputs._2 == 'etherum'}}
+        run: |
+        echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_ENV
+        echo "CONTRACT_DEPLOY_NETWORK=goerli-dev" >> $GITHUB_ENV
+      - name: Configuration for arbitrum-dev
+        if: ${{steps.split.outputs._2 == 'arbitrum'}}
+        run: |
+        echo "LIB_CONSTANT_NETWORK=arbitrum-goerli" >> $GITHUB_ENV
+        echo "CONTRACT_DEPLOY_NETWORK=arbitrum-goerli-dev" >> $GITHUB_ENV
   deploy-contracts:
     name: Deploy
     uses: ./.github/workflows/reusable-deploy-contracts.yml
     with:
       GIT_REF: ${{ github.ref_name }}
-      LIB_CONSTANT_NETWORK: goerli
-      CONTRACT_DEPLOY_NETWORK: goerli-predev
+      LIB_CONSTANT_NETWORK: ${{ env.LIB_CONSTANT_NETWORK }}
+      CONTRACT_DEPLOY_NETWORK: ${{ env.CONTRACT_DEPLOY_NETWORK }}
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       RINKEBY_URL: ${{ secrets.RINKEBY_URL }}

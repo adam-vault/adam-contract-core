@@ -60,7 +60,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     console.log(`${toBeAdd} to be whitelisted.`);
     await execute('Adam', { from: deployer, log: true }, 'whitelistBudgetApprovals', toBeAdd);
   }
-  
 };
 
 module.exports.tags = [
