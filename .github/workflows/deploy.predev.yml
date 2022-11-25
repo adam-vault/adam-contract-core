@@ -8,7 +8,7 @@ concurrency:
   group: goerli-deployment
 
 jobs:
-  example:
+  config-network-const:
     runs-on: ubuntu-latest
     steps:
       - uses: jungwinter/split@v2
@@ -19,13 +19,13 @@ jobs:
       - name: Configuration for etherum-dev
         if: ${{ steps.split.outputs._2 == 'etherum'}}
         run: |
-        echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_ENV
-        echo "CONTRACT_DEPLOY_NETWORK=goerli-dev" >> $GITHUB_ENV
+          echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_ENV \
+          && echo "CONTRACT_DEPLOY_NETWORK=goerli-dev" >> $GITHUB_ENV \
       - name: Configuration for arbitrum-dev
         if: ${{steps.split.outputs._2 == 'arbitrum'}}
         run: |
-        echo "LIB_CONSTANT_NETWORK=arbitrum-goerli" >> $GITHUB_ENV
-        echo "CONTRACT_DEPLOY_NETWORK=arbitrum-goerli-dev" >> $GITHUB_ENV
+          echo "LIB_CONSTANT_NETWORK=arbitrum-goerli" >> $GITHUB_ENV \
+          && echo "CONTRACT_DEPLOY_NETWORK=arbitrum-goerli-dev" >> $GITHUB_ENV \
   deploy-contracts:
     name: Deploy
     uses: ./.github/workflows/reusable-deploy-contracts.yml
