@@ -19,20 +19,20 @@ jobs:
       - name: Configuration for etherum-dev
         if: ${{ steps.split.outputs._2 == 'etherum'}}
         run: |
-          echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_OUTPUT \
-          && echo "CONTRACT_DEPLOY_NETWORK=goerli-dev" >> $GITHUB_OUTPUT \
+          echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_ENV \
+          && echo "CONTRACT_DEPLOY_NETWORK=goerli-dev" >> $GITHUB_ENV \
       - name: Configuration for arbitrum-dev
         if: ${{steps.split.outputs._2 == 'arbitrum'}}
         run: |
-          echo "LIB_CONSTANT_NETWORK=arbitrum-goerli" >> $GITHUB_OUTPUT \
-          && echo "CONTRACT_DEPLOY_NETWORK=arbitrum-goerli-dev" >> $GITHUB_OUTPUT \
+          echo "LIB_CONSTANT_NETWORK=arbitrum-goerli" >> $GITHUB_ENV \
+          && echo "CONTRACT_DEPLOY_NETWORK=arbitrum-goerli-dev" >> $GITHUB_ENV \
   deploy-contracts:
     name: Deploy
     uses: ./.github/workflows/reusable-deploy-contracts.yml
     with:
       GIT_REF: ${{ github.ref_name }}
-      LIB_CONSTANT_NETWORK: ${{ jobs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
-      CONTRACT_DEPLOY_NETWORK: ${{ jobs.config-network-const.outputs.CONTRACT_DEPLOY_NETWORK }}
+      LIB_CONSTANT_NETWORK: ${{ LIB_CONSTANT_NETWORK }}
+      CONTRACT_DEPLOY_NETWORK: ${{ CONTRACT_DEPLOY_NETWORK }}
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
