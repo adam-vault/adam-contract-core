@@ -2,7 +2,7 @@ name: Deploy Predev
 on:
   push:
     tags:    
-      - 'v[0-9].[0-9]+.[0-9]+\-predev\-(etherum|arbitrum)'
+      - 'v[0-9].[0-9]+.[0-9]+\-predev\-*'
 
 concurrency:
   group: goerli-deployment
