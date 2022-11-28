@@ -54,12 +54,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   if (toBeRemove.length) {
     console.log(`${toBeRemove} to be abandoned.`);
-    await execute('Adam', { from: deployer, log: true, maxFeePerGas: lastBaseFeePerGas() }, 'abandonBudgetApprovals', toBeRemove);
+    await execute('Adam', { from: deployer, log: true, maxFeePerGas: await lastBaseFeePerGas() }, 'abandonBudgetApprovals', toBeRemove);
   }
 
   if (toBeAdd.length) {
     console.log(`${toBeAdd} to be whitelisted.`);
-    await execute('Adam', { from: deployer, log: true, maxFeePerGas: lastBaseFeePerGas() }, 'whitelistBudgetApprovals', toBeAdd);
+    await execute('Adam', { from: deployer, log: true, maxFeePerGas: await lastBaseFeePerGas() }, 'whitelistBudgetApprovals', toBeAdd);
   }
 };
 
