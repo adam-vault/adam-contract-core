@@ -28,6 +28,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       from: deployer,
       log: true,
       gasLimit: 6000000,
+      ...(await maxFeePerGasSetting(),
     });
     if (!existing || existing.address !== result.address) {
       if (existing && await read('Adam', 'budgetApprovals', existing.address)) {
