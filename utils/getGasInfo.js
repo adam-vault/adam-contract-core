@@ -1,8 +1,8 @@
 const { ethers } = hre;
 
-async function lastBaseFeePerGas (markUpRate = 1.1) {
-  const { lastBaseFeePerGas } = await ethers.provider.getFeeData();
-  return (lastBaseFeePerGas * markUpRate).toFixed();
+async function lastBaseFeePerGas () {
+  const { maxFeePerGas } = await ethers.provider.getFeeData();
+  return maxFeePerGas;
 }
 
 module.exports = {
