@@ -19,6 +19,8 @@ on:
         required: true
       GOERLI_URL:
         required: true
+      ARBITRUM_GOERLI_URL:
+        required: true
       PRIVATE_KEY:
         required: true
       GH_PAT:
@@ -34,6 +36,7 @@ env:
   PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
   RINKEBY_URL: ${{ secrets.RINKEBY_URL }}
   GOERLI_URL: ${{ secrets.GOERLI_URL }}
+  ARBITRUM_GOERLI_URL: ${{ secrets.ARBITRUM_GOERLI_URL }}
   KOVAN_URL: ${{ secrets.KOVAN_URL }}
   LATEST_VERSION: ${{ inputs.GIT_REF }}
   ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
