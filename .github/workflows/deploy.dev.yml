@@ -61,7 +61,7 @@ jobs:
       ARBITRUM_GOERLI_URL: ${{ secrets.ARBITRUM_GOERLI_URL }}
   sync-subgraph:
     name: Sync Subgraph
-    needs: deploy-contracts
+    needs: [deploy-contracts-ethereum,deploy-contracts-arbitrum]
     uses: ./.github/workflows/reusable-sync-subgraph.yml
     with:
       GIT_REF: ${{ github.ref_name }}
