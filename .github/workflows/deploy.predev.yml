@@ -9,7 +9,6 @@ concurrency:
 
 jobs:
   config-network-const:
-    id: config
     runs-on: ubuntu-latest
     steps:
       - uses: jungwinter/split@v2
@@ -21,8 +20,11 @@ jobs:
         id: network
         run: |
           echo "NETWORK=${{steps.split.outputs._2}}" >> $GITHUB_OUTPUT
+    outputs:
+      NETWORK: ${{ steps.network.outputs.NETWORK }}
   deploy-contracts-arbitrum:
-    if: ${{ jobs.config.network.outputs.NETWORK == 'arbitrum'}}
+    needs: config-network-const
+    if: ${{ needs.config-network-const.outputs.NETWORK == 'arbitrum'}}
     name: Deploy Arbitrum
     uses: ./.github/workflows/reusable-deploy-contracts.yml
     with:
