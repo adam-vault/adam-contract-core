@@ -28,7 +28,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
     skipIfAlreadyDeployed: true,
     gasLimit: 5000000,
-    maxFeePerGas: await lastBaseFeePerGas(1.03),
+    maxFeePerGas: lastBaseFeePerGas(),
     proxy: {
       proxyContract: 'ERC1967Proxy',
       proxyArgs: ['{implementation}', '{data}'],
