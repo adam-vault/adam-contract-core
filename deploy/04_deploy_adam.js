@@ -1,4 +1,5 @@
 const fileReader = require('../utils/fileReader');
+const { lastBaseFeePerGas } = require('../utils/getGasInfo');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, get } = deployments;
@@ -27,6 +28,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
     skipIfAlreadyDeployed: true,
     gasLimit: 5000000,
+    maxFeePerGas: await lastBaseFeePerGas(1.03),
     proxy: {
       proxyContract: 'ERC1967Proxy',
       proxyArgs: ['{implementation}', '{data}'],
