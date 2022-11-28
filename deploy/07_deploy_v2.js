@@ -12,7 +12,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const adamV2Implementation = await deploy('AdamV2', { contract: 'Adam', from: deployer, log: true, gasLimit: 3000000, ...(await maxFeePerGasSetting()) });
 
   if (adamV2Implementation.newlyDeployed) {
-    await execute('Adam', { from: deployer, log: true }, 'upgradeTo', adamV2Implementation.address);
+    await execute('Adam', { from: deployer, log: true, ...(await maxFeePerGasSetting()) }, 'upgradeTo', adamV2Implementation.address);
   }
 
   const governFactoryV2 = await deploy('GovernFactoryV2', { contract: 'GovernFactory', from: deployer, log: true, gasLimit: 5000000, ...(await maxFeePerGasSetting()) });
