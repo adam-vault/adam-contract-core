@@ -1,5 +1,5 @@
 const ethers = require('ethers');
-const { lastBaseFeePerGas } = require('../utils/getGasInfo');
+const { maxFeePerGasSetting } = require('../utils/getGasInfo');
 
 const toBeAddBudgetApprovals = [
   { name: 'TransferLiquidERC20BudgetApprovalV2', contract: 'TransferLiquidERC20BudgetApproval' },
@@ -54,12 +54,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   if (toBeRemove.length) {
     console.log(`${toBeRemove} to be abandoned.`);
-    await execute('Adam', { from: deployer, log: true, maxFeePerGas: await lastBaseFeePerGas() }, 'abandonBudgetApprovals', toBeRemove);
+    await execute('Adam', { from: deployer, log: true, ...(await maxFeePerGasSetting()) }, 'abandonBudgetApprovals', toBeRemove);
   }
 
   if (toBeAdd.length) {
     console.log(`${toBeAdd} to be whitelisted.`);
-    await execute('Adam', { from: deployer, log: true, maxFeePerGas: await lastBaseFeePerGas() }, 'whitelistBudgetApprovals', toBeAdd);
+    await execute('Adam', { from: deployer, log: true, ...(await maxFeePerGasSetting()) }, 'whitelistBudgetApprovals', toBeAdd);
   }
 };
 

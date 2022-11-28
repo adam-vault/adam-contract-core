@@ -1,10 +1,10 @@
 const { ethers } = hre;
 
-async function lastBaseFeePerGas () {
-  const { maxFeePerGas } = await ethers.provider.getFeeData();
-  return maxFeePerGas;
+async function maxFeePerGasSetting () {
+  const { maxFeePerGas, maxPriorityFeePerGas } = await ethers.provider.getFeeData();
+  return { maxFeePerGas, maxPriorityFeePerGas };
 }
 
 module.exports = {
-  lastBaseFeePerGas,
+  maxFeePerGasSetting,
 };
