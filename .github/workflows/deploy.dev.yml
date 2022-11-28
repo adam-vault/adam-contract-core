@@ -71,7 +71,7 @@ jobs:
 
   sync-frontend:
     name: Sync Frontend
-    needs: deploy-contracts
+    needs: [deploy-contracts-ethereum,deploy-contracts-arbitrum]
     uses: ./.github/workflows/reusable-sync-frontend.yml
     with:
       GIT_REF: ${{ github.ref_name }}
@@ -81,7 +81,7 @@ jobs:
 
   sync-discord-integration:
     name: Sync Discord Integration
-    needs: deploy-contracts
+    needs: [deploy-contracts-ethereum,deploy-contracts-arbitrum]
     uses: ./.github/workflows/reusable-sync-discord-integration.yml
     with:
       GIT_REF: ${{ github.ref_name }}
@@ -91,7 +91,7 @@ jobs:
 
   sync-centralized-backend:
     name: Sync Centralized Backend
-    needs: deploy-contracts
+    needs: [deploy-contracts-ethereum,deploy-contracts-arbitrum]
     uses: ./.github/workflows/reusable-sync-centralized-backend.yml
     with:
       GIT_REF: ${{ github.ref_name }}
