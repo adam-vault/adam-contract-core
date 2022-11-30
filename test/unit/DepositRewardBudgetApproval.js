@@ -35,7 +35,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
     params.token,
     params.allowAnyAmount !== undefined ? params.allowAnyAmount : true,
     params.totalAmount || 0,
-    params.depositRewardAmount || 0,
+    params.referrerRewardAmount || 0,
     params.refereeRewardAmount || 0,
     ];
   }
@@ -102,7 +102,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
       expect(await depositRewardBA.liquidPool()).to.be.eq(liquidPool.address);
       expect(await depositRewardBA.allowAnyAmount()).to.be.eq(true);
       expect(await depositRewardBA.totalAmount()).to.be.eq(ethers.BigNumber.from('0'));
-      expect(await depositRewardBA.depositRewardAmount()).to.be.eq(ethers.BigNumber.from('0'));
+      expect(await depositRewardBA.referrerRewardAmount()).to.be.eq(ethers.BigNumber.from('0'));
       expect(await depositRewardBA.refereeRewardAmount()).to.be.eq(ethers.BigNumber.from('0'));
       expect(await depositRewardBA.text()).to.be.eq('text');
       expect(await depositRewardBA.transactionType()).to.be.eq('transactionType');
@@ -115,7 +115,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           liquidPool: liquidPool.address,
           allowAnyAmount: false,
           totalAmount: ethers.BigNumber.from('1000'),
-          depositRewardAmount: 1,
+          referrerRewardAmount: 1,
           refereeRewardAmount: 2,
         })));
       const depositRewardBA = await ethers.getContractAt('DepositRewardBudgetApproval', contract.address);
@@ -124,7 +124,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
       expect(await depositRewardBA.token()).to.be.eq(rewardToken.address);
       expect(await depositRewardBA.allowAnyAmount()).to.be.eq(false);
       expect(await depositRewardBA.totalAmount()).to.be.eq(ethers.BigNumber.from('1000'));
-      expect(await depositRewardBA.depositRewardAmount()).to.be.eq(ethers.BigNumber.from('1'));
+      expect(await depositRewardBA.referrerRewardAmount()).to.be.eq(ethers.BigNumber.from('1'));
       expect(await depositRewardBA.refereeRewardAmount()).to.be.eq(ethers.BigNumber.from('2'));
     });
     it('throws "Duplicated address in target address list" error if toAddresses duplicated', async () => {
@@ -135,7 +135,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           liquidPool: liquidPool.address,
           allowAnyAmount: false,
           totalAmount: ethers.BigNumber.from('1000'),
-          depositRewardAmount: 1,
+          referrerRewardAmount: 1,
           refereeRewardAmount: 2,
         })))).to.be.revertedWith('invalid token');
       await expect(ERC1967Proxy.deploy(
@@ -145,7 +145,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           liquidPool: liquidPool.address,
           allowAnyAmount: false,
           totalAmount: ethers.BigNumber.from('1000'),
-          depositRewardAmount: 1,
+          referrerRewardAmount: 1,
           refereeRewardAmount: 2,
         })))).to.be.revertedWith('invalid token');
     });
@@ -157,7 +157,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           liquidPool: ethers.constants.AddressZero,
           allowAnyAmount: false,
           totalAmount: ethers.BigNumber.from('1000'),
-          depositRewardAmount: 1,
+          referrerRewardAmount: 1,
           refereeRewardAmount: 2,
         })))).to.be.revertedWith('invalid liquidPool');
     });
@@ -191,7 +191,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           liquidPool: liquidPool.address,
           allowAnyAmount: false,
           totalAmount: 100,
-          depositRewardAmount: 4,
+          referrerRewardAmount: 4,
         })));
 
       const depositRewardBA = await ethers.getContractAt('DepositRewardBudgetApproval', contract.address);
@@ -238,7 +238,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           liquidPool: liquidPool.address,
           allowAnyAmount: false,
           totalAmount: 7,
-          depositRewardAmount: 3,
+          referrerRewardAmount: 3,
           refereeRewardAmount: 4,
         })));
 
@@ -268,7 +268,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           liquidPool: liquidPool.address,
           allowAnyAmount: false,
           totalAmount: 6,
-          depositRewardAmount: 3,
+          referrerRewardAmount: 3,
           refereeRewardAmount: 4,
         })));
 
@@ -286,7 +286,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           token: rewardToken.address,
           liquidPool: liquidPool.address,
           allowAnyAmount: true,
-          depositRewardAmount: 3,
+          referrerRewardAmount: 3,
           refereeRewardAmount: 4,
         })));
 
@@ -307,7 +307,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           token: rewardToken.address,
           liquidPool: liquidPool.address,
           allowAnyAmount: true,
-          depositRewardAmount: 3,
+          referrerRewardAmount: 3,
           refereeRewardAmount: 4,
         })));
 
@@ -332,7 +332,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           token: rewardToken.address,
           liquidPool: liquidPool.address,
           allowAnyAmount: true,
-          depositRewardAmount: 3,
+          referrerRewardAmount: 3,
           refereeRewardAmount: 4,
         })));
 
@@ -352,7 +352,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           token: rewardToken.address,
           liquidPool: liquidPool.address,
           allowAnyAmount: true,
-          depositRewardAmount: 3,
+          referrerRewardAmount: 3,
           refereeRewardAmount: 4,
         })));
 
