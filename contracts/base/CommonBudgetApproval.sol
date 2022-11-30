@@ -128,18 +128,12 @@ abstract contract CommonBudgetApproval is Initializable {
     }
 
     modifier onlyApprover() {
-        require(
-            approversMapping(msg.sender) ||
-                ITeam(team()).balanceOf(msg.sender, approverTeamId()) > 0,
-            "Approver not whitelisted in budget"
-        );
+        require(_isApprover(msg.sender), "Approver not whitelisted in budget");
         _;
     }
 
     modifier onlyExecutor() {
-        require(_isExecutor(msg.sender),
-            "Executor not whitelisted in budget"
-        );
+        require(_isExecutor(msg.sender), "Executor not whitelisted in budget");
         _;
     }
 
@@ -155,6 +149,11 @@ abstract contract CommonBudgetApproval is Initializable {
     function _isExecutor(address eoa) internal view virtual returns (bool) {
         return eoa == executor() ||
             ITeam(team()).balanceOf(eoa, executorTeamId()) > 0;
+    }
+
+    function _isApprover(address eoa) internal view virtual returns (bool) {
+        return approversMapping(eoa) ||
+                ITeam(team()).balanceOf(eoa, approverTeamId()) > 0;
     }
 
     function executorTeamId() public view returns (uint256) {
