@@ -1,0 +1,19 @@
+[
+  "constructor()",
+  "event AdminChanged(address previousAdmin, address newAdmin)",
+  "event BeaconUpgraded(address indexed beacon)",
+  "event Initialized(uint8 version)",
+  "event MarkedPriceSet(address asset, address baseCurrency, int256 price)",
+  "event Upgraded(address indexed implementation)",
+  "function assetBaseCurrencyPrice(address asset, uint256 amount, address baseCurrency) view returns (uint256)",
+  "function assetDecimals(address asset) view returns (uint8)",
+  "function assetEthPrice(address asset, uint256 amount) view returns (uint256)",
+  "function canResolvePrice(address asset, address baseCurrency) view returns (bool)",
+  "function dao() view returns (address)",
+  "function ethAssetPrice(address asset, uint256 ethAmount) view returns (uint256)",
+  "function initialize(address _dao)",
+  "function proxiableUUID() view returns (bytes32)",
+  "function setMarkedPrice(address asset, address baseCurrency, int256 price)",
+  "function upgradeTo(address newImplementation)",
+  "function upgradeToAndCall(address newImplementation, bytes data) payable"
+]
