@@ -8,6 +8,7 @@ const {
   getCreateTransferERC721BAParams,
   getCreateUniswapBAParams,
   getCreateBasicBudgetApprovalParams,
+  getCreateDepositRewardBAParams,
 } = require('../utils/paramsStruct');
 
 const commonTransferERC20Prompts = [
@@ -64,13 +65,15 @@ const questions = {
     { type: 'input', name: 'team', message: 'Team address?', default: ethers.constants.AddressZero },
     { type: 'input', name: 'toTeamIds', message: 'Team Ids? (Comma sep)' },
   ],
-  CreateArbitrumDaoBudgetApproval: [
-    { type: 'input', name: 'text', message: 'Text', default: 'Create Arb Dao' },
-    { type: 'input', name: 'transactionType', message: 'Transaction Type', default: 'others' },
-  ],
-  GMXAnyTokenBudgetApproval: [
-    { type: 'input', name: 'text', message: 'Text', default: 'GMX Any token' },
-    { type: 'input', name: 'transactionType', message: 'Transaction Type', default: 'others' },
+  DepositRewardBudgetApproval: [
+    { type: 'input', name: 'text', message: 'Text', default: 'depositReward' },
+    { type: 'input', name: 'transactionType', message: 'Transaction Type', default: 'depositReward' },
+    { type: 'input', name: 'liquidPool', message: 'LiquidPool address?' },
+    { type: 'input', name: 'token', message: 'Token address?' },
+    { type: 'confirm', name: 'allowAnyAmount', message: 'Allow all amount?' },
+    { type: 'number', name: 'totalAmount', message: 'Total Amount limited?', when: ({ allowAnyAmount }) => !allowAnyAmount },
+    { type: 'input', name: 'referrerRewardAmount', message: 'referrerRewardAmount?' },
+    { type: 'input', name: 'refereeRewardAmount', message: 'refereeRewardAmount?' },
   ],
 };
 
@@ -81,9 +84,7 @@ const encodeFn = {
   TransferLiquidERC20BudgetApproval: getCreateTransferLiquidErc20TokenBAParams,
   TransferERC721BudgetApproval: getCreateTransferERC721BAParams,
   UniswapLiquidBudgetApproval: getCreateUniswapBAParams,
-  CreateArbitrumDaoBudgetApproval: getCreateBasicBudgetApprovalParams,
-  GMXAnyTokenBudgetApproval: getCreateBasicBudgetApprovalParams,
-
+  DepositRewardBudgetApproval: getCreateDepositRewardBAParams,
 };
 
 const BA_TYPES = [
@@ -94,8 +95,7 @@ const BA_TYPES = [
   'TransferToArbitrumERC20BudgetApproval',
   'UniswapAnyTokenBudgetApproval',
   'UniswapLiquidBudgetApproval',
-  'GMXAnyTokenBudgetApproval',
-  'CreateArbitrumDaoBudgetApproval',
+  'DepositRewardBudgetApproval',
 ];
 
 function toArray (str) {

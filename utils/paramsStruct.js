@@ -26,7 +26,7 @@ function getCreateTransferERC20BAParams ({
   team,
   toTeamIds = [],
 }) {
-  return Object.entries({
+  return Object.values({
     params: getCreateCommonBudgetApprovalParams({
       executor,
       executorTeamId,
@@ -48,8 +48,6 @@ function getCreateTransferERC20BAParams ({
     allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
     totalAmount,
     toTeamIds,
-  }).map(([key, value]) => {
-    return value;
   });
 }
 
@@ -120,7 +118,7 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   team,
   toTeamIds = [],
 }) {
-  return Object.entries({
+  return Object.values({
     params: getCreateCommonBudgetApprovalParams({
       executor,
       executorTeamId,
@@ -142,8 +140,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     totalAmount,
     baseCurrency,
     toTeamIds,
-  }).map(([key, value]) => {
-    return value;
   });
 }
 
@@ -168,7 +164,7 @@ function getCreateUniswapBAParams ({
   baseCurrency = ETH,
   team,
 }) {
-  return Object.entries({
+  return Object.values({
     params: getCreateCommonBudgetApprovalParams({
       executor,
       executorTeamId,
@@ -190,8 +186,6 @@ function getCreateUniswapBAParams ({
     totalAmount,
     amountPercentage,
     baseCurrency,
-  }).map(([key, value]) => {
-    return value;
   });
 }
 
@@ -243,6 +237,50 @@ function getCreateTransferERC721BAParams ({
   });
 }
 
+function getCreateDepositRewardBAParams ({
+  executor,
+  executorTeamId,
+  approvers,
+  approverTeamId,
+  minApproval,
+  text = 'depositReward',
+  transactionType = 'depositReward',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  team,
+  liquidPool,
+  token,
+  allowAnyAmount = false,
+  totalAmount = 0,
+  referrerRewardAmount = 0,
+  refereeRewardAmount = 0,
+}) {
+  return Object.values({
+    params: getCreateCommonBudgetApprovalParams({
+      executor,
+      executorTeamId,
+      approvers,
+      approverTeamId,
+      minApproval,
+      text,
+      transactionType,
+      startTime,
+      endTime,
+      allowUnlimitedUsageCount,
+      usageCount,
+      team,
+    }),
+    liquidPool,
+    token,
+    allowAnyAmount,
+    totalAmount,
+    referrerRewardAmount,
+    refereeRewardAmount,
+  });
+}
+
 function getCreateCommonBudgetApprovalParams ({
   executor = ethers.constants.AddressZero,
   executorTeamId = 0,
@@ -257,7 +295,7 @@ function getCreateCommonBudgetApprovalParams ({
   usageCount = 0,
   team = ethers.constants.AddressZero,
 }) {
-  return Object.entries({
+  return Object.values({
     executor,
     executorTeamId,
     approvers,
@@ -270,11 +308,8 @@ function getCreateCommonBudgetApprovalParams ({
     allowUnlimitedUsageCount: allowUnlimitedUsageCount ?? usageCount === 0,
     usageCount,
     team,
-  }).map(([key, value]) => {
-    return value;
   });
 }
-
 
 function getCreateBasicBudgetApprovalParams ({
   executor,
@@ -312,4 +347,5 @@ module.exports = {
   getCreateUniswapBAParams,
   getCreateTransferERC721BAParams,
   getCreateBasicBudgetApprovalParams,
+  getCreateDepositRewardBAParams,
 };
