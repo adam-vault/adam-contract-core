@@ -25,6 +25,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
 
     Counters.Counter private _tokenIds;
     mapping(address => bool) public isMember;
+    mapping(address => bool) public wasMember;
 
     event CreateMember(address to);
     event RemoveMember(address member, uint256 tokenId);
@@ -57,6 +58,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         _safeMint(to, newId, "");
         totalSupply = _totalSupply + 1;
         isMember[to] = true;
+        wasMember[to] = false;
 
         emit CreateMember(to);
     }
@@ -105,6 +107,7 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         address owner = ownerOf(tokenId);
         _burn(tokenId);
         isMember[owner] = false;
+        wasMember[owner] = true;
         totalSupply = totalSupply - 1;
 
         emit RemoveMember(owner, tokenId);

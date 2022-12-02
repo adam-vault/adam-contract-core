@@ -128,20 +128,12 @@ abstract contract CommonBudgetApproval is Initializable {
     }
 
     modifier onlyApprover() {
-        require(
-            approversMapping(msg.sender) ||
-                ITeam(team()).balanceOf(msg.sender, approverTeamId()) > 0,
-            "Approver not whitelisted in budget"
-        );
+        require(_isApprover(msg.sender), "Approver not whitelisted in budget");
         _;
     }
 
     modifier onlyExecutor() {
-        require(
-            msg.sender == executor() ||
-                ITeam(team()).balanceOf(msg.sender, executorTeamId()) > 0,
-            "Executor not whitelisted in budget"
-        );
+        require(_isExecutor(msg.sender), "Executor not whitelisted in budget");
         _;
     }
 
@@ -152,6 +144,16 @@ abstract contract CommonBudgetApproval is Initializable {
 
     function executor() public view returns (address) {
         return _executor;
+    }
+
+    function _isExecutor(address eoa) internal view virtual returns (bool) {
+        return eoa == executor() ||
+            ITeam(team()).balanceOf(eoa, executorTeamId()) > 0;
+    }
+
+    function _isApprover(address eoa) internal view virtual returns (bool) {
+        return approversMapping(eoa) ||
+                ITeam(team()).balanceOf(eoa, approverTeamId()) > 0;
     }
 
     function executorTeamId() public view returns (uint256) {
@@ -238,9 +240,11 @@ abstract contract CommonBudgetApproval is Initializable {
 
     function executeTransaction(uint256 id)
         public
+        virtual
         matchStatus(id, Status.Approved)
         checkTime(id)
         onlyExecutor
+        payable
     {
         bool unlimited = allowUnlimitedUsageCount();
         uint256 count = usageCount();
@@ -264,7 +268,7 @@ abstract contract CommonBudgetApproval is Initializable {
         uint32 _deadline,
         bool _isExecute,
         string calldata comment
-    ) external onlyExecutor returns (uint256) {
+    ) external virtual onlyExecutor payable returns (uint256) {
         _transactionIds.increment();
         uint256 id = _transactionIds.current();
 
@@ -298,6 +302,7 @@ abstract contract CommonBudgetApproval is Initializable {
 
     function approveTransaction(uint256 id, string calldata comment)
         external
+        virtual
         onlyApprover
     {
         require(_transactionIds.current() >= id, "Invaild TransactionId");
@@ -325,7 +330,7 @@ abstract contract CommonBudgetApproval is Initializable {
         emit ApproveTransaction(id, msg.sender, comment);
     }
 
-    function revokeTransaction(uint256 id) external onlyExecutor {
+    function revokeTransaction(uint256 id) external virtual onlyExecutor {
         require(_transactionIds.current() >= id, "Invaild TransactionId");
         require(
             transactions[id].status != Status.Completed,
