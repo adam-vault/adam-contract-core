@@ -6,7 +6,7 @@
   "event Initialized(uint8 version)",
   "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)",
   "event Upgraded(address indexed implementation)",
-  "function createGovern(string name, uint256 duration, uint256 quorum, uint256 passThreshold, address voteToken, uint256 durationInBlock)",
+  "function createGovern(string name, uint256 duration, uint256 quorum, uint256 passThreshold, address voteToken)",
   "function governImplementation() view returns (address)",
   "function governMap(address, string) view returns (address)",
   "function initialize(address _governImplementation)",
