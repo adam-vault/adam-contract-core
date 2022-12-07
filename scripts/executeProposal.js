@@ -31,7 +31,8 @@ async function main () {
       },
     ]);
 
-  await govern.execute(proposal.target, proposal.values, proposal.calldatas, ethers.utils.id(proposal.description));
+  const tx = await govern.execute(proposal.targets, proposal[3], proposal.calldatas, ethers.utils.id(proposal.description));
+  console.log(tx);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -4,7 +4,7 @@ const inquirer = require('inquirer');
 async function main () {
   const [signer] = await hre.ethers.getSigners();
   const tx = {
-    nonce: 148,
+    nonce: 192,
     to: hre.ethers.constants.AddressZero,
     data: '0x',
     gasPrice: hre.ethers.utils.parseUnits('100', 'gwei'),
