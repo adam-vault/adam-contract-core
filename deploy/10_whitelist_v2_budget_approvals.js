@@ -1,4 +1,3 @@
-const ethers = require('ethers');
 const { gasFeeConfig } = require('../utils/getGasInfo');
 
 const toBeAddBudgetApprovals = [
