@@ -85,6 +85,8 @@ interface IMembership {
 
     function isMember(address) external view returns (bool);
 
+    function wasMember(address) external view returns (bool);
+
     function maxMemberLimit() external view returns (uint256);
 
     function name() external view returns (string memory);
