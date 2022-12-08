@@ -90,6 +90,9 @@ jobs:
         run: npx hardhat deploy --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
         timeout-minutes: 60
 
+      - name: Export Deployment Result
+        run: npx hardhat run exportDeploymentResult.js --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
+
       - name: Upload Deployment Artifacts
         uses: actions/upload-artifact@v3
         with:
