@@ -260,7 +260,7 @@ contract SelfClaimERC20BudgetApproval is Initializable {
   }
 
   function team() public view returns (address) {
-    return _team;
+    return address(0);
   }
 
   function __BudgetApproval_init(InitializeParams calldata params)
