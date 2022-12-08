@@ -72,7 +72,7 @@ describe.only('Integration - SelfClaimERC20BudgetApproval.sol - test/integration
       expect(await lp.budgetApprovals(budgetApprovalAddress)).to.eq(true);
     });
 
-    it('self claim ERC20 Token should success', async function () {
+    it('should able to self claim ERC20 Token', async function () {
       const originalLpBalance = await tokenA.balanceOf(lp.address);
       const originalReceiverBalance = await tokenA.balanceOf(tokenA.address);
       await tokenA.mint(lp.address, '100');
@@ -93,7 +93,7 @@ describe.only('Integration - SelfClaimERC20BudgetApproval.sol - test/integration
       expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.BigNumber.from(originalReceiverBalance).add(1));
     });
 
-    it('self claim ERC20 Token could not be claimed twice', async function () {
+    it('should not be able to self claim ERC20 Token twice', async function () {
       await tokenA.mint(lp.address, '100');
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
@@ -150,7 +150,7 @@ describe.only('Integration - SelfClaimERC20BudgetApproval.sol - test/integration
       expect(await dao.budgetApprovals(budgetApprovalAddress)).to.eq(true);
     });
 
-    it('self claim ERC20 Token should success', async function () {
+    it('shoule be able to self claim ERC20 Token', async function () {
       const originalDaoBalance = await tokenA.balanceOf(dao.address);
       const originalReceiverBalance = await tokenA.balanceOf(receiver.address);
       await tokenA.mint(dao.address, '100');
@@ -171,7 +171,7 @@ describe.only('Integration - SelfClaimERC20BudgetApproval.sol - test/integration
       expect(await tokenA.balanceOf(receiver.address)).to.eq(ethers.BigNumber.from(originalReceiverBalance).add(1));
     });
 
-    it('self claim ERC20 Token could not be claimed twice', async function () {
+    it('should not be able to self claim ERC20 Token twice', async function () {
       await tokenA.mint(dao.address, '100');
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
@@ -189,7 +189,7 @@ describe.only('Integration - SelfClaimERC20BudgetApproval.sol - test/integration
   });
 });
 
-describe('Integration - SelfClaimERC20BudgetApproval.sol 2 - test/integration/SelfClaimERC20BudgetApproval.js', function () {
+describe('Integration - Create selfClaimERC20BudgetApproval - test/integration/SelfClaimERC20BudgetApproval.js', function () {
   let selfClaimERC20BAImplementation, budgetApproval, team;
   let executor;
   let tokenA, executee, SelfClaimERC20BudgetApproval;

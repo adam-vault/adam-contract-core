@@ -74,7 +74,6 @@ contract SelfClaimERC20BudgetApproval is Initializable {
 
   uint256 private _startTime;
   uint256 private _endTime;
-  address private _team;
 
   // Any receiver
   bool public allowAllAddresses;
@@ -276,8 +275,6 @@ contract SelfClaimERC20BudgetApproval is Initializable {
 
     _allowUnlimitedUsageCount = params.allowUnlimitedUsageCount;
     _usageCount = params.usageCount;
-
-    _team = params.team;
   }
 
   function afterInitialized() external virtual onlyExecutee {}
