@@ -38,6 +38,7 @@ jobs:
     with:
       GIT_REF: ${{ github.ref_name }}
       DEPLOY_ENV: stg
+      NETWORK: ethereum
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
 

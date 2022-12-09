@@ -7,6 +7,9 @@ on:
       DEPLOY_ENV:
         required: true
         type: string
+      NETWORK:
+        required: true
+        type: string
     secrets:
       GH_PAT:
         required: true
@@ -36,17 +39,35 @@ jobs:
       - name: Replace SDK ABIs
         run: cp ${{ runner.temp }}/deployment/abis/human/* ./packages/adam-sdk/src/abis/v2
 
-      - name: Setup Address as Env Vars
+      - name: Setup Ethereum Address as Env Vars
+        if: ${{ inputs.NETWORK == 'ethereum'}}
         run: |
           echo "REACT_APP_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
           && echo "REACT_APP_NETWORK=$(jq -r .network ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
 
-      - name: Replace Contract Address
+      - name: Setup Arbitrum Address as Env Vars
+        if: ${{ inputs.NETWORK == 'arbitrum'}}
+        run: |
+          echo "REACT_APP_ARBITRUM_ONE_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
+          && echo "REACT_APP_NETWORK=$(jq -r .network ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
+
+      - name: Replace Ethereum Contract Address
+        if: ${{ inputs.NETWORK == 'ethereum'}}
         uses: mikefarah/yq@master
         with:
           cmd: |
             yq -i '
               .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS) |
+              .jobs.call-deploy-site.with.REACT_APP_NETWORK = strenv(REACT_APP_NETWORK)
+            ' .github/workflows/deploy.${{ env.DEPLOY_ENV }}.yml
+
+      - name: Replace Arbitrum Contract Address
+        if: ${{ inputs.NETWORK == 'arbitrum'}}
+        uses: mikefarah/yq@master
+        with:
+          cmd: |
+            yq -i '
+              .jobs.call-deploy-site.with.REACT_APP_ARBITRUM_ONE_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ARBITRUM_ONE_ADAM_CONTRACT_ADDRESS) |
               .jobs.call-deploy-site.with.REACT_APP_NETWORK = strenv(REACT_APP_NETWORK)
             ' .github/workflows/deploy.${{ env.DEPLOY_ENV }}.yml
       

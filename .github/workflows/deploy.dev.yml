@@ -23,6 +23,7 @@ jobs:
           echo "NETWORK=${{steps.split.outputs._2}}" >> $GITHUB_OUTPUT
     outputs:
       NETWORK: ${{ steps.network.outputs.NETWORK }}
+      
   deploy-contracts-arbitrum:
     needs: config-network-const
     if: ${{ needs.config-network-const.outputs.NETWORK == 'arbitrum'}}
@@ -41,6 +42,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
       ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}      
       ARBITRUM_GOERLI_URL: ${{ secrets.ARBITRUM_GOERLI_URL }}
+
   deploy-contracts-ethereum:
     needs: config-network-const
     if: ${{ needs.config-network-const.outputs.NETWORK == 'ethereum'}}
@@ -59,6 +61,7 @@ jobs:
       GH_PAT: ${{ secrets.GH_PAT }}
       ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
       ARBITRUM_GOERLI_URL: ${{ secrets.ARBITRUM_GOERLI_URL }}
+
   sync-subgraph:
     name: Sync Subgraph
     needs: [deploy-contracts-ethereum,deploy-contracts-arbitrum]
@@ -82,6 +85,7 @@ jobs:
     with:
       GIT_REF: ${{ github.ref_name }}
       DEPLOY_ENV: dev
+      NETWORK: ${{ needs.config-network-const.outputs.NETWORK }}
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
 
