@@ -57,7 +57,6 @@ jobs:
     uses: ./.github/workflows/reusable-sync-subgraph.yml
     with:
       GIT_REF: ${{ github.ref_name }}
-      DEPLOY_ENV: dev
       LIB_CONSTANT_NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
       CONTRACT_DEPLOY_NETWORK: ${{ needs.config-network-const.outputs.CONTRACT_DEPLOY_NETWORK }}
     secrets:
