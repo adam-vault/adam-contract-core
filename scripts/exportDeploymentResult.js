@@ -39,13 +39,18 @@ async function main () {
   console.log(contractAddresses);
 
   fileReader.save('deploy-results', 'results.json', {
-    network: deployNetwork.split('-')[0],
+    network: getNetwork(deployNetwork),
     block_number: adamDeployment.receipt.blockNumber,
     addresses: contractAddresses,
     initdata_addresses: {},
   });
 }
 
+function getNetwork (deployNetwork) {
+  const networks = deployNetwork.split('-');
+  networks.pop();
+  return networks.join('-');
+}
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main().catch((error) => {

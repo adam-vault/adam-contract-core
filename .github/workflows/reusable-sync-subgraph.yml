@@ -4,7 +4,10 @@ on:
       GIT_REF:
         required: true
         type: string
-      DEPLOY_ENV:
+      LIB_CONSTANT_NETWORK:
+        required: true
+        type: string
+      CONTRACT_DEPLOY_NETWORK:
         required: true
         type: string
     secrets:
@@ -13,7 +16,8 @@ on:
 
 env:
   GIT_REF: ${{ inputs.GIT_REF }}
-  DEPLOY_ENV: ${{ inputs.DEPLOY_ENV }}
+  LIB_CONSTANT_NETWORK: ${{ inputs.DEPLOYLIB_CONSTANT_NETWORK_ENV }}
+  CONTRACT_DEPLOY_NETWORK: ${{ inputs.CONTRACT_DEPLOY_NETWORK }}
 
 jobs:
   sync-subgraph-repo:
@@ -44,8 +48,8 @@ jobs:
             .[0].addresses.governFactory = .[1].addresses.governFactory |
             .[0].addresses.team = .[1].addresses.team |
             .[0]' \
-            config/${{ env.DEPLOY_ENV }}.json ${{ runner.temp }}/deployment/deploy-results/results.json > temp.json \
-            && mv temp.json config/${{ env.DEPLOY_ENV }}.json
+            config/${{ env.CONTRACT_DEPLOY_NETWORK }}.json ${{ runner.temp }}/deployment/deploy-results/results.json > temp.json \
+            && mv temp.json config/${{ env.CONTRACT_DEPLOY_NETWORK }}.json
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
