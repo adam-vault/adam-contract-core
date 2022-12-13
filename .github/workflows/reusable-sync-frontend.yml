@@ -40,19 +40,19 @@ jobs:
         run: cp ${{ runner.temp }}/deployment/abis/human/* ./packages/adam-sdk/src/abis/v2
 
       - name: Setup Ethereum Address as Env Vars
-        if: ${{ inputs.NETWORK == 'ethereum'}}
+        if: ${{ inputs.NETWORK == 'goerli'}}
         run: |
           echo "REACT_APP_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
           && echo "REACT_APP_NETWORK=$(jq -r .network ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
 
       - name: Setup Arbitrum Address as Env Vars
-        if: ${{ inputs.NETWORK == 'arbitrum'}}
+        if: ${{ inputs.NETWORK == 'arbitrum-goerli'}}
         run: |
           echo "REACT_APP_ARBITRUM_ONE_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
           && echo "REACT_APP_NETWORK=$(jq -r .network ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
 
       - name: Replace Ethereum Contract Address
-        if: ${{ inputs.NETWORK == 'ethereum'}}
+        if: ${{ inputs.NETWORK == 'goerli'}}
         uses: mikefarah/yq@master
         with:
           cmd: |
@@ -62,7 +62,7 @@ jobs:
             ' .github/workflows/deploy.${{ env.DEPLOY_ENV }}.yml
 
       - name: Replace Arbitrum Contract Address
-        if: ${{ inputs.NETWORK == 'arbitrum'}}
+        if: ${{ inputs.NETWORK == 'arbitrum-goerli'}}
         uses: mikefarah/yq@master
         with:
           cmd: |

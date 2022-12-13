@@ -4,9 +4,6 @@ on:
       GIT_REF:
         required: true
         type: string
-      DEPLOY_ENV:
-        required: true
-        type: string
     secrets:
       GH_PAT:
         required: true
