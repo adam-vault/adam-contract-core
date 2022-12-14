@@ -50,7 +50,7 @@ jobs:
 
   sync-subgraph:
     name: Sync Subgraph
-    needs: deploy-contracts
+    needs: [deploy-contracts,config-network-const]
     uses: ./.github/workflows/reusable-sync-subgraph.yml
     with:
       GIT_REF: ${{ github.ref_name }}
@@ -61,7 +61,7 @@ jobs:
 
   sync-frontend:
     name: Sync Frontend
-    needs: deploy-contracts
+    needs: [deploy-contracts,config-network-const]
     uses: ./.github/workflows/reusable-sync-frontend.yml
     with:
       GIT_REF: ${{ github.ref_name }}
