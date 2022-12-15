@@ -49,7 +49,7 @@ jobs:
         if: ${{ inputs.NETWORK == 'arbitrum-goerli'}}
         run: |
           echo "REACT_APP_ARBITRUM_ONE_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
-          && echo "REACT_APP_NETWORK=$(jq -r .network ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
+          && echo "REACT_APP_ARBITRUM_ONE_NETWORK=$(jq -r .network ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
 
       - name: Replace Ethereum Contract Address
         if: ${{ inputs.NETWORK == 'goerli'}}
@@ -68,7 +68,7 @@ jobs:
           cmd: |
             yq -i '
               .jobs.call-deploy-site.with.REACT_APP_ARBITRUM_ONE_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ARBITRUM_ONE_ADAM_CONTRACT_ADDRESS) |
-              .jobs.call-deploy-site.with.REACT_APP_NETWORK = strenv(REACT_APP_NETWORK)
+              .jobs.call-deploy-site.with.REACT_APP_ARBITRUM_ONE_NETWORK = strenv(REACT_APP_ARBITRUM_ONE_NETWORK)
             ' .github/workflows/deploy.${{ env.DEPLOY_ENV }}.yml
       
       - name: Make Pull Request
