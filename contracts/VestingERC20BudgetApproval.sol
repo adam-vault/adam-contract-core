@@ -171,7 +171,10 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
             return initTokenAmount - releasedTokenAmount;
         }
 
-        uint256 cyclePassed = Math.min((block.timestamp - CommonBudgetApproval.startTime()) / cyclePeriod, cycleCount);
+        uint256 cyclePassed = (block.timestamp - CommonBudgetApproval.startTime()) / cyclePeriod;
+        if (cycleCount > cycleCount) {
+            cyclePassed = cycleCount;
+        }
         return initTokenAmount + cyclePassed * cycleTokenAmount - releasedTokenAmount;
     }
 }
