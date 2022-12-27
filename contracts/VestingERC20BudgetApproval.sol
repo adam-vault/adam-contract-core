@@ -82,12 +82,21 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
         cycleTokenAmount = _cycleTokenAmount;
         initTokenAmount = _initTokenAmount;
         releasedTokenAmount = 0;
+
+        
+        if (cycleCount > 0) {
+            require(cycleTokenAmount > 0 && cyclePeriod > 0, "Cycle token amount and Cycle period must be larager than 0");
+        }
+
+        require(cyclePeriod * cycleCount >= cliffPeriod, "Vesting period must be long than Cliff Period");
+
+        require(totalAmount() > 0, "Vesting amount must be larger than 0");
     }
 
     function executeParams() external pure override returns (string[] memory) {
         // TODO
         string[] memory arr = new string[](1);
-        arr[0] = "uint256 value";
+        arr[0] = "uint256 amount";
         return arr;
     }
 
@@ -172,7 +181,7 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
         }
 
         uint256 cyclePassed = (block.timestamp - CommonBudgetApproval.startTime()) / cyclePeriod;
-        if (cycleCount > cycleCount) {
+        if (cyclePassed > cycleCount) {
             cyclePassed = cycleCount;
         }
         return initTokenAmount + cyclePassed * cycleTokenAmount - releasedTokenAmount;
