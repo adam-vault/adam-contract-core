@@ -23,13 +23,13 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
 
     // Terminology:
     //
-    // |<-- cycle 1 --> <-- cycle 2 --> <-- cycle 3 --> <-- cycle 4 --> 
-    // |<------ cliff ------> 
+    // |<-- cycle 1 --> <-- cycle 2 --> <-- cycle 3 --> <-- cycle 4 -->
+    // |<------ cliff ------>
     // |
     // |<-- Init Token Amount
-    // |<-- Budget Start Time                           
+    // |<-- Budget Start Time
     // |<----------------------- (vesting period) -------------------->
-    //     
+    //
     // Total Period = Cycle Period * Cycle Count
     // Total Amount = Init Amount + Cycle Amount * Cycle Count
 
@@ -44,11 +44,11 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
 
     // Period per cycle
     uint256 public cyclePeriod;
-    
+
     // Number of periods
     uint256 public cycleCount;
 
-    // Vesting Amount in each cycle 
+    // Vesting Amount in each cycle
     uint256 public cycleTokenAmount;
 
     // Token Amount after cliff
@@ -83,13 +83,17 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
         initTokenAmount = _initTokenAmount;
         releasedTokenAmount = 0;
 
-        
         if (cycleCount > 0) {
-            require(cycleTokenAmount > 0 && cyclePeriod > 0, "Cycle token amount and Cycle period must be larager than 0");
+            require(
+                cycleTokenAmount > 0 && cyclePeriod > 0,
+                "Cycle token amount and Cycle period must be larager than 0"
+            );
         }
 
-        require(cyclePeriod * cycleCount >= cliffPeriod, "Vesting period must be long than Cliff Period");
-
+        require(
+            cyclePeriod * cycleCount >= cliffPeriod,
+            "Vesting period must be long than Cliff Period"
+        );
         require(totalAmount() > 0, "Vesting amount must be larger than 0");
     }
 
@@ -104,10 +108,7 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
         internal
         override
     {
-        (uint256 amount) = abi.decode(
-            data,
-            (uint256)
-        );
+        uint256 amount = abi.decode(data, (uint256));
         bytes memory executeData = abi.encodeWithSelector(
             IERC20.transfer.selector,
             toAddress,
@@ -124,8 +125,11 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
         // Check if cliff period passed
         require(isCliffPassed(), "Cliff Period not passed");
 
-        // Check current relesable amount
-        require(amount <= currentReleasableAmount(), "Exceeded current relesable token amount");
+        // Check current releasable amount
+        require(
+            amount <= currentReleasableAmount(),
+            "Exceeded current releasable token amount"
+        );
 
         releasedTokenAmount = _releasedTokenAmount + amount;
 
@@ -139,39 +143,37 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
     }
 
     /**
-    * @dev Returns the remaining token amount of the overall vesting
-    */
+     * @dev Returns the remaining token amount of the overall vesting
+     */
     function remainingAmount() public view returns (uint256) {
         return totalAmount() - releasedAmount();
     }
 
     /**
-    * @dev Returns the total amount of tokens that will be released over the entire vesting period.
-    */
+     * @dev Returns the total amount of tokens that will be released over the entire vesting period.
+     */
     function totalAmount() public view returns (uint256) {
-        return initTokenAmount + cycleTokenAmount * cycleCount;   
+        return initTokenAmount + cycleTokenAmount * cycleCount;
     }
 
     /**
-    * @dev Returns the amount of tokens that has been released to the beneficial address.
-    */
+     * @dev Returns the amount of tokens that has been released to the beneficial address.
+     */
     function releasedAmount() public view returns (uint256) {
-        return releasedTokenAmount;   
+        return releasedTokenAmount;
     }
 
     /**
-    * @dev Returns whether the cliff period has passed
-    */
+     * @dev Returns whether the cliff period has passed
+     */
     function isCliffPassed() public view returns (bool) {
-        return block.timestamp > CommonBudgetApproval.startTime() + cliffPeriod;
+        return block.timestamp > startTime() + cliffPeriod;
     }
 
-
     /**
-    * @dev Returns the current relesable token amount of the vesting
-    */
+     * @dev Returns the current releasable token amount of the vesting
+     */
     function currentReleasableAmount() public view returns (uint256) {
-
         if (!isCliffPassed()) {
             return 0;
         }
@@ -180,10 +182,14 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
             return initTokenAmount - releasedTokenAmount;
         }
 
-        uint256 cyclePassed = (block.timestamp - CommonBudgetApproval.startTime()) / cyclePeriod;
+        uint256 cyclePassed = (block.timestamp - startTime()) / cyclePeriod;
         if (cyclePassed > cycleCount) {
             cyclePassed = cycleCount;
         }
-        return initTokenAmount + cyclePassed * cycleTokenAmount - releasedTokenAmount;
+        return
+            initTokenAmount +
+            cyclePassed *
+            cycleTokenAmount -
+            releasedTokenAmount;
     }
 }

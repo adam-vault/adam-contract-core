@@ -1,5 +1,5 @@
 const chai = require('chai');
-const { ethers, upgrades, network } = require('hardhat');
+const { ethers, network } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 
 const { expect } = chai;
@@ -9,8 +9,8 @@ chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApproval.js', async function () {
-  let creator, executor, receiver;
+describe.only('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApproval.js', async function () {
+  let executor, receiver;
   let mockToken, team, executee;
   let executeeAsSigner, VestingERC20BudgetApproval, ERC1967Proxy, vestingErc20BAImpl;
 
@@ -53,7 +53,7 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
   }
 
   beforeEach(async function () {
-    [creator, executor, receiver] = await ethers.getSigners();
+    [executor, receiver] = await ethers.getSigners();
 
     team = await smock.fake('Team');
     executee = await smock.fake('MockBudgetApprovalExecutee');
@@ -89,7 +89,7 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
         initTokenAmount: ethers.BigNumber.from(100),
       };
     };
-    it('initialized with normal params succesfully', async () => {
+    it('initialized with normal params successfully', async () => {
       const contract = await ERC1967Proxy.deploy(
         vestingErc20BAImpl.address,
         VestingERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
@@ -348,13 +348,13 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
                     .to.be.revertedWith('Cliff Period not passed');
                 });
               } else {
-                it('throws if request amount larger than current relesable amount', async function () {
+                it('throws if request amount larger than current releasable amount', async function () {
                   await expect(vestingERC20BA.connect(executor).createTransaction(
                     [encodeTxData(expectedResult.currentReleasableAmount + 1)], Math.round(Date.now() / 1000) + 86400, true, 'comment'))
-                    .to.be.revertedWith('Exceeded current relesable token amount');
+                    .to.be.revertedWith('Exceeded current releasable token amount');
                 });
                 if (expectedResult.currentReleasableAmount > 0) {
-                  it('passes if cliff period passed and request amount less than current relesable amount', async function () {
+                  it('passes if cliff period passed and request amount less than current releasable amount', async function () {
                     await expect(vestingERC20BA.connect(executor).createTransaction(
                       [encodeTxData(expectedResult.currentReleasableAmount - 1)], Math.round(Date.now() / 1000) + 86400, true, 'comment'))
                       .to.not.be.reverted;
@@ -364,7 +364,7 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
                       encodeTransferData(receiver.address, expectedResult.currentReleasableAmount - 1),
                       BigNumber.from('0'));
                   });
-                  it('passes if cliff period passed and request amount equal than current relesable amount', async function () {
+                  it('passes if cliff period passed and request amount equal than current releasable amount', async function () {
                     await expect(vestingERC20BA.connect(executor).createTransaction(
                       [encodeTxData(expectedResult.currentReleasableAmount)], Math.round(Date.now() / 1000) + 86400, true, 'comment'))
                       .to.not.be.reverted;
