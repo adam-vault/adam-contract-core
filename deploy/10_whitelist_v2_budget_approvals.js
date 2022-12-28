@@ -5,6 +5,7 @@ const toBeAddBudgetApprovals = [
   { name: 'TransferERC721BudgetApprovalV2', contract: 'TransferERC721BudgetApproval' },
   { name: 'TransferERC20BudgetApprovalV2', contract: 'TransferERC20BudgetApproval' },
   { name: 'DepositRewardBudgetApproval', contract: 'DepositRewardBudgetApproval' },
+  { name: 'VestingERC20BudgetApproval', contract: 'VestingERC20BudgetApproval' },
 ];
 
 const toBeRemoveBudgetApprovals = [
