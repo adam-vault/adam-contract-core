@@ -4,16 +4,12 @@ on:
       GIT_REF:
         required: true
         type: string
-      DEPLOY_ENV:
-        required: true
-        type: string
     secrets:
       GH_PAT:
         required: true
 
 env:
   GIT_REF: ${{ inputs.GIT_REF }}
-  DEPLOY_ENV: ${{ inputs.DEPLOY_ENV }}
 
 jobs:
   sync-centralized-backend-repo:
@@ -39,11 +35,6 @@ jobs:
           ${{ runner.temp }}/deployment/abis/machine/Adam.json \
             ./abis
 
-      - name: Replace Adam Address
-        run: | 
-          echo $(jq -s '.[0].adamAddress = .[1].addresses.adam | .[0]' \
-            config/${{ env.DEPLOY_ENV }}.json ${{ runner.temp }}/deployment/deploy-results/results.json) > config/${{ env.DEPLOY_ENV }}.json
-      
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
