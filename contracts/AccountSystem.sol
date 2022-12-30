@@ -4,9 +4,10 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "./base/PriceGateway.sol";
+import "./lib/Concat.sol";
 
 import "./interface/IDao.sol";
-import "./interface/PriceGateway.sol";
+import "./interface/IPriceGateway.sol";
 
 /// @title Dao Account System
 /// @notice This contract helps managing price gateway and allow set price by govern
@@ -15,34 +16,37 @@ import "./interface/PriceGateway.sol";
 /// @dev AccountSystem implemented price gateway since it will handle set price by govern
 
 contract AccountSystem is Initializable, UUPSUpgradeable {
-
+    using Concat for string;
     IDao public dao;
 
     mapping(address => bool) public priceGateways;
-    mapping(address => mapping(address => address)) public tokenPairPriceGatewayMap;
+    mapping(address => mapping(address => address))
+        public tokenPairPriceGatewayMap;
 
     event AddPriceGateway(address priceGateway);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    function initialize(
-        address owner,
-        address[] memory priceGateways,
-    )
-        public initializer
+    function initialize(address owner, address[] memory _priceGateways)
+        public
+        initializer
     {
         dao = IDao(payable(owner));
-        for (uint256 i = 0; i < priceGateways.length; i++) {
-            addPriceGateway(priceGateways[i]);
+        for (uint256 i = 0; i < _priceGateways.length; i++) {
+            addPriceGateway(_priceGateways[i]);
         }
     }
 
     /// @notice Add the price gateway to whitelist
     /// @dev This function must be called by govern, will logic occur in internal function
     /// @param priceGateway price Gateway address that want to whitelist
-     function addPriceGateway(address priceGateway) public onlyGovern("General") {
+    function addPriceGateway(address priceGateway)
+        public
+        onlyGovern("General")
+    {
         _addPriceGateway(priceGateway);
     }
 
@@ -50,8 +54,11 @@ contract AccountSystem is Initializable, UUPSUpgradeable {
     /// @dev Same price gateway cannot add to whitelist twice
     /// @param priceGateway price Gateway address that want to whitelist
     function _addPriceGateway(address priceGateway) internal {
-        require(priceGateways[priceGateways] == address(0), 'Price Gateway Already whitelisted');
-        priceGateways[priceGateways] = true;
+        require(
+            !priceGateways[priceGateway],
+            "Price Gateway Already whitelisted"
+        );
+        priceGateways[priceGateway] = true;
 
         emit AddPriceGateway(priceGateway);
     }
@@ -61,8 +68,12 @@ contract AccountSystem is Initializable, UUPSUpgradeable {
     /// @param _assets Asset List that supported by price gateway
     /// @param _bases Base token List that supported by price gateway
     /// @param priceGateway Price gateway address
-    function setTokenPairPriceGatewayMap(address[] calldata _assets, address[] calldata _bases,address priceGateway) public onlyGovern("General") {
-        _settokenPairPriceGatewayMap(_assets,_bases,priceGateway );
+    function setTokenPairPriceGatewayMap(
+        address[] calldata _assets,
+        address[] calldata _bases,
+        address priceGateway
+    ) public onlyGovern("General") {
+        _setTokenPairPriceGatewayMap(_assets, _bases, priceGateway);
     }
 
     /// @notice Internal function that set which price gateway will handle which pair of price
@@ -70,35 +81,72 @@ contract AccountSystem is Initializable, UUPSUpgradeable {
     /// @param _assets Asset address List that supported by price gateway
     /// @param _bases Base token address List that supported by price gateway
     /// @param priceGateway Price gateway address
-    function _setTokenPairPriceGatewayMap(address[] calldata _assets, address[] calldata _bases,address priceGateway) internal {
-        require(priceGateways[priceGateway] , 'PriceGateway Not whitelisted');
+    function _setTokenPairPriceGatewayMap(
+        address[] calldata _assets,
+        address[] calldata _bases,
+        address priceGateway
+    ) internal {
+        require(priceGateways[priceGateway], "PriceGateway Not whitelisted");
         for (uint256 i = 0; i < _assets.length; i++) {
             for (uint256 j = 0; j < _bases.length; i++) {
-                require(IPriceGateway(_priceGateway).isSupportedPair(asset, base), 'Price Pair not supported by price gateway');
+                require(
+                    IPriceGateway(priceGateway).isSupportedPair(
+                        _assets[i],
+                        _bases[j]
+                    ),
+                    "Price Pair not supported by price gateway"
+                );
+
                 tokenPairPriceGatewayMap[_assets[i]][_bases[i]] = priceGateway;
             }
         }
     }
 
-    /// @notice Provide Asset Price 
+    /// @notice Provide Asset Price
     /// @dev accept ETH / USD as Asset / Base Token
     /// @param asset Asset token address
     /// @param base Base token address
-    /// @param amount Asset Amount in term of Asset decimal  
-     function assetPrice(address asset, address base, uint256 amount) public {
+    /// @param amount Asset Amount in term of Asset decimal
+    function assetPrice(
+        address asset,
+        address base,
+        uint256 amount
+    ) public returns (uint256) {
         address priceGateWay = tokenPairPriceGatewayMap[asset][base];
-        require(priceGateWay != address(0), 'Not Supported Price Pair');
-        return IPriceGateway(priceGateWay).assetPrice(asset, base);
+        require(priceGateWay != address(0), "Not Supported Price Pair");
+        return IPriceGateway(priceGateWay).assetPrice(asset, base, amount);
     }
 
-    /// @notice Check the token pair is support or not 
-    /// @dev This function not really check in gateway, 
+    /// @notice Check the token pair is support or not
+    /// @dev This function not really check in gateway,
     /// @dev since the checking will be done when setting tokenPairPriceGatewayMap
     /// @param asset Asset token address
     /// @param base Base token address
     /// @return Bool Result of the checking
-    function isSupportedPair(address asset, address base) public {
+    function isSupportedPair(address asset, address base)
+        public
+        view
+        returns (bool)
+    {
         return tokenPairPriceGatewayMap[asset][base] != address(0);
     }
 
+    modifier onlyGovern(string memory category) {
+        IDao _dao = dao;
+        require(
+            (_dao.byPassGovern(msg.sender)) ||
+                msg.sender == _dao.govern(category),
+            string("Dao: only Govern").concat(category)
+        );
+        _;
+    }
+
+    function _authorizeUpgrade(address)
+        internal
+        view
+        override
+        onlyGovern("General")
+    {}
+
+    uint256[50] private __gap;
 }
