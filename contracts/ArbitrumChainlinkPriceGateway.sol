@@ -42,26 +42,35 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
         address base,
         uint256 amount
     ) public virtual override returns (uint256) {
+        asset = asset == _WETH9() ? Denominations.ETH : asset;
+        base = base == _WETH9() ? Denominations.ETH : base;
+        // Feed Registry doesn't provide any WETH Price Feed, redirect to ETH case here
+
         if (asset == base) return amount;
 
-        if (base == Denominations.ETH || base == _WETH9()) {
-            return assetEthPrice(asset, amount);
+        if (base == Denominations.USD) {
+            return assetUSDPrice(asset, amount);
         }
 
-        if (asset == Denominations.ETH || asset == _WETH9()) {
-            return ethAssetPrice(base, amount);
+        if (asset == Denominations.USD) {
+            return usdAssetPrice(base, amount);
         }
 
         return derivedAssetPrice(asset, base, amount);
     }
 
-    function assetEthPrice(address asset, uint256 amount)
-        public
+    /// @notice Get Asset Price in Term of USD
+    /// @dev Get the rate in Chainlink and scale the Price to decimal 8
+    /// @param asset the asset token address, support ETH , WETH and other ERC20
+    /// @param amount Asset Amount in term of asset's decimal
+    /// @return uint256 the Asset Price in term of USD with hardcoded decimal 8
+    function assetUSDPrice(address asset, uint256 amount)
+        internal
         view
         virtual
         returns (uint256)
     {
-        if (asset == Denominations.ETH || asset == _WETH9()) return amount;
+        if (asset == Denominations.USD) return amount;
 
         (
             uint80 roundID,
@@ -71,10 +80,10 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
             uint80 answeredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 asset,
-                Denominations.ETH
+                Denominations.USD
             );
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(asset, Denominations.ETH);
+            .decimals(asset, Denominations.USD);
 
         require(answeredInRound >= roundID, "Stale price in Chainlink");
         require(
@@ -85,10 +94,11 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
         price = scalePrice(
             price,
             priceDecimals,
-            18 /* ETH decimals */
+            8 /* USD decimals */
         );
 
         if (price > 0) {
+            // return price with decimal = price Decimal (8) + amount decimal (Asset decimal) - Asset decimal = price decimal(8)
             return
                 (uint256(price) * amount) /
                 10**IERC20Metadata(asset).decimals();
@@ -97,13 +107,18 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
         return 0;
     }
 
-    function ethAssetPrice(address asset, uint256 ethAmount)
+    /// @notice Get USD Price in term of Asset
+    /// @dev Get the rate in Chainlink and scale the Price to asset decimal
+    /// @param asset the asset token address, support ETH , WETH and other ERC20, used as base token address
+    /// @param usdAmount Usd Amount with 8 decimal (arbitrum)
+    /// @return uint256 the price by using asset as base with assets decimal
+    function usdAssetPrice(address asset, uint256 usdAmount)
         public
         view
         virtual
         returns (uint256)
     {
-        if (asset == Denominations.ETH || asset == _WETH9()) return ethAmount;
+        if (asset == Denominations.USD) return usdAmount;
 
         (
             uint80 roundID,
@@ -113,10 +128,10 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
             uint80 answeredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 asset,
-                Denominations.ETH
+                Denominations.USD
             );
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(asset, Denominations.ETH);
+            .decimals(asset, Denominations.USD);
 
         require(answeredInRound >= roundID, "Stale price in Chainlink");
         require(
@@ -127,11 +142,12 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
         price = scalePrice(
             price,
             priceDecimals,
-            18 /* ETH decimals */
+            8 /* USD decimals */
         );
         if (price > 0) {
+            // return price with decimal = 8 + asset Decimal - price Decimal (8) = asset Decimal
             return
-                (ethAmount * (10**IERC20Metadata(asset).decimals())) /
+                (usdAmount * (10**IERC20Metadata(asset).decimals())) /
                 uint256(price);
         }
 
@@ -180,7 +196,7 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
             uint80 _baseAnsweredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 _base,
-                Denominations.ETH
+                Denominations.USD
             );
 
         require(
@@ -193,7 +209,7 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
         );
 
         uint8 baseDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(_base, Denominations.ETH);
+            .decimals(_base, Denominations.USD);
         basePrice = scalePrice(basePrice, baseDecimals, _decimals);
         (
             uint80 _quoteRoundID,
@@ -203,7 +219,7 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
             uint80 _quoteAnsweredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 _quote,
-                Denominations.ETH
+                Denominations.USD
             );
         require(
             _quoteAnsweredInRound >= _quoteRoundID,
@@ -215,7 +231,7 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
         );
 
         uint8 quoteDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(_quote, Denominations.ETH);
+            .decimals(_quote, Denominations.USD);
         quotePrice = scalePrice(quotePrice, quoteDecimals, _decimals);
 
         return (basePrice * decimals) / quotePrice;
@@ -235,11 +251,17 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
     }
 
     function canResolvePrice(address asset) internal view returns (bool) {
-        if (asset == Denominations.ETH || asset == _WETH9()) return true;
+        if (asset == Denominations.USD) return true;
+
+        if (asset == _WETH9()) {
+            // Feed Registry doesn't provide any WETH Price Feed, redirect to ETH case here
+            asset = Denominations.ETH;
+        }
+
         try
             FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(
                 asset,
-                Denominations.ETH
+                Denominations.USD
             )
         {
             return true;
@@ -250,6 +272,7 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
 
     function assetDecimals(address asset) public view virtual returns (uint8) {
         if (asset == Denominations.ETH) return 18;
+        if (asset == Denominations.USD) return 8;
         try IERC20Metadata(asset).decimals() returns (uint8 _decimals) {
             return _decimals;
         } catch {
@@ -260,4 +283,6 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
     function _WETH9() internal pure returns (address) {
         return Constant.WETH_ADDRESS;
     }
+
+    uint256[50] private __gap;
 }
