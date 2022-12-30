@@ -7,6 +7,7 @@ const {
   getCreateTransferLiquidErc20TokenBAParams,
   getCreateTransferERC721BAParams,
   getCreateUniswapBAParams,
+  getCreateVestingERC20BAParams,
   getCreateBasicBudgetApprovalParams,
 } = require('../utils/paramsStruct');
 
@@ -64,6 +65,16 @@ const questions = {
     { type: 'input', name: 'team', message: 'Team address?', default: ethers.constants.AddressZero },
     { type: 'input', name: 'toTeamIds', message: 'Team Ids? (Comma sep)' },
   ],
+  VestingERC20BudgetApproval: [
+    // cliffPeriod: 0, cyclePeriod: 86400 * 30, cycleCount: 24, cycleTokenAmount: 20, initTokenAmount: 0
+    { type: 'input', name: 'token', message: 'Token to be vested (should be ERC20)', default: '0xc944b73fba33a773a4a07340333a3184a70af1ae' },
+    { type: 'input', name: 'toAddress', message: 'The beneficial address' },
+    { type: 'input', name: 'cliffPeriod', message: 'Period of Cliff', default: 60 },
+    { type: 'input', name: 'cyclePeriod', message: 'Period per cycle', default: 300 },
+    { type: 'input', name: 'cycleCount', message: 'Number of periods', default: 12 },
+    { type: 'input', name: 'cycleTokenAmount', message: 'Vesting Amount in each cycle', default: 10000 },
+    { type: 'input', name: 'initTokenAmount', message: 'Init Token Amount before Vesting ', default: 5000 },
+  ],
   CreateArbitrumDaoBudgetApproval: [
     { type: 'input', name: 'text', message: 'Text', default: 'Create Arb Dao' },
     { type: 'input', name: 'transactionType', message: 'Transaction Type', default: 'others' },
@@ -81,6 +92,7 @@ const encodeFn = {
   TransferLiquidERC20BudgetApproval: getCreateTransferLiquidErc20TokenBAParams,
   TransferERC721BudgetApproval: getCreateTransferERC721BAParams,
   UniswapLiquidBudgetApproval: getCreateUniswapBAParams,
+  VestingERC20BudgetApproval: getCreateVestingERC20BAParams,
   CreateArbitrumDaoBudgetApproval: getCreateBasicBudgetApprovalParams,
   GMXAnyTokenBudgetApproval: getCreateBasicBudgetApprovalParams,
 
@@ -94,6 +106,7 @@ const BA_TYPES = [
   'TransferToArbitrumERC20BudgetApproval',
   'UniswapAnyTokenBudgetApproval',
   'UniswapLiquidBudgetApproval',
+  'VestingERC20BudgetApproval',
   'GMXAnyTokenBudgetApproval',
   'CreateArbitrumDaoBudgetApproval',
 ];
@@ -126,7 +139,7 @@ async function main () {
       { type: 'input', name: 'minApproval', message: 'Min Approval needed?', default: 0 },
       { type: 'input', name: 'approvers', message: 'Approvers? (comma separated)', when: ({ minApproval }) => minApproval },
       { type: 'number', name: 'approverTeamId', message: 'Approver Team ID?', default: 0, when: ({ minApproval }) => minApproval },
-      { type: 'number', name: 'startTime', message: 'Start time?', default: 0 },
+      { type: 'number', name: 'startTime', message: 'Start time?', default: Math.round(new Date().getTime() / 1000) },
       { type: 'number', name: 'endTime', message: 'End time?', default: ethers.constants.MaxUint256 },
       { type: 'confirm', name: 'allowUnlimitedUsageCount', message: 'Allow Unlimited Usage Count?' },
       { type: 'number', name: 'usageCount', message: 'Usage Count?', default: 3, when: ({ allowUnlimitedUsageCount }) => !allowUnlimitedUsageCount },

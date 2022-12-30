@@ -243,6 +243,54 @@ function getCreateTransferERC721BAParams ({
   });
 }
 
+function getCreateVestingERC20BAParams ({
+  executor,
+  executorTeamId,
+  approvers,
+  approverTeamId,
+  minApproval,
+  text = 'Vesting ERC20 Token',
+  transactionType = 'vesting',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  team,
+  token,
+  toAddress,
+  cliffPeriod,
+  cyclePeriod,
+  cycleCount,
+  cycleTokenAmount,
+  initTokenAmount,
+}) {
+  return Object.entries({
+    params: getCreateCommonBudgetApprovalParams({
+      executor,
+      executorTeamId,
+      approvers,
+      approverTeamId,
+      minApproval,
+      text,
+      transactionType,
+      startTime,
+      endTime,
+      allowUnlimitedUsageCount,
+      usageCount,
+      team,
+    }),
+    token,
+    toAddress,
+    cliffPeriod,
+    cyclePeriod,
+    cycleCount,
+    cycleTokenAmount,
+    initTokenAmount,
+  }).map(([key, value]) => {
+    return value;
+  });
+}
+
 function getCreateCommonBudgetApprovalParams ({
   executor = ethers.constants.AddressZero,
   executorTeamId = 0,
@@ -274,7 +322,6 @@ function getCreateCommonBudgetApprovalParams ({
     return value;
   });
 }
-
 
 function getCreateBasicBudgetApprovalParams ({
   executor,
@@ -311,5 +358,6 @@ module.exports = {
   getCreateTransferLiquidErc20TokenBAParams,
   getCreateUniswapBAParams,
   getCreateTransferERC721BAParams,
+  getCreateVestingERC20BAParams,
   getCreateBasicBudgetApprovalParams,
 };

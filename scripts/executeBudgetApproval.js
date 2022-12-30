@@ -9,6 +9,7 @@ const BA_TYPES_MAPPING = {
   'Transfer Liquid ERC20 Budget Approval': 'TransferLiquidERC20BudgetApproval',
   'Uniswap Any Token Budget Approval': 'UniswapAnyTokenBudgetApproval',
   'Uniswap Liquid Budget Approval': 'UniswapLiquidBudgetApproval',
+  'Vesting ERC20 Budget Approval': 'VestingERC20BudgetApproval',
 };
 
 async function main () {

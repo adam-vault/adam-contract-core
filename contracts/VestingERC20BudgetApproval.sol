@@ -51,7 +51,7 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
     // Vesting Amount in each cycle
     uint256 public cycleTokenAmount;
 
-    // Token Amount after cliff
+    // Init Token Amount before Vesting
     uint256 public initTokenAmount;
 
     // Amount of tokens released
