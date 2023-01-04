@@ -46,19 +46,19 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
         .to.emit(adam, 'CreateDao');
     });
 
-    it('produces upgradable dao', async function () {
-      const tx1 = await createDao();
-      const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
+    // it('produces upgradable dao', async function () {
+    //   const tx1 = await createDao();
+    //   const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
-      const MockDao = await ethers.getContractFactory('MockDao');
-      const mockDao = await MockDao.deploy();
-      await mockDao.deployed();
-      const dao = await ethers.getContractAt('Dao', daoAddr);
-      await dao.upgradeTo(mockDao.address);
-      const daoUpgraded = await ethers.getContractAt('MockDao', daoAddr);
+    //   const MockDao = await ethers.getContractFactory('MockDao');
+    //   const mockDao = await MockDao.deploy();
+    //   await mockDao.deployed();
+    //   const dao = await ethers.getContractAt('Dao', daoAddr);
+    //   await dao.upgradeTo(mockDao.address);
+    //   const daoUpgraded = await ethers.getContractAt('MockDao', daoAddr);
 
-      expect(await daoUpgraded.v2()).to.equal(true);
-    });
+    //   expect(await daoUpgraded.v2()).to.equal(true);
+    // });
 
     it('creates successfully when set 0x0 as admission token', async function () {
       await expect(adam.createDao(

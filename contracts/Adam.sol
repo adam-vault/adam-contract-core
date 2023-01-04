@@ -11,6 +11,11 @@ import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
 import "./interface/IGovernFactory.sol";
+import "./base/DaoBeaconProxy.sol";
+import "./DaoBeacon.sol";
+
+import "./base/DaoChildBeaconProxy.sol";
+import "./lib/Constant.sol";
 
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
@@ -32,9 +37,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     address public governFactory;
     address public team;
-
+    
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
+
+    address public daoBeacon;
 
     event CreateDao(address indexed dao, string name, string description, address creator, address referer);
     event WhitelistBudgetApproval(address budgetApproval);
@@ -100,9 +107,9 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     function createDao(CreateDaoParams memory params, bytes[] memory data) external returns (address) {
-        ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
-        ERC1967Proxy _membership = new ERC1967Proxy(membershipImplementation, "");
-        ERC1967Proxy _liquidPool = new ERC1967Proxy(liquidPoolImplementation, "");
+        DaoBeaconProxy _dao = new DaoBeaconProxy(daoBeacon, "");
+        DaoChildBeaconProxy _membership = new DaoChildBeaconProxy(address(_dao), Constant.BEACON_NAME_MEMBERSHIP, "");
+        DaoChildBeaconProxy _liquidPool = new DaoChildBeaconProxy(address(_dao), Constant.BEACON_NAME_LIQUID_POOL, "");
 
         daos[address(_dao)] = true;
 
@@ -154,6 +161,9 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
        )));
     }
 
+    function setDaoBeacon(address _daoBeacon) public onlyOwner {
+        daoBeacon = _daoBeacon;
+    }
     function upgradeImplementations(
         address _daoImplementation,
         address _membershipImplementation,
@@ -168,29 +178,16 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         require(_memberTokenImplementation != address(0), "memberTokenImpl is null");
         require(IGovernFactory(governFactory).governImplementation() == _governImplementation, "governImpl not match");
 
-        daoImplementation = _daoImplementation;
-        membershipImplementation = _membershipImplementation;
-        liquidPoolImplementation = _liquidPoolImplementation;
-        memberTokenImplementation = _memberTokenImplementation;
+        DaoBeacon.ContractImpl[] memory _i = new DaoBeacon.ContractImpl[](5);
+        _i[0] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_DAO, _daoImplementation));
+        _i[1] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_MEMBERSHIP, _membershipImplementation));
+        _i[2] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_LIQUID_POOL, _liquidPoolImplementation));
+        _i[3] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_MEMBER_TOKEN, _memberTokenImplementation));
+        _i[4] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_GOVERN, _governImplementation));
 
-        uint256 versionId = hashVersion(
-            _daoImplementation,
-            _membershipImplementation,
-            _liquidPoolImplementation,
-            _memberTokenImplementation,
-            _governImplementation
-        );
+        DaoBeacon db = new DaoBeacon(description, _i);
 
-        emit ImplementationUpgrade(
-            versionId,
-            _daoImplementation,
-            _membershipImplementation,
-            _liquidPoolImplementation,
-            _memberTokenImplementation,
-            _governImplementation,
-            _getImplementation(),
-            description
-        );
+        daoBeacon = address(db);
     }
 
     function _authorizeUpgrade(address) internal view override onlyOwner {}

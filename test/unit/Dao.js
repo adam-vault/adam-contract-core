@@ -12,6 +12,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
   let creator, member, mockGovern;
   let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam;
   let tokenA, tokenC721, tokenD1155;
+  let mockGovernImp;
 
   beforeEach(async function () {
     [creator, member, mockGovern] = await ethers.getSigners();
@@ -20,6 +21,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
 
     mockAdam = await smock.fake('Adam');
     mockMembership = await (await smock.mock('Membership')).deploy();
+    mockGovernImp = await (await smock.mock('Govern')).deploy();
     const mockLiquidPool = await smock.fake('LiquidPool');
     mockGovernFactory = await smock.fake('GovernFactory');
     mockTeam = await smock.fake('Team');
@@ -33,15 +35,24 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     mockMembership.totalSupply.returns(1);
     mockMembership.isMember.returns(true);
 
-    mockGovernFactory.createGovern.returns();
 
     mockMemberToken.mint.returns();
     mockMemberToken.initialize.returns();
 
-    const ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy', { signer: adamAsSigner });
+    const DaoBeaconProxy = await ethers.getContractFactory('DaoBeaconProxy', { signer: adamAsSigner });
     const Dao = await ethers.getContractFactory('Dao', { signer: adamAsSigner });
     const implDao = await Dao.deploy();
-    const proxyDao = await ERC1967Proxy.deploy(implDao.address, '0x');
+
+    const DaoBeacon = await ethers.getContractFactory('DaoBeacon', { signer: adamAsSigner });
+    const beacon = await DaoBeacon.deploy('v1', [
+      [ethers.utils.id('adam.dao'), implDao.address],
+      [ethers.utils.id('adam.dao.membership'), mockMembership.address],
+      [ethers.utils.id('adam.dao.member_token'), mockMemberToken.address],
+      [ethers.utils.id('adam.dao.liquid_pool'), mockLiquidPool.address],
+      [ethers.utils.id('adam.dao.govern'), mockGovernImp.address],
+      [ethers.utils.id('adam.dao.team'), mockTeam.address],
+    ]);
+    const proxyDao = await DaoBeaconProxy.deploy(beacon.address, '0x');
 
     dao = await ethers.getContractAt('Dao', proxyDao.address, adamAsSigner);
     await dao.initialize([
@@ -88,8 +99,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
 
   describe('govern()', function () {
     it('returns address from governFactory.governMap()', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
-      expect(await dao.govern('General')).to.equal(mockGovern.address);
+      expect(await dao.govern('General')).to.be.not.equal(ethers.constants.AddressZero);
     });
   });
 
@@ -155,13 +165,12 @@ describe('Dao.sol - test/unit/Dao.js', function () {
 
   describe('createGovern()', function () {
     it('calls governFactory and create govern', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
-      await dao.connect(mockGovern).createGovern('governA', 1, 2, 3, 0, ethers.constants.AddressZero, 0);
-      await dao.connect(mockGovern).createGovern('governB', 4, 5, 6, 1, ethers.constants.AddressZero, 5);
-      await dao.connect(mockGovern).createGovern('governC', 7, 8, 9, 2, tokenA.address, 6);
-      mockGovernFactory.createGovern.atCall(1).should.be.calledWith('governA', 1, 2, 3, await dao.membership(), 0);
-      mockGovernFactory.createGovern.atCall(2).should.be.calledWith('governB', 4, 5, 6, await dao.memberToken(), 5);
-      mockGovernFactory.createGovern.atCall(3).should.be.calledWith('governC', 7, 8, 9, tokenA.address, 6);
+      const tx = await dao.connect(mockGovern).createGovern('governA', 1, 2, 3, 0, ethers.constants.AddressZero, 0);
+      const tx2 = await dao.connect(mockGovern).createGovern('governB', 4, 5, 6, 1, ethers.constants.AddressZero, 5);
+      const tx3 = await dao.connect(mockGovern).createGovern('governC', 7, 8, 9, 2, tokenA.address, 6);
+      expect(await dao.govern('governA')).to.equal(await findEventArgs(tx, 'CreateGovern', 'govern'));
+      expect(await dao.govern('governB')).to.equal(await findEventArgs(tx2, 'CreateGovern', 'govern'));
+      expect(await dao.govern('governC')).to.equal(await findEventArgs(tx3, 'CreateGovern', 'govern'));
     });
   });
 

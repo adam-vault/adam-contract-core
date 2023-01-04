@@ -171,7 +171,7 @@ interface IDao {
 
     function revokeBudgetApprovals(address[] memory __budgetApprovals) external;
 
-    function setFirstDepositTime(address owner) external;
+    function setFirstDepositTime(address owner, uint256 timestamp) external;
 
     function setLocktime(uint256 _locktime) external;
 

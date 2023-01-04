@@ -2,17 +2,18 @@
 
 pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/draft-ERC721VotesUpgradeable.sol";
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "./interface/IDao.sol";
+import "./interface/ILiquidPool.sol";
 
 import "./lib/Base64.sol";
 import "./lib/ToString.sol";
 import "./lib/Concat.sol";
 
-contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
+contract Membership is Initializable, ERC721VotesUpgradeable {
     using Counters for Counters.Counter;
     using Strings for uint256;
     using ToString for address;
@@ -103,17 +104,22 @@ contract Membership is Initializable, UUPSUpgradeable, ERC721VotesUpgradeable {
         }
     }
 
-    function removeMember(uint256 tokenId) public onlyDao {
+    function quit(uint256 tokenId) public {
         address owner = ownerOf(tokenId);
+        address liquidPool = IDao(dao).liquidPool();
+
+        require(msg.sender == owner, "Permission denied");
+        require(ILiquidPool(payable(liquidPool)).balanceOf(owner) == 0, "LP balance is not zero");
+    
         _burn(tokenId);
         isMember[owner] = false;
         wasMember[owner] = true;
         totalSupply = totalSupply - 1;
 
+        IDao(dao).setFirstDepositTime(owner, 0);
         emit RemoveMember(owner, tokenId);
-    }
 
-    function _authorizeUpgrade(address) internal view override onlyDao {}
+    }
 
     uint256[50] private __gap;
 }
