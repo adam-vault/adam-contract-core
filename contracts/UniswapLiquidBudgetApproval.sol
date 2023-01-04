@@ -62,7 +62,7 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
 
-        __PriceResolver_init(_baseCurrency);
+        __PriceResolver_init(_baseCurrency, IBudgetApprovalExecutee(executee()).accountSystem());
 
     }
 

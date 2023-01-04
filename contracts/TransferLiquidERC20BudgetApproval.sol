@@ -72,7 +72,7 @@ contract TransferLiquidERC20BudgetApproval is
 
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
-        __PriceResolver_init(_baseCurrency);
+        __PriceResolver_init(_baseCurrency, IBudgetApprovalExecutee(executee()).accountSystem());
     }
 
     function executeParams() external pure override returns (string[] memory) {

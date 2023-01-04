@@ -53,10 +53,15 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
         public initializer
     {
         __ERC20_init("LiquidPool", "LP");
-        __PriceResolver_init(_baseCurrency);
         dao = IDao(payable(owner));
+        //__PriceResolver_init(_baseCurrency, dao.accountSystem());
         _addAssets(depositTokens);
-        ___BudgetApprovalExecutee_init(IDao(payable(owner)).team());
+        /*
+        ___BudgetApprovalExecutee_init(
+            IDao(payable(owner)).team(), 
+            IDao(payable(owner)).accountSystem()
+        );
+        */
     }
 
     function assetsShares(address asset, uint256 amount) public view returns (uint256) {
@@ -97,7 +102,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
 
         for (uint256 i = 0; i < _assetsLength; i++) {
             address _asset = assets[i];
-            total += assetEthPrice(_asset,  _assetBalance(_asset));
+            total += assetPrice(_asset, Denominations.ETH, _assetBalance(_asset));
         }
         return total;
     }

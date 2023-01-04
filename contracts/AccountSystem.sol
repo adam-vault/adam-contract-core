@@ -111,7 +111,7 @@ contract AccountSystem is Initializable, UUPSUpgradeable {
         address asset,
         address base,
         uint256 amount
-    ) public returns (uint256) {
+    ) public view returns (uint256) {
         address priceGateWay = tokenPairPriceGatewayMap[asset][base];
         require(priceGateWay != address(0), "Not Supported Price Pair");
         return IPriceGateway(priceGateWay).assetPrice(asset, base, amount);
