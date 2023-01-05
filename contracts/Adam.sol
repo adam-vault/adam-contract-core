@@ -34,59 +34,29 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public membershipImplementation;
     address public liquidPoolImplementation;
     address public memberTokenImplementation;
-
-    address public governFactory;
-    address public team;
     
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
 
+    mapping(address => bool) public daoBeacons;
     address public daoBeacon;
 
     event CreateDao(address indexed dao, string name, string description, address creator, address referer);
     event WhitelistBudgetApproval(address budgetApproval);
     event AbandonBudgetApproval(address budgetApproval);
-    event ImplementationUpgrade(
-        uint256 indexed versionId,
-        address daoImplementation,
-        address membershipImplementation,
-        address liquidPoolImplementation,
-        address memberTokenImplementation,
-        address governImplementation,
-        address adamImplementation,
-        string description
-    );
-    
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
     }
     
-    function initialize(
-        address _daoImplementation,
-        address _membershipImplementation,
-        address _liquidPoolImplementation,
-        address _memberTokenImplementation,
-        address[] calldata _budgetApprovalImplementations,
-        address _governFactory,
-        address _team
-    )
+    function initialize(address _daoBeacon, address[] calldata _budgetApprovalImplementations)
         external initializer
     {
         __Ownable_init();
         whitelistBudgetApprovals(_budgetApprovalImplementations);
-        require(_governFactory != address(0), "governFactory is null");
-        require(_team != address(0), "team is null");
-        governFactory = _governFactory;
-        team = _team;
-
-        upgradeImplementations(
-            _daoImplementation,
-            _membershipImplementation,
-            _liquidPoolImplementation,
-            _memberTokenImplementation,
-            IGovernFactory(governFactory).governImplementation(),
-            "");
+        daoBeacon = _daoBeacon;
+        daoBeacons[_daoBeacon] = true;
     }
 
     function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public onlyOwner {
@@ -110,6 +80,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         DaoBeaconProxy _dao = new DaoBeaconProxy(daoBeacon, "");
         DaoChildBeaconProxy _membership = new DaoChildBeaconProxy(address(_dao), Constant.BEACON_NAME_MEMBERSHIP, "");
         DaoChildBeaconProxy _liquidPool = new DaoChildBeaconProxy(address(_dao), Constant.BEACON_NAME_LIQUID_POOL, "");
+        DaoChildBeaconProxy _team = new DaoChildBeaconProxy(address(_dao), Constant.BEACON_NAME_TEAM, "");
 
         daos[address(_dao)] = true;
 
@@ -128,9 +99,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 msg.sender,
                 address(_membership),
                 address(_liquidPool),
-                address(governFactory),
-                address(team),
-                address(memberTokenImplementation),
+                address(_team),
                 params._name,
                 params._description,
                 params.baseCurrency,
@@ -145,49 +114,10 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return address(_dao);
     }
     
-    function hashVersion(
-        address _daoImplementation,
-        address _membershipImplementation,
-        address _liquidPoolImplementation,
-        address _memberTokenImplementation,
-        address _governImplementation
-    ) public pure returns (uint256) {
-        return uint256(keccak256(abi.encode(
-            _daoImplementation,
-            _membershipImplementation,
-            _liquidPoolImplementation,
-            _memberTokenImplementation,
-            _governImplementation
-       )));
-    }
 
     function setDaoBeacon(address _daoBeacon) public onlyOwner {
         daoBeacon = _daoBeacon;
-    }
-    function upgradeImplementations(
-        address _daoImplementation,
-        address _membershipImplementation,
-        address _liquidPoolImplementation,
-        address _memberTokenImplementation,
-        address _governImplementation,
-        string memory description
-    ) public onlyOwner {
-        require(_daoImplementation != address(0), "daoImpl is null");
-        require(_membershipImplementation != address(0), "membershipImpl is null");
-        require(_liquidPoolImplementation != address(0), "liquidPoolImpl is null");
-        require(_memberTokenImplementation != address(0), "memberTokenImpl is null");
-        require(IGovernFactory(governFactory).governImplementation() == _governImplementation, "governImpl not match");
-
-        DaoBeacon.ContractImpl[] memory _i = new DaoBeacon.ContractImpl[](5);
-        _i[0] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_DAO, _daoImplementation));
-        _i[1] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_MEMBERSHIP, _membershipImplementation));
-        _i[2] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_LIQUID_POOL, _liquidPoolImplementation));
-        _i[3] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_MEMBER_TOKEN, _memberTokenImplementation));
-        _i[4] = (DaoBeacon.ContractImpl(Constant.BEACON_NAME_GOVERN, _governImplementation));
-
-        DaoBeacon db = new DaoBeacon(description, _i);
-
-        daoBeacon = address(db);
+        daoBeacons[_daoBeacon] = true;
     }
 
     function _authorizeUpgrade(address) internal view override onlyOwner {}

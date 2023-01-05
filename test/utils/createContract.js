@@ -46,6 +46,7 @@ const createAdam = async (budgetApprovalAddresses) => {
   const Team = await ethers.getContractFactory('Team', { signer: creator });
 
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
+  const DaoBeacon = await ethers.getContractFactory('DaoBeacon', { signer: creator });
 
   const dao = await Dao.deploy();
   if (!budgetApprovalAddresses) {
@@ -66,14 +67,22 @@ const createAdam = async (budgetApprovalAddresses) => {
 
   const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
   await governFactory.deployed();
+
+  const beacon = await DaoBeacon.deploy(
+    '',
+    [
+      [ethers.utils.id('adam.dao'), dao.address],
+      [ethers.utils.id('adam.dao.membership'), membership.address],
+      [ethers.utils.id('adam.dao.member_token'), memberToken.address],
+      [ethers.utils.id('adam.dao.liquid_pool'), liquidPool.address],
+      [ethers.utils.id('adam.dao.govern'), govern.address],
+      [ethers.utils.id('adam.dao.team'), team.address],
+    ],
+  );
+
   const adam = await upgrades.deployProxy(Adam, [
-    dao.address,
-    membership.address,
-    liquidPool.address,
-    memberToken.address,
-    budgetApprovalAddresses,
-    governFactory.address,
-    team.address,
+    beacon.address,
+    budgetApprovalAddresses
   ], { kind: 'uups' });
 
   await adam.deployed();

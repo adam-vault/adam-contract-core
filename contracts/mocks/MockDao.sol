@@ -8,7 +8,7 @@ contract MockDao is Dao {
         return true;
     }
     function exposedCreateMemberToken(address imple, string calldata name, string calldata symbol, uint amount) public {
-        _createMemberToken(imple, name, symbol);
+        _createMemberToken(name, symbol);
     }
     function exposedMintMemberToken(uint amount) public {
         _mintMemberToken(amount);

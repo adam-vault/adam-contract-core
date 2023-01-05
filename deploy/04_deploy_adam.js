@@ -1,3 +1,4 @@
+const ethers = require('ethers');
 const fileReader = require('../utils/fileReader');
 const { gasFeeConfig } = require('../utils/getGasInfo');
 
@@ -11,7 +12,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const liquidPool = await get('LiquidPool');
   const memberToken = await get('MemberToken');
   const team = await get('Team');
-  const governFactory = await get('GovernFactory');
   const govern = await get('Govern');
 
   const budgetApprovalsAddress = (await Promise.all([
@@ -22,6 +22,21 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     get('UniswapLiquidBudgetApproval'),
   ])).map((deployment) => deployment.address);
 
+  const daoBeacon = await deploy('DaoBeacon', {
+    from: deployer,
+    log: true,
+    args: [
+      'v2',
+      [
+        [ethers.utils.id('adam.dao'), dao.address],
+        [ethers.utils.id('adam.dao.membership'), membership.address],
+        [ethers.utils.id('adam.dao.member_token'), memberToken.address],
+        [ethers.utils.id('adam.dao.liquid_pool'), liquidPool.address],
+        [ethers.utils.id('adam.dao.govern'), govern.address],
+        [ethers.utils.id('adam.dao.team'), team.address],
+      ]
+    ],
+  });
   const adam = await deploy('Adam', {
     from: deployer,
     log: true,
@@ -36,37 +51,12 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         init: {
           methodName: 'initialize',
           args: [
-            dao.address,
-            membership.address,
-            liquidPool.address,
-            memberToken.address,
+            daoBeacon.address,
             budgetApprovalsAddress,
-            governFactory.address,
-            team.address,
           ],
         },
       },
     },
-  });
-
-  const contractAddresses = {
-    adam: adam.address,
-    dao: dao.address,
-    membership: membership.address,
-    governFactory: governFactory.address,
-    govern: govern.address,
-    memberToken: memberToken.address,
-    liquidPool: liquidPool.address,
-    team: team.address,
-  };
-
-  console.log(contractAddresses);
-
-  fileReader.save('deploy-results', 'results.json', {
-    network: deployNetwork.split('-')[0],
-    block_number: adam.receipt.blockNumber,
-    addresses: contractAddresses,
-    initdata_addresses: {},
   });
 };
 

@@ -11,24 +11,24 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     gasLimit: 4000000,
   });
 
-  await deploy('GovernFactory', {
-    from: deployer,
-    log: true,
-    args: [],
-    skipIfAlreadyDeployed: true,
-    gasLimit: 6000000,
-    ...(await gasFeeConfig()),
-    proxy: {
-      proxyContract: 'ERC1967Proxy',
-      proxyArgs: ['{implementation}', '{data}'],
-      execute: {
-        init: {
-          methodName: 'initialize',
-          args: [govern.address],
-        },
-      },
-    },
-  });
+  // await deploy('GovernFactory', {
+  //   from: deployer,
+  //   log: true,
+  //   args: [],
+  //   skipIfAlreadyDeployed: true,
+  //   gasLimit: 6000000,
+  //   ...(await gasFeeConfig()),
+  //   proxy: {
+  //     proxyContract: 'ERC1967Proxy',
+  //     proxyArgs: ['{implementation}', '{data}'],
+  //     execute: {
+  //       init: {
+  //         methodName: 'initialize',
+  //         args: [govern.address],
+  //       },
+  //     },
+  //   },
+  // });
 };
 
 module.exports.tags = [
