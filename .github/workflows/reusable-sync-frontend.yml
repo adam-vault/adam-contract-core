@@ -36,9 +36,6 @@ jobs:
           name: deploy_${{ env.GIT_REF }}
           path: ${{ runner.temp }}/deployment
 
-      - name: Replace SDK ABIs
-        run: cp ${{ runner.temp }}/deployment/abis/human/* ./packages/adam-sdk/src/abis/v2
-
       - name: Setup Ethereum Address as Env Vars
         if: ${{ inputs.NETWORK == 'goerli'}}
         run: |
@@ -76,9 +73,9 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           branch: autosync/contract_deploy_${{ env.GIT_REF }}
-          title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
+          title: Sync ${{ env.GIT_REF }} Contract Addresses
           body: |
-            Syncrhonizing Contract Addresses and ABIs from adam-contract-core
+            Syncrhonizing Contract Addresses from adam-contract-core
             Version: ${{ env.GIT_REF }}
             Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
