@@ -80,7 +80,6 @@ jobs:
     with:
       GIT_REF: ${{ github.ref_name }}
       DEPLOY_ENV: dev
-      NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
 

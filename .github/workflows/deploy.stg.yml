@@ -77,7 +77,6 @@ jobs:
     with:
       GIT_REF: ${{ github.ref_name }}
       DEPLOY_ENV: stg
-      NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
 
