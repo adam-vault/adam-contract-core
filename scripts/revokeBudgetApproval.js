@@ -1,7 +1,6 @@
 const hre = require('hardhat');
-const inquirer = require('inquirer');
-const abiCoder = hre.ethers.utils.defaultAbiCoder;
 const _ = require('lodash');
+const inquirer = require('inquirer');
 
 const BA_TYPES_MAPPING = {
   'Transfer ERC20 Budget Approval': 'TransferERC20BudgetApproval',
@@ -14,35 +13,23 @@ const BA_TYPES_MAPPING = {
 
 async function main () {
   const { get } = hre.deployments;
-
   const adamDeployment = await get('Adam');
   const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);
   const events = await adam.queryFilter(adam.filters.CreateDao());
   const daos = events.map(e => ({ dao: e.args.dao, name: e.args.name }));
 
-  const { daoAddress } = await inquirer
+  const { daoAddress, dest } = await inquirer
     .prompt([
-      {
-        type: 'list',
-        name: 'daoAddress',
-        message: 'Dao?',
-        choices: daos.map(({ dao, name }) => ({
-          name: `${dao} - ${name}`,
-          value: dao,
-        })),
-      }]);
+      { type: 'list', name: 'daoAddress', message: 'Dao?', choices: daos.map(({ dao, name }) => ({ name: `${dao} - ${name}`, value: dao })) },
+      { type: 'list', name: 'dest', message: 'To where?', default: 0, choices: ['Treasury', 'LiquidPool'] },
+    ]);
+
   const dao = await hre.ethers.getContractAt('Dao', daoAddress);
-
-  const lp = await hre.ethers.getContractAt('LiquidPool', await dao.liquidPool());
-
   const createEvents = await dao.queryFilter(dao.filters.CreateBudgetApproval());
   const revokeEvents = await dao.queryFilter(dao.filters.RevokeBudgetApproval());
 
-  const lpCreateEvents = await lp.queryFilter(lp.filters.CreateBudgetApproval());
-  const lpRevokeEvents = await lp.queryFilter(lp.filters.RevokeBudgetApproval());
-
-  const revokedBA = revokeEvents.concat(lpRevokeEvents).map(e => e.args.budgetApproval).concat();
-  const createdBA = createEvents.concat(lpCreateEvents)
+  const revokedBA = revokeEvents.map(e => e.args.budgetApproval);
+  const createdBA = createEvents
     .map(e => e.args.budgetApproval)
     .filter(ba => !revokedBA.includes(ba));
 
@@ -63,34 +50,27 @@ async function main () {
       })),
     },
   ]);
-
   const budgetApproval = await hre.ethers.getContractAt(budgetApprovalOptions.key, budgetApprovalOptions.address);
-  const params = await budgetApproval.executeParams();
-  const answers = await inquirer.prompt(params.map(param => param.split(' ')).map(([pType, pKey]) => ({
-    type: pType === 'bool' ? 'confirm' : 'input',
-    name: pKey,
-    message: pKey,
-  })));
 
-  const transactionData = abiCoder.encode(params, Object.values(answers));
+  let target = await hre.ethers.getContractAt('Dao', daoAddress);
+  if (dest === 'LiquidPool') {
+    target = await hre.ethers.getContractAt('LiquidPool', await target.liquidPool());
+  }
 
-  console.log(answers);
-
-  const { shouldExecute } = await inquirer.prompt([{ type: 'confirm', name: 'shouldExecute', message: 'Execute now?'}]);
-
-  const tx = await budgetApproval.createTransaction(
-    [transactionData],
-    Math.round(Date.now() / 1000) + 86400,
-    shouldExecute,
-    '',
+  const tx1 = await target.revokeBudgetApprovals(
+    [budgetApproval.address],
   );
-  const receipt = await tx.wait();
-  const creationEventLogs = _.filter(receipt.events, { event: 'CreateTransaction' });
-  creationEventLogs.forEach(({ args }) => {
-    console.log(`Transaction created id = ${args.id.toString()}, BA = ${budgetApprovalOptions.type} ${budgetApprovalOptions.address}`);
+  console.log(tx1);
+
+  const receipt1 = await tx1.wait();
+  console.log(receipt1);
+  const RevokeEventLogs1 = _.filter(receipt1.events, { event: 'RevokeBudgetApproval' });
+  console.log(RevokeEventLogs1);
+
+  RevokeEventLogs1.forEach(({ args }) => {
+    console.log('budget approval revoked:', args.budgetApproval);
   });
-  console.log(tx);
-};
+}
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
