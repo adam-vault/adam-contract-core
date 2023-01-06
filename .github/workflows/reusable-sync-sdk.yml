@@ -35,29 +35,15 @@ jobs:
 
       - name: Replace SDK ABIs
         run: cp ${{ runner.temp }}/deployment/abis/human/* ./src/abis/v2
-
-      - name: Setup Address as Env Vars
-        run: |
-          echo "REACT_APP_ADAM_CONTRACT_ADDRESS=$(jq -r .addresses.adam ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
-          && echo "REACT_APP_NETWORK=$(jq -r .network ${{ runner.temp }}/deployment/deploy-results/results.json)" >> $GITHUB_ENV \
-
-      - name: Replace Contract Address
-        uses: mikefarah/yq@master
-        with:
-          cmd: |
-            yq -i '
-              .jobs.call-deploy-site.with.REACT_APP_ADAM_CONTRACT_ADDRESS = strenv(REACT_APP_ADAM_CONTRACT_ADDRESS) |
-              .jobs.call-deploy-site.with.REACT_APP_NETWORK = strenv(REACT_APP_NETWORK)
-            ' .github/workflows/deploy.${{ env.DEPLOY_ENV }}.yml
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GH_PAT }}
           branch: autosync/contract_deploy_${{ env.GIT_REF }}
-          title: Sync ${{ env.GIT_REF }} Contract Addresses and ABIs
+          title: Sync ${{ env.GIT_REF }} Contract ABIs
           body: |
-            Syncrhonizing Contract Addresses and ABIs from adam-contract-core
+            Syncrhonizing Contract ABIs from adam-contract-core
             Version: ${{ env.GIT_REF }}
             Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
