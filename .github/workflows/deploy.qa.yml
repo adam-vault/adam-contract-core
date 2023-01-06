@@ -73,6 +73,17 @@ jobs:
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
 
+  sync-sdk:
+    name: Sync SDK
+    needs: [deploy-contracts,config-network-const]
+    uses: ./.github/workflows/reusable-sync-sdk.yml
+    with:
+      GIT_REF: ${{ github.ref_name }}
+      DEPLOY_ENV: qa
+      NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+
   sync-centralized-backend:
     name: Sync Centralized Backend
     needs: deploy-contracts
