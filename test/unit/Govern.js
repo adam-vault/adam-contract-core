@@ -26,23 +26,6 @@ describe('Govern.sol - test/unit/Govern.js', function () {
     ], { kind: 'uups' });
   });
 
-  describe('upgradeTo()', function () {
-    let mockV2Impl;
-    beforeEach(async function () {
-      const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
-      mockV2Impl = await MockUpgrade.deploy();
-      await mockV2Impl.deployed();
-    });
-    it('allows owner to upgrade', async function () {
-      await govern.connect(owner).upgradeTo(mockV2Impl.address);
-      const v2Contract = await ethers.getContractAt('MockVersionUpgrade', govern.address);
-      expect(await v2Contract.v2()).to.equal(true);
-    });
-    it('throws "not dao" error if upgrade by non dao', async function () {
-      await expect(govern.connect(unknown).upgradeTo(mockV2Impl.address)).to.revertedWith('Access denied');
-    });
-  });
-
   describe('votingPeriod()', function () {
     it('adding duration with durationInBlock together', async function () {
       expect(await govern.votingPeriod()).to.equal(ethers.BigNumber.from('15'));

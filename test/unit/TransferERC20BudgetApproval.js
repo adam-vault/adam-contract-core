@@ -27,7 +27,6 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
       params.endTime || Math.round(Date.now() / 1000) + 86400,
       params.allowUnlimitedUsageCount || true,
       params.usageCount || 0,
-      params.team || team.address,
     ],
     params.allowAllToAddresses !== undefined ? params.allowAllToAddresses : true,
     params.toAddresses || [],
@@ -59,6 +58,8 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
 
     team = await smock.fake('Team');
     executee = await smock.fake('MockBudgetApprovalExecutee');
+    executee.team.returns(team.address);
+
     mockToken = await smock.fake('ERC20');
     unknownToken = await smock.fake('ERC20');
 

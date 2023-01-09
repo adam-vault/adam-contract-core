@@ -23,7 +23,6 @@ function getCreateTransferERC20BAParams ({
   token = ethers.constants.AddressZero,
   allowAnyAmount,
   totalAmount = 0,
-  team,
   toTeamIds = [],
 }) {
   return Object.entries({
@@ -39,7 +38,6 @@ function getCreateTransferERC20BAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
-      team,
     }),
     allowAllAddresses: allowAllAddresses ?? toAddresses.length === 0,
     toAddresses,
@@ -117,7 +115,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   allowAnyAmount,
   totalAmount = 0,
   baseCurrency = ETH,
-  team,
   toTeamIds = [],
 }) {
   return Object.entries({
@@ -133,7 +130,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
-      team,
     }),
     allowAllAddresses: allowAllAddresses ?? toAddresses.length === 0,
     toAddresses,
@@ -166,7 +162,6 @@ function getCreateUniswapBAParams ({
   totalAmount = 0,
   amountPercentage = 100,
   baseCurrency = ETH,
-  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -181,7 +176,6 @@ function getCreateUniswapBAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
-      team,
     }),
     fromTokens,
     allowAllToTokens: allowAllToTokens ?? toTokens.length === 0,
@@ -213,7 +207,6 @@ function getCreateTransferERC721BAParams ({
   tokens = [],
   allowAnyAmount,
   totalAmount = 0,
-  team,
   toTeamIds = [],
 }) {
   return Object.entries({
@@ -229,7 +222,6 @@ function getCreateTransferERC721BAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
-      team,
     }),
     allowAllAddresses: allowAllAddresses ?? toAddresses.length === 0,
     toAddresses,
@@ -255,7 +247,6 @@ function getCreateCommonBudgetApprovalParams ({
   endTime = constants.MaxUint256,
   allowUnlimitedUsageCount,
   usageCount = 0,
-  team = ethers.constants.AddressZero,
 }) {
   return Object.entries({
     executor,
@@ -269,7 +260,6 @@ function getCreateCommonBudgetApprovalParams ({
     endTime,
     allowUnlimitedUsageCount: allowUnlimitedUsageCount ?? usageCount === 0,
     usageCount,
-    team,
   }).map(([key, value]) => {
     return value;
   });
@@ -288,7 +278,6 @@ function getCreateBasicBudgetApprovalParams ({
   endTime,
   allowUnlimitedUsageCount,
   usageCount,
-  team,
 }) {
   return [getCreateCommonBudgetApprovalParams({
     executor,
@@ -302,7 +291,6 @@ function getCreateBasicBudgetApprovalParams ({
     endTime,
     allowUnlimitedUsageCount,
     usageCount,
-    team,
   })];
 }
 module.exports = {

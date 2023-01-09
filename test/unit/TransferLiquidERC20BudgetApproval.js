@@ -2,6 +2,7 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
+const { smock } = require('@defi-wonderland/smock');
 
 const {
   ADDRESS_ETH,
@@ -29,7 +30,9 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
 
     team = await Team.deploy();
     dao = await MockLPDao.deploy();
-    executee = await MockBudgetApprovalExecutee.deploy();
+    executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
+    executee.team.returns(team.address);
+
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
@@ -58,7 +61,6 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
           endTime, // endTime
           false, // allow unlimited usage
           10, // usage count
-          team.address, // team
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
@@ -110,7 +112,6 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
           Math.round(Date.now() / 1000) + 86400, // endTime
           false, // allow unlimited usage
           10, // usage count
-          team.address, // team
         ],
         false, // allow all addresses,
         [receiver.address], // allowed addresses (use when above = false)
@@ -149,7 +150,6 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
           endTime, // endTime
           false, // allow unlimited usage
           10, // usage count
-          team.address, // team
         ],
         false, // allow all addresses
         [receiver.address], // allowed addresses (use when above = false)
@@ -164,7 +164,6 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
         [transferLiquidERC20BAImplementation.address], [initData],
       );
       const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
       budgetApproval = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', budgetApprovalAddress);
     });
 
@@ -341,7 +340,6 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
             0, // endTime
             false, // allow unlimited usage
             10, // usage count
-            team.address, // team
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
@@ -395,7 +393,6 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
             Math.round(Date.now() / 1000) - 86400, // endTime
             false, // allow unlimited usage
             10, // usage count
-            team.address, // team
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)
@@ -450,7 +447,6 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
             0, // endTime
             false, // allow unlimited usage
             1, // usage count
-            team.address, // team
           ],
           false, // allow all addresses,
           [receiver.address], // allowed addresses (use when above = false)

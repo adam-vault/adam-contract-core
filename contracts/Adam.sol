@@ -29,11 +29,6 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         address[] depositTokens;
         address _referer;
     }
-
-    address public daoImplementation;
-    address public membershipImplementation;
-    address public liquidPoolImplementation;
-    address public memberTokenImplementation;
     
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;

@@ -5,6 +5,7 @@ const paramsStruct = require('../../utils/paramsStruct');
 
 const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
 const { getCreateTransferERC721BAParams } = require('../../utils/paramsStruct');
+const { smock } = require('@defi-wonderland/smock');
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
@@ -45,7 +46,6 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
           endTime,
           toAddresses: [receiver.address],
           tokens: [tokenC721.address],
-          team: await adam.team(),
         }),
       );
 
@@ -120,12 +120,13 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
-    const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     TransferERC721BudgetApproval = await ethers.getContractFactory('TransferERC721BudgetApproval', { signer: executor });
     const Team = await ethers.getContractFactory('Team', { signer: executor });
     transferERC721BAImplementation = await TransferERC721BudgetApproval.deploy();
-    executee = await MockBudgetApprovalExecutee.deploy();
+    executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
     team = await Team.deploy();
+
+    executee.team.returns(team.address);
   });
 
   describe('Create Budget Approval', function () {
@@ -147,7 +148,6 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
           startTime,
           endTime,
           usageCount: 10,
-          team: team.address,
         }),
       );
 
@@ -189,7 +189,6 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
           toAddresses: [receiver.address],
           tokens: [tokenC721.address],
           totalAmount: 1,
-          team: team.address,
         }),
       );
 
@@ -215,7 +214,6 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
           toAddresses: [receiver.address],
           tokens: [tokenC721.address],
           totalAmount: 2,
-          team: team.address,
         }),
       );
 
@@ -390,7 +388,6 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
           tokens: [tokenC721.address],
           totalAmount: 1,
           startTime: Math.round(Date.now() / 1000) + 86400,
-          team: team.address,
         }),
       );
 
@@ -431,7 +428,6 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
           tokens: [tokenC721.address],
           totalAmount: 1,
           endTime: Math.round(Date.now() / 1000) - 86400,
-          team: team.address,
         }),
       );
 
@@ -473,7 +469,6 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
           tokens: [tokenC721.address],
           usageCount: 1,
           totalAmount: 1,
-          team: team.address,
         }),
       );
 

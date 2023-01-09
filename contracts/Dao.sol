@@ -59,6 +59,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     address public creator;
     address public adam;
     string public name;
+    string public description;
     uint256 public locktime;
     uint256 public minDepositAmount;
     address public baseCurrency;
@@ -85,6 +86,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     event UpdateLocktime(uint256 locktime);
     event UpdateMinDepositAmount(uint256 amount);
     event UpdateLogoCID(string logoCID);
+    event UpdateDescription(string description);
     event CreateGovern(
         string name,
         address govern,
@@ -112,6 +114,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         plugins[Constant.BEACON_NAME_MEMBERSHIP] = params._membership;
         plugins[Constant.BEACON_NAME_LIQUID_POOL] = params._liquidPool;
         baseCurrency = params.baseCurrency;
+        description = params._description;
 
         _mintMember(params._creator);
         _createMemberToken(params._memberTokenName, params._memberTokenSymbol);
@@ -171,6 +174,11 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     function setMinDepositAmount(uint256 _minDepositAmount) public onlyGovern("General") {
         minDepositAmount = _minDepositAmount;
         emit UpdateMinDepositAmount(_minDepositAmount);
+    }
+
+    function setDescription(string calldata _description) public onlyGovern("General") {
+        description = _description;
+        emit UpdateDescription(_description);
     }
 
     function setLogoCID(string calldata _logoCID) public onlyGovern("General") {
@@ -328,7 +336,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         emit Deposit(msg.sender, msg.value);
       }
     }
-    
+
     function version() public view returns(uint256) {
         return 2;
     }

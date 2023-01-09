@@ -31,11 +31,8 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     await testUtils.address.setBalance(mockAdam.address, ethers.utils.parseEther('1'));
     lpAsSigner = await testUtils.address.impersonate(mockLiquidPool.address);
 
-    mockMembership.createMember.returns();
     mockMembership.totalSupply.returns(1);
     mockMembership.isMember.returns(true);
-
-
     mockMemberToken.mint.returns();
     mockMemberToken.initialize.returns();
 
@@ -55,13 +52,14 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     const proxyDao = await DaoBeaconProxy.deploy(beacon.address, '0x');
 
     dao = await ethers.getContractAt('Dao', proxyDao.address, adamAsSigner);
+    await mockMembership.setVariable('dao', proxyDao.address);
+    await mockMembership.setVariable('maxMemberLimit', 1);
+
     await dao.initialize([
       creator.address,
       mockMembership.address,
       mockLiquidPool.address,
-      mockGovernFactory.address,
       mockTeam.address,
-      mockMemberToken.address,
       'Name',
       'Description',
       '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
@@ -78,12 +76,11 @@ describe('Dao.sol - test/unit/Dao.js', function () {
   describe('setFirstDepositTime()', function () {
     it('sets first deposit time when msg.sender is liquid pool', async function () {
       await testUtils.address.setBalance(lpAsSigner.address, ethers.utils.parseEther('1'));
-      const { blockNumber } = await dao.connect(lpAsSigner).setFirstDepositTime(creator.address);
-      const { timestamp } = await ethers.provider.getBlock(blockNumber);
-      expect(await dao.firstDepositTime(creator.address)).to.equal(timestamp);
+      await dao.connect(lpAsSigner).setFirstDepositTime(creator.address, 10);
+      expect(await dao.firstDepositTime(creator.address)).to.equal(10);
     });
     it('throws "only LP"', async function () {
-      await expect(dao.setFirstDepositTime(creator.address)).to.be.revertedWith('only LP');
+      await expect(dao.setFirstDepositTime(creator.address, 0)).to.be.revertedWith('only LP');
     });
   });
 
@@ -100,12 +97,6 @@ describe('Dao.sol - test/unit/Dao.js', function () {
   describe('govern()', function () {
     it('returns address from governFactory.governMap()', async function () {
       expect(await dao.govern('General')).to.be.not.equal(ethers.constants.AddressZero);
-    });
-  });
-
-  describe('admissionTokensLength()', function () {
-    it('counts admissionTokens', async function () {
-      expect(await dao.admissionTokensLength()).to.equal(ethers.BigNumber.from('3'));
     });
   });
 
@@ -126,16 +117,6 @@ describe('Dao.sol - test/unit/Dao.js', function () {
       mockMembership.totalSupply.returns(1);
       mockMembership.isMember.returns(false);
       expect(await dao.byPassGovern(creator.address)).to.equal(false);
-    });
-  });
-
-  describe('isMember()', function () {
-    it('returns value from membership.isMember()', async function () {
-      mockMembership.isMember.returns(true);
-      expect(await dao.isMember(creator.address)).to.equal(true);
-
-      mockMembership.isMember.returns(false);
-      expect(await dao.isMember(creator.address)).to.equal(false);
     });
   });
 
@@ -189,33 +170,6 @@ describe('Dao.sol - test/unit/Dao.js', function () {
       const tx = await dao.connect(mockGovern).createTeam('title', creator.address, [member.address], 'description');
       const { tokenId: teamId } = await findEventArgs(tx, 'WhitelistTeam');
       expect(await dao.teamWhitelist(teamId)).to.equal(true);
-    });
-  });
-
-  describe('isPassAdmissionToken()', function () {
-    it('returns true when all pass', async function () {
-      await tokenA.mint(member.address, 10);
-      await tokenC721.mint(member.address, 1);
-      await tokenD1155.mint(member.address, 1, 1, 0);
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(true);
-    });
-    it('returns false when lack ERC20', async function () {
-      await tokenC721.mint(member.address, 1);
-      await tokenD1155.mint(member.address, 1, 1, 0);
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
-    });
-    it('returns false when lack ERC721', async function () {
-      await tokenA.mint(member.address, 10);
-      await tokenD1155.mint(member.address, 1, 1, 0);
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
-    });
-    it('returns false when lack ERC1155', async function () {
-      await tokenA.mint(member.address, 10);
-      await tokenC721.mint(member.address, 1);
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
-    });
-    it('returns false when lack all tokens', async function () {
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
     });
   });
 });

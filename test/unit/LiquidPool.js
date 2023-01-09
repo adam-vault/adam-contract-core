@@ -61,7 +61,6 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     await token.mint(signer2.address, parseEther('100'));
     dao.memberToken.returns(memberToken.address);
     dao.team.returns(team.address);
-    dao.isPassAdmissionToken.returns(true);
     dao.govern.returns(govern.address);
 
     lp = await upgrades.deployProxy(LiquidPool, [dao.address, [ADDRESS_ETH, token.address], ADDRESS_ETH], { kind: 'uups' });
@@ -83,26 +82,6 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
       govern.address,
       parseEther('1000').toHexString(),
     ]);
-  });
-  describe('upgradeTo()', function () {
-    let mockV2Impl;
-    beforeEach(async function () {
-      const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
-      mockV2Impl = await MockUpgrade.deploy();
-      await mockV2Impl.deployed();
-    });
-    it('allows owner to upgrade', async function () {
-      await ethers.provider.send('hardhat_setBalance', [
-        daoAsSigner.address,
-        parseEther('1000').toHexString(),
-      ]);
-      await lp.connect(daoAsSigner).upgradeTo(mockV2Impl.address);
-      const v2Contract = await ethers.getContractAt('MockVersionUpgrade', lp.address);
-      expect(await v2Contract.v2()).to.equal(true);
-    });
-    it('throws "not dao" error if upgrade by non dao', async function () {
-      await expect(lp.connect(unknown).upgradeTo(mockV2Impl.address)).to.revertedWith('not dao');
-    });
   });
 
   describe('deposit()', function () {

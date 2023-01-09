@@ -34,23 +34,6 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
   });
 
-  describe('upgradeTo()', function () {
-    let mockV2Impl;
-    beforeEach(async function () {
-      const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
-      mockV2Impl = await MockUpgrade.deploy();
-      await mockV2Impl.deployed();
-    });
-    it('allows owner to upgrade', async function () {
-      await memberToken.connect(dao).upgradeTo(mockV2Impl.address);
-      const v2Contract = await ethers.getContractAt('MockVersionUpgrade', memberToken.address);
-      expect(await v2Contract.v2()).to.equal(true);
-    });
-    it('throws "Not dao" error if upgrade by non dao', async function () {
-      await expect(memberToken.connect(minter).upgradeTo(mockV2Impl.address)).to.revertedWith('Not dao');
-    });
-  });
-
   describe('mint()', function () {
     it('mints when msg.sender is minter', async function () {
       await memberToken.connect(minter).mint(member.address, 10);

@@ -91,7 +91,6 @@ abstract contract CommonBudgetApproval is Initializable {
         uint256 endTime;
         bool allowUnlimitedUsageCount;
         uint256 usageCount;
-        address team; // TODO: Get team from IBudgetApprovalExecutee
     }
 
     modifier onlyExecutee() {
@@ -148,12 +147,16 @@ abstract contract CommonBudgetApproval is Initializable {
 
     function _isExecutor(address eoa) internal view virtual returns (bool) {
         return eoa == executor() ||
-            ITeam(team()).balanceOf(eoa, executorTeamId()) > 0;
+            _inTeam(eoa, executorTeamId());
     }
 
     function _isApprover(address eoa) internal view virtual returns (bool) {
         return approversMapping(eoa) ||
-                ITeam(team()).balanceOf(eoa, approverTeamId()) > 0;
+                _inTeam(eoa, approverTeamId());
+    }
+
+    function _inTeam(address eoa, uint256 teamId) internal view returns (bool) {
+        return ITeam(team()).balanceOf(eoa, teamId) > 0;
     }
 
     function executorTeamId() public view returns (uint256) {
@@ -201,7 +204,7 @@ abstract contract CommonBudgetApproval is Initializable {
     }
 
     function team() public view returns (address) {
-        return _team;
+        return IBudgetApprovalExecutee(executee()).team();
     }
 
     function __BudgetApproval_init(InitializeParams calldata params)
@@ -226,7 +229,6 @@ abstract contract CommonBudgetApproval is Initializable {
         _allowUnlimitedUsageCount = params.allowUnlimitedUsageCount;
         _usageCount = params.usageCount;
 
-        _team = params.team;
         _executorTeamId = params.executorTeamId;
         _approverTeamId = params.approverTeamId;
 

@@ -33,7 +33,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
         bool active;
     }
 
-    address payable public dao;
+    address public dao;
     uint256 public totalSupply;
     uint256 public maxMemberLimit;
 
@@ -63,7 +63,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
     {
         __EIP712_init(_name.concat(" Membership"), "1");
         __ERC721_init(_name.concat(" Membership"), "MS");
-        dao = payable(_dao);
+        dao = _dao;
         maxMemberLimit = _maxMemberLimit;
     }
 
@@ -124,12 +124,12 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
         }
     }
 
-    function admissionTokensLength() external view returns(uint256) {
+    function countAdmissionTokens() external view returns(uint256) {
         return admissionTokens.length;
     }
 
     function setMemberTokenAsAdmissionToken(uint256 minTokenToAdmit) public onlyDao {
-        address _memberToken = IDao(dao).memberToken();
+        address _memberToken = IDao(payable(dao)).memberToken();
         require(_memberToken != address(0), "member token not init");
 
         _addAdmissionToken(_memberToken, minTokenToAdmit, 0);
@@ -202,7 +202,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
 
     function quit(uint256 tokenId) public {
         address owner = ownerOf(tokenId);
-        address liquidPool = IDao(dao).liquidPool();
+        address liquidPool = IDao(payable(dao)).liquidPool();
 
         require(msg.sender == owner, "Permission denied");
         require(ILiquidPool(payable(liquidPool)).balanceOf(owner) == 0, "LP balance is not zero");
@@ -212,7 +212,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
         wasMember[owner] = true;
         totalSupply = totalSupply - 1;
 
-        IDao(dao).setFirstDepositTime(owner, 0);
+        IDao(payable(dao)).setFirstDepositTime(owner, 0);
         emit RemoveMember(owner, tokenId);
 
     }

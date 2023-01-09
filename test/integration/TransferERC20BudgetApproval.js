@@ -11,6 +11,7 @@ const {
   ADDRESS_MOCK_AGGRGATOR,
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
+const { smock } = require('@defi-wonderland/smock');
 
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
@@ -62,7 +63,6 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
           endTime,
           minApproval: 1,
           totalAmount: parseEther('100'),
-          team: await adam.team(),
         }),
       );
 
@@ -149,7 +149,6 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
           endTime,
           minApproval: 1,
           totalAmount: parseEther('100'),
-          team: await adam.team(),
         }),
       );
 
@@ -223,7 +222,6 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenA, tokenB } = await createTokens());
-    const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
     transferErc20BAImplementation = await TransferERC20BudgetApproval.deploy();
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
@@ -231,7 +229,8 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
 
     team = await Team.deploy();
     dao = await MockLPDao.deploy();
-    executee = await MockBudgetApprovalExecutee.deploy();
+    executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
+    executee.team.returns(team.address);
   });
 
   describe('Create Budget Approval', function () {
@@ -250,7 +249,6 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
           endTime,
           minApproval: 1,
           usageCount: 10,
-          team: team.address,
         }),
       );
 
@@ -288,7 +286,6 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
           minApproval: 2,
           toAddresses: [receiver.address],
           token: tokenA.address,
-          team: team.address,
         }),
       );
 
@@ -314,7 +311,6 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
           token: tokenA.address,
           minApproval: 1,
           usageCount: 1,
-          team: team.address,
         }),
       );
 
@@ -496,7 +492,6 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
             token: tokenA.address,
             endTime: 0,
             startTime: Math.round(Date.now() / 1000) + 86400,
-            team: team.address,
           }),
         );
 
@@ -542,7 +537,6 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
             token: tokenA.address,
             startTime: 0,
             endTime: Math.round(Date.now() / 1000) - 86400,
-            team: team.address,
           }),
         );
 
@@ -590,7 +584,6 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
             startTime: 0,
             endTime: 0,
             usageCount: 1,
-            team: team.address,
           }),
         );
 
@@ -660,7 +653,6 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
             toAddresses: [receiver.address],
             token: tokenA.address,
             minApproval: 0,
-            team: team.address,
           }),
         );
 

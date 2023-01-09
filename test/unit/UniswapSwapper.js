@@ -71,7 +71,6 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
         Math.round(Date.now() / 1000) + 86400, // endTime,
         true,
         0,
-        await adam.team(), // team
       ],
       [ADDRESS_ETH, ADDRESS_WETH, ADDRESS_DAI, ADDRESS_UNI],
       true,

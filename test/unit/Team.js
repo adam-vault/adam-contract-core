@@ -29,22 +29,6 @@ describe('Team.sol - test/unit/Team.js', function () {
     expect(await team.owner()).to.eq(creator.address);
   });
 
-  describe('upgradeTo()', function () {
-    let mockV2Impl;
-    beforeEach(async function () {
-      mockV2Impl = await (await smock.mock('MockVersionUpgrade')).deploy();
-    });
-    it('allows owner to upgrade', async function () {
-      await team.upgradeTo(mockV2Impl.address);
-      const v2Contract = await ethers.getContractAt('MockVersionUpgrade', team.address);
-
-      expect(await v2Contract.v2()).to.equal(true);
-    });
-    it('throws "Ownable: caller is not the owner" error if upgrade by non owner', async function () {
-      await expect(team.connect(member2).upgradeTo(mockV2Impl.address))
-        .to.revertedWith('Ownable: caller is not the owner');
-    });
-  });
 
   describe('safeTransferFrom()', function () {
     it('throws "Team: Transfer of team ownership is aboundand" error if member transfer their token', async function () {

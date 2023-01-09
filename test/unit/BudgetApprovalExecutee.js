@@ -79,7 +79,6 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
         0, // endTime
         false, // allow unlimited usage
         10, // usage count
-        team.address, // team
       ]];
     });
     it('executes call and values to target contract', async () => {

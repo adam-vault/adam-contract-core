@@ -2,6 +2,7 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
+const { smock } = require('@defi-wonderland/smock');
 
 const { createTokens } = require('../utils/createContract');
 
@@ -29,9 +30,10 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Percentage li
     const Team = await ethers.getContractFactory('Team', { signer: executor });
 
     transferLiquidERC20BAImplementation = await TransferLiquidERC20BudgetApproval.deploy();
-    executee = await MockBudgetApprovalExecutee.deploy();
+    executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
     dao = await MockLPDao.deploy();
     team = await Team.deploy();
+    executee.team.returns(team.address);
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
@@ -58,7 +60,6 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Percentage li
         endTime, // endTime
         false, // allow unlimited usage
         10, // usage count
-        team.address, // team
       ],
       false, // allow all addresses
       [receiver.address], // allowed addresses (use when above = false)

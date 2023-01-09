@@ -27,7 +27,6 @@ describe('TransferERC721BudgetApprovalV2.sol - test/unit/v2/TransferERC721Budget
       params.endTime || Math.round(Date.now() / 1000) + 86400,
       params.allowUnlimitedUsageCount || true,
       params.usageCount || 0,
-      params.team || team.address,
     ],
     params.allowAllToAddresses !== undefined ? params.allowAllToAddresses : true,
     params.toAddresses || [],
@@ -59,7 +58,9 @@ describe('TransferERC721BudgetApprovalV2.sol - test/unit/v2/TransferERC721Budget
     [creator, executor, receiver] = await ethers.getSigners();
 
     team = await smock.fake('Team');
-    executee = await smock.fake('MockBudgetApprovalExecutee');
+    executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
+    executee.team.returns(team.address);
+
     mockToken = await smock.fake('ERC721');
 
     await network.provider.request({

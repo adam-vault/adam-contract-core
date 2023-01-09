@@ -77,7 +77,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     });
 
     context('when has no member token', async function () {
-      let memberTokenImpl;
       beforeEach(async function () {
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
@@ -87,7 +86,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
         dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-        memberTokenImpl = await adam.memberTokenImplementation();
       });
 
       // TODO: move to unit test
@@ -126,7 +124,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     });
 
     context('when using ERC721 Admission token', async function () {
-      let memberTokenImpl;
 
       beforeEach(async function () {
         const tx1 = await adam.createDao(
@@ -139,7 +136,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const daoAddr = creationEventLog.args.dao;
         dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-        memberTokenImpl = await adam.memberTokenImplementation();
       });
 
       it('allows EOA to deposit successfully with enough ERC721 Admission Token', async function () {
@@ -154,7 +150,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     });
 
     context('when using ERC20 Admission token', async function () {
-      let memberTokenImpl;
       beforeEach(async function () {
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
@@ -166,7 +161,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const daoAddr = creationEventLog.args.dao;
         dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-        memberTokenImpl = await adam.memberTokenImplementation();
       });
 
       // TODO: Move to unit test
@@ -213,7 +207,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     });
 
     describe('when using ERC20 member token as Admission token', function () {
-      let memberTokenImpl;
       beforeEach(async function () {
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
@@ -226,7 +219,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const daoAddr = creationEventLog.args.dao;
         dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-        memberTokenImpl = await adam.memberTokenImplementation();
       });
 
       // TODO: move to Dao creation

@@ -57,7 +57,6 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
           toAddresses: [receiver.address],
           minApproval: 1,
           usageCount: 10,
-          team: await adam.team(),
         }),
       );
 

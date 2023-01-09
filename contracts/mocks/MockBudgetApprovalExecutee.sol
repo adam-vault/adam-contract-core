@@ -11,6 +11,7 @@ contract MockBudgetApprovalExecutee {
     using Concat for string;
     mapping(address => bool) public budgetApprovals;
     address public memberToken; 
+    address public team;
     //todo workaround for AS-834 , need to remove it when split memeber token outflow BA
     event CreateBudgetApproval(address budgetApproval, bytes data);
 

@@ -29,7 +29,6 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
       params.endTime || Math.round(Date.now() / 1000) + 86400,
       params.allowUnlimitedUsageCount || true,
       params.usageCount || 0,
-      params.team || ethers.constants.AddressZero,
     ],
     params.liquidPool,
     params.token,
