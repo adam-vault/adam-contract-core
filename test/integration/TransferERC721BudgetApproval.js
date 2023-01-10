@@ -3,7 +3,7 @@ const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 const paramsStruct = require('../../utils/paramsStruct');
 
-const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
+const { createTokens, createAdam, createBudgetApprovals, createPriceGateways } = require('../utils/createContract');
 const { getCreateTransferERC721BAParams } = require('../../utils/paramsStruct');
 
 const abiCoder = ethers.utils.defaultAbiCoder;
@@ -11,7 +11,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 describe('Integration - TransferERC721BudgetApproval.sol - test/integration/TransferERC721BudgetApproval.js', function () {
   let adam, dao, transferERC721BAImplementation, budgetApproval;
   let executor, approver, receiver;
-  let tokenC721, budgetApprovalAddresses;
+  let tokenC721, budgetApprovalAddresses, priceGatewayAddresses, ethereumChainlinkPriceGateway;
 
   before(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
@@ -19,9 +19,13 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
     ({ tokenC721 } = await createTokens());
 
     budgetApprovalAddresses = await createBudgetApprovals(executor);
-    adam = await createAdam(budgetApprovalAddresses);
+    priceGatewayAddresses = await createPriceGateways(executor);
+    ethereumChainlinkPriceGateway = priceGatewayAddresses[1];
+    adam = await createAdam({ budgetApprovalAddresses, priceGatewayAddresses });
     const tx1 = await adam.createDao(
-      ...paramsStruct.getCreateDaoParams({}),
+      ...paramsStruct.getCreateDaoParams({
+        priceGateways: [ethereumChainlinkPriceGateway],
+      }),
     );
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     dao = await ethers.getContractAt('Dao', daoAddr);

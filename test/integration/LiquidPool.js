@@ -1,27 +1,27 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { smock } = require('@defi-wonderland/smock');
 const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
 const decodeBase64 = require('../utils/decodeBase64');
 const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-const { createAdam, createTokens } = require('../utils/createContract.js');
+const { createAdam, createTokens, createPriceGateways } = require('../utils/createContract.js');
 const paramsStruct = require('../../utils/paramsStruct');
 
 const {
   ADDRESS_ETH,
   ADDRESS_MOCK_FEED_REGISTRY,
   ADDRESS_MOCK_AGGRGATOR,
-  ADDRESS_UNISWAP_ROUTER,
-  ADDRESS_WETH,
 } = require('../utils/constants');
 
 describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', function () {
-  let adam, dao, membership, tokenC721, tokenA, tokenD1155, uniswapRouter;
-  let creator, member, anyone, feedRegistry;
+  let adam, tokenC721, tokenA, tokenD1155;
+  let creator, member, anyone, feedRegistry, priceGatewayAddresses, ethereumChainlinkPriceGateway;
 
   function createDao () {
-    return adam.createDao(...paramsStruct.getCreateDaoParams({ name: 'A Company' }));
+    return adam.createDao(...paramsStruct.getCreateDaoParams({
+      name: 'A Company',
+      priceGateways: [ethereumChainlinkPriceGateway],
+    }));
   };
 
   beforeEach(async function () {
@@ -35,7 +35,9 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
-    adam = await createAdam();
+    priceGatewayAddresses = await createPriceGateways(creator);
+    ethereumChainlinkPriceGateway = priceGatewayAddresses[1];
+    adam = await createAdam({ priceGatewayAddresses });
   });
 
   context('when deposit() called', async function () {
@@ -82,6 +84,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
             mintMemberToken: false,
+            priceGateways: [ethereumChainlinkPriceGateway],
           }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -132,6 +135,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
             admissionTokens: [[tokenC721.address, 1, 0, false]],
+            priceGateways: [ethereumChainlinkPriceGateway],
           }),
         );
         const receipt = await tx1.wait();
@@ -159,6 +163,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
             admissionTokens: [[tokenA.address, 1, 0, false]],
+            priceGateways: [ethereumChainlinkPriceGateway],
           }),
         );
         const receipt = await tx1.wait();
@@ -195,6 +200,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
             admissionTokens: [[tokenD1155.address, 1, 0, false]],
+            priceGateways: [ethereumChainlinkPriceGateway],
           }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -213,11 +219,11 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     });
 
     describe('when using ERC20 member token as Admission token', function () {
-      let memberTokenImpl;
       beforeEach(async function () {
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
             admissionTokens: [[ethers.constants.AddressZero, 50, 0, true]],
+            priceGateways: [ethereumChainlinkPriceGateway],
           }),
         );
 
@@ -256,6 +262,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
               [tokenA.address, 2, 0, false],
               [tokenD1155.address, 2, 111, false],
             ],
+            priceGateways: [ethereumChainlinkPriceGateway],
           }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -298,6 +305,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
             admissionTokens: [
               [nonERC20Contract.address, 1, 0, false],
             ],
+            priceGateways: [ethereumChainlinkPriceGateway],
           }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -327,6 +335,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
             minDepositAmount: 50,
+            priceGateways: [ethereumChainlinkPriceGateway],
           }),
         );
         const receipt = await tx1.wait();
@@ -351,6 +360,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
             maxMemberLimit: 1,
+            priceGateways: [ethereumChainlinkPriceGateway],
           }),
         );
         const receipt = await tx1.wait();
@@ -379,6 +389,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
       const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
         lockTime: 1000,
         depositTokens: [ADDRESS_ETH, tokenA.address], // depositTokens
+        priceGateways: [ethereumChainlinkPriceGateway],
       }),
       );
       const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');

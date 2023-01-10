@@ -1,9 +1,10 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
-const { getCreateTransferLiquidErc20TokenBAParams, getCreateDaoParams } = require('../../utils/paramsStruct');
+const { getCreateTransferLiquidErc20TokenBAParams } = require('../../utils/paramsStruct');
 
-const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
+const { createTokens, createAdam, createBudgetApprovals, createPriceGateways, getMockFeedRegistry } = require('../utils/createContract');
+const paramsStruct = require('../../utils/paramsStruct');
 
 const {
   ADDRESS_ETH,
@@ -17,7 +18,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration/TransferLiquidERC20BudgetApproval.js', function () {
   let adam, dao, transferLiquidERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
-  let tokenA, feedRegistry, budgetApprovalAddresses;
+  let tokenA, feedRegistry, budgetApprovalAddresses, priceGatewayAddresses, ethereumChainlinkPriceGateway;
 
   before(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
@@ -33,14 +34,18 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
     budgetApprovalAddresses = await createBudgetApprovals(executor);
-    adam = await createAdam(budgetApprovalAddresses);
-
+    priceGatewayAddresses = await createPriceGateways(executor);
+    ethereumChainlinkPriceGateway = priceGatewayAddresses[1];
+    adam = await createAdam({ budgetApprovalAddresses, priceGatewayAddresses });
     const tx1 = await adam.createDao(
-      ...getCreateDaoParams({}),
+      ...paramsStruct.getCreateDaoParams({
+        priceGateways: [ethereumChainlinkPriceGateway],
+      }),
     );
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     dao = await ethers.getContractAt('Dao', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+
     const transferLiquidERC20BAImplementationAddr = budgetApprovalAddresses[0];
     transferLiquidERC20BAImplementation = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', transferLiquidERC20BAImplementationAddr);
   });

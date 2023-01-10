@@ -1,13 +1,13 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
-const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
+const { createTokens, createAdam, createPriceGateways } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
 
 describe('Integration - Govern.sol - test/integration/Govern.js', function () {
   let adam, dao, governFactory, lp;
   let creator, owner1, owner2;
-  let tokenA, tokenC721, budgetApprovalAddresses;
+  let tokenA, tokenC721, priceGatewayAddresses, ethereumChainlinkPriceGateway;
   const category = {
     name: 'BudgetApproval',
     duration: 6570, // 1 day
@@ -18,15 +18,16 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
     voteTokens: [],
   };
 
-  function createDao () {
-    return adam.createDao(...paramsStruct.getCreateDaoParams({ mintMemberToken: true }));
-  }
-
   beforeEach(async function () {
     [creator, owner1, owner2] = await ethers.getSigners();
-    budgetApprovalAddresses = await createBudgetApprovals(creator);
-    adam = await createAdam(budgetApprovalAddresses);
-    const tx1 = await createDao();
+    priceGatewayAddresses = await createPriceGateways(creator);
+    ethereumChainlinkPriceGateway = priceGatewayAddresses[1];
+    adam = await createAdam({ priceGatewayAddresses });
+    const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
+      mintMemberToken: true,
+      priceGateways: [ethereumChainlinkPriceGateway],
+    }));
+
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     dao = await ethers.getContractAt('MockDao', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
@@ -174,6 +175,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
           general: [13, 3000, 5000, 0], // general,
           daoSettingApproval: [13, 3000, 5000, 1], // daoSetting,
           mintMemberToken: true,
+          priceGateways: [ethereumChainlinkPriceGateway],
         }),
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -230,6 +232,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
         const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
           generalGovernSetting: [300, 1000, 5100, 0, ethers.constants.AddressZero, 5],
           mintMemberToken: true,
+          priceGateways: [ethereumChainlinkPriceGateway],
         }),
         );
 
@@ -290,6 +293,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
     const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
       generalGovernSetting: [300, 1000, 5100, 0, ethers.constants.AddressZero, 5],
       mintMemberToken: true,
+      priceGateways: [ethereumChainlinkPriceGateway],
     }),
     );
 
@@ -326,6 +330,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
     const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
       generalGovernSetting: [300, 1000, 4900, 0, ethers.constants.AddressZero, 5],
       mintMemberToken: true,
+      priceGateways: [ethereumChainlinkPriceGateway],
     }),
     );
 

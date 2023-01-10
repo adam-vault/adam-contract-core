@@ -9,7 +9,7 @@ chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe.only('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApproval.js', async function () {
+describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApproval.js', async function () {
   let executor, receiver;
   let mockToken, team, executee;
   let executeeAsSigner, VestingERC20BudgetApproval, ERC1967Proxy, vestingErc20BAImpl;

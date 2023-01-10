@@ -4,8 +4,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { smock } = require('@defi-wonderland/smock');
 const { ethers } = hre;
 const { expect } = chai;
-const { createAdam, createTokens } = require('../utils/createContract');
-const decodeBase64 = require('../utils/decodeBase64');
+const { createAdam, createTokens, createPriceGateways } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
 chai.use(smock.matchers);
 const {
@@ -18,10 +17,14 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
   let creator;
   let token;
   let feedRegistry;
-  let adam;
+  let adam, priceGatewayAddresses, ethereumChainlinkPriceGateway;
 
-  function createDao () {
-    return adam.createDao(...paramsStruct.getCreateDaoParams({ name: 'A Company' }));
+  async function createDao () {
+    return adam.createDao(...paramsStruct.getCreateDaoParams({
+      name: 'A Company',
+      depositTokens: [],
+      priceGateways: [ethereumChainlinkPriceGateway],
+    }));
   };
 
   beforeEach(async function () {
@@ -37,7 +40,9 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
-    adam = await createAdam();
+    priceGatewayAddresses = await createPriceGateways(creator);
+    ethereumChainlinkPriceGateway = priceGatewayAddresses[1];
+    adam = await createAdam({ priceGatewayAddresses });
   });
 
   describe('when createDao() called', function () {
@@ -65,6 +70,7 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
         ...paramsStruct.getCreateDaoParams({
           mintMemberToken: true,
           admissionTokens: [[ethers.constants.AddressZero, 50, 0, true]],
+          priceGateways: [ethereumChainlinkPriceGateway],
         }),
       )).to.not.be.reverted;
     });
