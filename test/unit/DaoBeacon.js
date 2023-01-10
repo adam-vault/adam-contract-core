@@ -4,30 +4,17 @@ const { smock } = require('@defi-wonderland/smock');
 const {
   ADDRESS_ETH,
 } = require('../utils/constants');
-const { random } = require('lodash');
 
 const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-describe.only('Adam.sol - test/unit/Adam.js', function () {
-  let deployer, daoCreator, unknown;
-  let dao, membership, liquidPool, memberToken, govern, team;
-  let budgetApproval, beacon;
-  let Adam, DaoBeacon;
+describe('DaoBeacon.sol - test/unit/DaoBeacon.js', function () {
+  let deployer, unknown, daoBeacon;
   beforeEach(async function () {
-    [deployer, daoCreator, unknown] = await ethers.getSigners();
+    [deployer, unknown] = await ethers.getSigners();
 
-    dao = await smock.fake('Dao');
-    membership = await smock.fake('Membership');
-    memberToken = await smock.fake('MemberToken');
-    liquidPool = await smock.fake('LiquidPool');
-    budgetApproval = await smock.fake('TransferERC20BudgetApproval');
-    govern = await smock.fake('Govern');
-    team = await smock.fake('Team');
-    Adam = await ethers.getContractFactory('Adam', { signer: deployer });
-    DaoBeacon = await ethers.getContractFactory('DaoBeacon', { signer: deployer });
-
+    daoBeacon = await (await smock.mock('DaoBeacon')).deploy();
     beacon = await DaoBeacon.deploy('v1', [
       [ethers.utils.id('adam.dao'), dao.address],
       [ethers.utils.id('adam.dao.membership'), membership.address],

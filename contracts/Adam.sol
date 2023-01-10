@@ -1,23 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity 0.8.7;
+
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
+import "./lib/Constant.sol";
 import "./interface/IDao.sol";
-
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
 import "./base/DaoBeaconProxy.sol";
-import "./DaoBeacon.sol";
-
 import "./base/DaoChildBeaconProxy.sol";
-import "./lib/Constant.sol";
+
+error InvalidContract(address _contract);
+error DaoBeaconAlreadyInitialized(address _daoBeacon);
+error BudgetApprovalAlreadyInitialized(address _budgetApproval);
+error BudgetApprovalNotFound(address _budgetApproval);
 
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+    using AddressUpgradeable for address;
 
     struct CreateDaoParams {
         string _name;
@@ -32,13 +35,14 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
-
     mapping(address => uint256) public daoBeaconIndex;
+
     address public daoBeacon; // latest daoBeacon;
 
-    event CreateDao(address indexed dao, string name, string description, address creator, address referer);
+    event CreateDao(address indexed dao, address creator, address referer);
     event WhitelistBudgetApproval(address budgetApproval);
     event AbandonBudgetApproval(address budgetApproval);
+    event SetDaoBeacon(address _daoBeacon, uint256 _index);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -55,8 +59,16 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function whitelistBudgetApprovals(address[] calldata _budgetApprovals) public onlyOwner {
         for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(_budgetApprovals[i] != address(0), "budget approval is null");
-            require(budgetApprovals[_budgetApprovals[i]] == false, "budget approval already whitelisted");
+            address ba = _budgetApprovals[i];
+
+            if (!ba.isContract()) {
+                revert InvalidContract(ba);
+            }
+
+            if (budgetApprovals[ba] == true) {
+                revert BudgetApprovalAlreadyInitialized(ba);
+            }
+
             budgetApprovals[_budgetApprovals[i]] = true;
             emit WhitelistBudgetApproval(_budgetApprovals[i]);
         }
@@ -64,9 +76,14 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function abandonBudgetApprovals(address[] calldata _budgetApprovals) public onlyOwner {
         for(uint i = 0; i < _budgetApprovals.length; i++) {
-            require(budgetApprovals[_budgetApprovals[i]] == true, "budget approval not exist");
-            budgetApprovals[_budgetApprovals[i]] = false;
-            emit AbandonBudgetApproval(_budgetApprovals[i]);
+            address ba = _budgetApprovals[i];
+
+            if (budgetApprovals[ba] == false) {
+                revert BudgetApprovalNotFound(ba);
+            }
+
+            budgetApprovals[ba] = false;
+            emit AbandonBudgetApproval(ba);
         }
     }
 
@@ -104,7 +121,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             data
         );
 
-        emit CreateDao(address(_dao), params._name, params._description, msg.sender, params._referer);
+        emit CreateDao(address(_dao), msg.sender, params._referer);
         return address(_dao);
     }
     
@@ -112,14 +129,17 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         _setDaoBeacon(_daoBeacon);
     }
     function _setDaoBeacon(address _daoBeacon) internal {
-        require(AddressUpgradeable.isContract(_daoBeacon), "not a contract");
-        address lastDaoBeacon = daoBeacon;
-        daoBeacon = _daoBeacon;
-        if (lastDaoBeacon == address(0)) {
-            daoBeaconIndex[_daoBeacon] = 1;
-        } else {
-            daoBeaconIndex[_daoBeacon] = daoBeaconIndex[lastDaoBeacon] + 1;
+        if (!_daoBeacon.isContract()) {
+            revert InvalidContract(_daoBeacon);
         }
+        if (daoBeaconIndex[_daoBeacon] > 0) {
+            revert DaoBeaconAlreadyInitialized(_daoBeacon);
+        }
+
+        uint256 index = daoBeaconIndex[daoBeacon] + 1;
+        daoBeacon = _daoBeacon;
+        daoBeaconIndex[_daoBeacon] = index;
+        emit SetDaoBeacon(_daoBeacon, index);
     }
 
     function _authorizeUpgrade(address) internal view override onlyOwner {}
