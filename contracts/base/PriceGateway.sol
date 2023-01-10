@@ -5,6 +5,7 @@ pragma solidity 0.8.7;
 contract PriceGateway {
     function isSupportedPair(address asset, address base)
         public
+        view
         virtual
         returns (bool)
     {}
@@ -13,7 +14,7 @@ contract PriceGateway {
         address asset,
         address base,
         uint256 amount
-    ) public virtual returns (uint256) {}
+    ) public view virtual returns (uint256) {}
 
     uint256[50] private __gap;
 }

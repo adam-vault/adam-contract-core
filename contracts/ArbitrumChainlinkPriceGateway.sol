@@ -23,6 +23,7 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
     function isSupportedPair(address asset, address base)
         public
         virtual
+        view
         override
         returns (bool)
     {
@@ -41,7 +42,7 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
         address asset,
         address base,
         uint256 amount
-    ) public virtual override returns (uint256) {
+    ) public view virtual override returns (uint256) {
         asset = asset == _WETH9() ? Denominations.ETH : asset;
         base = base == _WETH9() ? Denominations.ETH : base;
         // Feed Registry doesn't provide any WETH Price Feed, redirect to ETH case here

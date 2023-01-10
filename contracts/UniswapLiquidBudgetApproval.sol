@@ -48,7 +48,8 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         address _baseCurrency
     ) external initializer {
         __BudgetApproval_init(params);
-        
+        __PriceResolver_init(_baseCurrency, IBudgetApprovalExecutee(executee()).accountSystem());
+
         for(uint i = 0; i < _fromTokens.length; i++) {
             _addFromToken(_fromTokens[i]);
         }
@@ -61,8 +62,6 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
-
-        __PriceResolver_init(_baseCurrency, IBudgetApprovalExecutee(executee()).accountSystem());
 
     }
 

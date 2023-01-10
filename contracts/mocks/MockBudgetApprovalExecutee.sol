@@ -12,6 +12,8 @@ contract MockBudgetApprovalExecutee {
     mapping(address => bool) public budgetApprovals;
     address public memberToken; 
     //todo workaround for AS-834 , need to remove it when split memeber token outflow BA
+
+    address public accountSystem;
     event CreateBudgetApproval(address budgetApproval, bytes data);
 
     function executeByBudgetApproval(address _to, bytes memory _data, uint256 _value) external returns (bytes memory) {
@@ -41,6 +43,11 @@ contract MockBudgetApprovalExecutee {
     function setMemberToken(address _memberToken) public {
         memberToken = _memberToken;
     }
+
+    function setAccountSystem(address __accountSystem) public {
+        accountSystem = __accountSystem;
+    }
+
     receive() external payable {
 
     }

@@ -17,7 +17,9 @@ import "./interface/IPriceGateway.sol";
 
 contract AccountSystem is Initializable, UUPSUpgradeable {
     using Concat for string;
+    bool private _initializing;
     IDao public dao;
+    address public defaultPriceGateway;
 
     mapping(address => bool) public priceGateways;
     mapping(address => mapping(address => address))
@@ -30,14 +32,24 @@ contract AccountSystem is Initializable, UUPSUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(address owner, address[] memory _priceGateways)
+    function initialize(
+        address owner, 
+        address[] memory _priceGateways
+    )
         public
         initializer
-    {
+    {   
+        _initializing = true;
         dao = IDao(payable(owner));
+
         for (uint256 i = 0; i < _priceGateways.length; i++) {
+            if(i == 0) {
+                defaultPriceGateway = _priceGateways[i];
+            }
             addPriceGateway(_priceGateways[i]);
+
         }
+        _initializing = false;
     }
 
     /// @notice Add the price gateway to whitelist
@@ -49,7 +61,6 @@ contract AccountSystem is Initializable, UUPSUpgradeable {
     {
         _addPriceGateway(priceGateway);
     }
-
     /// @notice Internal function add the price gateway to whitelist
     /// @dev Same price gateway cannot add to whitelist twice
     /// @param priceGateway price Gateway address that want to whitelist
@@ -112,9 +123,9 @@ contract AccountSystem is Initializable, UUPSUpgradeable {
         address base,
         uint256 amount
     ) public view returns (uint256) {
-        address priceGateWay = tokenPairPriceGatewayMap[asset][base];
-        require(priceGateWay != address(0), "Not Supported Price Pair");
-        return IPriceGateway(priceGateWay).assetPrice(asset, base, amount);
+        require(isSupportedPair(asset, base), "Not Supported Price Pair");
+        address _priceGateway = (tokenPairPriceGatewayMap[asset][base] != address(0)) ? tokenPairPriceGatewayMap[asset][base] : defaultPriceGateway;
+        return IPriceGateway(_priceGateway).assetPrice(asset, base, amount);
     }
 
     /// @notice Check the token pair is support or not
@@ -127,17 +138,26 @@ contract AccountSystem is Initializable, UUPSUpgradeable {
         public
         view
         returns (bool)
-    {
-        return tokenPairPriceGatewayMap[asset][base] != address(0);
+    {        
+        return 
+            tokenPairPriceGatewayMap[asset][base] != address(0) ||
+            IPriceGateway(defaultPriceGateway).isSupportedPair(asset, base);
     }
 
+    /// @notice Modilifier that allow init and govern to execute function
+    /// @dev Don't check initializing at same require, since for accountSystem init before Dao
+    /// @dev So for those initializing case, Dao related function cannot be call
+    /// @param category govern Category
     modifier onlyGovern(string memory category) {
         IDao _dao = dao;
-        require(
-            (_dao.byPassGovern(msg.sender)) ||
-                msg.sender == _dao.govern(category),
-            string("Dao: only Govern").concat(category)
-        );
+        
+        if(!_initializing){
+            require(
+                (_dao.byPassGovern(msg.sender)) ||
+                    msg.sender == _dao.govern(category),
+                string("Dao: only Govern").concat(category)
+            );
+        }
         _;
     }
 

@@ -23,9 +23,10 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
     function isSupportedPair(address asset, address base)
         public
         virtual
+        view
         override
         returns (bool)
-    {
+    {   
         return canResolvePrice(asset) && canResolvePrice(base);
     }
 
@@ -41,7 +42,7 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
         address asset,
         address base,
         uint256 amount
-    ) public virtual override returns (uint256) {
+    ) public virtual view override returns (uint256) {
         if (asset == base) return amount;
 
         if (base == Denominations.ETH || base == _WETH9()) {

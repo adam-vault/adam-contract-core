@@ -13,8 +13,6 @@ import "./interface/ILiquidPool.sol";
 import "./interface/IGovernFactory.sol";
 import "./interface/IAccountSystem.sol";
 
-
-
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     struct CreateDaoParams {
@@ -132,7 +130,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             emit AbandonPriceGateway(_priceGateways[i]);
         }
     }
-
+    
+    /// @notice Create Dao
+    /// @dev Init Liquid pool after Dao , since the Liquid Pool need to get AccountSystem address in Dao
+    /// @param  params init config for Dao
+    /// @param  data init function for Dao
 
     function createDao(CreateDaoParams memory params, bytes[] memory data) external returns (address) {
         ERC1967Proxy _dao = new ERC1967Proxy(daoImplementation, "");
@@ -147,15 +149,12 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             params._name,
             params.maxMemberLimit
         );
-        ILiquidPool(payable(address(_liquidPool))).initialize(
-            address(_dao),
-            params.depositTokens,
-            params.baseCurrency
-        );
+
         IAccountSystem(payable(address(_accountSystem))).initialize(
             address(_dao),
             params._priceGateways
         );
+        
         IDao(payable(address(_dao))).initialize(
             IDao.InitializeParams(
                 msg.sender,
@@ -175,10 +174,15 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             data
         );
 
+        ILiquidPool(payable(address(_liquidPool))).initialize(
+            address(_dao),
+            params.depositTokens,
+            params.baseCurrency
+        );
+
         emit CreateDao(address(_dao), params._name, params._description, msg.sender, params._referer);
         return address(_dao);
     }
-    
     function hashVersion(
         address _daoImplementation,
         address _membershipImplementation,

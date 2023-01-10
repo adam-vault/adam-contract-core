@@ -44,6 +44,18 @@ contract TransferLiquidERC20BudgetApproval is
         _disableInitializers();
     }
 
+
+    /// @dev Need to init __PriceResolver before _addToken,
+    /// @dev since addToken need Price resolver to check the token is support or not
+    /// @param params InitializeParams struct containing data required for initialization
+    /// @param _allowAllAddresses Boolean flag to indicate if the BA can sent to any addresses 
+    /// @param _toAddresses Array of addresses that are allowed to receive 
+    /// @param _tokens Array of token addresses that can be transferred
+    /// @param _allowAnyAmount Boolean flag to indicate if any amount of tokens can be transferred
+    /// @param _totalAmount Total number of tokens that can be transferred
+    /// @param _baseCurrency Address of the token that serves as the base currency
+    /// @param _toTeamIds array of teamId that are allowed to receive 
+
     function initialize(
         InitializeParams calldata params,
         bool _allowAllAddresses,
@@ -62,6 +74,8 @@ contract TransferLiquidERC20BudgetApproval is
             _addToAddress(_toAddresses[i]);
         }
 
+        __PriceResolver_init(_baseCurrency, IBudgetApprovalExecutee(executee()).accountSystem());
+
         for (uint256 i = 0; i < _tokens.length; i++) {
             _addToken(_tokens[i]);
         }
@@ -69,12 +83,10 @@ contract TransferLiquidERC20BudgetApproval is
         for (uint256 i = 0; i < _toTeamIds.length; i++) {
             _addToTeam(_toTeamIds[i]);
         }
-
+        
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
-        __PriceResolver_init(_baseCurrency, IBudgetApprovalExecutee(executee()).accountSystem());
     }
-
     function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address token";
