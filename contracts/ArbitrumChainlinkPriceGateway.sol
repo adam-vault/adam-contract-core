@@ -9,7 +9,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "./base/PriceGateway.sol";
 import "./lib/Constant.sol";
 
-contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
+contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
