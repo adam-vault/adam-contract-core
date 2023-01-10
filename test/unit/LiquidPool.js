@@ -331,7 +331,6 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
           0, // endTime
           false, // allow unlimited usage
           10, // usage count
-          team.address, // team
         ],
       ])])).to.not.be.reverted;
     });
@@ -350,7 +349,6 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
           0, // endTime
           false, // allow unlimited usage
           10, // usage count
-          team.address, // team
         ],
       ])])).to.be.revertedWith('not whitelist');
     });

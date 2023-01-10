@@ -313,7 +313,9 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     }
 
     function upgradeTo(address _daoBeacon) external onlyGovern("General") {
+        address curBeacon = IDaoBeaconProxy(address(this)).daoBeacon();
         require(AddressUpgradeable.isContract(_daoBeacon), "ERC1967: new beacon is not a contract");
+        require(IAdam(adam).daoBeaconIndex(_daoBeacon) > IAdam(adam).daoBeaconIndex(curBeacon), "invalid downgrade");
         StorageSlot.getAddressSlot(bytes32(keccak256("adam.proxy.beacon.slot"))).value = _daoBeacon;
         emit UpgradeDaoBeacon(_daoBeacon);
     }

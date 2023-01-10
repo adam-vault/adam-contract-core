@@ -121,7 +121,7 @@ describe('Membership.sol - test/unit/Membership.js', function () {
     });
   });
 
-  describe('admissionTokensLength()', function () {
+  describe('countAdmissionTokens()', function () {
     let tokenA, tokenC721, tokenD1155;
     beforeEach(async function () {
       ({ tokenA, tokenC721, tokenD1155 } = await createTokens());

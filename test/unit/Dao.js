@@ -10,7 +10,7 @@ chai.use(smock.matchers);
 
 describe('Dao.sol - test/unit/Dao.js', function () {
   let creator, member, mockGovern;
-  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam;
+  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockTeam;
   let tokenA, tokenC721, tokenD1155;
   let mockGovernImp;
 
@@ -23,7 +23,6 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     mockMembership = await (await smock.mock('Membership')).deploy();
     mockGovernImp = await (await smock.mock('Govern')).deploy();
     const mockLiquidPool = await smock.fake('LiquidPool');
-    mockGovernFactory = await smock.fake('GovernFactory');
     mockTeam = await smock.fake('Team');
     mockMemberToken = await (await smock.mock('MemberToken')).deploy();
 
@@ -95,7 +94,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
   });
 
   describe('govern()', function () {
-    it('returns address from governFactory.governMap()', async function () {
+    it('returns address from dao.govern()', async function () {
       expect(await dao.govern('General')).to.be.not.equal(ethers.constants.AddressZero);
     });
   });
@@ -122,7 +121,6 @@ describe('Dao.sol - test/unit/Dao.js', function () {
 
   describe('setMinDepositAmount()', function () {
     it('updates minDepositAmount', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       await dao.connect(mockGovern).setMinDepositAmount(10);
       expect(await dao.minDepositAmount()).to.equal(10);
     });
@@ -130,7 +128,6 @@ describe('Dao.sol - test/unit/Dao.js', function () {
 
   describe('setLocktime()', function () {
     it('updates locktime', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       await dao.connect(mockGovern).setLocktime(123);
       expect(await dao.locktime()).to.equal(123);
     });
@@ -138,14 +135,13 @@ describe('Dao.sol - test/unit/Dao.js', function () {
 
   describe('setLogoCID()', function () {
     it('updates Logo CID', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       await dao.connect(mockGovern).setLogoCID('cid');
       expect(await dao.logoCID()).to.equal('cid');
     });
   });
 
   describe('createGovern()', function () {
-    it('calls governFactory and create govern', async function () {
+    it('calls dao and create govern', async function () {
       const tx = await dao.connect(mockGovern).createGovern('governA', 1, 2, 3, 0, ethers.constants.AddressZero, 0);
       const tx2 = await dao.connect(mockGovern).createGovern('governB', 4, 5, 6, 1, ethers.constants.AddressZero, 5);
       const tx3 = await dao.connect(mockGovern).createGovern('governC', 7, 8, 9, 2, tokenA.address, 6);
@@ -157,7 +153,6 @@ describe('Dao.sol - test/unit/Dao.js', function () {
 
   describe('addAssets()', function () {
     it('adds supported asset', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       await dao.connect(mockGovern).addAssets([tokenA.address]);
       expect(await dao.isAssetSupported(tokenA.address)).to.equal(true);
     });
@@ -166,7 +161,6 @@ describe('Dao.sol - test/unit/Dao.js', function () {
   describe('createTeam()', function () {
     it('creates team', async function () {
       mockTeam.addTeam.returns(1);
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       const tx = await dao.connect(mockGovern).createTeam('title', creator.address, [member.address], 'description');
       const { tokenId: teamId } = await findEventArgs(tx, 'WhitelistTeam');
       expect(await dao.teamWhitelist(teamId)).to.equal(true);

@@ -51,6 +51,7 @@ interface IAdam {
         returns (address);
 
     function daoBeacon() external view returns (address);
+    function daoBeaconIndex(address _daoBeacon) external view returns (uint256);
 
     function daoImplementation() external view returns (address);
 
@@ -93,7 +94,7 @@ interface IAdam {
     function team() external view returns (address);
 
     function transferOwnership(address newOwner) external;
-
+    
     function upgradeImplementations(
         address _daoImplementation,
         address _membershipImplementation,

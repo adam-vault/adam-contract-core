@@ -5,7 +5,7 @@ const { createTokens, createAdam, createBudgetApprovals } = require('../utils/cr
 const paramsStruct = require('../../utils/paramsStruct');
 
 describe('Integration - Govern.sol - test/integration/Govern.js', function () {
-  let adam, dao, governFactory, lp;
+  let adam, dao, lp;
   let creator, owner1, owner2;
   let tokenA, tokenC721, budgetApprovalAddresses;
   const category = {

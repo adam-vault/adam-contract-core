@@ -11,7 +11,7 @@ chai.use(smock.matchers);
 
 describe('Adam.sol - test/unit/Adam.js', function () {
   let deployer, daoCreator, unknown;
-  let dao, membership, liquidPool, memberToken, govern, governFactory, team;
+  let dao, membership, liquidPool, memberToken, govern, team;
   let budgetApproval, beacon;
   let Adam, DaoBeacon;
   beforeEach(async function () {
@@ -22,7 +22,6 @@ describe('Adam.sol - test/unit/Adam.js', function () {
     memberToken = await smock.fake('MemberToken');
     liquidPool = await smock.fake('LiquidPool');
     budgetApproval = await smock.fake('TransferERC20BudgetApproval');
-    governFactory = await smock.fake('GovernFactory');
     govern = await smock.fake('Govern');
     team = await smock.fake('Team');
     Adam = await ethers.getContractFactory('Adam', { signer: deployer });
@@ -36,8 +35,6 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       [ethers.utils.id('adam.dao.govern'), govern.address],
       [ethers.utils.id('adam.dao.team'), team.address],
     ]);
-
-    governFactory.governImplementation.returns(govern.address);
   });
 
   describe('initialize()', async function () {
