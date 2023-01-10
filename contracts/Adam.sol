@@ -14,11 +14,6 @@ import "./interface/ILiquidPool.sol";
 import "./base/DaoBeaconProxy.sol";
 import "./base/DaoChildBeaconProxy.sol";
 
-error InvalidContract(address _contract);
-error DaoBeaconAlreadyInitialized(address _daoBeacon);
-error BudgetApprovalAlreadyInitialized(address _budgetApproval);
-error BudgetApprovalNotFound(address _budgetApproval);
-
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using AddressUpgradeable for address;
 
@@ -43,7 +38,11 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     event WhitelistBudgetApproval(address budgetApproval);
     event AbandonBudgetApproval(address budgetApproval);
     event SetDaoBeacon(address _daoBeacon, uint256 _index);
-
+    error InvalidContract(address _contract);
+    error DaoBeaconAlreadyInitialized(address _daoBeacon);
+    error BudgetApprovalAlreadyInitialized(address _budgetApproval);
+    error BudgetApprovalNotFound(address _budgetApproval);
+    
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
