@@ -216,9 +216,6 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
         emit RemoveMember(owner, tokenId);
 
     }
-    function version() public view returns(uint256) {
-        return 2;
-    }
 
     uint256[50] private __gap;
 }

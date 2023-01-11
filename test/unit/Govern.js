@@ -12,18 +12,30 @@ describe('Govern.sol - test/unit/Govern.js', function () {
   beforeEach(async function () {
     [creator, owner, unknown] = await ethers.getSigners();
     const Govern = await ethers.getContractFactory('Govern', { signer: creator });
+    const DaoChildBeaconProxy = await ethers.getContractFactory('DaoChildBeaconProxy', { signer: creator });
+    const daoBeacon = await smock.fake('DaoBeacon');
+    const dao = await smock.fake('DaoBeaconProxy');
+    const impl = await Govern.deploy();
+
+    daoBeacon.implementation.returns(impl.address);
+    dao.daoBeacon.returns(daoBeacon.address);
+
     voteToken = await smock.fake('Membership');
     nonVotableToken = await smock.fake('ERC20');
-
-    govern = await upgrades.deployProxy(Govern, [
-      owner.address,
-      'Name',
-      130,
-      3000,
-      5000,
-      voteToken.address,
-      5,
-    ], { kind: 'uups' });
+    govern = await DaoChildBeaconProxy.deploy(
+      dao.address,
+      ethers.utils.id('adam.dao.govern'),
+      impl.interface.encodeFunctionData('initialize', [
+        owner.address,
+        'Name',
+        130,
+        3000,
+        5000,
+        voteToken.address,
+        5,
+      ]),
+    );
+    govern = await ethers.getContractAt('Govern', govern.address);
   });
 
   describe('votingPeriod()', function () {

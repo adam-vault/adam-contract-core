@@ -1,23 +1,48 @@
-const { expect } = require('chai');
+const chai = require('chai');
 const { ethers, upgrades } = require('hardhat');
+const { smock } = require('@defi-wonderland/smock');
+
+const { expect } = chai;
+chai.should();
+chai.use(smock.matchers);
 
 describe('MemberToken.sol - test/unit/MemberToken.js', function () {
-  let dao, member, minter;
+  let member, minter;
   let memberToken, MemberToken;
+  let DaoChildBeaconProxy, daoProxy, impl;
 
-  beforeEach(async function () {
-    [dao, minter, member] = await ethers.getSigners();
-
+  before(async function () {
+    [minter, member] = await ethers.getSigners();
     MemberToken = await ethers.getContractFactory('MemberToken');
-    // Use creator address to simulate minter address
-    memberToken = await upgrades.deployProxy(MemberToken, [minter.address, 'MemberTokenName', 'MT'], { kind: 'uups' });
+    DaoChildBeaconProxy = await ethers.getContractFactory('DaoChildBeaconProxy');
   });
 
-  describe('initialize()', function () {
+  beforeEach(async function () {
+    const daoBeacon = await smock.fake('DaoBeacon');
+    daoProxy = await smock.fake('DaoBeaconProxy');
+    impl = await MemberToken.deploy();
+
+    daoBeacon.implementation.returns(impl.address);
+    daoProxy.daoBeacon.returns(daoBeacon.address);
+
+    memberToken = await DaoChildBeaconProxy.deploy(
+      daoProxy.address,
+      ethers.utils.id('adam.dao.member_token'),
+      impl.interface.encodeFunctionData('initialize', [minter.address, 'MemberTokenName', 'MT']),
+    );
+    memberToken = await ethers.getContractAt('MemberToken', memberToken.address);
+  });
+
+  describe('initialize()', async function () {
     it('init with minter, name and symbol', async function () {
-      const contract = await upgrades.deployProxy(MemberToken, [
-        minter.address, 'MemberTokenName', 'MT',
-      ], { kind: 'uups', signer: dao });
+      let contract = await DaoChildBeaconProxy.deploy(
+        daoProxy.address,
+        ethers.utils.id('adam.dao.member_token'),
+        impl.interface.encodeFunctionData('initialize', [
+          minter.address, 'MemberTokenName', 'MT',
+        ]),
+      );
+      contract = await ethers.getContractAt('MemberToken', contract.address);
 
       expect(await contract.minter()).to.equal(minter.address);
       expect(await contract.name()).to.equal('MemberTokenName');
@@ -25,12 +50,15 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
     it('throws "minter is null" error if set minter as null', async function () {
       await expect(
-        upgrades.deployProxy(MemberToken, [
-          ethers.constants.AddressZero,
-          'MemberTokenName',
-          'MT',
-        ], { kind: 'uups', signer: dao }),
-      ).to.revertedWith('minter is null');
+        DaoChildBeaconProxy.deploy(
+          daoProxy.address,
+          ethers.utils.id('adam.dao.member_token'),
+          impl.interface.encodeFunctionData('initialize', [
+            ethers.constants.AddressZero,
+            'MemberTokenName',
+            'MT',
+          ]),
+        )).to.revertedWith('minter is null');
     });
   });
 

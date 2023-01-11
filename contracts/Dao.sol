@@ -353,9 +353,5 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
       }
     }
 
-    function version() public view returns(uint256) {
-        return 2;
-    }
-
     uint256[49] private __gap;
 }

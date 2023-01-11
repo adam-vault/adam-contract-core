@@ -3,10 +3,9 @@
 pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 
-contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
+contract MemberToken is Initializable, ERC20VotesUpgradeable {
     address public minter;
     address public dao;
 
@@ -81,8 +80,6 @@ contract MemberToken is Initializable, UUPSUpgradeable, ERC20VotesUpgradeable {
     ) public virtual override {
         revert("Not support delegate Vote");
     }
-
-    function _authorizeUpgrade(address) internal view override onlyDao {}
 
     uint256[50] private __gap;
 }

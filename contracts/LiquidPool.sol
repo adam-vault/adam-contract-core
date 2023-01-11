@@ -2,7 +2,6 @@
 
 pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
@@ -15,7 +14,7 @@ import "./base/PriceResolver.sol";
 import "./lib/Concat.sol";
 import "./interface/IDao.sol";
 
-contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceResolver, BudgetApprovalExecutee {
+contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApprovalExecutee {
     using Concat for string;
     using SafeERC20Upgradeable for IERC20MetadataUpgradeable;
     
@@ -221,8 +220,6 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     function assetsLength() public view returns(uint256) {
         return assets.length;
     }
-
-    function _authorizeUpgrade(address) internal view override onlyDao {}
     receive() external payable {}
 
     uint256[50] private __gap;

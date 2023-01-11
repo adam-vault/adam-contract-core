@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.so
 import "./lib/Constant.sol";
 
 contract Govern is
-    Initializable, UUPSUpgradeable, GovernorUpgradeable
+    Initializable, GovernorUpgradeable
 {
 
     enum VoteType {
@@ -190,8 +190,6 @@ contract Govern is
             return false;
         }
     }
-
-    function _authorizeUpgrade(address) internal view override onlyOwner {}
 
     uint256[49] private __gap;
 }

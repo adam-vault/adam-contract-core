@@ -1,23 +1,19 @@
-const { expect } = require('chai');
+const chai = require('chai');
 const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
-const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
+const { createAdam, createBudgetApprovals } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
+const { smock } = require('@defi-wonderland/smock');
+
+const { expect } = chai;
+chai.should();
+chai.use(smock.matchers);
+
 
 describe('Integration - Govern.sol - test/integration/Govern.js', function () {
   let adam, dao, lp;
   let creator, owner1, owner2;
-  let tokenA, tokenC721, budgetApprovalAddresses;
-  const category = {
-    name: 'BudgetApproval',
-    duration: 6570, // 1 day
-    durationInBlock: 5, // appending 5 block on top of 1 day
-    quorum: 1000, // 10%
-    passThreshold: 1000, // 10%
-    voteWights: [70, 30],
-    voteTokens: [],
-  };
-
+  let tokenA, budgetApprovalAddresses;
   function createDao () {
     return adam.createDao(...paramsStruct.getCreateDaoParams({ mintMemberToken: true }));
   }
@@ -31,9 +27,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
     dao = await ethers.getContractAt('MockDao', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
 
-    const res = await createTokens();
-    tokenA = res.tokenA;
-    tokenC721 = res.tokenC721;
+    tokenA = await (await smock.mock('ERC20')).deploy('Name', 'Symbol');
   });
 
   describe('Voting and executing proposals', function () {
@@ -87,11 +81,13 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
 
         expect(await mt.getPastVotes(creator.address, await ethers.provider.getBlockNumber() - 1)).to.eq(1);
 
-        const token = await ethers.getContractAt('TokenA', tokenA.address);
-        const transferCalldata = token.interface.encodeFunctionData(
-          'mint', [owner1.address, 1000],
-        );
+        await tokenA.setVariable('_balances', {
+          [govern.address]: 2000,
+        });
 
+        const transferCalldata = tokenA.interface.encodeFunctionData(
+          'transfer', [owner1.address, 1000],
+        );
         const tx = await govern.propose(
           [tokenA.address],
           [0],
@@ -121,7 +117,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
           descriptionHash);
 
         expect(await govern.state(proposalId)).to.eq(7); // Executed
-        expect(await token.balanceOf(owner1.address)).to.eq(1000);
+        expect(await tokenA.balanceOf(owner1.address)).to.eq(1000);
       });
     });
 

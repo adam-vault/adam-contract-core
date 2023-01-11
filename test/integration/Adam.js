@@ -1,11 +1,9 @@
 const chai = require('chai');
 const hre = require('hardhat');
-const findEventArgs = require('../../utils/findEventArgs');
 const { smock } = require('@defi-wonderland/smock');
 const { ethers } = hre;
 const { expect } = chai;
-const { createAdam, createTokens } = require('../utils/createContract');
-const decodeBase64 = require('../utils/decodeBase64');
+const { createAdam } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
 chai.use(smock.matchers);
 const {
@@ -26,8 +24,7 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
 
   beforeEach(async function () {
     [creator] = await ethers.getSigners();
-    const tokens = await createTokens();
-    token = tokens.tokenA;
+    token = await smock.fake('ERC20');
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
@@ -45,20 +42,6 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
       await expect(createDao())
         .to.emit(adam, 'CreateDao');
     });
-
-    // it('produces upgradable dao', async function () {
-    //   const tx1 = await createDao();
-    //   const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-
-    //   const MockDao = await ethers.getContractFactory('MockDao');
-    //   const mockDao = await MockDao.deploy();
-    //   await mockDao.deployed();
-    //   const dao = await ethers.getContractAt('Dao', daoAddr);
-    //   await dao.upgradeTo(mockDao.address);
-    //   const daoUpgraded = await ethers.getContractAt('MockDao', daoAddr);
-
-    //   expect(await daoUpgraded.v2()).to.equal(true);
-    // });
 
     it('creates successfully when set 0x0 as admission token', async function () {
       await expect(adam.createDao(

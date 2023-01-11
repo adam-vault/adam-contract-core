@@ -14,7 +14,20 @@ describe('Team.sol - test/unit/Team.js', function () {
 
     // contract
     const Team = await ethers.getContractFactory('Team', { signer: creator });
-    team = await upgrades.deployProxy(Team, [], { kind: 'uups' });
+    const DaoChildBeaconProxy = await ethers.getContractFactory('DaoChildBeaconProxy');
+    const daoBeacon = await smock.fake('DaoBeacon');
+    const daoProxy = await smock.fake('DaoBeaconProxy');
+    const impl = await Team.deploy();
+
+    daoBeacon.implementation.returns(impl.address);
+    daoProxy.daoBeacon.returns(daoBeacon.address);
+
+    team = await DaoChildBeaconProxy.deploy(
+      daoProxy.address,
+      ethers.utils.id('adam.dao.team'),
+      impl.interface.encodeFunctionData('initialize', []),
+    );
+    team = await ethers.getContractAt('Team', team.address);
 
     // create teamId
     const tx = await team.addTeam(

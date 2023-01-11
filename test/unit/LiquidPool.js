@@ -63,7 +63,19 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     dao.team.returns(team.address);
     dao.govern.returns(govern.address);
 
-    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [ADDRESS_ETH, token.address], ADDRESS_ETH], { kind: 'uups' });
+    const DaoChildBeaconProxy = await ethers.getContractFactory('DaoChildBeaconProxy', { signer: creator });
+    const daoBeacon = await smock.fake('DaoBeacon');
+    const daoProxy = await smock.fake('DaoBeaconProxy');
+    const impl = await LiquidPool.deploy();
+    daoBeacon.implementation.returns(impl.address);
+    daoProxy.daoBeacon.returns(daoBeacon.address);
+
+    lp = await DaoChildBeaconProxy.deploy(
+      daoProxy.address,
+      ethers.utils.id('adam.dao.liquid_pool'),
+      impl.interface.encodeFunctionData('initialize', [dao.address, [ADDRESS_ETH, token.address], ADDRESS_ETH]),
+    );
+    lp = await ethers.getContractAt('LiquidPool', lp.address);
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);
@@ -485,7 +497,20 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     await token.mint(signer2.address, parseEther('100'));
     await dao.setMemberToken(memberToken.address);
     await dao.setIsPassAdmissionToken(true);
-    lp = await upgrades.deployProxy(LiquidPool, [dao.address, [token.address], token.address], { kind: 'uups' });
+
+    const DaoChildBeaconProxy = await ethers.getContractFactory('DaoChildBeaconProxy', { signer: creator });
+    const daoBeacon = await smock.fake('DaoBeacon');
+    const daoProxy = await smock.fake('DaoBeaconProxy');
+    const impl = await LiquidPool.deploy();
+    daoBeacon.implementation.returns(impl.address);
+    daoProxy.daoBeacon.returns(daoBeacon.address);
+
+    lp = await DaoChildBeaconProxy.deploy(
+      daoProxy.address,
+      ethers.utils.id('adam.dao.liquid_pool'),
+      impl.interface.encodeFunctionData('initialize', [dao.address, [token.address], token.address]),
+    );
+    lp = await ethers.getContractAt('LiquidPool', lp.address);
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);
