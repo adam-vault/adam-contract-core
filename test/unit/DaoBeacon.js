@@ -1,9 +1,6 @@
 const chai = require('chai');
-const { ethers, upgrades } = require('hardhat');
+const { ethers } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
-const {
-  ADDRESS_ETH,
-} = require('../utils/constants');
 
 const { expect } = chai;
 chai.should();

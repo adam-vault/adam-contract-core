@@ -1,9 +1,7 @@
 const chai = require('chai');
 const { smock } = require('@defi-wonderland/smock');
 const { expect } = require('chai');
-const { ethers, testUtils } = require('hardhat');
-const { createTokens } = require('../utils/createContract');
-const findEventArgs = require('../../utils/findEventArgs');
+const { ethers } = require('hardhat');
 
 chai.should();
 chai.use(smock.matchers);

@@ -11,18 +11,25 @@ import "../DaoBeacon.sol";
 import "@openzeppelin/contracts/utils/StorageSlot.sol";
 import "../interface/IDaoBeaconProxy.sol";
 import "../interface/IDaoBeacon.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 
 contract DaoChildBeaconProxy is Proxy {
     bytes32 private constant _DAO_SLOT = bytes32(keccak256("adam.proxy.daoProxy.slot"));
     bytes32 private constant _CONTRACT_NAME_SLOT = bytes32(keccak256("adam.proxy.contractName.slot"));
 
+    error InvalidContract(address _contract);
     constructor(address _daoProxy, bytes32 _contractName, bytes memory _data) payable {
         StorageSlot.getAddressSlot(_DAO_SLOT).value = _daoProxy;
         StorageSlot.getBytes32Slot(_CONTRACT_NAME_SLOT).value = _contractName;
 
         address impl = IDaoBeacon(IDaoBeaconProxy(_daoProxy).daoBeacon()).implementation(_contractName);
-        require(impl != address(0), "impl not found");
+        
+
+        if (!Address.isContract(impl)) {
+            revert InvalidContract(impl);
+        }
+
         if (_data.length > 0) {
             Address.functionDelegateCall(impl, _data);
         }
@@ -36,11 +43,11 @@ contract DaoChildBeaconProxy is Proxy {
         return StorageSlot.getBytes32Slot(_CONTRACT_NAME_SLOT).value;
     }
 
-    function daoBeacon() public view returns (address) {
+    function _daoBeacon() internal view returns (address) {
         return IDaoBeaconProxy(_getDaoProxy()).daoBeacon();
     }
 
     function _implementation() internal view virtual override returns (address) {
-        return IDaoBeacon(daoBeacon()).implementation(_getContractName());
+        return IDaoBeacon(_daoBeacon()).implementation(_getContractName());
     }
 }
