@@ -10,7 +10,7 @@ chai.use(smock.matchers);
 
 describe('Dao.sol - test/unit/Dao.js', function () {
   let creator, member, mockGovern;
-  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam;
+  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam, mockAccountSystem;
   let tokenA, tokenC721, tokenD1155;
 
   beforeEach(async function () {
@@ -23,6 +23,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     const mockLiquidPool = await smock.fake('LiquidPool');
     mockGovernFactory = await smock.fake('GovernFactory');
     mockTeam = await smock.fake('Team');
+    mockAccountSystem = await smock.fake('AccountSystem');
     mockMemberToken = await (await smock.mock('MemberToken')).deploy();
 
     const adamAsSigner = await testUtils.address.impersonate(mockAdam.address);
@@ -56,6 +57,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
       '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
       'tokenName', 'T1',
       ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'],
+      mockAccountSystem.address,
     ], [
       Dao.interface.encodeFunctionData('createGovern', ['General', 0, 0, 0, 0, ethers.constants.AddressZero, 0]),
       Dao.interface.encodeFunctionData('addAdmissionToken', [tokenA.address, 10, 0]),

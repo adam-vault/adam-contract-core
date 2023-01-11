@@ -8,10 +8,10 @@ chai.should();
 chai.use(smock.matchers);
 
 describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', async function () {
-  let deployer, team, budgetApproval, unknown;
+  let deployer, team, budgetApproval, unknown, accountSystem;
   let executee, weth;
   beforeEach(async function () {
-    [deployer, team, budgetApproval, unknown] = await ethers.getSigners();
+    [deployer, team, budgetApproval, unknown, accountSystem] = await ethers.getSigners();
     executee = await (await smock.mock('BudgetApprovalExecutee', deployer)).deploy();
     weth = await smock.fake('MockWETH9');
 
@@ -20,6 +20,7 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
     });
 
     await executee.setVariable('_team', team.address);
+    await executee.setVariable('_accountSystem', accountSystem.address);
 
     await ethers.provider.send('hardhat_setBalance', [
       executee.address,
@@ -30,6 +31,11 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
   describe('team()', async function () {
     it('returns team address', async () => {
       expect(await executee.team()).to.eq(team.address);
+    });
+  });
+  describe('accountSystem()', async function () {
+    it('returns accountSystem address', async () => {
+      expect(await executee.accountSystem()).to.eq(accountSystem.address);
     });
   });
   describe('budgetApprovals()', async function () {

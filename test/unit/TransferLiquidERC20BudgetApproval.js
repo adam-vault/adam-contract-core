@@ -2,18 +2,18 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
+const { smock } = require('@defi-wonderland/smock');
+const { getCreateTransferLiquidErc20TokenBAParams } = require('../../utils/paramsStruct');
 
 const {
   ADDRESS_ETH,
-  ADDRESS_MOCK_AGGRGATOR,
-  ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC20BudgetApprovalV2.js', function () {
-  let transferLiquidERC20BAImplementation, budgetApproval, dao, team;
+  let transferLiquidERC20BAImplementation, budgetApproval, team, accountSystem;
   let executor, approver, receiver;
   let tokenA, executee, TransferLiquidERC20BudgetApproval;
 
@@ -24,50 +24,39 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
     const MockBudgetApprovalExecutee = await ethers.getContractFactory('MockBudgetApprovalExecutee', { signer: executor });
     TransferLiquidERC20BudgetApproval = await ethers.getContractFactory('TransferLiquidERC20BudgetApproval', { signer: executor });
     transferLiquidERC20BAImplementation = await TransferLiquidERC20BudgetApproval.deploy();
-    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
     const Team = await ethers.getContractFactory('Team', { signer: executor });
 
     team = await Team.deploy();
-    dao = await MockLPDao.deploy();
+    accountSystem = await smock.fake('AccountSystem');
     executee = await MockBudgetApprovalExecutee.deploy();
-    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-    await ethers.provider.send('hardhat_setCode', [
-      ADDRESS_MOCK_FEED_REGISTRY,
-      feedRegistryArticfact.deployedBytecode,
-    ]);
-    const feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
-    await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
-    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, parseEther('1'));
-    await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
+    executee.setAccountSystem(accountSystem.address);
+    accountSystem.isSupportedPair.whenCalledWith(tokenA.address, ADDRESS_ETH).returns(true);
+    accountSystem.isSupportedPair.whenCalledWith(ADDRESS_ETH, ADDRESS_ETH).returns(true);
+    accountSystem.assetPrice.returns(([,, amount]) => {
+      return amount;
+    });
   });
 
   describe('Create Budget Approval', function () {
     it('creates liquid ERC20 Budget Approval', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
-        [
-          executor.address, // executor
-          0, // executorTeam
-          [approver.address], // approvers
-          0, // approverTeam
-          1, // minApproval
-          'Transfer Liquid ERC20', // text
-          'outflowLiquid', // transaction type
-          startTime, // startTime
-          endTime, // endTime
-          false, // allow unlimited usage
-          10, // usage count
-          team.address, // team
-        ],
-        false, // allow all addresses
-        [receiver.address], // allowed addresses (use when above = false)
-        [ADDRESS_ETH, tokenA.address], // allowed token
-        false, // allow any amount
-        parseEther('100'), // allowed total amount
-        ADDRESS_ETH, // base currency
-        [],
-      ]);
+
+      const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateTransferLiquidErc20TokenBAParams({
+          dao: executor.address,
+          executor: executor.address,
+          approvers: [approver.address],
+          tokens: [ADDRESS_ETH, tokenA.address],
+          toAddresses: [receiver.address],
+          minApproval: 1,
+          usageCount: 10,
+          team: team.address,
+          totalAmount: parseEther('100'),
+          startTime,
+          endTime,
+        }),
+      );
 
       const tx = await executee.createBudgetApprovals([transferLiquidERC20BAImplementation.address], [initData]);
       const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
@@ -97,29 +86,19 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
     });
 
     it('throws "Invalid approver list"', async function () {
-      const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
-        [
-          executor.address, // executor
-          0, // executorTeam
-          [approver.address], // approvers
-          0, // approverTeam
-          2, // minApproval
-          'Transfer Liquid ERC20', // text
-          'outflowLiquid', // transaction type
-          Math.round(Date.now() / 1000) - 86400, // startTime
-          Math.round(Date.now() / 1000) + 86400, // endTime
-          false, // allow unlimited usage
-          10, // usage count
-          team.address, // team
-        ],
-        false, // allow all addresses,
-        [receiver.address], // allowed addresses (use when above = false)
-        [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
-        false, // allow any amount
-        parseEther('100'), // allowed total amount
-        ADDRESS_ETH, // base currency
-        [],
-      ]);
+      const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateTransferLiquidErc20TokenBAParams({
+          dao: executor.address,
+          executor: executor.address,
+          approvers: [approver.address],
+          tokens: [ADDRESS_ETH, tokenA.address],
+          toAddresses: [receiver.address],
+          minApproval: 2,
+          usageCount: 10,
+          team: team.address,
+          totalAmount: ethers.utils.parseEther('1'),
+        }),
+      );
 
       await expect(
         executee.createBudgetApprovals(
@@ -134,31 +113,19 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
     beforeEach(async function () {
       await executor.sendTransaction({ to: executee.address, value: parseEther('200') });
 
-      const startTime = Math.round(Date.now() / 1000) - 86400;
-      const endTime = Math.round(Date.now() / 1000) + 86400;
-      const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize', [
-        [
-          executor.address, // executor
-          0, // executorTeam
-          [approver.address], // approvers
-          0, // approverTeam
-          1, // minApproval
-          'Transfer Liquid ERC20', // text
-          'outflowLiquid', // transaction type
-          startTime, // startTime
-          endTime, // endTime
-          false, // allow unlimited usage
-          10, // usage count
-          team.address, // team
-        ],
-        false, // allow all addresses
-        [receiver.address], // allowed addresses (use when above = false)
-        [ADDRESS_ETH, tokenA.address], // allowed token
-        false, // allow any amount
-        parseEther('100'), // allowed total amount
-        ADDRESS_ETH, // base currency
-        [],
-      ]);
+      const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
+        getCreateTransferLiquidErc20TokenBAParams({
+          dao: executor.address,
+          executor: executor.address,
+          approvers: [approver.address],
+          tokens: [ADDRESS_ETH, tokenA.address],
+          toAddresses: [receiver.address],
+          minApproval: 1,
+          usageCount: 10,
+          team: team.address,
+          totalAmount: ethers.utils.parseEther('100'),
+        }),
+      );
 
       const tx = await executee.createBudgetApprovals(
         [transferLiquidERC20BAImplementation.address], [initData],
@@ -328,29 +295,21 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
 
     context('execute before startTime', () => {
       it('throws "Budget usage period not started"', async function () {
-        const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
-          [
-            executor.address, // executor
-            0, // executorTeam
-            [], // approvers
-            0, // approverTeam
-            0, // minApproval
-            'Transfer Liquid ERC20', // text
-            'outflowLiquid', // transaction type
-            Math.round(Date.now() / 1000) + 86400, // startTime
-            0, // endTime
-            false, // allow unlimited usage
-            10, // usage count
-            team.address, // team
-          ],
-          false, // allow all addresses,
-          [receiver.address], // allowed addresses (use when above = false)
-          [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
-          false, // allow any amount
-          parseEther('100'), // allowed total amount
-          ADDRESS_ETH, // base currency
-          [],
-        ]);
+        const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
+          getCreateTransferLiquidErc20TokenBAParams({
+            dao: executor.address,
+            executor: executor.address,
+            approvers: [],
+            tokens: [ADDRESS_ETH, tokenA.address],
+            toAddresses: [receiver.address],
+            minApproval: 0,
+            usageCount: 10,
+            team: team.address,
+            totalAmount: ethers.utils.parseEther('100'),
+            startTime: Math.round(Date.now() / 1000) + 86400,
+            endTime: 0,
+          }),
+        );
 
         const tx = await executee.createBudgetApprovals(
           [transferLiquidERC20BAImplementation.address],
@@ -382,29 +341,21 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
 
     context('execute after endTime', () => {
       it('throws "Budget usage period has ended"', async function () {
-        const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
-          [
-            executor.address, // executor
-            0, // executorTeam
-            [], // approvers
-            0, // approverTeam
-            0, // minApproval
-            'Transfer Liquid ERC20', // text
-            'outflowLiquid', // transaction type
-            0, // startTime
-            Math.round(Date.now() / 1000) - 86400, // endTime
-            false, // allow unlimited usage
-            10, // usage count
-            team.address, // team
-          ],
-          false, // allow all addresses,
-          [receiver.address], // allowed addresses (use when above = false)
-          [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
-          false, // allow any amount
-          parseEther('100'), // allowed total amount
-          ADDRESS_ETH, // base currency
-          [],
-        ]);
+        const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
+          getCreateTransferLiquidErc20TokenBAParams({
+            dao: executor.address,
+            executor: executor.address,
+            approvers: [],
+            tokens: [ADDRESS_ETH, tokenA.address],
+            toAddresses: [receiver.address],
+            minApproval: 0,
+            usageCount: 10,
+            team: team.address,
+            totalAmount: ethers.utils.parseEther('100'),
+            startTime: 0,
+            endTime: Math.round(Date.now() / 1000) - 86400,
+          }),
+        );
 
         const tx = await executee.createBudgetApprovals(
           [transferLiquidERC20BAImplementation.address],
@@ -437,29 +388,20 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
 
     context('execute if not enough usage count', () => {
       it('throws "Exceeded budget usage limit"', async function () {
-        const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize', [
-          [
-            executor.address, // executor
-            0, // executorTeam
-            [], // approvers
-            0, // approverTeam
-            0, // minApproval
-            'Transfer Liquid ERC20', // text
-            'outflowLiquid', // transaction type
-            0, // startTime
-            0, // endTime
-            false, // allow unlimited usage
-            1, // usage count
-            team.address, // team
-          ],
-          false, // allow all addresses,
-          [receiver.address], // allowed addresses (use when above = false)
-          [ADDRESS_ETH, tokenA.address], // allowed token (use when above = false)
-          false, // allow any amount
-          parseEther('100'), // allowed total amount
-          ADDRESS_ETH, // base currency
-          [],
-        ]);
+        const initData = TransferLiquidERC20BudgetApproval.interface.encodeFunctionData('initialize',
+          getCreateTransferLiquidErc20TokenBAParams({
+            dao: executor.address,
+            executor: executor.address,
+            approvers: [],
+            tokens: [ADDRESS_ETH, tokenA.address],
+            toAddresses: [receiver.address],
+            minApproval: 0,
+            usageCount: 1,
+            team: team.address,
+            totalAmount: parseEther('100'),
+            allowAnyAmount: false,
+          }),
+        );
 
         const tx = await executee.createBudgetApprovals(
           [transferLiquidERC20BAImplementation.address],
