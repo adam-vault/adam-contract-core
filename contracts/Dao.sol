@@ -72,9 +72,10 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
 
     mapping(string => address) public govern;
     mapping(bytes32 => address) public plugins;
+    mapping(address => bool) public isPlugin;
 
     event AllowDepositToken(address token);
-    event CreateMemberToken(address creator, address token);
+    event CreateMemberToken(address token);
     event SetFirstDepositTime(address owner, uint256 time);
     event WhitelistTeam(uint256 tokenId);
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
@@ -111,8 +112,9 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         name = params._name;
         creator = params._creator;
 
-        plugins[Constant.BEACON_NAME_MEMBERSHIP] = params._membership;
-        plugins[Constant.BEACON_NAME_LIQUID_POOL] = params._liquidPool;
+        _addToPlugins(Constant.BEACON_NAME_MEMBERSHIP, params._membership);
+        _addToPlugins(Constant.BEACON_NAME_LIQUID_POOL, params._liquidPool);
+
         baseCurrency = params.baseCurrency;
         description = params._description;
 
@@ -130,11 +132,15 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     }
     
 
-    modifier onlyGovern(string memory category) {
+    modifier onlyGovernGeneral() {
         require(
             byPassGovern(msg.sender) ||
-            msg.sender == govern[category] ||
+            msg.sender == govern["General"] ||
             _initializing, "Action not permitted");
+        _;
+    }
+    modifier onlyPlugins() {
+        require(isPlugin[msg.sender], "only plugins");
         _;
     }
 
@@ -148,6 +154,12 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         return plugins[Constant.BEACON_NAME_MEMBER_TOKEN];
     }
 
+    function _addToPlugins(bytes32 name, address dest) internal {
+        require(plugins[name] == address(0), "plugins already init");
+        plugins[name] = dest;
+        isPlugin[dest] = true;
+    }
+
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
         return IAdam(adam).budgetApprovals(budgetApproval);
     }
@@ -156,38 +168,37 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         return (IMembership(membership()).totalSupply() == 1 && IMembership(membership()).isMember(account));
     }
 
-    function setFirstDepositTime(address owner, uint256 timestamp) public {
-        require(msg.sender == liquidPool() || msg.sender == membership(), "only LP");
+    function setFirstDepositTime(address owner, uint256 timestamp) public onlyPlugins {
         firstDepositTime[owner] = timestamp;
         emit SetFirstDepositTime(owner, timestamp);
     }
 
-    function transferMemberToken(address to, uint amount) public onlyGovern("General") {
+    function transferMemberToken(address to, uint amount) public onlyGovernGeneral {
         _transferMemberToken(to, amount);
     }
 
-    function setLocktime(uint256 _locktime) public onlyGovern("General") {
+    function setLocktime(uint256 _locktime) public onlyGovernGeneral {
         locktime = _locktime;
         emit UpdateLocktime(_locktime);
     }
 
-    function setMinDepositAmount(uint256 _minDepositAmount) public onlyGovern("General") {
+    function setMinDepositAmount(uint256 _minDepositAmount) public onlyGovernGeneral {
         minDepositAmount = _minDepositAmount;
         emit UpdateMinDepositAmount(_minDepositAmount);
     }
 
-    function setDescription(string calldata _description) public onlyGovern("General") {
+    function setDescription(string calldata _description) public onlyGovernGeneral {
         description = _description;
         emit UpdateDescription(_description);
     }
 
-    function setLogoCID(string calldata _logoCID) public onlyGovern("General") {
+    function setLogoCID(string calldata _logoCID) public onlyGovernGeneral {
         logoCID = _logoCID;
         emit UpdateLogoCID(_logoCID);
     }
 
 
-    function mintMemberToken(uint amount) public onlyGovern("General") {
+    function mintMemberToken(uint amount) public onlyGovernGeneral {
         _mintMemberToken(amount);
     }
 
@@ -199,7 +210,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         VoteType voteType,
         address externalVoteToken,
         uint256 durationInBlock
-    ) public onlyGovern("General") {
+    ) public onlyGovernGeneral {
         address _voteToken;
 
         if (voteType == VoteType.Membership) {
@@ -234,35 +245,38 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         );
     }
 
-    function setMemberTokenAsAdmissionToken(uint256 minTokenToAdmit) public onlyGovern("General") {
+    function setMemberTokenAsAdmissionToken(uint256 minTokenToAdmit) public onlyGovernGeneral {
         IMembership(membership()).setMemberTokenAsAdmissionToken(minTokenToAdmit);
     }
 
-    function addAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId) public onlyGovern("General") {
+    function addAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId) public onlyGovernGeneral {
         IMembership(membership()).addAdmissionToken(token, minTokenToAdmit, tokenId);
     }
 
-    function addAssets(address[] calldata erc20s) public onlyGovern("General") {
+    function addAssets(address[] calldata erc20s) public onlyGovernGeneral {
         _addAssets(erc20s);
     }
 
-    function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("General") {
+    function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovernGeneral {
       uint256 id = ITeam(team()).addTeam(title, minter, members, description);
       teamWhitelist[id] = true;
 
       emit WhitelistTeam(id);
     }
 
-    function _createMemberToken(string memory _name, string memory _symbol) internal {
-        require(memberToken() == address(0), "Member token already initialized");
+    function createMemberToken(string memory _name, string memory _symbol) public onlyGovernGeneral returns(address) {
+        return _createMemberToken(name, _symbol);
+    }
 
+    function _createMemberToken(string memory _name, string memory _symbol) internal returns(address) {
         DaoChildBeaconProxy _memberTokenContract = new DaoChildBeaconProxy(address(this), Constant.BEACON_NAME_MEMBER_TOKEN, "");
         address _memberToken = address(_memberTokenContract);
-        plugins[Constant.BEACON_NAME_MEMBER_TOKEN] = _memberToken;
+        _addToPlugins(Constant.BEACON_NAME_MEMBER_TOKEN, _memberToken);
         IMemberToken(_memberToken).initialize(address(this), _name, _symbol);
         _addAsset(_memberToken);
 
-        emit CreateMemberToken(msg.sender, _memberToken);
+        emit CreateMemberToken(_memberToken);
+        return _memberToken;
     }
 
     function afterDeposit(address account, uint256 amount) external {
@@ -280,11 +294,11 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         }
     }
 
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovernGeneral {
         require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
     }
 
-    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {}
+    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyGovernGeneral {}
 
 
     function _mintMemberToken(uint256 amount) internal {
@@ -312,7 +326,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         IMembership(membership()).createMember(owner);
     }
 
-    function upgradeTo(address _daoBeacon) external onlyGovern("General") {
+    function upgradeTo(address _daoBeacon) external onlyGovernGeneral {
         address curBeacon = IDaoBeaconProxy(address(this)).daoBeacon();
         require(AddressUpgradeable.isContract(_daoBeacon), "ERC1967: new beacon is not a contract");
         require(IAdam(adam).daoBeaconIndex(_daoBeacon) > IAdam(adam).daoBeaconIndex(curBeacon), "invalid downgrade");
@@ -320,7 +334,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         emit UpgradeDaoBeacon(_daoBeacon);
     }
 
-    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) public onlyGovern("General") returns (bytes[] memory) {
+    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) public onlyGovernGeneral returns (bytes[] memory) {
         require(targets.length == values.length ||
             targets.length == data.length , "length not match");
 

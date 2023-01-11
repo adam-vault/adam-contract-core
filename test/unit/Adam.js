@@ -4,8 +4,6 @@ const { smock } = require('@defi-wonderland/smock');
 const {
   ADDRESS_ETH,
 } = require('../utils/constants');
-const { random } = require('lodash');
-
 const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);

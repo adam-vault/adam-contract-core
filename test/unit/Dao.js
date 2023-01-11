@@ -78,8 +78,8 @@ describe('Dao.sol - test/unit/Dao.js', function () {
       await dao.connect(lpAsSigner).setFirstDepositTime(creator.address, 10);
       expect(await dao.firstDepositTime(creator.address)).to.equal(10);
     });
-    it('throws "only LP"', async function () {
-      await expect(dao.setFirstDepositTime(creator.address, 0)).to.be.revertedWith('only LP');
+    it('throws "only plugins"', async function () {
+      await expect(dao.setFirstDepositTime(creator.address, 0)).to.be.revertedWith('only plugins');
     });
   });
 
@@ -90,6 +90,12 @@ describe('Dao.sol - test/unit/Dao.js', function () {
 
       await mockAdam.budgetApprovals.returns(false);
       expect(await dao.canCreateBudgetApproval(creator.address)).to.equal(false);
+    });
+  });
+
+  describe('liquidPool()', function () {
+    it('returns address from dao.plugins()', async function () {
+      expect(await dao.liquidPool()).to.be.equal(await dao.plugins(ethers.utils.id('adam.dao.liquid_pool')));
     });
   });
 
@@ -123,6 +129,13 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     it('updates minDepositAmount', async function () {
       await dao.connect(mockGovern).setMinDepositAmount(10);
       expect(await dao.minDepositAmount()).to.equal(10);
+    });
+  });
+
+  describe('setDescription()', function () {
+    it('updates description', async function () {
+      await dao.connect(mockGovern).setDescription('desc');
+      expect(await dao.description()).to.equal('desc');
     });
   });
 
