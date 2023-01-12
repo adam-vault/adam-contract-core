@@ -62,7 +62,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
     dao = await smock.fake('Dao');
     membership = await smock.fake('Membership');
 
-    liquidPool.dao.returns(dao.address);
+    liquidPool.owner.returns(dao.address);
     dao.membership.returns(membership.address);
 
     executee = await smock.fake('MockBudgetApprovalExecutee');

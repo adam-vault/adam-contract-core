@@ -25,11 +25,12 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     daoBeacon.implementation.returns(impl.address);
     daoProxy.daoBeacon.returns(daoBeacon.address);
 
-    memberToken = await DaoChildBeaconProxy.deploy(
+    memberToken = await (DaoChildBeaconProxy).deploy(
       daoProxy.address,
       ethers.utils.id('adam.dao.member_token'),
-      impl.interface.encodeFunctionData('initialize', [minter.address, 'MemberTokenName', 'MT']),
+      impl.interface.encodeFunctionData('initialize', ['MemberTokenName', 'MT']),
     );
+
     memberToken = await ethers.getContractAt('MemberToken', memberToken.address);
   });
 
@@ -39,26 +40,14 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
         daoProxy.address,
         ethers.utils.id('adam.dao.member_token'),
         impl.interface.encodeFunctionData('initialize', [
-          minter.address, 'MemberTokenName', 'MT',
+          'MemberTokenName', 'MT',
         ]),
       );
       contract = await ethers.getContractAt('MemberToken', contract.address);
 
-      expect(await contract.minter()).to.equal(minter.address);
+      expect(await contract.owner()).to.equal(minter.address);
       expect(await contract.name()).to.equal('MemberTokenName');
       expect(await contract.symbol()).to.equal('MT');
-    });
-    it('throws "minter is null" error if set minter as null', async function () {
-      await expect(
-        DaoChildBeaconProxy.deploy(
-          daoProxy.address,
-          ethers.utils.id('adam.dao.member_token'),
-          impl.interface.encodeFunctionData('initialize', [
-            ethers.constants.AddressZero,
-            'MemberTokenName',
-            'MT',
-          ]),
-        )).to.revertedWith('minter is null');
     });
   });
 
@@ -68,8 +57,8 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
       expect(await memberToken.balanceOf(member.address)).to.equal(10);
     });
 
-    it('throws "Not minter" error if not called by minter', async function () {
-      await expect(memberToken.connect(member).mint(member.address, 10)).to.be.revertedWith('Not minter');
+    it('throws "Ownable: caller is not the owner" error if not called by minter', async function () {
+      await expect(memberToken.connect(member).mint(member.address, 10)).to.be.revertedWith('Ownable: caller is not the owner');
     });
   });
 

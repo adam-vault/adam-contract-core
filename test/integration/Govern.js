@@ -44,7 +44,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
     await dao.setVariable({
       plugins: {
         [ethers.utils.id('adam.dao.member_token')]: memberToken.address,
-        [ethers.utils.id('adam.dao.liquidPool')]: lp.address,
+        [ethers.utils.id('adam.dao.liquid_pool')]: lp.address,
       },
       isPlugins: {
         [memberToken.address]: true,

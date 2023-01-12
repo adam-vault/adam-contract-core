@@ -224,28 +224,22 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       ], { signer: daoCreator, kind: 'uups' });
     });
     it('createDao successfully', async () => {
-      await expect(adamForCreatrDao.createDao([
+      await expect(adamForCreatrDao.createDao(
         'name',
         'description',
         ADDRESS_ETH,
-        2,
-        'name',
-        'symbol',
         [],
         ethers.constants.AddressZero,
-      ], [])).to.not.be.reverted;
+      )).to.not.be.reverted;
     });
     it('emits createDao event', async () => {
-      const tx = await adamForCreatrDao.createDao([
+      const tx = await adamForCreatrDao.createDao(
         'name',
         'description',
         ADDRESS_ETH,
-        2,
-        'name',
-        'symbol',
         [],
         ethers.constants.AddressZero,
-      ], []);
+      );
       const receipt = await tx.wait();
       const event = receipt.events.find(e => e.event === 'CreateDao');
 

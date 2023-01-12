@@ -207,6 +207,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     });
 
     describe('when using ERC20 member token as Admission token', function () {
+      let memberToken;
       beforeEach(async function () {
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({
@@ -219,17 +220,46 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         const daoAddr = creationEventLog.args.dao;
         dao = await ethers.getContractAt('MockDao', daoAddr);
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+
+        dao = await (await smock.mock('Dao')).deploy();
+        memberToken = await (await smock.mock('MemberToken')).deploy();
+        membership = await (await smock.mock('Membership')).deploy();
+        lp = await (await smock.mock('LiquidPool')).deploy();
+
+        await dao.setVariables({
+          plugins: {
+            [ethers.utils.id('adam.dao.member_token')]: memberToken.address,
+            [ethers.utils.id('adam.dao.liquid_pool')]: lp.address,
+            [ethers.utils.id('adam.dao.membership')]: membership.address,
+          },
+          isPlugin: {
+            [memberToken.address]: true,
+            [lp.address]: true,
+          },
+        });
+
+        await membership.setVariables({
+          _owner: dao.address,
+          admissionTokens: [memberToken.address],
+          maxMemberLimit: 10,
+          admissionTokenSetting: {
+            [memberToken.address]: {
+              minTokenToAdmit: 100,
+              tokenId: 0,
+              active: true,
+            },
+          },
+        });
+        await lp.setVariables({
+          _owner: dao.address,
+          assets: ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'],
+          _assetIndex: {
+            '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE': 1,
+          },
+        });
       });
-
-      // TODO: move to Dao creation
-      // it('should minted member token', async function () {
-      //   const memberTokenAddr = await dao.memberToken();
-      //   const memberToken = await ethers.getContractAt('MemberToken', memberTokenAddr);
-
-      //   expect(await memberToken.balanceOf(dao.address)).to.eq(100);
-      // });
       it('allows EOA to deposit successfully with enough ERC20 Member Token', async function () {
-        await dao.exposedTransferMemberToken(creator.address, 100);
+        memberToken.balanceOf.returns(100);
         await lp.deposit(creator.address, { value: 1 });
         expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
       });

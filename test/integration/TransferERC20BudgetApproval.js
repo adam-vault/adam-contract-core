@@ -225,12 +225,13 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
     transferErc20BAImplementation = await TransferERC20BudgetApproval.deploy();
     const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
-    const Team = await ethers.getContractFactory('Team', { signer: executor });
 
-    team = await Team.deploy();
+    team = await (await smock.mock('Team')).deploy();
     dao = await MockLPDao.deploy();
     executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
     executee.team.returns(team.address);
+
+    executee = await (await smock.mock('Dao')).deploy();
   });
 
   describe('Create Budget Approval', function () {
@@ -630,18 +631,16 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
   describe('Execute Transaction with team (Transfer illiquid token)', function () {
     beforeEach(async function () {
       await tokenA.mint(executee.address, '200');
-      await team.addTeam(
-        'Testing1',
-        executor.address,
-        [executor.address],
-        'Test',
-      );
-      await team.addTeam(
-        'Testing2',
-        executor.address,
-        [approver.address],
-        'Test',
-      );
+      await team.setVariables({
+        _balances: {
+          1: {
+            [executor.address]: 1,
+          },
+          2: {
+            [approver.address]: 2,
+          },
+        },
+      });
 
       const initData =
         transferErc20BAImplementation.interface.encodeFunctionData(

@@ -44,10 +44,7 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
     budgetApprovalAddresses = await createBudgetApprovals(executor);
     adam = await createAdam(budgetApprovalAddresses);
     const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
-      budgetApproval: [13, 3000, 5000, 0], // budgetApproval
-      revokeBudgetApproval: [13, 3000, 5000, 0], // revokeBudgetApproval
-      general: [13, 3000, 5000, 0], // general,
-      daoSettingApproval: [13, 3000, 5000, 0], // daoSetting
+      creator: executor.address, // creator
     }));
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     const dao = await ethers.getContractAt('Dao', daoAddr);

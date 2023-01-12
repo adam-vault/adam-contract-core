@@ -13,23 +13,9 @@ describe('Team.sol - test/unit/Team.js', function () {
     [creator, member1, member2, member3] = await ethers.getSigners();
 
     // contract
-    const Team = await ethers.getContractFactory('Team', { signer: creator });
-    const DaoChildBeaconProxy = await ethers.getContractFactory('DaoChildBeaconProxy');
-    const daoBeacon = await smock.fake('DaoBeacon');
-    const daoProxy = await smock.fake('DaoBeaconProxy');
-    const impl = await Team.deploy();
+    team = await (await smock.mock('Team')).deploy();
+    await team.setVariable('_owner', creator.address);
 
-    daoBeacon.implementation.returns(impl.address);
-    daoProxy.daoBeacon.returns(daoBeacon.address);
-
-    team = await DaoChildBeaconProxy.deploy(
-      daoProxy.address,
-      ethers.utils.id('adam.dao.team'),
-      impl.interface.encodeFunctionData('initialize', []),
-    );
-    team = await ethers.getContractAt('Team', team.address);
-
-    // create teamId
     const tx = await team.addTeam(
       'Team Name',
       member1.address,
@@ -41,7 +27,6 @@ describe('Team.sol - test/unit/Team.js', function () {
   it('init creator as owner', async function () {
     expect(await team.owner()).to.eq(creator.address);
   });
-
 
   describe('safeTransferFrom()', function () {
     it('throws "Team: Transfer of team ownership is aboundand" error if member transfer their token', async function () {
@@ -67,7 +52,6 @@ describe('Team.sol - test/unit/Team.js', function () {
         'Description');
       teamId = await findEventArgs(tx, 'TransferSingle', 'id');
 
-      expect(await team.creatorOf(teamId)).to.eq(creator.address);
       expect(await team.minterOf(teamId)).to.eq(member1.address);
       expect(await team.nameOf(teamId)).to.eq('Team Name');
     });

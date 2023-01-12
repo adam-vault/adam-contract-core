@@ -114,7 +114,7 @@ function getCreateDaoParams ({
       creator
         ? iface.encodeFunctionData('executePlugin', [
           ethers.utils.id('adam.dao.membership'),
-          memberTokenIface.encodeFunctionData('createMember', [creator]),
+          membershipIface.encodeFunctionData('createMember', [creator]),
           0,
         ])
         : '',

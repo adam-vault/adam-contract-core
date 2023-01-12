@@ -1,28 +1,34 @@
 const { expect } = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const { createTokens } = require('../utils/createContract');
+const { smock } = require('@defi-wonderland/smock');
 
 describe('Membership.sol - test/unit/Membership.js', function () {
   let dao, creator, member, member2, member3;
   let membership, membershipImpl;
   let Membership, ERC1967Proxy;
 
+  before(async () => {
+    ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy');
+    membershipImpl = await (await ethers.getContractFactory('Membership')).deploy();
+  });
+
   beforeEach(async function () {
     [creator, member, member2, member3, dao] = await ethers.getSigners();
-    Membership = await ethers.getContractFactory('Membership');
-    ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy');
-    membershipImpl = await Membership.deploy();
-    const proxy = await ERC1967Proxy.deploy(membershipImpl.address, '0x');
-    membership = await ethers.getContractAt('Membership', proxy.address);
-    await membership.initialize(dao.address, 'DaoName', 2);
+    membership = await (await smock.mock('Membership')).deploy();
+    await membership.setVariables({
+      _owner: dao.address,
+      _name: 'DaoName Membership',
+      _symbol: 'MS',
+      maxMemberLimit: 2,
+    });
   });
 
   describe('initialize()', function () {
     it('init with name and symbol', async function () {
       const proxy = await ERC1967Proxy.deploy(membershipImpl.address, '0x');
       const contract = await ethers.getContractAt('Membership', proxy.address);
-      await contract.initialize(dao.address, 'DaoName', 1);
-      expect(await contract.dao()).to.equal(dao.address);
+      await contract.initialize('DaoName', 1);
       expect(await contract.name()).to.equal('DaoName Membership');
       expect(await contract.symbol()).to.equal('MS');
       expect(await contract.maxMemberLimit()).to.equal(ethers.BigNumber.from('1'));
@@ -38,8 +44,8 @@ describe('Membership.sol - test/unit/Membership.js', function () {
       expect(await membership.totalSupply()).to.equal(1);
     });
 
-    it('throws "not dao" if not called by dao', async function () {
-      await expect(membership.connect(member).createMember(member.address)).to.be.revertedWith('not dao');
+    it('throws "Ownable: caller is not the owner" if not called by dao', async function () {
+      await expect(membership.connect(member).createMember(member.address)).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
     it('throws "Member already created" if member count exceeds limit', async function () {
