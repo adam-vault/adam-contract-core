@@ -14,32 +14,56 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
   let adam, dao, lp;
   let creator, owner1, owner2;
   let tokenA, budgetApprovalAddresses;
+  let memberToken;
+  let ERC1967Proxy, impl, LiquidPool, MemberToken, govern;
   function createDao () {
     return adam.createDao(...paramsStruct.getCreateDaoParams({ mintMemberToken: true }));
   }
 
+  before(async function() {
+    ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy');
+    MemberToken = await ethers.getContractFactory('MemberToken');
+    LiquidPool = await ethers.getContractFactory('LiquidPool');
+  });
   beforeEach(async function () {
     [creator, owner1, owner2] = await ethers.getSigners();
     budgetApprovalAddresses = await createBudgetApprovals(creator);
     adam = await createAdam(budgetApprovalAddresses);
     const tx1 = await createDao();
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-    dao = await ethers.getContractAt('MockDao', daoAddr);
-    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+    // dao = await ethers.getContractAt('MockDao', daoAddr);
+    // lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
+
+    dao = await (await smock.mock('Dao')).deploy();
+    memberToken = await (await smock.mock('MemberToken')).deploy();
+    lp = await (await smock.mock('LiquidPool')).deploy();
+    govern = await (await smock.mock('Govern')).deploy();
+    await govern.setVariable('voteToken', memberToken.address);
+    await govern.setVariable('durationInBlock', 5);
+
+    await dao.setVariable({
+      plugins: {
+        [ethers.utils.id('adam.dao.member_token')]: memberToken.address,
+        [ethers.utils.id('adam.dao.liquidPool')]: lp.address,
+      },
+      isPlugins: {
+        [memberToken.address]: true,
+        [lp.address]: true,
+      },
+      govern: {
+        General: govern.address,
+      },
+    });
 
     tokenA = await (await smock.mock('ERC20')).deploy('Name', 'Symbol');
   });
 
-  describe('Voting and executing proposals', function () {
-    context('For one toke only', function () {
+  describe('Voting and executing proposals', async function () {
+    context('For one toke only', async function () {
       it('proposes a proposal and vote', async function () {
-        await dao.exposedTransferMemberToken(creator.address, 1);
+        memberToken.getPastVotes.returns(1);
 
-        const governAddr = await dao.govern('General');
-        const govern = await ethers.getContractAt('Govern', governAddr);
-
-        const token = await ethers.getContractAt('ERC20', tokenA.address);
-        const transferCalldata = token.interface.encodeFunctionData(
+        const transferCalldata = tokenA.interface.encodeFunctionData(
           'transfer', [owner1.address, 1000],
         );
 
@@ -50,17 +74,19 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
           'Proposal #1: Transfer token',
         );
         const { proposalId } = await findEventArgs(tx, 'ProposalCreated');
+        const descriptionHash = ethers.utils.id('Proposal #1: Transfer token');
+
+        await ethers.provider.send('hardhat_mine', ['0x1']);
+        await ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
 
         await govern.castVote(proposalId, 0);
-        const hasVoted = await govern.hasVoted(proposalId, creator.address);
-        expect(hasVoted).to.eq(true);
+        await ethers.provider.send('hardhat_mine', ['0x1']);
+
+        expect(await govern.hasVoted(proposalId, creator.address)).to.eq(true);
         expect(await govern.state(proposalId)).to.eq(1); // Active
         expect(await govern.getProposalVote(proposalId, 0)).to.eq(1);
         expect(await govern.getProposalVote(proposalId, 1)).to.eq(0);
         expect(await govern.getProposalVote(proposalId, 2)).to.eq(0);
-
-        const descriptionHash = ethers.utils.id('Proposal #1: Transfer token');
-
         await expect(govern.execute(
           [tokenA.address],
           [0],
@@ -70,16 +96,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
       });
 
       it('proposes a proposal, vote and execute', async function () {
-        await dao.exposedTransferMemberToken(creator.address, 1);
-        const mt = await ethers.getContractAt('MemberToken', await dao.memberToken());
-        expect(await mt.balanceOf(creator.address)).to.eq(1);
-
-        const governAddr = await dao.govern('General');
-        const govern = await ethers.getContractAt('Govern', governAddr);
-        await ethers.provider.send('hardhat_mine', ['0x2']);
-        await ethers.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
-
-        expect(await mt.getPastVotes(creator.address, await ethers.provider.getBlockNumber() - 1)).to.eq(1);
+        memberToken.getPastVotes.returns(1);
 
         await tokenA.setVariable('_balances', {
           [govern.address]: 2000,
@@ -95,10 +112,10 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
           'Proposal #1: Transfer token',
         );
         const { proposalId } = await findEventArgs(tx, 'ProposalCreated');
+        const descriptionHash = ethers.utils.id('Proposal #1: Transfer token');
 
         await govern.castVote(proposalId, 1);
-        const hasVoted = await govern.hasVoted(proposalId, creator.address);
-        expect(hasVoted).to.eq(true);
+        expect(await govern.hasVoted(proposalId, creator.address)).to.eq(true);
         expect(await govern.state(proposalId)).to.eq(1); // Active
         expect(await govern.getProposalVote(proposalId, 0)).to.eq(0);
         expect(await govern.getProposalVote(proposalId, 1)).to.eq(1);
@@ -109,7 +126,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
 
         expect(await govern.state(proposalId)).to.eq(4); // Success
 
-        const descriptionHash = ethers.utils.id('Proposal #1: Transfer token');
         await govern.execute(
           [tokenA.address],
           [0],

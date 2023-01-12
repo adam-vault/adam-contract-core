@@ -17,27 +17,16 @@ import "./base/DaoChildBeaconProxy.sol";
 contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using AddressUpgradeable for address;
 
-    struct CreateDaoParams {
-        string _name;
-        string _description;
-        address baseCurrency;
-        uint256 maxMemberLimit;
-        string _memberTokenName;
-        string _memberTokenSymbol;
-        address[] depositTokens;
-        address _referer;
-    }
-    
     mapping(address => bool) public budgetApprovals;
     mapping(address => bool) public daos;
     mapping(address => uint256) public daoBeaconIndex;
-
     address public daoBeacon; // latest daoBeacon;
 
     event CreateDao(address indexed dao, address creator, address referer);
     event WhitelistBudgetApproval(address budgetApproval);
     event AbandonBudgetApproval(address budgetApproval);
     event SetDaoBeacon(address _daoBeacon, uint256 _index);
+
     error InvalidContract(address _contract);
     error DaoBeaconAlreadyInitialized(address _daoBeacon);
     error BudgetApprovalAlreadyInitialized(address _budgetApproval);
@@ -86,41 +75,26 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         }
     }
 
-    function createDao(CreateDaoParams memory params, bytes[] memory data) external returns (address) {
+    function createDao(
+        string memory  _name,
+        string memory _description,
+        address _baseCurrency,
+        bytes[] memory _data,
+        address _referer
+    ) external returns (address) {
+
         DaoBeaconProxy _dao = new DaoBeaconProxy(daoBeacon, "");
-        DaoChildBeaconProxy _membership = new DaoChildBeaconProxy(address(_dao), Constant.BEACON_NAME_MEMBERSHIP, "");
-        DaoChildBeaconProxy _liquidPool = new DaoChildBeaconProxy(address(_dao), Constant.BEACON_NAME_LIQUID_POOL, "");
-        DaoChildBeaconProxy _team = new DaoChildBeaconProxy(address(_dao), Constant.BEACON_NAME_TEAM, "");
+        IDao(payable(address(_dao))).initialize(
+            msg.sender,
+            _name,
+            _description,
+            _baseCurrency,
+            _data
+        );
 
         daos[address(_dao)] = true;
 
-        IMembership(address(_membership)).initialize(
-            address(_dao),
-            params._name,
-            params.maxMemberLimit
-        );
-        ILiquidPool(payable(address(_liquidPool))).initialize(
-            address(_dao),
-            params.depositTokens,
-            params.baseCurrency
-        );
-        IDao(payable(address(_dao))).initialize(
-            IDao.InitializeParams(
-                msg.sender,
-                address(_membership),
-                address(_liquidPool),
-                address(_team),
-                params._name,
-                params._description,
-                params.baseCurrency,
-                params._memberTokenName,
-                params._memberTokenSymbol,
-                params.depositTokens
-            ),
-            data
-        );
-
-        emit CreateDao(address(_dao), msg.sender, params._referer);
+        emit CreateDao(address(_dao), msg.sender, _referer);
         return address(_dao);
     }
     

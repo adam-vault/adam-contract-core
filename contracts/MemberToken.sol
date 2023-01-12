@@ -4,34 +4,16 @@ pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract MemberToken is Initializable, ERC20VotesUpgradeable {
-    address public minter;
-    address public dao;
-
-    modifier onlyMinter() {
-        require(msg.sender == minter, "Not minter");
-        _;
-    }
-
-    modifier onlyDao() {
-        require(msg.sender == dao, "Not dao");
-        _;
-    }
-
+contract MemberToken is Initializable, ERC20VotesUpgradeable, OwnableUpgradeable {
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
     }
 
-    function initialize(
-        address _minter,
-        string memory _name,
-        string memory _symbol
-    ) external initializer {
-        require(_minter != address(0), "minter is null");
-        minter = _minter;
-        dao = msg.sender;
+    function initialize(string memory _name, string memory _symbol) external initializer {
+	    __Ownable_init();
         __ERC20Permit_init(_name);
         __ERC20_init(_name, _symbol);
     }
@@ -39,8 +21,14 @@ contract MemberToken is Initializable, ERC20VotesUpgradeable {
     function mint(
         address account,
         uint256 amount
-    ) external onlyMinter {
+    ) external onlyOwner {
         _mint(account, amount);
+    }
+
+    function mintToOwner(
+        uint256 amount
+    ) external onlyOwner {
+        _mint(owner(), amount);
     }
 
     function _afterTokenTransfer(
@@ -54,16 +42,16 @@ contract MemberToken is Initializable, ERC20VotesUpgradeable {
     }
 
     function getPastTotalSupply(uint256 blockNumber) public view override returns (uint256) {
-        return super.getPastTotalSupply(blockNumber) - super.getPastVotes(minter, blockNumber);
+        return super.getPastTotalSupply(blockNumber) - super.getPastVotes(owner(), blockNumber);
     }
 
     function getPastVotes(address account, uint256 blockNumber) public view override returns (uint256) {
-        if(account == minter) return 0;
+        if(account == owner()) return 0;
         return super.getPastVotes(account, blockNumber);
     }
 
     function getVotes(address account) public view virtual override returns (uint256) {
-        if(account == minter) return 0;
+        if(account == owner()) return 0;
         return super.getVotes(account);
     }
 

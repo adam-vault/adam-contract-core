@@ -4,6 +4,7 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/draft-ERC721VotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -18,7 +19,7 @@ import "./lib/ToString.sol";
 import "./lib/Concat.sol";
 import "./lib/InterfaceChecker.sol";
 
-contract Membership is Initializable, ERC721VotesUpgradeable {
+contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable {
     using Counters for Counters.Counter;
     using Strings for uint256;
     using ToString for address;
@@ -59,15 +60,15 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
       _disableInitializers();
     }
 
-    function initialize(address _dao, string memory _name, uint256 _maxMemberLimit) external initializer
+    function initialize(string memory _name, uint256 _maxMemberLimit) external initializer
     {
+        __Ownable_init();
         __EIP712_init(_name.concat(" Membership"), "1");
         __ERC721_init(_name.concat(" Membership"), "MS");
-        dao = _dao;
         maxMemberLimit = _maxMemberLimit;
     }
 
-    function createMember(address to) external onlyDao {
+    function createMember(address to) external onlyOwner {
         uint256 _totalSupply = totalSupply;
         require(!isMember[to], "Member already created");
         require(_totalSupply < maxMemberLimit, "member count exceed limit");
@@ -82,6 +83,10 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
 
 
         emit CreateMember(to);
+    }
+
+    function _dao() internal returns (IDao) {
+        return IDao(payable(owner()));
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
@@ -128,8 +133,8 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
         return admissionTokens.length;
     }
 
-    function setMemberTokenAsAdmissionToken(uint256 minTokenToAdmit) public onlyDao {
-        address _memberToken = IDao(payable(dao)).memberToken();
+    function setMemberTokenAsAdmissionToken(uint256 minTokenToAdmit) public onlyOwner {
+        address _memberToken = _dao().memberToken();
         require(_memberToken != address(0), "member token not init");
 
         _addAdmissionToken(_memberToken, minTokenToAdmit, 0);
@@ -141,7 +146,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
         );
     }
 
-    function addAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId) public onlyDao {
+    function addAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId) public onlyOwner {
         _addAdmissionToken(token, minTokenToAdmit, tokenId);
         emit AddAdmissionToken(
             token,
@@ -151,7 +156,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
         );
     }
 
-    function removeAdmissionToken(uint256 index) public onlyDao {
+    function removeAdmissionToken(uint256 index) public onlyOwner {
         require(admissionTokens.length > index, "index overflow");
         address token = admissionTokens[index];
         admissionTokenSetting[token].active = false;
@@ -202,7 +207,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
 
     function quit(uint256 tokenId) public {
         address owner = ownerOf(tokenId);
-        address liquidPool = IDao(payable(dao)).liquidPool();
+        address liquidPool = _dao().liquidPool();
 
         require(msg.sender == owner, "Permission denied");
         require(ILiquidPool(payable(liquidPool)).balanceOf(owner) == 0, "LP balance is not zero");
@@ -212,7 +217,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable {
         wasMember[owner] = true;
         totalSupply = totalSupply - 1;
 
-        IDao(payable(dao)).setFirstDepositTime(owner, 0);
+        _dao().setFirstDepositTime(owner, 0);
         emit RemoveMember(owner, tokenId);
 
     }

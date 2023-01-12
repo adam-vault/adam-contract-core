@@ -5,10 +5,12 @@ import "@openzeppelin/contracts-upgradeable/governance/GovernorUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/utils/VotesUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
 import "./lib/Constant.sol";
 
 contract Govern is
-    Initializable, GovernorUpgradeable
+    Initializable, GovernorUpgradeable, OwnableUpgradeable
 {
 
     enum VoteType {
@@ -24,20 +26,11 @@ contract Govern is
         mapping(address => bool) hasVoted;
     }
 
-    address public owner;
-    uint256 public duration;
     uint256 public quorumThreshold;
     uint256 public passThreshold;
     address public voteToken;
     mapping(uint256 => ProposalVote) private _proposalVotes;
-
-    // v2
     uint256 public durationInBlock;
-
-    modifier onlyOwner {
-        require(msg.sender == owner, "Access denied");
-        _;
-    }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -45,23 +38,18 @@ contract Govern is
     }
 
     function initialize(
-        address _owner,
         string memory _name,
-        uint256 _duration,
         uint256 _quorum,
         uint256 _passThreshold,
         address _voteToken,
         uint256 _durationInBlock
     ) external initializer {
         require(_isVotableToken(_voteToken),"Govern Token without voting function");
-        require(_owner != address(0),"Owner cannot be empty");
         require(_voteToken != address(0),"VoteToken cannot be empty");
 
-        __Governor_init(_name);
+        __Ownable_init();
 
-        owner = _owner;
-        //13.14s for 1 block
-        duration = _duration;
+        __Governor_init(_name);
         quorumThreshold = _quorum; //expecting 2 decimals (i.e. 1000 = 10%)
         passThreshold = _passThreshold; //expecting 2 decimals (i.e. 250 = 2.5%)
         voteToken = _voteToken;
@@ -85,7 +73,7 @@ contract Govern is
     function votingPeriod() public view override returns (uint256) {
         // Fading out duration;
         // Suggest to use durationInBlock instead of duration(in second);
-        return (duration / Constant.BLOCK_NUMBER_IN_SECOND) + durationInBlock;
+        return durationInBlock;
     }
 
     function votingDelay() public pure override returns (uint256) {

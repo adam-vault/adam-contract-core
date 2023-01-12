@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
 
@@ -14,11 +15,10 @@ import "./base/PriceResolver.sol";
 import "./lib/Concat.sol";
 import "./interface/IDao.sol";
 
-contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApprovalExecutee {
+contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApprovalExecutee, OwnableUpgradeable {
     using Concat for string;
     using SafeERC20Upgradeable for IERC20MetadataUpgradeable;
     
-    IDao public dao;
     address[] public assets;
     mapping(address => uint256) private _assetIndex;
 
@@ -26,36 +26,29 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     event DisallowDepositToken(address token);
     event Deposit(address account, address token, uint256 depositAmount);
 
-    modifier onlyGovern(string memory category) {
-        IDao _dao = dao;
-        require(
-            (_dao.byPassGovern(msg.sender)) || msg.sender == _dao.govern(category),
-            string("Dao: only Govern").concat(category));
-        _;
-    }
-
-    modifier onlyDao() {
-        require(msg.sender == address(dao), "not dao");
-        _;
-    }
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
     }
 
     function initialize(
-        address owner,
         address[] memory depositTokens,
         address _baseCurrency
     )
         public initializer
     {
+        __Ownable_init();
         __ERC20_init("LiquidPool", "LP");
         __PriceResolver_init(_baseCurrency);
-        dao = IDao(payable(owner));
         _addAssets(depositTokens);
-        ___BudgetApprovalExecutee_init(IDao(payable(owner)).team());
+    }
+
+    function team() public view override returns(address) {
+        return _dao().team();
+    }
+    
+    function _dao() internal view returns (IDao) {
+        return IDao(payable(owner()));
     }
 
     function assetsShares(address asset, uint256 amount) public view returns (uint256) {
@@ -126,7 +119,7 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function redeem(uint256 amount) public {
-        IDao _dao = dao;
+        IDao _dao = _dao();
         require(balanceOf(msg.sender) >= amount, "not enough balance");
         require(_dao.firstDepositTime(msg.sender) + _dao.locktime() <= block.timestamp, "lockup time");
 
@@ -150,19 +143,19 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
         emit Deposit(receiver, asset, amount);
     }
 
-    function addAssets(address[] calldata erc20s) public onlyGovern("General") {
+    function addAssets(address[] calldata erc20s) public onlyOwner {
         _addAssets(erc20s);
     }
 
-    function removeAssets(address[] calldata erc20s) public onlyGovern("General") {
+    function removeAssets(address[] calldata erc20s) public onlyOwner {
         _removeAssets(erc20s);
     }
 
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {
-        require(dao.canCreateBudgetApproval(budgetApproval), "not whitelist");
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyOwner {
+        require(_dao().canCreateBudgetApproval(budgetApproval), "not whitelist");
     }
 
-    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {}
+    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyOwner {}
 
     function _assetBalance(address asset) internal view returns (uint256) {
         if(asset == Denominations.ETH) {
@@ -182,7 +175,7 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
     
     function _afterDeposit(address account, uint256 amount) private {
-      dao.afterDeposit(account, amount);
+      _dao().afterDeposit(account, amount);
     }
 
     function _addAssets(address[] memory erc20s) internal {

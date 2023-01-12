@@ -3,12 +3,11 @@
 pragma solidity 0.8.7;
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "../interface/ICommonBudgetApproval.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "../lib/RevertMsg.sol";
 import "../lib/Concat.sol";
 
-contract BudgetApprovalExecutee is Initializable {
+abstract contract BudgetApprovalExecutee {
     using Concat for string;
 
     address private _team;
@@ -24,18 +23,7 @@ contract BudgetApprovalExecutee is Initializable {
         _;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-      _disableInitializers();
-    }
-
-    function ___BudgetApprovalExecutee_init(address __team) internal onlyInitializing {
-        _team = __team;
-    }
-
-    function team() public view virtual returns (address) {
-        return _team;
-    }
+    function team() public view virtual returns (address);
 
     function budgetApprovals(address template) public view virtual returns (bool) {
         return _budgetApprovals[template];

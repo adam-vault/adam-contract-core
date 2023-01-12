@@ -118,7 +118,7 @@ contract DepositRewardBudgetApproval is CommonBudgetApproval {
         address _executee = executee();
         address _token = token;
 
-        address dao = ILiquidPool(liquidPool).dao();
+        address dao = ILiquidPool(liquidPool).owner();
         address membership = IDao(payable(dao)).membership();
 
         require(_allowAnyAmount || _totalAmount >= _referrerRewardAmount + _refereeRewardAmount, "not enough supply");

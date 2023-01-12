@@ -43,7 +43,6 @@ const createAdam = async (budgetApprovalAddresses) => {
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
   const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
   const Team = await ethers.getContractFactory('Team', { signer: creator });
-
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
   const DaoBeacon = await ethers.getContractFactory('DaoBeacon', { signer: creator });
 
@@ -51,12 +50,13 @@ const createAdam = async (budgetApprovalAddresses) => {
   if (!budgetApprovalAddresses) {
     budgetApprovalAddresses = await createBudgetApprovals(creator);
   }
+
   const membership = await Membership.deploy();
   const liquidPool = await LiquidPool.deploy();
   const team = await Team.deploy();
-
   const govern = await Govern.deploy();
   const memberToken = await MemberToken.deploy();
+
   await dao.deployed();
   await membership.deployed();
   await govern.deployed();
