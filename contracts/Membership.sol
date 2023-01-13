@@ -110,6 +110,9 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
         super._beforeTokenTransfer(from, to, tokenId); 
     }
 
+function test() public {
+
+}
     function _afterTokenTransfer(
         address from,
         address to,

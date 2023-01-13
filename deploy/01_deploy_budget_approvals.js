@@ -12,5 +12,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 };
 
 module.exports.tags = [
-  'phase4',
+  'phase2',
 ];

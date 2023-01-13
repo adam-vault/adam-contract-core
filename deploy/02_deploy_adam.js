@@ -1,9 +1,10 @@
 const ethers = require('ethers');
+const hre = require('hardhat');
 const fileReader = require('../utils/fileReader');
 const { gasFeeConfig } = require('../utils/getGasInfo');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, get } = deployments;
+  const { deploy, get, read, execute } = deployments;
   const { deployer } = await getNamedAccounts();
   const deployNetwork = hre.network.name || 'kovan';
 
@@ -25,8 +26,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const daoBeacon = await deploy('DaoBeacon', {
     from: deployer,
     log: true,
+    gasLimit: 5000000,
+    ...(await gasFeeConfig()),
     args: [
-      'v2',
+      'v2.0.0',
       [
         [ethers.utils.id('adam.dao'), dao.address],
         [ethers.utils.id('adam.dao.membership'), membership.address],
@@ -34,9 +37,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         [ethers.utils.id('adam.dao.liquid_pool'), liquidPool.address],
         [ethers.utils.id('adam.dao.govern'), govern.address],
         [ethers.utils.id('adam.dao.team'), team.address],
-      ]
+      ],
     ],
   });
+
   const adam = await deploy('Adam', {
     from: deployer,
     log: true,
@@ -58,9 +62,26 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       },
     },
   });
+
+  if (await read('Adam', 'daoBeacon') !== daoBeacon.address) {
+    await execute('Adam', { from: deployer, log: true, ...(await gasFeeConfig()) }, 'setDaoBeacon', daoBeacon.address);
+  }
+
+  const contractAddresses = {
+    adam: adam.address,
+    daoBeacon: daoBeacon.address,
+  };
+
+  console.log(contractAddresses);
+
+  fileReader.save('deploy-results', 'results.json', {
+    network: deployNetwork.split('-')[0],
+    block_number: adam.receipt.blockNumber,
+    addresses: contractAddresses,
+    initdata_addresses: {},
+  });
 };
 
 module.exports.tags = [
-  'Adam',
-  'phase5',
+  'phase3',
 ];
