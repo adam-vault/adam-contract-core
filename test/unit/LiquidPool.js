@@ -520,8 +520,6 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
 
   describe('depositToken()', function () {
     it('mints shares based on ERC20 token amount when 0 value in pool', async function () {
-      console.log(dao.address, await lpAsSigner1.owner());
-
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'));
       expect(await lp.balanceOf(signer1.address)).to.eq(parseEther('1'));

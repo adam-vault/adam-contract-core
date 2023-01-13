@@ -15,18 +15,23 @@ const { smock } = require('@defi-wonderland/smock');
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('Integration - TransferERC20BudgetApproval.sol - test/integration/TransferERC20BudgetApproval.js', function () {
+describe('Integration - TransferERC20BudgetApproval.sol - test/integration/TransferERC20BudgetApproval.js', async function () {
   let dao, adam, transferERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
   let tokenA, feedRegistry;
   let daoSigner;
+
+  let feedRegistryArticfact;
+
+  before(async function () {
+    feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
+  });
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
 
-    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
@@ -34,8 +39,11 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
+    adam = await smock.fake('Adam');
     dao = await (await smock.mock('Dao')).deploy();
     dao.canCreateBudgetApproval.returns(true);
+    adam.budgetApprovals.returns(true);
+
     daoSigner = await testUtils.address.impersonate(dao.address);
     await testUtils.address.setBalance(dao.address, ethers.utils.parseEther('1'));
 
@@ -138,7 +146,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     });
   });
 
-  describe('On Treasury', function () {
+  describe('On Treasury', async function () {
     let budgetApprovalAddress;
     beforeEach(async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;

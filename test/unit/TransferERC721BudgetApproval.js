@@ -302,10 +302,16 @@ describe('TransferERC721BudgetApprovalV2.sol - test/unit/v2/TransferERC721Budget
             toTeamIds: [10],
           })));
         transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
+        await executee.setVariables({
+          _budgetApprovals: {
+            [contract.address]: true,
+          },
+        });
       });
 
       it('allows user to transfer to member of whitelisted team', async function () {
         team.balanceOfBatch.whenCalledWith([receiver.address], [10]).returns([1]);
+
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;

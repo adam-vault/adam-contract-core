@@ -12,14 +12,15 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
   let executee, weth;
   beforeEach(async function () {
     [deployer, team, budgetApproval, unknown] = await ethers.getSigners();
-    executee = await (await smock.mock('BudgetApprovalExecutee', deployer)).deploy();
+    executee = await (await smock.mock('MockBudgetApprovalExecutee', deployer)).deploy();
     weth = await smock.fake('MockWETH9');
 
-    await executee.setVariable('_budgetApprovals', {
-      [budgetApproval.address]: true,
+    await executee.setVariables({
+      _team: team.address,
+      _budgetApprovals: {
+        [budgetApproval.address]: true,
+      },
     });
-
-    executee.team.returns(team.address);
 
     await ethers.provider.send('hardhat_setBalance', [
       executee.address,

@@ -19,18 +19,20 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
 
     ({ tokenC721 } = await createTokens());
 
-    budgetApprovalAddresses = await createBudgetApprovals(executor);
-    adam = await createAdam(budgetApprovalAddresses);
-    const tx1 = await adam.createDao(
-      ...paramsStruct.getCreateDaoParams({}),
-    );
-    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-    dao = await ethers.getContractAt('Dao', daoAddr);
-    const transferERC721BAImplementationAddr = budgetApprovalAddresses[2];
-    transferERC721BAImplementation = await ethers.getContractAt('TransferERC721BudgetApproval', transferERC721BAImplementationAddr);
+    dao = await (await smock.mock('Dao')).deploy();
+    adam = await (await smock.mock('Adam')).deploy();
+    adam.budgetApprovals.returns(true);
+    transferERC721BAImplementation = await (await smock.mock('TransferERC721BudgetApproval')).deploy();
+
+    await dao.setVariables({
+      govern: {
+        [ethers.utils.id('General')]: executor.address,
+      },
+      adam: adam.address,
+    });
   });
 
-  describe('On Treasury', function () {
+  describe('On Treasury', async function () {
     let budgetApprovalAddress;
     beforeEach(async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;

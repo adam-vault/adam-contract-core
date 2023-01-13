@@ -16,9 +16,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
   let tokenA, budgetApprovalAddresses;
   let memberToken;
   let ERC1967Proxy, impl, LiquidPool, MemberToken, govern;
-  function createDao () {
-    return adam.createDao(...paramsStruct.getCreateDaoParams({ mintMemberToken: true }));
-  }
 
   before(async function() {
     ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy');
@@ -29,10 +26,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
     [creator, owner1, owner2] = await ethers.getSigners();
     budgetApprovalAddresses = await createBudgetApprovals(creator);
     adam = await createAdam(budgetApprovalAddresses);
-    const tx1 = await createDao();
-    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-    // dao = await ethers.getContractAt('MockDao', daoAddr);
-    // lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
 
     dao = await (await smock.mock('Dao')).deploy();
     memberToken = await (await smock.mock('MemberToken')).deploy();
@@ -46,12 +39,12 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
         [ethers.utils.id('adam.dao.member_token')]: memberToken.address,
         [ethers.utils.id('adam.dao.liquid_pool')]: lp.address,
       },
-      isPlugins: {
+      isPlugin: {
         [memberToken.address]: true,
         [lp.address]: true,
       },
       govern: {
-        General: govern.address,
+        [ethers.utils.id('General')]: govern.address,
       },
     });
 
