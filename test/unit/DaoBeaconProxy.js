@@ -23,16 +23,10 @@ describe('DaoBeaconProxy.sol - test/unit/DaoBeaconProxy.js', function () {
     it('creates new Dao with init data', async function () {
       dao.initialize.returns();
       await expect(DaoBeaconProxy.deploy(daoBeacon.address, dao.interface.encodeFunctionData('initialize', [
-        [
-          AddressZero,
-          AddressZero,
-          AddressZero,
-          AddressZero,
-          'name',
-          'desc',
-          AddressZero,
-          '', '', [],
-        ],
+        AddressZero,
+        'name',
+        'desc',
+        AddressZero,
         [],
       ]))).to.not.be.reverted;
     });

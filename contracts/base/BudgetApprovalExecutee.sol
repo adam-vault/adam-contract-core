@@ -10,8 +10,6 @@ import "../lib/Concat.sol";
 abstract contract BudgetApprovalExecutee {
     using Concat for string;
 
-    address private _team;
-
     mapping(address => bool) private _budgetApprovals;
 
     event CreateBudgetApproval(address budgetApproval, bytes data);

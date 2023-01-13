@@ -19,7 +19,7 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
       [budgetApproval.address]: true,
     });
 
-    await executee.setVariable('_team', team.address);
+    executee.team.returns(team.address);
 
     await ethers.provider.send('hardhat_setBalance', [
       executee.address,

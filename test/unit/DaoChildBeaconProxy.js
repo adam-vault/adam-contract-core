@@ -28,7 +28,7 @@ describe('DaoChildBeaconProxy.sol - test/unit/DaoChildBeaconProxy.js', function 
     it('creates new Dao with init data', async function () {
       membership.initialize.returns();
       await expect(DaoChildBeaconProxy.deploy(dao.address, ethers.utils.id('adam.dao.membership'), membership.interface.encodeFunctionData('initialize', [
-        AddressZero, '', 3,
+        '', 3,
       ]))).to.not.be.reverted;
     });
     it('throws "InvalidContract" if provides 0x impl address', async function () {

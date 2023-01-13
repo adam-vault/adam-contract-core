@@ -41,7 +41,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
     await govern.setVariable('voteToken', memberToken.address);
     await govern.setVariable('durationInBlock', 5);
 
-    await dao.setVariable({
+    await dao.setVariables({
       plugins: {
         [ethers.utils.id('adam.dao.member_token')]: memberToken.address,
         [ethers.utils.id('adam.dao.liquid_pool')]: lp.address,

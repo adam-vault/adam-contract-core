@@ -26,9 +26,7 @@ describe('Govern.sol - test/unit/Govern.js', function () {
       dao.address,
       ethers.utils.id('adam.dao.govern'),
       impl.interface.encodeFunctionData('initialize', [
-        owner.address,
         'Name',
-        130,
         3000,
         5000,
         voteToken.address,
@@ -40,7 +38,7 @@ describe('Govern.sol - test/unit/Govern.js', function () {
 
   describe('votingPeriod()', function () {
     it('adding duration with durationInBlock together', async function () {
-      expect(await govern.votingPeriod()).to.equal(ethers.BigNumber.from('15'));
+      expect(await govern.votingPeriod()).to.equal(ethers.BigNumber.from('5'));
     });
   });
   describe('votingDelay()', function () {

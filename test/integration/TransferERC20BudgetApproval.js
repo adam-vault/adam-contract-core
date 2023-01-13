@@ -1,9 +1,8 @@
 const { expect } = require('chai');
-const { ethers } = require('hardhat');
+const { ethers, testUtils } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
-const paramsStruct = require('../../utils/paramsStruct');
 
-const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
+const { createTokens } = require('../utils/createContract');
 const { getCreateTransferERC20BAParams } = require('../../utils/paramsStruct');
 
 const {
@@ -17,11 +16,12 @@ const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('Integration - TransferERC20BudgetApproval.sol - test/integration/TransferERC20BudgetApproval.js', function () {
-  let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
+  let dao, adam, transferERC20BAImplementation, budgetApproval, lp;
   let executor, approver, receiver;
-  let tokenA, feedRegistry, budgetApprovalAddresses;
+  let tokenA, feedRegistry;
+  let daoSigner;
 
-  before(async function () {
+  beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
@@ -34,17 +34,21 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
-    budgetApprovalAddresses = await createBudgetApprovals(executor);
-    adam = await createAdam(budgetApprovalAddresses);
+    dao = await (await smock.mock('Dao')).deploy();
+    dao.canCreateBudgetApproval.returns(true);
+    daoSigner = await testUtils.address.impersonate(dao.address);
+    await testUtils.address.setBalance(dao.address, ethers.utils.parseEther('1'));
 
-    const tx1 = await adam.createDao(
-      ...paramsStruct.getCreateDaoParams({}),
-    );
-    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-    dao = await ethers.getContractAt('Dao', daoAddr);
-    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-    const transferERC20BAImplementationAddr = budgetApprovalAddresses[3];
-    transferERC20BAImplementation = await ethers.getContractAt('TransferERC20BudgetApproval', transferERC20BAImplementationAddr);
+    lp = await (await smock.mock('LiquidPool')).deploy();
+    await lp.setVariable('_owner', dao.address);
+
+    await dao.setVariables({
+      adam: adam.address,
+      govern: {
+        [ethers.utils.id('General')]: executor.address,
+      },
+    });
+    transferERC20BAImplementation = await (await smock.mock('TransferERC20BudgetApproval')).deploy();
   });
 
   describe('On Liquid Pool', function () {
@@ -66,7 +70,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
         }),
       );
 
-      const tx = await lp.createBudgetApprovals(
+      const tx = await lp.connect(daoSigner).createBudgetApprovals(
         [transferERC20BAImplementation.address], [initData],
       );
       budgetApprovalAddress = (await findEventArgs(tx, 'CreateBudgetApproval')).budgetApproval;
@@ -108,6 +112,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     });
 
     it('transfer multiple ERC20 should success', async function () {
+      await tokenA.mint(lp.address, parseEther('190'));
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
         [tokenA.address, receiver.address, parseEther('10')],
@@ -187,6 +192,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     });
 
     it('transfer multiple ERC20 should success', async function () {
+      await tokenA.mint(dao.address, parseEther('190'));
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
         [tokenA.address, receiver.address, parseEther('10')],
@@ -214,7 +220,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
 });
 
 describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/TransferERC20BudgetApproval.js', function () {
-  let transferErc20BAImplementation, budgetApproval, dao, team;
+  let transferErc20BAImplementation, budgetApproval, team;
   let executor, approver, receiver;
   let tokenA, tokenB, executee, TransferERC20BudgetApproval;
 
@@ -224,14 +230,10 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     ({ tokenA, tokenB } = await createTokens());
     TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
     transferErc20BAImplementation = await TransferERC20BudgetApproval.deploy();
-    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
 
     team = await (await smock.mock('Team')).deploy();
-    dao = await MockLPDao.deploy();
     executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
-    executee.team.returns(team.address);
-
-    executee = await (await smock.mock('Dao')).deploy();
+    await executee.setVariable('_team', team.address);
   });
 
   describe('Create Budget Approval', function () {
@@ -576,7 +578,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       it('throws "Exceeded budget usage limit"', async function () {
         const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
           getCreateTransferERC20BAParams({
-            dao: dao.address,
+            dao: executee.address,
             executor: executor.address,
             approvers: [],
             minApproval: 0,

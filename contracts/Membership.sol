@@ -34,7 +34,6 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
         bool active;
     }
 
-    address public dao;
     uint256 public totalSupply;
     uint256 public maxMemberLimit;
 
@@ -49,11 +48,6 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
     event RemoveMember(address member, uint256 tokenId);
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
     event RemoveAdmissionToken(address token);
-
-    modifier onlyDao() {
-        require(msg.sender == dao, "not dao");
-        _;
-    }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -85,7 +79,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
         emit CreateMember(to);
     }
 
-    function _dao() internal returns (IDao) {
+    function _dao() internal view returns (IDao) {
         return IDao(payable(owner()));
     }
 

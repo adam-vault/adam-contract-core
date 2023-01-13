@@ -65,7 +65,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
       'tokenName', 'T1',
       ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'],
     ], [
-      Dao.interface.encodeFunctionData('createGovern', ['General', 0, 0, 0, 0, ethers.constants.AddressZero, 0]),
+      Dao.interface.encodeFunctionData('createGovern', ['General', 0, 0, 0, ethers.constants.AddressZero, 0]),
       Dao.interface.encodeFunctionData('addAdmissionToken', [tokenA.address, 10, 0]),
       Dao.interface.encodeFunctionData('addAdmissionToken', [tokenC721.address, 1, 1]),
       Dao.interface.encodeFunctionData('addAdmissionToken', [tokenD1155.address, 1, 1]),

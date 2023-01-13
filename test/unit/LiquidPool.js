@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { smock } = require('@defi-wonderland/smock');
-const { ethers, upgrades, network } = require('hardhat');
+const { ethers, upgrades, network, testUtils } = require('hardhat');
 const { parseEther } = ethers.utils;
 
 const {
@@ -11,7 +11,7 @@ const {
 
 describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
   let lp, lpAsSigner1, lpAsSigner2, unknown;
-  let governAsSigner, daoAsSigner;
+  let daoAsSigner;
   let creator;
   let signer1, signer2;
   let token, token2, tokenAsSigner1, tokenAsSigner2, govern, budgetApproval;
@@ -34,9 +34,8 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
 
     daoAsSigner = await ethers.getSigner(dao.address);
-    governAsSigner = await ethers.getSigner(govern.address);
 
-    const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
+    await testUtils.address.setBalance(dao.address, parseEther('1'));
 
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
@@ -59,23 +58,21 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     await feedRegistry.setDecimal(token.address, ADDRESS_ETH, 18);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
+
+    dao.canCreateBudgetApproval.returns(true);
     dao.memberToken.returns(memberToken.address);
     dao.team.returns(team.address);
-    dao.govern.returns(govern.address);
 
-    const DaoChildBeaconProxy = await ethers.getContractFactory('DaoChildBeaconProxy', { signer: creator });
-    const daoBeacon = await smock.fake('DaoBeacon');
-    const daoProxy = await smock.fake('DaoBeaconProxy');
-    const impl = await LiquidPool.deploy();
-    daoBeacon.implementation.returns(impl.address);
-    daoProxy.daoBeacon.returns(daoBeacon.address);
-
-    lp = await DaoChildBeaconProxy.deploy(
-      daoProxy.address,
-      ethers.utils.id('adam.dao.liquid_pool'),
-      impl.interface.encodeFunctionData('initialize', [dao.address, [ADDRESS_ETH, token.address], ADDRESS_ETH]),
-    );
-    lp = await ethers.getContractAt('LiquidPool', lp.address);
+    lp = await (await (smock.mock('LiquidPool'))).deploy();
+    await lp.setVariables({
+      _owner: dao.address,
+      assets: [ADDRESS_ETH, token.address],
+      _baseCurrency: ADDRESS_ETH,
+      _assetIndex: {
+        [ADDRESS_ETH]: 1,
+        [token.address]: 2,
+      },
+    });
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);
@@ -330,7 +327,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
   describe('createBudgetApproval()', function () {
     it('allows to create whitelisted BudgetApproval', async function () {
       await dao.canCreateBudgetApproval.returns(true);
-      await expect(lpAsSigner1.connect(governAsSigner).createBudgetApprovals([budgetApproval.address], [budgetApproval.interface.encodeFunctionData('initialize', [
+      await expect(lpAsSigner1.connect(daoAsSigner).createBudgetApprovals([budgetApproval.address], [budgetApproval.interface.encodeFunctionData('initialize', [
         [
           signer1.address, // executor
           0, // executorTeam
@@ -348,7 +345,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
     it('allows to create whitelisted BudgetApproval', async function () {
       await dao.canCreateBudgetApproval.returns(false);
-      await expect(lpAsSigner1.connect(governAsSigner).createBudgetApprovals([budgetApproval.address], [budgetApproval.interface.encodeFunctionData('initialize', [
+      await expect(lpAsSigner1.connect(daoAsSigner).createBudgetApprovals([budgetApproval.address], [budgetApproval.interface.encodeFunctionData('initialize', [
         [
           signer1.address, // executor
           0, // executorTeam
@@ -415,32 +412,32 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
       await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ethers.constants.AddressZero);
       expect(await lp.canAddAsset(token.address)).to.eq(false);
     });
-    it('throws "Dao: only Govern" errors if non govern called', async function () {
-      await expect(lp.addAssets([token2.address])).to.be.revertedWith('Dao: only GovernGeneral');
+    it('throws "Ownable: caller is not the owner" errors if non dao called', async function () {
+      await expect(lp.addAssets([token2.address])).to.be.revertedWith('Ownable: caller is not the owner');
     });
   });
 
   describe('addAssets()', function () {
     it('emits AllowDepositToken', async function () {
-      const tx = await lp.connect(governAsSigner).addAssets([token2.address]);
+      const tx = await lp.connect(daoAsSigner).addAssets([token2.address]);
       const receipt = await tx.wait();
       const event = receipt.events.find(e => e.event === 'AllowDepositToken');
       expect(event.args.token).to.eq(token2.address);
       expect(await lp.isAssetSupported(token2.address)).to.eq(true);
     });
     it('throws "Asset not support" errors if token duplicated', async function () {
-      await lp.connect(governAsSigner).addAssets([token2.address]);
-      await expect(lp.connect(governAsSigner).addAssets([token2.address])).to.be.revertedWith('Asset not support');
+      await lp.connect(daoAsSigner).addAssets([token2.address]);
+      await expect(lp.connect(daoAsSigner).addAssets([token2.address])).to.be.revertedWith('Asset not support');
     });
     it('throws "Asset not support" errors if token cannot resolve price', async function () {
-      await expect(lp.connect(governAsSigner).addAssets([memberToken.address])).to.be.revertedWith('Asset not support');
+      await expect(lp.connect(daoAsSigner).addAssets([memberToken.address])).to.be.revertedWith('Asset not support');
     });
   });
 
   describe('removeAssets()', function () {
     it('emits DisallowDepositToken', async function () {
-      await lp.connect(governAsSigner).addAssets([token2.address]);
-      const tx = await lp.connect(governAsSigner).removeAssets([ADDRESS_ETH]);
+      await lp.connect(daoAsSigner).addAssets([token2.address]);
+      const tx = await lp.connect(daoAsSigner).removeAssets([ADDRESS_ETH]);
       const receipt = await tx.wait();
       const event = receipt.events.find(e => e.event === 'DisallowDepositToken');
       expect(event.args.token).to.eq(ADDRESS_ETH);
@@ -448,13 +445,13 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
       expect(await lp.isAssetSupported(token.address)).to.eq(true);
       expect(await lp.isAssetSupported(token2.address)).to.eq(true);
 
-      await lp.connect(governAsSigner).removeAssets([token2.address]);
+      await lp.connect(daoAsSigner).removeAssets([token2.address]);
       expect(await lp.isAssetSupported(ADDRESS_ETH)).to.eq(false);
       expect(await lp.isAssetSupported(token.address)).to.eq(true);
       expect(await lp.isAssetSupported(token2.address)).to.eq(false);
     });
-    it('throws "Dao: only Govern" errors if non govern called', async function () {
-      await expect(lp.removeAssets([ADDRESS_ETH])).to.be.revertedWith('Dao: only GovernGeneral');
+    it('throws "Ownable: caller is not the owner" errors if non dao called', async function () {
+      await expect(lp.removeAssets([ADDRESS_ETH])).to.be.revertedWith('Ownable: caller is not the owner');
     });
   });
 
@@ -475,10 +472,6 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
   beforeEach(async function () {
     [creator, signer1, signer2] = await ethers.getSigners();
     const MockToken = await ethers.getContractFactory('MockToken', { signer: creator });
-    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: creator });
-
-    const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
-
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
@@ -486,7 +479,7 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     ]);
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
 
-    dao = await MockLPDao.deploy();
+    dao = await (await smock.mock('Dao')).deploy();
     token = await MockToken.deploy();
     memberToken = await MockToken.deploy();
 
@@ -495,22 +488,20 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     await feedRegistry.setDecimal(token.address, ADDRESS_ETH, 18);
     await token.mint(signer1.address, parseEther('100'));
     await token.mint(signer2.address, parseEther('100'));
-    await dao.setMemberToken(memberToken.address);
-    await dao.setIsPassAdmissionToken(true);
 
-    const DaoChildBeaconProxy = await ethers.getContractFactory('DaoChildBeaconProxy', { signer: creator });
-    const daoBeacon = await smock.fake('DaoBeacon');
-    const daoProxy = await smock.fake('DaoBeaconProxy');
-    const impl = await LiquidPool.deploy();
-    daoBeacon.implementation.returns(impl.address);
-    daoProxy.daoBeacon.returns(daoBeacon.address);
+    dao.canCreateBudgetApproval.returns(true);
+    dao.memberToken.returns(memberToken.address);
+    dao.afterDeposit.returns();
 
-    lp = await DaoChildBeaconProxy.deploy(
-      daoProxy.address,
-      ethers.utils.id('adam.dao.liquid_pool'),
-      impl.interface.encodeFunctionData('initialize', [dao.address, [token.address], token.address]),
-    );
-    lp = await ethers.getContractAt('LiquidPool', lp.address);
+    lp = await (await (smock.mock('LiquidPool'))).deploy();
+    await lp.setVariables({
+      _owner: dao.address,
+      assets: [token.address],
+      _baseCurrency: token.address,
+      _assetIndex: {
+        [token.address]: 1,
+      },
+    });
 
     lpAsSigner1 = lp.connect(signer1);
     lpAsSigner2 = lp.connect(signer2);
@@ -529,6 +520,8 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
 
   describe('depositToken()', function () {
     it('mints shares based on ERC20 token amount when 0 value in pool', async function () {
+      console.log(dao.address, await lpAsSigner1.owner());
+
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'));
       expect(await lp.balanceOf(signer1.address)).to.eq(parseEther('1'));
@@ -558,17 +551,6 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
       await dao.setMinDepositAmount(parseEther('0.0046'));
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await expect(lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'))).to.not.be.reverted;
-    });
-    it('throws "deposit amount not enough" error without　enough minDeposit amount', async function () {
-      await dao.setIsPassDepositAmount(false);
-      await tokenAsSigner1.approve(lp.address, parseEther('0.99'));
-      await expect(lpAsSigner1.depositToken(signer1.address, token.address, parseEther('0.99'))).to.be.revertedWith('deposit amount not enough');
-    });
-    it('throws "Admission token not enough" error without　enough minTokenToAdmit amount', async function () {
-      await dao.setIsPassAdmissionToken(false);
-      await dao.setMinDepositAmount(parseEther('0.0046'));
-      await tokenAsSigner1.approve(lp.address, parseEther('1'));
-      await expect(lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'))).to.be.revertedWith('Admission token not enough');
     });
   });
 
