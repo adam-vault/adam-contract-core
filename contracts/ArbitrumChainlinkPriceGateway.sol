@@ -8,7 +8,6 @@ import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 
 import "./base/PriceGateway.sol";
 import "./lib/Constant.sol";
-import "hardhat/console.sol";
 
 contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -72,8 +71,6 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
         virtual
         returns (uint256)
     {
-        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:124 ~ asset", asset);
-        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:125 ~ asset", amount); //18 decimal
         if (asset == Denominations.USD) return amount;
         asset = asset == _WETH9() ? Denominations.ETH : asset;
 
@@ -90,13 +87,11 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
             .decimals(asset, Denominations.USD);
 
-        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:93 ~ price", uint256(price)); // 10 in 18 decimal
-        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:93 ~ priceDecimals", priceDecimals);
 
         require(answeredInRound >= roundID, "Stale price in Chainlink");
         require(
             block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY,
-            "Stale price in Chainlink"
+            "Stale price in Chainlink 113"
         );
 
         price = scalePrice(
@@ -105,9 +100,7 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
             8 /* USD decimals */
         );
 
-        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:108 ~ price", uint256(price));
         if (price > 0) {
-            console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:109 ~ price > 0", price > 0);
             // return price with decimal = price Decimal (8) + amount decimal (Asset decimal) - Asset decimal = price decimal(8)
             return
                 (uint256(price) * amount) /
