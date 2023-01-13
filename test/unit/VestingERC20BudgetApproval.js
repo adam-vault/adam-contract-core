@@ -11,7 +11,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe.only('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApproval.js', async function () {
   let executor, receiver;
-  let mockToken, team, executee;
+  let mockToken, executee;
   let executeeAsSigner, VestingERC20BudgetApproval, ERC1967Proxy, vestingErc20BAImpl;
 
   function initializeParser (params = {}) {
@@ -27,7 +27,6 @@ describe.only('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetA
       params.endTime || Math.round(Date.now() / 1000) + 86400,
       params.allowUnlimitedUsageCount || true,
       params.usageCount || 0,
-      params.team || team.address,
     ],
     params.token,
     params.toAddress,
