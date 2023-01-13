@@ -41,5 +41,6 @@
   "function totalSupply() view returns (uint256)",
   "function transferFrom(address from, address to, uint256 tokenId)",
   "function upgradeTo(address newImplementation)",
-  "function upgradeToAndCall(address newImplementation, bytes data) payable"
+  "function upgradeToAndCall(address newImplementation, bytes data) payable",
+  "function wasMember(address) view returns (bool)"
 ]
