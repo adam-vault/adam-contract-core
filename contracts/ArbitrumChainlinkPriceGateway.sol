@@ -8,6 +8,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 
 import "./base/PriceGateway.sol";
 import "./lib/Constant.sol";
+import "hardhat/console.sol";
 
 contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -66,12 +67,15 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
     /// @param amount Asset Amount in term of asset's decimal
     /// @return uint256 the Asset Price in term of USD with hardcoded decimal 8
     function assetUSDPrice(address asset, uint256 amount)
-        internal
+        public
         view
         virtual
         returns (uint256)
     {
+        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:124 ~ asset", asset);
+        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:125 ~ asset", amount); //18 decimal
         if (asset == Denominations.USD) return amount;
+        asset = asset == _WETH9() ? Denominations.ETH : asset;
 
         (
             uint80 roundID,
@@ -86,6 +90,9 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
             .decimals(asset, Denominations.USD);
 
+        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:93 ~ price", uint256(price)); // 10 in 18 decimal
+        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:93 ~ priceDecimals", priceDecimals);
+
         require(answeredInRound >= roundID, "Stale price in Chainlink");
         require(
             block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY,
@@ -98,11 +105,13 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
             8 /* USD decimals */
         );
 
+        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:108 ~ price", uint256(price));
         if (price > 0) {
+            console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:109 ~ price > 0", price > 0);
             // return price with decimal = price Decimal (8) + amount decimal (Asset decimal) - Asset decimal = price decimal(8)
             return
                 (uint256(price) * amount) /
-                10**IERC20Metadata(asset).decimals();
+                10**assetDecimals(asset);
         }
 
         return 0;
@@ -120,7 +129,7 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
         returns (uint256)
     {
         if (asset == Denominations.USD) return usdAmount;
-
+        asset = asset == _WETH9() ? Denominations.ETH : asset;
         (
             uint80 roundID,
             int256 price,
@@ -137,7 +146,7 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
         require(answeredInRound >= roundID, "Stale price in Chainlink");
         require(
             block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY,
-            "Stale price in Chainlink"
+            "Stale price in Chainlink 113"
         );
 
         price = scalePrice(
@@ -148,7 +157,7 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
         if (price > 0) {
             // return price with decimal = 8 + asset Decimal - price Decimal (8) = asset Decimal
             return
-                (usdAmount * (10**IERC20Metadata(asset).decimals())) /
+                (usdAmount * (10**assetDecimals(asset))) /
                 uint256(price);
         }
 
@@ -243,6 +252,7 @@ contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
         uint8 _priceDecimals,
         uint8 _decimals
     ) internal pure virtual returns (int256) {
+        
         if (_priceDecimals < _decimals) {
             return _price * int256(10**uint256(_decimals - _priceDecimals));
         } else if (_priceDecimals > _decimals) {

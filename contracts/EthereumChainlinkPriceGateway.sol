@@ -8,6 +8,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 
 import "./base/PriceGateway.sol";
 import "./lib/Constant.sol";
+import "hardhat/console.sol";
 
 contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -80,7 +81,7 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
         require(answeredInRound >= roundID, "Stale price in Chainlink");
         require(
             block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY,
-            "Stale price in Chainlink"
+            "Stale price in Chainlink 113"
         );
 
         price = scalePrice(
@@ -122,7 +123,7 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
         require(answeredInRound >= roundID, "Stale price in Chainlink");
         require(
             block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY,
-            "Stale price in Chainlink"
+            "Stale price in Chainlink 113"
         );
 
         price = scalePrice(
@@ -221,7 +222,6 @@ contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
 
         return (basePrice * decimals) / quotePrice;
     }
-
     function scalePrice(
         int256 _price,
         uint8 _priceDecimals,
