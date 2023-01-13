@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.7;
 
-import "./base/CommonBudgetApproval.sol";
-import "./lib/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "./base/CommonBudgetApproval.sol";
+import "./lib/BytesLib.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract VestingERC20BudgetApproval is CommonBudgetApproval {

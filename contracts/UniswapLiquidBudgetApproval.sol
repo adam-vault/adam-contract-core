@@ -2,13 +2,12 @@
 
 pragma solidity 0.8.7;
 
+import "./base/PriceResolver.sol";
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
-import "./dex/UniswapSwapper.sol";
 import "./lib/Constant.sol";
-
-import "./base/PriceResolver.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
+import "./dex/UniswapSwapper.sol";
 
 contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
 

@@ -3,15 +3,14 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/proxy/beacon/IBeacon.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
-
 import "@openzeppelin/contracts/proxy/Proxy.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Upgrade.sol";
-import "../lib/Constant.sol";
-import "../DaoBeacon.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/StorageSlot.sol";
+
+import "../lib/Constant.sol";
 import "../interface/IDaoBeaconProxy.sol";
 import "../interface/IDaoBeacon.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
 
 
 contract DaoChildBeaconProxy is Proxy {

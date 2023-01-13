@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "../lib/BytesLib.sol";
-
 import "../interface/ITeam.sol";
 import "../interface/IBudgetApprovalExecutee.sol";
 

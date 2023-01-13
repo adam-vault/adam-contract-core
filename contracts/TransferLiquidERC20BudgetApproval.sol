@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity 0.8.7;
-
-import "./base/CommonBudgetApproval.sol";
-import "./lib/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./base/PriceResolver.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
+import "./lib/BytesLib.sol";
+import "./base/CommonBudgetApproval.sol";
+import "./base/PriceResolver.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract TransferLiquidERC20BudgetApproval is

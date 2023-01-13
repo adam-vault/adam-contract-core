@@ -4,7 +4,6 @@ pragma solidity 0.8.7;
 
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
-
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract TransferERC721BudgetApproval is CommonBudgetApproval {

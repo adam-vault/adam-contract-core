@@ -2,17 +2,13 @@
 
 pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "@openzeppelin/contracts/utils/StorageSlot.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
+import "./base/DaoChildBeaconProxy.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
@@ -23,13 +19,10 @@ import "./interface/ILiquidPool.sol";
 
 import "./lib/Concat.sol";
 import "./lib/Constant.sol";
-
 import "./lib/InterfaceChecker.sol";
 import "./lib/ToString.sol";
 import "./lib/RevertMsg.sol";
-import "./base/DaoChildBeaconProxy.sol";
 
-import "@openzeppelin/contracts/utils/StorageSlot.sol";
 
 contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
