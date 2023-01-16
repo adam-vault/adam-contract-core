@@ -25,7 +25,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     event CreateDao(address indexed dao, address creator, address referer);
     event WhitelistBudgetApproval(address budgetApproval);
     event AbandonBudgetApproval(address budgetApproval);
-    event SetDaoBeacon(address _daoBeacon, uint256 _index);
+    event SetDaoBeacon(address indexed _daoBeacon, uint256 indexed _index);
 
     error InvalidContract(address _contract);
     error DaoBeaconAlreadyInitialized(address _daoBeacon);
