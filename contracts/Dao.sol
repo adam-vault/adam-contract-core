@@ -91,9 +91,9 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
 
         _initializing = true;
         adam = msg.sender;
-        name = _name;
         creator = _creator;
-        description = _description;
+        setName(_name);
+        setDescription(_description);
         baseCurrency = _baseCurrency;
 
         for (uint256 i = 0; i< _data.length; i++) {
@@ -206,6 +206,8 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         uint256 durationInBlock
     ) public onlyGovernGeneral {
         address _voteToken;
+
+        require(govern[_name] == address(0), "duplicated");
 
         if (voteType == VoteType.Membership) {
             address _membership = membership();
