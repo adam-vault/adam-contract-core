@@ -98,18 +98,17 @@ contract AccountSystem is Initializable, UUPSUpgradeable {
         address priceGateway
     ) internal {
         require(priceGateways[priceGateway], "PriceGateway Not whitelisted");
+        require(_assets.length == _bases.length, "Asset base pair length not match");
+        
         for (uint256 i = 0; i < _assets.length; i++) {
-            for (uint256 j = 0; j < _bases.length; i++) {
-                require(
-                    IPriceGateway(priceGateway).isSupportedPair(
-                        _assets[i],
-                        _bases[j]
-                    ),
-                    "Price Pair not supported by price gateway"
-                );
-
-                tokenPairPriceGatewayMap[_assets[i]][_bases[i]] = priceGateway;
-            }
+            require(
+                IPriceGateway(priceGateway).isSupportedPair(
+                    _assets[i],
+                    _bases[i]
+                ),
+                "Price Pair not supported by price gateway"
+            );
+            tokenPairPriceGatewayMap[_assets[i]][_bases[i]] = priceGateway;
         }
     }
 

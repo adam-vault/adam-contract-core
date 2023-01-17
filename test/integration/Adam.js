@@ -7,16 +7,9 @@ const { expect } = chai;
 const { createAdam, createTokens, createPriceGateways } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
 chai.use(smock.matchers);
-const {
-  ADDRESS_ETH,
-  ADDRESS_MOCK_AGGRGATOR,
-  ADDRESS_MOCK_FEED_REGISTRY,
-} = require('../utils/constants');
 
 describe('Integration - Adam.sol - test/integration/Adam.js', function () {
   let creator;
-  let token;
-  let feedRegistry;
   let adam, priceGatewayAddresses, ethereumChainlinkPriceGateway;
 
   async function createDao () {
@@ -29,16 +22,6 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
 
   beforeEach(async function () {
     [creator] = await ethers.getSigners();
-    const tokens = await createTokens();
-    token = tokens.tokenA;
-
-    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-    await ethers.provider.send('hardhat_setCode', [
-      ADDRESS_MOCK_FEED_REGISTRY,
-      feedRegistryArticfact.deployedBytecode,
-    ]);
-    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
-    await feedRegistry.setAggregator(token.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
     priceGatewayAddresses = await createPriceGateways(creator);
     ethereumChainlinkPriceGateway = priceGatewayAddresses[1];

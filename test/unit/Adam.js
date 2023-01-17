@@ -2,9 +2,6 @@ const chai = require('chai');
 const { ethers, upgrades } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 const paramsStruct = require('../../utils/paramsStruct');
-const {
-  ADDRESS_ETH,
-} = require('../utils/constants');
 
 const { expect } = chai;
 chai.should();
@@ -51,10 +48,13 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       expect(await adam.membershipImplementation()).to.be.eq(membership.address);
       expect(await adam.liquidPoolImplementation()).to.be.eq(liquidPool.address);
       expect(await adam.memberTokenImplementation()).to.be.eq(memberToken.address);
+      expect(await adam.accountSystemImplementation()).to.be.eq(accountSystem.address);
       expect(await adam.governFactory()).to.be.eq(governFactory.address);
       expect(await adam.team()).to.be.eq(team.address);
       expect(await adam.budgetApprovals(budgetApproval.address)).to.be.eq(true);
       expect(await adam.budgetApprovals(ethers.constants.AddressZero)).to.be.eq(false);
+      expect(await adam.priceGateways(priceGateway.address)).to.be.eq(true);
+      expect(await adam.priceGateways(ethers.constants.AddressZero)).to.be.eq(false);
     });
     it('throws "budget approval already whitelisted" if budgetApproval duplicated', async () => {
       const tx = upgrades.deployProxy(Adam, [
@@ -70,6 +70,22 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       ], { kind: 'uups' });
       await expect(tx).to.be.revertedWith('budget approval already whitelisted');
     });
+
+    it('throws "Price Gateway already whitelisted" if priceGateway duplicated', async () => {
+      const tx = upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        accountSystem.address,
+        [budgetApproval.address],
+        [priceGateway.address, priceGateway.address],
+        governFactory.address,
+        team.address,
+      ], { kind: 'uups' });
+      await expect(tx).to.be.revertedWith('Price Gateway already whitelisted');
+    });
+
     it('throws "governFactory is null" if address zero is set as governFactory', async () => {
       const tx = upgrades.deployProxy(Adam, [
         dao.address,
@@ -449,6 +465,102 @@ describe('Adam.sol - test/unit/Adam.js', function () {
         newAccountSystem.address,
         'v2',
       )).to.be.revertedWith('memberTokenImpl is null');
+    });
+  });
+
+  describe('whitelistPriceGateways()', async function () {
+    let adam;
+    let priceGateway1, priceGateway2;
+    beforeEach(async function () {
+      adam = await upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        accountSystem.address,
+        [budgetApproval.address],
+        [priceGateway.address],
+        governFactory.address,
+        team.address,
+      ], { kind: 'uups' });
+      priceGateway1 = await smock.fake('ArbitrumChainlinkPriceGateway');
+      priceGateway2 = await smock.fake('EthereumChainlinkPriceGateway');
+    });
+    it('adds priceGateways to whitelist', async () => {
+      await adam.whitelistPriceGateways([
+        priceGateway1.address,
+        priceGateway2.address,
+      ]);
+      expect(await adam.priceGateways(priceGateway1.address)).to.be.eq(true);
+      expect(await adam.priceGateways(priceGateway2.address)).to.be.eq(true);
+    });
+    it('remains old priceGateways in whitelist after new priceGateways add to whitelist', async () => {
+      await adam.whitelistPriceGateways([
+        priceGateway1.address,
+        priceGateway2.address,
+      ]);
+      expect(await adam.budgetApprovals(budgetApproval.address)).to.be.eq(true);
+    });
+    it('throws "Price Gateway already whitelisted" if priceGateway duplicated', async () => {
+      const tx = adam.whitelistPriceGateways([
+        priceGateway1.address,
+        priceGateway2.address,
+        priceGateway.address,
+      ]);
+      await expect(tx).to.be.revertedWith('Price Gateway already whitelisted');
+    });
+    it('throws "Price Gateway is null" if address zero is set', async () => {
+      const tx = adam.whitelistPriceGateways([ethers.constants.AddressZero]);
+      await expect(tx).to.be.revertedWith('Price Gateway is null');
+    });
+    it('throws "Ownable: caller is not the owner" if not called by deployer', async () => {
+      const tx = adam.connect(unknown).whitelistPriceGateways([]);
+      await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+  });
+
+  describe('abandonPriceGateways()', async function () {
+    let adam;
+    let newPriceGateway1, newPriceGateway2;
+    beforeEach(async function () {
+      newPriceGateway1 = await smock.fake('ArbitrumChainlinkPriceGateway');
+      newPriceGateway2 = await smock.fake('EthereumChainlinkPriceGateway');
+      adam = await upgrades.deployProxy(Adam, [
+        dao.address,
+        membership.address,
+        liquidPool.address,
+        memberToken.address,
+        accountSystem.address,
+        [budgetApproval.address],
+        [priceGateway.address, newPriceGateway1.address],
+        governFactory.address,
+        team.address,
+      ], { kind: 'uups' });
+    });
+    it('removes priceGateways from whitelist', async () => {
+      await adam.abandonPriceGateways([
+        priceGateway.address,
+        newPriceGateway1.address,
+      ]);
+      expect(await adam.priceGateways(priceGateway.address)).to.be.eq(false);
+      expect(await adam.priceGateways(newPriceGateway1.address)).to.be.eq(false);
+    });
+    it('remains old priceGateways in whitelist after priceGateways removes from whitelist', async () => {
+      await adam.abandonPriceGateways([
+        priceGateway.address,
+      ]);
+      expect(await adam.priceGateways(newPriceGateway1.address)).to.be.eq(true);
+    });
+    it('throws "price Gateway not exist" if abandon non exist priceGateway', async () => {
+      const tx = adam.abandonPriceGateways([
+        priceGateway.address,
+        newPriceGateway2.address,
+      ]);
+      await expect(tx).to.be.revertedWith('Price Gateway not exist');
+    });
+    it('throws "Ownable: caller is not the owner" if not called by deployer', async () => {
+      const tx = adam.connect(unknown).abandonPriceGateways([]);
+      await expect(tx).to.be.revertedWith('Ownable: caller is not the owner');
     });
   });
 });

@@ -125,7 +125,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     function abandonPriceGateways(address[] calldata _priceGateways) public onlyOwner {
         for(uint i = 0; i < _priceGateways.length; i++) {
-            require(priceGateways[_priceGateways[i]] == true, "budget approval not exist");
+            require(priceGateways[_priceGateways[i]] == true, "Price Gateway not exist");
             priceGateways[_priceGateways[i]] = false;
             emit AbandonPriceGateway(_priceGateways[i]);
         }
