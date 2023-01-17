@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./lib/Constant.sol";
 import "./interface/IDao.sol";
+import "./interface/IDaoBeacon.sol";
 import "./interface/IMembership.sol";
 import "./interface/ILiquidPool.sol";
 import "./base/DaoBeaconProxy.sol";
@@ -25,7 +26,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     event CreateDao(address indexed dao, address creator, address referer);
     event WhitelistBudgetApproval(address budgetApproval);
     event AbandonBudgetApproval(address budgetApproval);
-    event SetDaoBeacon(address indexed _daoBeacon, uint256 indexed _index);
+    event SetDaoBeacon(address indexed _daoBeacon, uint256 indexed _index, string _name);
 
     error InvalidContract(address _contract);
     error DaoBeaconAlreadyInitialized(address _daoBeacon);
@@ -112,7 +113,7 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 index = daoBeaconIndex[daoBeacon] + 1;
         daoBeacon = _daoBeacon;
         daoBeaconIndex[_daoBeacon] = index;
-        emit SetDaoBeacon(_daoBeacon, index);
+        emit SetDaoBeacon(_daoBeacon, index, IDaoBeacon(_daoBeacon).name());
     }
 
     function _authorizeUpgrade(address) internal view override onlyOwner {}
