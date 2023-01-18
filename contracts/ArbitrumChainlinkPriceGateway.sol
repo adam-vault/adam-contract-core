@@ -11,6 +11,7 @@ import "./lib/Constant.sol";
 
 contract ArbitrumChainlinkPriceGateway is Initializable, PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
+    string public constant override name = "Arbitrum Chainlink Price Gateway";
     constructor() {
         _disableInitializers();
     }

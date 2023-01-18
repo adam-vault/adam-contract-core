@@ -11,6 +11,7 @@ import "./lib/Constant.sol";
 
 contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
+    string public constant override name = "Ethereum Chainlink Price Gateway";
     constructor() {
         _disableInitializers();
     }

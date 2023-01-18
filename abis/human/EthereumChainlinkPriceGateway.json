@@ -1,0 +1,11 @@
+[
+  "constructor()",
+  "event Initialized(uint8 version)",
+  "function assetDecimals(address asset) view returns (uint8)",
+  "function assetEthPrice(address asset, uint256 amount) view returns (uint256)",
+  "function assetPrice(address asset, address base, uint256 amount) view returns (uint256)",
+  "function derivedAssetPrice(address asset, address base, uint256 amount) view returns (uint256)",
+  "function ethAssetPrice(address asset, uint256 ethAmount) view returns (uint256)",
+  "function isSupportedPair(address asset, address base) view returns (bool)",
+  "function name() view returns (string)"
+]

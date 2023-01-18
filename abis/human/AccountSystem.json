@@ -1,0 +1,20 @@
+[
+  "constructor()",
+  "event AddPriceGateway(address priceGateway)",
+  "event AdminChanged(address previousAdmin, address newAdmin)",
+  "event BeaconUpgraded(address indexed beacon)",
+  "event Initialized(uint8 version)",
+  "event Upgraded(address indexed implementation)",
+  "function addPriceGateway(address priceGateway)",
+  "function assetPrice(address asset, address base, uint256 amount) view returns (uint256)",
+  "function dao() view returns (address)",
+  "function defaultPriceGateway() view returns (address)",
+  "function initialize(address owner, address[] _priceGateways)",
+  "function isSupportedPair(address asset, address base) view returns (bool)",
+  "function priceGateways(address) view returns (bool)",
+  "function proxiableUUID() view returns (bytes32)",
+  "function setTokenPairPriceGatewayMap(address[] _assets, address[] _bases, address priceGateway)",
+  "function tokenPairPriceGatewayMap(address, address) view returns (address)",
+  "function upgradeTo(address newImplementation)",
+  "function upgradeToAndCall(address newImplementation, bytes data) payable"
+]
