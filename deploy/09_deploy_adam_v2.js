@@ -55,6 +55,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const governV2 = await get('GovernV2');
   const liquidPoolV2 = await get('LiquidPoolV2');
   const membershipV2 = await get('MembershipV2');
+  const accountSystem = await get('AccountSystem');
   const memberTokenImplementation = await read('Adam', 'memberTokenImplementation');
 
   const isGovernImpUpgraded = (await read('GovernFactory', 'governImplementation') !== governV2.address);
@@ -74,6 +75,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
       membershipV2.address,
       liquidPoolV2.address,
       memberTokenImplementation,
+      accountSystem.address,
       governV2.address,
       process.env.LATEST_VERSION || 'v2.0.0',
     );

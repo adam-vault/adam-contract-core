@@ -54,7 +54,7 @@ contract PriceResolver is Initializable {
 
     /// @notice This function is imported by other contract, thus cannot be external
     function canResolvePrice(address asset) public view virtual returns (bool) {
-       return IAccountSystem(_accountSystem).isSupportedPair(asset,_baseCurrency);
+       return IAccountSystem(_accountSystem).isSupportedPair(asset, _baseCurrency);
     }
 
     uint256[50] private __gap;

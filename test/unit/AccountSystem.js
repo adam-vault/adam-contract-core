@@ -7,7 +7,7 @@ const {
   ADDRESS_ETH,
 } = require('../utils/constants');
 
-describe.only('AccountSystem.sol', function () {
+describe('AccountSystem.sol', function () {
   let creator;
   let dao, priceGateway1, priceGateway2, accountSystem, priceGateway3;
   let tokenA, tokenB, notSupportedToken;

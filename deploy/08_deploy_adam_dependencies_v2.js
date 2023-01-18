@@ -16,6 +16,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await deploy('GovernV2', { contract: 'Govern', from: deployer, log: true, gasLimit: 5000000, ...(await gasFeeConfig()) });
   await deploy('LiquidPoolV2', { contract: 'LiquidPool', from: deployer, log: true, gasLimit: 7000000, ...(await gasFeeConfig()) });
   await deploy('MembershipV2', { contract: 'Membership', from: deployer, log: true, gasLimit: 5000000, ...(await gasFeeConfig()) });
+  await deploy('AccountSystem', { contract: 'AccountSystem', from: deployer, log: true, ...(await gasFeeConfig()) });
   await deploy('Adam_Implementation', { contract: 'Adam', from: deployer, log: true, gasLimit: 3000000, ...(await gasFeeConfig()) });
 };
 module.exports.tags = [

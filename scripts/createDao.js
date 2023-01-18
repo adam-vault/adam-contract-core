@@ -4,7 +4,18 @@ const inquirer = require('inquirer');
 const paramsStruct = require('../utils/paramsStruct');
 const ETH = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 async function main () {
-  const { get } = hre.deployments;
+  const { get, getOrNull } = hre.deployments;
+
+  const PG_TYPES = [
+    'ArbitrumChainlinkPriceGateway',
+    'EthereumChainlinkPriceGateway',
+  ];
+
+  const priceGatewayAddress = (await Promise.all(PG_TYPES.map(async (key) => {
+    const d = await getOrNull(key);
+    if (!d) return null;
+    return [key, d.address];
+  }))).filter(deployment => !!deployment);
 
   const answers = await inquirer
     .prompt([
@@ -20,7 +31,7 @@ async function main () {
 
       { type: 'input', name: 'maxMemberLimit', message: 'Max member allowed?', default: ethers.constants.MaxUint256.toString() },
 
-      { type: 'checkbox', name: 'depositTokens', message: 'Deposit Tokens?', default: [ETH], choices: [ETH] },
+      { type: 'checkbox', name: 'depositTokens', message: 'Deposit Tokens?', default: [ETH, '0xc944B73fBA33a773A4A07340333A3184A70aF1ae'], choices: [ETH, '0xc944B73fBA33a773A4A07340333A3184A70aF1ae'] },
       { type: 'list', name: 'baseCurrency', message: 'BaseCurrency?', default: ETH, choices: [ETH] },
       { type: 'number', name: 'minDepositAmount', message: 'Min Deposit Amount?', default: 0 },
 
@@ -45,11 +56,11 @@ async function main () {
         default: ethers.constants.AddressZero,
       },
       { type: 'number', name: 'generalGovernSetting.5', message: 'Govern proposal duration? (in block)', default: 600 },
+      { type: 'list', name: 'priceGatewayOptions', message: 'Price Gateway ? ', choices: priceGatewayAddress.map(([key, address]) => ({ name: `${key} - ${address}`, value: { key, address } })) },
     ]);
-
   const adamDeployment = await get('Adam');
   const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);
-  const tx = await adam.createDao(...paramsStruct.getCreateDaoParams(answers));
+  const tx = await adam.createDao(...paramsStruct.getCreateDaoParams({ ...answers, priceGateways: [answers.priceGatewayOptions.address] }));
   console.log(tx);
   const receipt = await tx.wait();
   console.log('Dao created at', receipt.events.find(e => e.event === 'CreateDao').args.dao);
