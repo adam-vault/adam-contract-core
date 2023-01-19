@@ -45,5 +45,5 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
 module.exports.tags = [
   'v2',
-  'budgetApproval',
+  'priceGateway',
 ];
