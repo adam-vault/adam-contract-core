@@ -80,10 +80,10 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
 
     function initialize(
         address _creator,
-        string memory _name,
-        string memory _description,
+        string calldata _name,
+        string calldata _description,
         address _baseCurrency,
-        bytes[] memory _data) public initializer {
+        bytes[] calldata _data) public initializer {
         require( 
             address(_creator) != address(0)
             && address(_baseCurrency) != address(0)
@@ -140,6 +140,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     function createPlugin(bytes32 contractName, bytes calldata data) public onlyGovernGeneral returns(address) {
         DaoChildBeaconProxy _plugin = new DaoChildBeaconProxy(address(this), contractName, data);
         _addToPlugins(contractName, address(_plugin));
+        return address(_plugin);
     }
 
     function executePlugin(bytes32 contractName, bytes calldata data, uint256 value) public onlyGovernGeneral pluginExists(contractName) returns(bytes memory) {

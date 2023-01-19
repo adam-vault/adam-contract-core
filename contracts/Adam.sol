@@ -77,10 +77,10 @@ contract Adam is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     function createDao(
-        string memory  _name,
-        string memory _description,
+        string calldata  _name,
+        string calldata _description,
         address _baseCurrency,
-        bytes[] memory _data,
+        bytes[] calldata _data,
         address _referer
     ) external returns (address) {
 
