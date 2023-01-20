@@ -130,17 +130,17 @@ describe('Team.sol - test/unit/Team.js', function () {
 
   describe('setMinter()', function () {
     it('updates minter', async function () {
-      await team.connect(member1).setMinter(member2.address, teamId);
+      await team.connect(creator).setMinter(member2.address, teamId);
       expect(await team.minterOf(teamId)).to.eq(member2.address);
     });
-    it('throw "Unauthorized" error if not minter', async function () {
-      await expect(team.connect(member2).setMinter(member2.address, teamId)).to.revertedWithCustomError(team, 'Unauthorized');
+    it('throw "Ownable: caller is not the owner" error if not minter', async function () {
+      await expect(team.connect(member2).setMinter(member2.address, teamId)).to.revertedWith('Ownable: caller is not the owner');
     });
-    it('throw "Unauthorized" error if team not exists', async function () {
-      await expect(team.connect(member2).setMinter(member2.address, 0)).to.revertedWithCustomError(team, 'Unauthorized');
+    it('throw "Ownable: caller is not the owner" error if team not exists', async function () {
+      await expect(team.connect(member2).setMinter(member2.address, 0)).to.revertedWith('Ownable: caller is not the owner');
     });
     it('throw "InvalidAddress" error if team not exists', async function () {
-      await expect(team.connect(member1).setMinter(AddressZero, 0)).to.revertedWithCustomError(team, 'InvalidAddress');
+      await expect(team.connect(creator).setMinter(AddressZero, 0)).to.revertedWithCustomError(team, 'InvalidAddress');
     });
   });
 });

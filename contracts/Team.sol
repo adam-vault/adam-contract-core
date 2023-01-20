@@ -122,7 +122,7 @@ contract Team is Initializable, ERC1155Upgradeable, OwnableUpgradeable {
 		emit RemoveMembers(tokenId, members);
 	}
 
-	function setMinter(address minter, uint256 tokenId) external onlyTeamMinter(tokenId) {
+	function setMinter(address minter, uint256 tokenId) external onlyOwner {
 		if (minter == address(0)) {
 			revert InvalidAddress(minter);
 		}
