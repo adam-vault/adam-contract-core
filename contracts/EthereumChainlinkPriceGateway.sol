@@ -2,18 +2,16 @@
 
 pragma solidity 0.8.7;
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 
 import "./base/PriceGateway.sol";
 import "./lib/Constant.sol";
 
-contract EthereumChainlinkPriceGateway is Initializable, PriceGateway {
+contract EthereumChainlinkPriceGateway is PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
     string public constant override name = "Ethereum Chainlink Price Gateway";
     constructor() {
-        _disableInitializers();
     }
 
     /// @notice inherited from PriceGateway, help to check the imported pair support or not

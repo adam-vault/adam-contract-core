@@ -14,6 +14,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const memberToken = await get('MemberToken');
   const team = await get('Team');
   const govern = await get('Govern');
+  const accountingSystem = await get('AccountingSystem');
 
   const budgetApprovalsAddress = (await Promise.all([
     get('TransferLiquidERC20BudgetApproval'),
@@ -21,6 +22,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     get('TransferERC20BudgetApproval'),
     get('UniswapAnyTokenBudgetApproval'),
     get('UniswapLiquidBudgetApproval'),
+    get('VestingERC20BudgetApproval'),
   ])).map((deployment) => deployment.address);
 
   const daoBeacon = await deploy('DaoBeacon', {
@@ -37,6 +39,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         [ethers.utils.id('adam.dao.liquid_pool'), liquidPool.address],
         [ethers.utils.id('adam.dao.govern'), govern.address],
         [ethers.utils.id('adam.dao.team'), team.address],
+        [ethers.utils.id('adam.dao.accounting_system'), accountingSystem.address],
       ],
     ],
   });

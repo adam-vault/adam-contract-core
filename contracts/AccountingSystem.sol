@@ -7,14 +7,15 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./base/PriceGateway.sol";
 import "./lib/Concat.sol";
 import "./interface/IPriceGateway.sol";
+import "./interface/IDao.sol";
 
 /// @title Dao Account System
 /// @notice This contract helps managing price gateway and allow set price by govern
 /// @dev The contract is interacted with priceResolver.sol
 /// @dev Custom price gateway is allowed, but need to implement priceGateway.sol and set by govern
-/// @dev AccountSystem implemented price gateway since it will handle set price by govern
+/// @dev AccountingSystem implemented price gateway since it will handle set price by govern
 
-contract AccountSystem is Initializable, OwnableUpgradeable {
+contract AccountingSystem is Initializable, OwnableUpgradeable {
     using Concat for string;
     address public defaultPriceGateway;
 
@@ -59,6 +60,7 @@ contract AccountSystem is Initializable, OwnableUpgradeable {
     /// @dev Same price gateway cannot add to whitelist twice
     /// @param priceGateway price Gateway address that want to whitelist
     function _addPriceGateway(address priceGateway) internal {
+        require(IDao(payable(owner())).canAddPriceGateway(priceGateway), "Not Allowed");
         require(
             !priceGateways[priceGateway],
             "Price Gateway Already whitelisted"
@@ -116,6 +118,8 @@ contract AccountSystem is Initializable, OwnableUpgradeable {
         address base,
         uint256 amount
     ) public view returns (uint256) {
+        if (asset == base && asset != address(0)) return amount;
+
         require(isSupportedPair(asset, base), "Not Supported Price Pair");
         address _priceGateway = (tokenPairPriceGatewayMap[asset][base] != address(0)) ? tokenPairPriceGatewayMap[asset][base] : defaultPriceGateway;
         return IPriceGateway(_priceGateway).assetPrice(asset, base, amount);
@@ -132,6 +136,8 @@ contract AccountSystem is Initializable, OwnableUpgradeable {
         view
         returns (bool)
     {        
+
+        if (asset == base && asset != address(0)) return true;
         return 
             tokenPairPriceGatewayMap[asset][base] != address(0) ||
             IPriceGateway(defaultPriceGateway).isSupportedPair(asset, base);

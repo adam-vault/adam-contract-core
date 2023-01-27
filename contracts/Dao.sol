@@ -164,6 +164,9 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
         return IAdam(adam).budgetApprovals(budgetApproval);
     }
+    function canAddPriceGateway(address priceGateway) public view returns (bool) {
+        return IAdam(adam).priceGateways(priceGateway);
+    }
 
     function byPassGovern(address account) public view returns (bool) {
         if (membership() == address(0))

@@ -17,14 +17,14 @@ abstract contract PriceResolver {
         address _baseCurrency = baseCurrency();
         address _accountingSystem = accountingSystem();
 
-        require(IAccountSystem(_accountingSystem).isSupportedPair(asset,_baseCurrency), 'Account System not supported');
-        return IAccountSystem(_accountingSystem).assetPrice(asset, _baseCurrency, amount);
+        require(IAccountingSystem(_accountingSystem).isSupportedPair(asset,_baseCurrency), 'Account System not supported');
+        return IAccountingSystem(_accountingSystem).assetPrice(asset, _baseCurrency, amount);
     }
 
     function assetPrice(address asset, address base, uint256 amount) public  view virtual returns (uint256) {
         address _accountingSystem = accountingSystem();
-        require(IAccountSystem(_accountingSystem).isSupportedPair(asset, base), 'Account System not supported');
-        return IAccountSystem(_accountingSystem).assetPrice(asset, base, amount);
+        require(IAccountingSystem(_accountingSystem).isSupportedPair(asset, base), 'Account System not supported');
+        return IAccountingSystem(_accountingSystem).assetPrice(asset, base, amount);
     }
 
     function baseCurrencyDecimals() public view virtual returns (uint8) {
@@ -39,6 +39,6 @@ abstract contract PriceResolver {
 
     /// @notice This function is imported by other contract, thus cannot be external
     function canResolvePrice(address asset) public view virtual returns (bool) {
-       return IAccountSystem(accountingSystem()).isSupportedPair(asset, baseCurrency());
+       return IAccountingSystem(accountingSystem()).isSupportedPair(asset, baseCurrency());
     }
 }

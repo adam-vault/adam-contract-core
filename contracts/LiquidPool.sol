@@ -37,12 +37,12 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
         public initializer
     {
         __Ownable_init();
+        require(accountingSystem() != address(0), "AccountingSystem is required");
+
         __ERC20_init("LiquidPool", "LP");
         _baseCurrency = __baseCurrency;
         _addAssets(depositTokens);
-        
-        require(accountingSystem() != address(0), "AccountingSystem is required");
-    }
+            }
 
     function baseCurrency() public view override returns(address) {
         return _baseCurrency;

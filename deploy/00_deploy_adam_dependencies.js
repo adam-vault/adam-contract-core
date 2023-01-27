@@ -11,6 +11,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await deploy('MemberToken', { from: deployer, log: true, gasLimit: 5000000, ...(await gasFeeConfig()) });
   await deploy('Team', { from: deployer, log: true, gasLimit: 5000000, ...(await gasFeeConfig()) });
   await deploy('Govern', { from: deployer, log: true, gasLimit: 5000000, ...(await gasFeeConfig()) });
+  await deploy('AccountingSystem', { from: deployer, log: true, gasLimit: 5000000, ...(await gasFeeConfig()) });
 };
 
 module.exports.tags = [

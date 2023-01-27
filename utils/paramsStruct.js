@@ -7,6 +7,7 @@ const memberTokenArtifact = require('../artifacts/contracts/MemberToken.sol/Memb
 const liquidPoolArtifact = require('../artifacts/contracts/LiquidPool.sol/LiquidPool.json');
 const governArtifact = require('../artifacts/contracts/Govern.sol/Govern.json');
 const teamArtifact = require('../artifacts/contracts/Team.sol/Team.json');
+const accountingSystemArtifact = require('../artifacts/contracts/AccountingSystem.sol/AccountingSystem.json');
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
@@ -73,12 +74,14 @@ function getCreateDaoParams ({
   maxMemberLimit = ethers.constants.MaxUint256,
   referer = constants.AddressZero,
   creator,
+  priceGateways = [],
 }) {
   const iface = new ethers.utils.Interface(daoArtifact.abi);
   const membershipIface = new ethers.utils.Interface(membershipArtifact.abi);
   const memberTokenIface = new ethers.utils.Interface(memberTokenArtifact.abi);
   const liquidPoolIface = new ethers.utils.Interface(liquidPoolArtifact.abi);
   const teamIface = new ethers.utils.Interface(teamArtifact.abi);
+  const accountingSystemIface = new ethers.utils.Interface(accountingSystemArtifact.abi);
 
   return [
     name,
@@ -88,6 +91,10 @@ function getCreateDaoParams ({
       iface.encodeFunctionData('createPlugin', [
         ethers.utils.id('adam.dao.membership'),
         membershipIface.encodeFunctionData('initialize', [name, maxMemberLimit]),
+      ]),
+      iface.encodeFunctionData('createPlugin', [
+        ethers.utils.id('adam.dao.accounting_system'),
+        accountingSystemIface.encodeFunctionData('initialize', [priceGateways]),
       ]),
       iface.encodeFunctionData('createPlugin', [
         ethers.utils.id('adam.dao.liquid_pool'),
