@@ -73,6 +73,8 @@ contract TransferLiquidERC20BudgetApproval is
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         _baseCurrency = __baseCurrency;
+
+        require(accountingSystem() != address(0), "AccountingSystem is required");
     }
 
     function baseCurrency() public view override returns(address) {

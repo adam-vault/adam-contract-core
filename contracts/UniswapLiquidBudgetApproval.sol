@@ -62,6 +62,8 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
         _baseCurrency = __baseCurrency;
+
+        require(accountingSystem() != address(0), "AccountingSystem is required");
     }
 
     function baseCurrency() public view override returns(address) {

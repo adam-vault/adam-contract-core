@@ -215,6 +215,7 @@ abstract contract CommonBudgetApproval is Initializable {
                 (params.minApproval <= params.approvers.length),
             "Invalid approver list"
         );
+        require(team() != address(0), "Team is required");
 
         _executee = msg.sender;
         _executor = params.executor;
