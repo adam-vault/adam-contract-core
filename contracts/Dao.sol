@@ -136,6 +136,9 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     function team() public view override returns(address) {
         return plugins[Constant.BEACON_NAME_TEAM];
     }
+    function accountingSystem() public view override returns(address) {
+        return plugins[Constant.BEACON_NAME_ACCOUNTING_SYSTEM];
+    }
 
     function createPlugin(bytes32 contractName, bytes calldata data) public onlyGovernGeneral returns(address) {
         DaoChildBeaconProxy _plugin = new DaoChildBeaconProxy(address(this), contractName, data);

@@ -10,9 +10,13 @@ import "../lib/Concat.sol";
 
 contract MockBudgetApprovalExecutee is BudgetApprovalExecutee {
     address private _team;
+    address private _accountingSystem;
 
     function team() public view override returns(address) {
         return _team;
+    }
+    function accountingSystem() public view override returns(address) {
+        return _accountingSystem;
     }
     receive() external payable {
 

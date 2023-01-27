@@ -23,6 +23,7 @@ abstract contract BudgetApprovalExecutee {
     }
 
     function team() public view virtual returns (address);
+    function accountingSystem() public view virtual returns (address);
 
     function budgetApprovals(address template) public view virtual returns (bool) {
         return _budgetApprovals[template];

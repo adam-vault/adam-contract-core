@@ -20,6 +20,7 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
 
     string public constant override name = "Uniswap Liquid Budget Approval";
 
+    address private _baseCurrency;
     address[] public fromTokens;
     mapping(address => bool) public fromTokensMapping;
     bool public allowAnyAmount;
@@ -44,7 +45,7 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         bool _allowAnyAmount,
         uint256 _totalAmount,
         uint8 _amountPercentage,
-        address _baseCurrency
+        address __baseCurrency
     ) external initializer {
         __BudgetApproval_init(params);
         
@@ -60,9 +61,14 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
         amountPercentage = _amountPercentage;
+        _baseCurrency = __baseCurrency;
+    }
 
-        __PriceResolver_init(_baseCurrency);
-
+    function baseCurrency() public view override returns(address) {
+        return _baseCurrency;
+    }
+    function accountingSystem() public view override returns(address) {
+        return IBudgetApprovalExecutee(executee()).accountingSystem();
     }
 
     function afterInitialized() external override onlyExecutee {

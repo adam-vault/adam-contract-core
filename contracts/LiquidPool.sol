@@ -17,6 +17,7 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     using Concat for string;
     using SafeERC20Upgradeable for IERC20MetadataUpgradeable;
     
+    address private _baseCurrency;
     address[] public assets;
     mapping(address => uint256) private _assetIndex;
 
@@ -31,18 +32,26 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
 
     function initialize(
         address[] memory depositTokens,
-        address _baseCurrency
+        address __baseCurrency
     )
         public initializer
     {
         __Ownable_init();
         __ERC20_init("LiquidPool", "LP");
-        __PriceResolver_init(_baseCurrency);
+        _baseCurrency = __baseCurrency;
         _addAssets(depositTokens);
+    }
+
+    function baseCurrency() public view override returns(address) {
+        return _baseCurrency;
     }
 
     function team() public view override returns(address) {
         return _dao().team();
+    }
+
+    function accountingSystem() public view override(PriceResolver, BudgetApprovalExecutee) returns(address) {
+        return _dao().accountingSystem();
     }
     
     function _dao() internal view returns (IDao) {
@@ -87,7 +96,7 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
 
         for (uint256 i = 0; i < _assetsLength; i++) {
             address _asset = assets[i];
-            total += assetEthPrice(_asset,  _assetBalance(_asset));
+            total += assetPrice(_asset, Denominations.ETH, _assetBalance(_asset));
         }
         return total;
     }
@@ -117,9 +126,9 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function redeem(uint256 amount) public {
-        IDao _dao = _dao();
+        IDao __dao = _dao();
         require(balanceOf(msg.sender) >= amount, "not enough balance");
-        require(_dao.firstDepositTime(msg.sender) + _dao.locktime() <= block.timestamp, "lockup time");
+        require(__dao.firstDepositTime(msg.sender) + __dao.locktime() <= block.timestamp, "lockup time");
 
         uint256 _assetsLength = assets.length;
         for (uint256 i = 0; i < _assetsLength; i++) {

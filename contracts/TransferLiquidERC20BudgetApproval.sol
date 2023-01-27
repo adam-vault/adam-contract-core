@@ -18,6 +18,7 @@ contract TransferLiquidERC20BudgetApproval is
     string public constant override name =
         "Transfer Liquid ERC20 Budget Approval";
 
+    address private _baseCurrency;
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
     address[] public tokens;
@@ -50,7 +51,7 @@ contract TransferLiquidERC20BudgetApproval is
         address[] memory _tokens,
         bool _allowAnyAmount,
         uint256 _totalAmount,
-        address _baseCurrency,
+        address __baseCurrency,
         // v2
         uint256[] memory _toTeamIds
     ) external initializer {
@@ -71,7 +72,14 @@ contract TransferLiquidERC20BudgetApproval is
 
         allowAnyAmount = _allowAnyAmount;
         totalAmount = _totalAmount;
-        __PriceResolver_init(_baseCurrency);
+        _baseCurrency = __baseCurrency;
+    }
+
+    function baseCurrency() public view override returns(address) {
+        return _baseCurrency;
+    }
+    function accountingSystem() public view override returns(address) {
+        return IBudgetApprovalExecutee(executee()).accountingSystem();
     }
 
     function executeParams() external pure override returns (string[] memory) {
