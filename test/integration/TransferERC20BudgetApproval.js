@@ -1,8 +1,9 @@
 const { expect } = require('chai');
 const { ethers, testUtils } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
+const paramsStruct = require('../../utils/paramsStruct');
 
-const { createTokens } = require('../utils/createContract');
+const { createTokens, createAdam, createBudgetApprovals, createPriceGateways } = require('../utils/createContract');
 const { getCreateTransferERC20BAParams } = require('../../utils/paramsStruct');
 
 const {
@@ -16,22 +17,16 @@ const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('Integration - TransferERC20BudgetApproval.sol - test/integration/TransferERC20BudgetApproval.js', async function () {
-  let dao, adam, transferERC20BAImplementation, budgetApproval, lp;
-  let executor, approver, receiver;
-  let tokenA, feedRegistry;
-  let daoSigner;
-
-  let feedRegistryArticfact;
-
-  before(async function () {
-    feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-  });
+  let adam, dao, transferERC20BAImplementation, budgetApproval, lp;
+  let executor, approver, receiver, daoSigner;
+  let tokenA, feedRegistry, ethereumChainlinkPriceGateway;
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
-    ({ tokenA } = await createTokens());
+    tokenA = await (await smock.mock('ERC20')).deploy('', '');
 
+    const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
@@ -39,27 +34,27 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
-    adam = await smock.fake('Adam');
-    dao = await (await smock.mock('Dao')).deploy();
-    dao.canCreateBudgetApproval.returns(true);
-    adam.budgetApprovals.returns(true);
+    const result = await createAdam();
+    adam = result.adam;
+    ethereumChainlinkPriceGateway = result.ethPriceGateway.address;
 
-    daoSigner = await testUtils.address.impersonate(dao.address);
-    await testUtils.address.setBalance(dao.address, ethers.utils.parseEther('1'));
+    const tx1 = await adam.createDao(
+      ...paramsStruct.getCreateDaoParams({
+        priceGateways: [ethereumChainlinkPriceGateway],
+        creator: executor.address,
+      }),
+    );
+    const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
+    dao = await ethers.getContractAt('Dao', daoAddr);
+    lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
 
-    lp = await (await smock.mock('LiquidPool')).deploy();
-    await lp.setVariable('_owner', dao.address);
+    daoSigner = await testUtils.address.impersonate(daoAddr);
+    await testUtils.address.setBalance(daoAddr, ethers.utils.parseEther('1'));
 
-    await dao.setVariables({
-      adam: adam.address,
-      govern: {
-        [ethers.utils.id('General')]: executor.address,
-      },
-    });
-    transferERC20BAImplementation = await (await smock.mock('TransferERC20BudgetApproval')).deploy();
+    transferERC20BAImplementation = result.transferERC20BudgetApproval;
   });
 
-  describe('On Liquid Pool', function () {
+  describe('On Liquid Pool', async function () {
     let budgetApprovalAddress;
     beforeEach(async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
@@ -90,7 +85,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     });
 
     it('transfer ERC20 Token should success', async function () {
-      await tokenA.mint(lp.address, parseEther('200'));
+      await tokenA.setVariable('_balances', { [lp.address]: parseEther('200') });
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
         [tokenA.address, receiver.address, parseEther('10')],
@@ -120,7 +115,8 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     });
 
     it('transfer multiple ERC20 should success', async function () {
-      await tokenA.mint(lp.address, parseEther('190'));
+      await tokenA.setVariable('_balances', { [lp.address]: parseEther('190') });
+
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
         [tokenA.address, receiver.address, parseEther('10')],
@@ -178,7 +174,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     });
 
     it('transfer ERC20 Token should success', async function () {
-      await tokenA.mint(dao.address, parseEther('200'));
+      await tokenA.setVariable('_balances', { [dao.address]: parseEther('200') });
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
         [tokenA.address, receiver.address, parseEther('10')],
@@ -200,7 +196,8 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     });
 
     it('transfer multiple ERC20 should success', async function () {
-      await tokenA.mint(dao.address, parseEther('190'));
+      await tokenA.setVariable('_balances', { [dao.address]: parseEther('190') });
+
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
         [tokenA.address, receiver.address, parseEther('10')],
@@ -228,7 +225,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
 });
 
 describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/TransferERC20BudgetApproval.js', function () {
-  let transferErc20BAImplementation, budgetApproval, team;
+  let transferErc20BAImplementation, budgetApproval, dao, team;
   let executor, approver, receiver;
   let tokenA, tokenB, executee, TransferERC20BudgetApproval;
 
@@ -238,10 +235,12 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     ({ tokenA, tokenB } = await createTokens());
     TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: executor });
     transferErc20BAImplementation = await TransferERC20BudgetApproval.deploy();
+    const MockLPDao = await ethers.getContractFactory('MockLPDao', { signer: executor });
 
     team = await (await smock.mock('Team')).deploy();
+    dao = await MockLPDao.deploy();
     executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
-    await executee.setVariable('_team', team.address);
+    executee.setVariable('_team', team.address);
   });
 
   describe('Create Budget Approval', function () {
@@ -503,6 +502,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
             token: tokenA.address,
             endTime: 0,
             startTime: Math.round(Date.now() / 1000) + 86400,
+            team: team.address,
           }),
         );
 
@@ -548,6 +548,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
             token: tokenA.address,
             startTime: 0,
             endTime: Math.round(Date.now() / 1000) - 86400,
+            team: team.address,
           }),
         );
 
@@ -586,7 +587,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       it('throws "Exceeded budget usage limit"', async function () {
         const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
           getCreateTransferERC20BAParams({
-            dao: executee.address,
+            dao: dao.address,
             executor: executor.address,
             approvers: [],
             minApproval: 0,
@@ -595,6 +596,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
             startTime: 0,
             endTime: 0,
             usageCount: 1,
+            team: team.address,
           }),
         );
 
@@ -662,6 +664,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
             toAddresses: [receiver.address],
             token: tokenA.address,
             minApproval: 0,
+            team: team.address,
           }),
         );
 

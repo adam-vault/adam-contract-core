@@ -76,7 +76,6 @@ abstract contract CommonBudgetApproval is Initializable {
     uint256 private _startTime;
     uint256 private _endTime;
 
-    address private _team;
 
     struct InitializeParams {
         address executor;
@@ -215,7 +214,6 @@ abstract contract CommonBudgetApproval is Initializable {
                 (params.minApproval <= params.approvers.length),
             "Invalid approver list"
         );
-        require(team() != address(0), "Team is required");
 
         _executee = msg.sender;
         _executor = params.executor;
@@ -236,6 +234,7 @@ abstract contract CommonBudgetApproval is Initializable {
             _approversMapping[params.approvers[i]] = true;
             emit SetApprover(params.approvers[i]);
         }
+        require(team() != address(0), "Team is required");
     }
 
     function afterInitialized() external virtual onlyExecutee {}
