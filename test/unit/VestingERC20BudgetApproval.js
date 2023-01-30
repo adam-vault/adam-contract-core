@@ -1,5 +1,5 @@
 const chai = require('chai');
-const { ethers, network } = require('hardhat');
+const { ethers, network, testUtils } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 
 const { expect } = chai;
@@ -10,7 +10,7 @@ chai.use(smock.matchers);
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApproval.js', async function () {
-  let executor, receiver;
+  let executor, receiver, team;
   let mockToken, executee;
   let executeeAsSigner, VestingERC20BudgetApproval, ERC1967Proxy, vestingErc20BAImpl;
 
@@ -56,19 +56,10 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
 
     team = await smock.fake('Team');
     executee = await smock.fake('MockBudgetApprovalExecutee');
+    executee.team.returns(team.address);
     mockToken = await smock.fake('ERC20');
-
-    await network.provider.request({
-      method: 'hardhat_impersonateAccount',
-      params: [executee.address],
-    });
-    await network.provider.send(
-      'hardhat_setBalance', [
-        executee.address,
-        '0x10000000000000000000000000000',
-      ]);
-
-    executeeAsSigner = await ethers.getSigner(executee.address);
+    executeeAsSigner = await testUtils.address.impersonate(executee.address);
+    await testUtils.address.setBalance(executee.address, ethers.utils.parseEther('1'));
     VestingERC20BudgetApproval = await ethers.getContractFactory('VestingERC20BudgetApproval', { signer: executeeAsSigner });
 
     ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy', { signer: executeeAsSigner });

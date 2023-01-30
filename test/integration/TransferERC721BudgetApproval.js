@@ -10,7 +10,7 @@ const { smock } = require('@defi-wonderland/smock');
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 describe('Integration - TransferERC721BudgetApproval.sol - test/integration/TransferERC721BudgetApproval.js', function () {
-  let adam, dao, transferERC721BAImplementation, budgetApproval;
+  let adam, dao, transferERC721BAImplementation, budgetApproval, team;
   let executor, approver, receiver;
   let tokenC721, budgetApprovalAddresses;
 
@@ -21,6 +21,8 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
 
     dao = await (await smock.mock('Dao')).deploy();
     adam = await (await smock.mock('Adam')).deploy();
+    team = await (await smock.mock('Team')).deploy();
+
     adam.budgetApprovals.returns(true);
     transferERC721BAImplementation = await (await smock.mock('TransferERC721BudgetApproval')).deploy();
 
@@ -30,6 +32,7 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
       },
       adam: adam.address,
     });
+    dao.team.returns(team.address);
   });
 
   describe('On Treasury', async function () {

@@ -32,7 +32,7 @@ abstract contract BudgetApprovalExecutee {
     function executeByBudgetApproval(address _to, bytes memory _data, uint256 _value) external onlyBudgetApproval returns (bytes memory) {
         (bool success, bytes memory result) = _to.call{ value: _value }(_data);
         if(!success) {
-            revert(string("Reverted by external contract").concat(RevertMsg.ToString(result)));
+            revert(string("Reverted by external contract - ").concat(RevertMsg.ToString(result)));
         }
         emit ExecuteByBudgetApproval(msg.sender, _data);
 

@@ -12,7 +12,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetApproval.js', async function () {
   let creator, executor, referee, referrer;
   let executee, depositToken;
-  let executeeAsSigner, DepositRewardBudgetApproval, ERC1967Proxy, depositRewardBAImpl;
+  let executeeAsSigner, DepositRewardBudgetApproval, ERC1967Proxy, depositRewardBAImpl, team;
 
   let liquidPool, dao, membership, rewardToken;
 
@@ -67,6 +67,9 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
 
     executee = await smock.fake('MockBudgetApprovalExecutee');
     rewardToken = await smock.fake('ERC20');
+    team = await smock.fake('Team');
+    executee.team.returns(team.address);
+
     depositToken = await smock.fake('ERC20');
 
     await network.provider.request({

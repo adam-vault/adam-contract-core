@@ -48,6 +48,11 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         address __baseCurrency
     ) external initializer {
         __BudgetApproval_init(params);
+
+        allowAnyAmount = _allowAnyAmount;
+        totalAmount = _totalAmount;
+        amountPercentage = _amountPercentage;
+        _baseCurrency = __baseCurrency;
         
         for(uint i = 0; i < _fromTokens.length; i++) {
             _addFromToken(_fromTokens[i]);
@@ -57,11 +62,6 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         for(uint i = 0; i < _toTokens.length; i++) {
             _addToToken(_toTokens[i]);
         }
-
-        allowAnyAmount = _allowAnyAmount;
-        totalAmount = _totalAmount;
-        amountPercentage = _amountPercentage;
-        _baseCurrency = __baseCurrency;
 
         require(accountingSystem() != address(0), "AccountingSystem is required");
     }

@@ -80,7 +80,7 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', function 
     });
   });
 
-  describe('Deposit()', function () {
+  describe('Deposit()', async function () {
     it('creates mint correct amount of Liquid Pool token', async function () {
       const liquidPool = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       await (liquidPool.connect(daoMember)).deposit(daoMember.address, { value: ethers.utils.parseEther('0.5') });

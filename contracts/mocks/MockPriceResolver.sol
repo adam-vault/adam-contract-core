@@ -13,7 +13,4 @@ contract MockPriceResolver is PriceResolver {
     function accountingSystem() public view override returns (address) {
         return _accountingSystem;
     }
-    function setBaseCurrency(address asset) public {
-        _baseCurrency = asset;
-    }
 }

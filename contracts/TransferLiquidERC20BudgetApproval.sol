@@ -58,6 +58,10 @@ contract TransferLiquidERC20BudgetApproval is
         __BudgetApproval_init(params);
 
         allowAllAddresses = _allowAllAddresses;
+        allowAnyAmount = _allowAnyAmount;
+        totalAmount = _totalAmount;
+        _baseCurrency = __baseCurrency;
+        
         for (uint256 i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
         }
@@ -69,10 +73,6 @@ contract TransferLiquidERC20BudgetApproval is
         for (uint256 i = 0; i < _toTeamIds.length; i++) {
             _addToTeam(_toTeamIds[i]);
         }
-
-        allowAnyAmount = _allowAnyAmount;
-        totalAmount = _totalAmount;
-        _baseCurrency = __baseCurrency;
 
         require(accountingSystem() != address(0), "AccountingSystem is required");
     }
