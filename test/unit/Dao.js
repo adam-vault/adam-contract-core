@@ -108,8 +108,8 @@ describe('Dao.sol - test/unit/Dao.js', function () {
       await dao.connect(lpAsSigner).setFirstDepositTime(creator.address, 10);
       expect(await dao.firstDepositTime(creator.address)).to.equal(10);
     });
-    it('throws "only plugins"', async function () {
-      await expect(dao.setFirstDepositTime(creator.address, 0)).to.be.revertedWith('only plugins');
+    it('throws "Unauthorized"', async function () {
+      await expect(dao.setFirstDepositTime(creator.address, 0)).to.be.revertedWithCustomError(dao, 'Unauthorized');
     });
   });
 
