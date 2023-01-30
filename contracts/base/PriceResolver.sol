@@ -9,6 +9,8 @@ import "../interface/IAccountingSystem.sol";
 import "../lib/Constant.sol";
 
 abstract contract PriceResolver {
+    error PairNotSupport(address asset, address base);
+
     function baseCurrency() public view virtual returns (address);
     function accountingSystem() public view virtual returns (address);
 
@@ -17,13 +19,17 @@ abstract contract PriceResolver {
         address _baseCurrency = baseCurrency();
         address _accountingSystem = accountingSystem();
 
-        require(IAccountingSystem(_accountingSystem).isSupportedPair(asset,_baseCurrency), 'Account System not supported');
+        if (!IAccountingSystem(accountingSystem()).isSupportedPair(asset, baseCurrency())) {
+            revert PairNotSupport(asset, baseCurrency());
+        }
         return IAccountingSystem(_accountingSystem).assetPrice(asset, _baseCurrency, amount);
     }
 
     function assetPrice(address asset, address base, uint256 amount) public  view virtual returns (uint256) {
         address _accountingSystem = accountingSystem();
-        require(IAccountingSystem(_accountingSystem).isSupportedPair(asset, base), 'Account System not supported');
+        if (!IAccountingSystem(accountingSystem()).isSupportedPair(asset, base)) {
+            revert PairNotSupport(asset, base);
+        }
         return IAccountingSystem(_accountingSystem).assetPrice(asset, base, amount);
     }
 

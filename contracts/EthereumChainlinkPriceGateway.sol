@@ -11,6 +11,10 @@ import "./lib/Constant.sol";
 contract EthereumChainlinkPriceGateway is PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
     string public constant override name = "Ethereum Chainlink Price Gateway";
+
+    error StaleRoundId(uint80 roundID, uint80 answeredInRound);
+    error StaleTimestamp(uint256 currentTimeStamp, uint256 updatedAtTimeStamp);
+    error InvaildDecimal(uint8 decimals);
     constructor() {
     }
 
@@ -76,11 +80,12 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
             .decimals(asset, Denominations.ETH);
 
-        require(answeredInRound >= roundID, "Stale price in Chainlink");
-        require(
-            block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY,
-            "Stale price in Chainlink 113"
-        );
+        if (answeredInRound < roundID) {
+            revert StaleRoundId(roundID, answeredInRound);
+        }
+        if (block.timestamp > updatedAt + Constant.STALE_PRICE_DELAY) {
+            revert StaleTimestamp(block.timestamp, updatedAt);
+        }
 
         price = scalePrice(
             price,
@@ -118,12 +123,12 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
             .decimals(asset, Denominations.ETH);
 
-        require(answeredInRound >= roundID, "Stale price in Chainlink");
-        require(
-            block.timestamp <= updatedAt + Constant.STALE_PRICE_DELAY,
-            "Stale price in Chainlink 113"
-        );
-
+        if (answeredInRound < roundID) {
+            revert StaleRoundId(roundID, answeredInRound);
+        }
+        if (block.timestamp > updatedAt + Constant.STALE_PRICE_DELAY) {
+            revert StaleTimestamp(block.timestamp, updatedAt);
+        }
         price = scalePrice(
             price,
             priceDecimals,
@@ -167,10 +172,9 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         address _quote,
         uint8 _decimals
     ) internal view virtual returns (int256) {
-        require(
-            _decimals > uint8(0) && _decimals <= uint8(18),
-            "Invalid _decimals"
-        );
+        if (_decimals <= uint8(0) || _decimals > uint8(18)) {
+            revert InvaildDecimal(_decimals);
+        }
         int256 decimals = int256(10**uint256(_decimals));
         (
             uint80 _baseRoundID,
@@ -183,14 +187,12 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
                 Denominations.ETH
             );
 
-        require(
-            _baseAnsweredInRound >= _baseRoundID,
-            "Stale price in Chainlink 104"
-        );
-        require(
-            block.timestamp <= _baseUpdatedAt + Constant.STALE_PRICE_DELAY,
-            "Stale price in Chainlink 105"
-        );
+        if (_baseAnsweredInRound < _baseRoundID) {
+            revert StaleRoundId(_baseRoundID, _baseAnsweredInRound);
+        }
+        if (block.timestamp > _baseUpdatedAt + Constant.STALE_PRICE_DELAY) {
+            revert StaleTimestamp(block.timestamp, _baseUpdatedAt);
+        }
 
         uint8 baseDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
             .decimals(_base, Denominations.ETH);
@@ -205,14 +207,12 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
                 _quote,
                 Denominations.ETH
             );
-        require(
-            _quoteAnsweredInRound >= _quoteRoundID,
-            "Stale price in Chainlink 112"
-        );
-        require(
-            block.timestamp <= _quoteUpdatedAt + Constant.STALE_PRICE_DELAY,
-            "Stale price in Chainlink 113"
-        );
+        if (_quoteAnsweredInRound < _quoteRoundID) {
+            revert StaleRoundId(_quoteRoundID, _quoteAnsweredInRound);
+        }
+        if (block.timestamp > _quoteUpdatedAt + Constant.STALE_PRICE_DELAY) {
+            revert StaleTimestamp(block.timestamp, _quoteUpdatedAt);
+        }
 
         uint8 quoteDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
             .decimals(_quote, Denominations.ETH);

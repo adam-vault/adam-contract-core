@@ -25,6 +25,7 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', function 
       priceGateways: [ethereumChainlinkPriceGateway],
       depositTokens: [ADDRESS_ETH, tokenA.address],
       baseCurrency: ADDRESS_ETH,
+      creator: creator.address,
     }));
   };
 
@@ -68,15 +69,15 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', function 
 
   describe('CreateDao()', function () {
     it('creates Dao successfully with correct param', async function () {
-      const accountSystem = await ethers.getContractAt('AccountingSystem', await dao.accountingSystem());
-      expect(await accountSystem.priceGateways(ethereumChainlinkPriceGateway)).to.be.equal(true);
-      expect(await accountSystem.priceGateways(arbitrumChainlinkPriceGateway)).to.be.equal(false);
-      expect(await accountSystem.defaultPriceGateway()).to.be.equal(ethereumChainlinkPriceGateway);
+      const accountingSystem = await ethers.getContractAt('AccountingSystem', await dao.accountingSystem());
+      expect(await accountingSystem.priceGateways(ethereumChainlinkPriceGateway)).to.be.equal(true);
+      expect(await accountingSystem.priceGateways(arbitrumChainlinkPriceGateway)).to.be.equal(false);
+      expect(await accountingSystem.defaultPriceGateway()).to.be.equal(ethereumChainlinkPriceGateway);
     });
     it('creates Liquid successfully with correct param', async function () {
-      const accountSystem = await ethers.getContractAt('AccountingSystem', await dao.accountingSystem());
+      const accountingSystem = await ethers.getContractAt('AccountingSystem', await dao.accountingSystem());
       const liquidPool = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-      expect(await liquidPool.accountingSystem()).to.be.equal(accountSystem.address);
+      expect(await liquidPool.accountingSystem()).to.be.equal(accountingSystem.address);
     });
   });
 

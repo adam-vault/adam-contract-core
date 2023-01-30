@@ -24,6 +24,11 @@ contract AccountingSystem is Initializable, OwnableUpgradeable {
         public tokenPairPriceGatewayMap;
 
     event AddPriceGateway(address priceGateway);
+    error PriceGatewayExist(address priceGateway);
+    error PriceGatewayOmit(address priceGateway);
+    error InputLengthNotMatch(uint count1, uint count2);
+    error PairNotSupport(address asset, address base);
+    error OwnerNotPermit(address priceGateway);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -60,11 +65,12 @@ contract AccountingSystem is Initializable, OwnableUpgradeable {
     /// @dev Same price gateway cannot add to whitelist twice
     /// @param priceGateway price Gateway address that want to whitelist
     function _addPriceGateway(address priceGateway) internal {
-        require(IDao(payable(owner())).canAddPriceGateway(priceGateway), "Not Allowed");
-        require(
-            !priceGateways[priceGateway],
-            "Price Gateway Already whitelisted"
-        );
+        if (!IDao(payable(owner())).canAddPriceGateway(priceGateway)) {
+            revert OwnerNotPermit(priceGateway);
+        }
+        if(priceGateways[priceGateway]){
+            revert PriceGatewayExist(priceGateway);
+        }
         priceGateways[priceGateway] = true;
 
         emit AddPriceGateway(priceGateway);
@@ -93,17 +99,16 @@ contract AccountingSystem is Initializable, OwnableUpgradeable {
         address[] calldata _bases,
         address priceGateway
     ) internal {
-        require(priceGateways[priceGateway], "PriceGateway Not whitelisted");
-        require(_assets.length == _bases.length, "Asset base pair length not match");
-        
+        if (!priceGateways[priceGateway]) {
+            revert PriceGatewayOmit(priceGateway);
+        }
+        if (_assets.length != _bases.length) {
+            revert InputLengthNotMatch(_assets.length, _bases.length);
+        }
         for (uint256 i = 0; i < _assets.length; i++) {
-            require(
-                IPriceGateway(priceGateway).isSupportedPair(
-                    _assets[i],
-                    _bases[i]
-                ),
-                "Price Pair not supported by price gateway"
-            );
+            if (!IPriceGateway(priceGateway).isSupportedPair(_assets[i], _bases[i])) {
+                revert PairNotSupport(_assets[i], _bases[i]);
+            }
             tokenPairPriceGatewayMap[_assets[i]][_bases[i]] = priceGateway;
         }
     }
@@ -120,7 +125,10 @@ contract AccountingSystem is Initializable, OwnableUpgradeable {
     ) public view returns (uint256) {
         if (asset == base && asset != address(0)) return amount;
 
-        require(isSupportedPair(asset, base), "Not Supported Price Pair");
+        if(!isSupportedPair(asset, base)){
+            revert PairNotSupport(asset, base);
+        }
+
         address _priceGateway = (tokenPairPriceGatewayMap[asset][base] != address(0)) ? tokenPairPriceGatewayMap[asset][base] : defaultPriceGateway;
         return IPriceGateway(_priceGateway).assetPrice(asset, base, amount);
     }

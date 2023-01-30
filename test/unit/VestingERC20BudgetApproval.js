@@ -51,20 +51,21 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
     ]);
   }
 
-  beforeEach(async function () {
+  before(async function () {
     [executor, receiver] = await ethers.getSigners();
-
-    team = await smock.fake('Team');
-    executee = await smock.fake('MockBudgetApprovalExecutee');
-    executee.team.returns(team.address);
-    mockToken = await smock.fake('ERC20');
-    executeeAsSigner = await testUtils.address.impersonate(executee.address);
-    await testUtils.address.setBalance(executee.address, ethers.utils.parseEther('1'));
-    VestingERC20BudgetApproval = await ethers.getContractFactory('VestingERC20BudgetApproval', { signer: executeeAsSigner });
-
-    ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy', { signer: executeeAsSigner });
-
+    VestingERC20BudgetApproval = await ethers.getContractFactory('VestingERC20BudgetApproval');
     vestingErc20BAImpl = await VestingERC20BudgetApproval.deploy();
+  });
+
+  beforeEach(async function () {
+    executee = await smock.fake('MockBudgetApprovalExecutee');
+    mockToken = await smock.fake('ERC20');
+    team = await smock.fake('Team');
+    executee.team.returns(team.address);
+    await testUtils.address.setBalance(executee.address, ethers.utils.parseEther('1'));
+
+    executeeAsSigner = await testUtils.address.impersonate(executee.address);
+    ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy', { signer: executeeAsSigner });
   });
 
   describe('initialize()', async function () {
