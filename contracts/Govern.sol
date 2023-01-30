@@ -31,6 +31,12 @@ contract Govern is
     mapping(uint256 => ProposalVote) private _proposalVotes;
     uint256 public durationInBlock;
 
+    error NonVotableToken(address token);
+    error VoteAlreadyCast();
+    error NoContent();
+    error InvalidVoteType();
+
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
@@ -43,8 +49,9 @@ contract Govern is
         address _voteToken,
         uint256 _durationInBlock
     ) external initializer {
-        require(_isVotableToken(_voteToken),"Govern Token without voting function");
-        require(_voteToken != address(0),"VoteToken cannot be empty");
+        if (!_isVotableToken(_voteToken)) {
+            revert NonVotableToken(_voteToken);
+        }
 
         __Ownable_init();
 
@@ -65,7 +72,7 @@ contract Govern is
         } else if (support == uint8(VoteType.Abstain)) {
             return proposalvote.abstainVotes;
         } else {
-            revert("Governor: invalid value for enum VoteType");
+            revert InvalidVoteType();
         }
     }
 
@@ -122,7 +129,7 @@ contract Govern is
         bytes32 descriptionHash
     ) public payable override returns (uint256) {
         if (targets[0] == address(0)) {
-            revert("no content");
+            revert NoContent();
         }
 
         return super.execute(targets, values, calldatas, descriptionHash);
@@ -137,7 +144,9 @@ contract Govern is
     ) internal override {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
 
-        require(!proposalvote.hasVoted[account], "GovernorVotingSimple: vote already cast");
+        if (proposalvote.hasVoted[account]) {
+            revert VoteAlreadyCast();
+        }
         proposalvote.hasVoted[account] = true;
 
         if (support == uint8(VoteType.Against)) {
@@ -147,7 +156,7 @@ contract Govern is
         } else if (support == uint8(VoteType.Abstain)) {
             proposalvote.abstainVotes += weight;
         } else {
-            revert("Governor: invalid value for enum VoteType");
+            revert InvalidVoteType();
         }
     }
 
