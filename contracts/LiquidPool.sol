@@ -22,7 +22,9 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     IDao public dao;
     address[] public assets;
     mapping(address => uint256) private _assetIndex;
-
+    //V2
+    address public __baseCurrency;
+    
     event AllowDepositToken(address token);
     event DisallowDepositToken(address token);
     event Deposit(address account, address token, uint256 depositAmount);
@@ -54,8 +56,7 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
     {
         __ERC20_init("LiquidPool", "LP");
         dao = IDao(payable(owner));
-        __PriceResolver_init(_baseCurrency, dao.accountSystem());
-
+        __baseCurrency = _baseCurrency;
         _addAssets(depositTokens);
         
         ___BudgetApprovalExecutee_init(
@@ -226,6 +227,14 @@ contract LiquidPool is Initializable, UUPSUpgradeable, ERC20Upgradeable, PriceRe
 
     function assetsLength() public view returns(uint256) {
         return assets.length;
+    }
+
+    function baseCurrency() public view virtual override returns (address){
+        return __baseCurrency;
+    }
+
+    function accountSystem() public view virtual override(BudgetApprovalExecutee, PriceResolver) returns (address){
+        return dao.accountSystem();
     }
 
     function _authorizeUpgrade(address) internal view override onlyDao {}

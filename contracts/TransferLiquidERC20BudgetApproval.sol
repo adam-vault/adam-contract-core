@@ -29,6 +29,8 @@ contract TransferLiquidERC20BudgetApproval is
     // v2
     uint256[] public toTeamIds;
     mapping(uint256 => bool) public toTeamIdsMapping;
+    address public __baseCurrency;
+
 
     event AllowTeam(uint256 indexed teamId);
     event ExecuteTransferLiquidERC20Transaction(
@@ -73,9 +75,8 @@ contract TransferLiquidERC20BudgetApproval is
         for (uint256 i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
         }
-
-        __PriceResolver_init(_baseCurrency, IBudgetApprovalExecutee(executee()).accountSystem());
-
+        
+        __baseCurrency = _baseCurrency;
         for (uint256 i = 0; i < _tokens.length; i++) {
             _addToken(_tokens[i]);
         }
@@ -209,5 +210,13 @@ contract TransferLiquidERC20BudgetApproval is
 
     function toTeamsLength() public view returns (uint256) {
         return toTeamIds.length;
+    }
+
+    function baseCurrency() public view virtual override returns (address){
+        return __baseCurrency;
+    }
+
+    function accountSystem() public view virtual override(PriceResolver) returns (address){
+        return IBudgetApprovalExecutee(executee()).accountSystem();
     }
 }

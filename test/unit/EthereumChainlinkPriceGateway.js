@@ -165,13 +165,13 @@ describe('EthereumChainlinkPriceGateway', async () => {
       await feedRegistry.setBlockTimestamp(tokenB.address, ADDRESS_ETH, Math.round(Date.now() / 1000) - 86400);
     });
     it('get ethAssetPrice fail ', async function () {
-      await expect(priceGateway.ethAssetPrice(tokenB.address, parseEther('1'))).to.be.revertedWith('Stale price in Chainlink 113');
+      await expect(priceGateway.ethAssetPrice(tokenB.address, parseEther('1'))).to.be.revertedWithCustomError(priceGateway, 'StaleTimestamp');
     });
     it('get ethAssetPrice fail ', async function () {
-      await expect(priceGateway.assetEthPrice(tokenB.address, parseEther('1'))).to.be.revertedWith('Stale price in Chainlink 113');
+      await expect(priceGateway.assetEthPrice(tokenB.address, parseEther('1'))).to.be.revertedWithCustomError(priceGateway, 'StaleTimestamp');
     });
     it('get ethAssetPrice fail ', async function () {
-      await expect(priceGateway.assetPrice(tokenA.address, tokenB.address, parseEther('1'))).to.be.revertedWith('Stale price in Chainlink 113');
+      await expect(priceGateway.assetPrice(tokenA.address, tokenB.address, parseEther('1'))).to.be.revertedWithCustomError(priceGateway, 'StaleTimestamp');
     });
   });
 });

@@ -86,7 +86,7 @@ describe('AccountSystem.sol', function () {
     });
 
     it('reverts with "Not Supported Price Pair" when calls with not Supported token ', async () => {
-      await expect(accountSystem.assetPrice(notSupportedToken.address, ADDRESS_ETH, parseEther('1'))).to.be.revertedWith('Not Supported Price Pair');
+      await expect(accountSystem.assetPrice(notSupportedToken.address, ADDRESS_ETH, parseEther('1'))).to.be.revertedWithCustomError(accountSystem, 'PairNotSupport');
     });
   });
 

@@ -31,7 +31,8 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
 
     mapping(uint256 => mapping(address => uint256)) private _tokenInAmountOfTransaction;
     mapping(uint256 => address[]) private _tokenInOfTransaction;
-
+    // V2
+    address public __baseCurrency;
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
@@ -48,7 +49,8 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         address _baseCurrency
     ) external initializer {
         __BudgetApproval_init(params);
-        __PriceResolver_init(_baseCurrency, IBudgetApprovalExecutee(executee()).accountSystem());
+
+        __baseCurrency = _baseCurrency;
 
         for(uint i = 0; i < _fromTokens.length; i++) {
             _addFromToken(_fromTokens[i]);
@@ -224,6 +226,14 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         require(!toTokensMapping[token], "Duplicated token");
         toTokensMapping[token] = true;
         emit AllowToToken(token);
+    }
+
+    function baseCurrency() public view virtual override returns (address){
+        return __baseCurrency;
+    }
+
+    function accountSystem() public view virtual override(PriceResolver) returns (address){
+        return IBudgetApprovalExecutee(executee()).accountSystem();
     }
 
 }

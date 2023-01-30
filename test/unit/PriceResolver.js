@@ -16,17 +16,17 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
 
   beforeEach(async () => {
     [creator] = await ethers.getSigners();
-    priceResolver = await (await smock.mock('PriceResolver', creator)).deploy();
+    priceResolver = await (await smock.mock('MockPriceResolver', creator)).deploy();
     accountSystem = await smock.fake('AccountSystem');
-    await priceResolver.setVariable('_accountSystem', accountSystem.address);
+    await priceResolver.setAccountSystem(accountSystem.address);
 
     tokenA = await smock.fake('TokenA');
     tokenB = await smock.fake('TokenB');
   });
 
-  describe('assetBaseCurrency()', function () {
+  describe('assetBaseCurrency()', async function () {
     beforeEach(async () => {
-      await priceResolver.setVariable('_baseCurrency', tokenA.address);
+      await priceResolver.setBaseCurrency(tokenA.address);
     });
     it('redirect call to accountSystem correcly if accountSystem support the pair', async function () {
       accountSystem.isSupportedPair.returns(true);
@@ -36,7 +36,7 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
     });
     it('redirect call to accountSystem correcly if accountSystem not support the pair', async function () {
       accountSystem.isSupportedPair.returns(false);
-      await expect(priceResolver.assetBaseCurrencyPrice(tokenB.address, parseEther('1'))).to.be.revertedWith('Account System not supported');
+      await expect(priceResolver.assetBaseCurrencyPrice(tokenB.address, parseEther('1'))).to.be.revertedWithCustomError(priceResolver, 'PairNotSupport');
       expect(accountSystem.isSupportedPair).to.have.been.calledWith(tokenB.address, tokenA.address);
       expect(accountSystem.assetPrice).to.have.callCount(0);
     });
@@ -51,7 +51,7 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
     });
     it('redirect call to accountSystem correcly if accountSystem not support the pair', async function () {
       accountSystem.isSupportedPair.returns(false);
-      await expect(priceResolver.assetPrice(tokenB.address, tokenA.address, parseEther('1'))).to.be.revertedWith('Account System not supported');
+      await expect(priceResolver.assetPrice(tokenB.address, tokenA.address, parseEther('1'))).to.be.revertedWithCustomError(priceResolver, 'PairNotSupport');
       expect(accountSystem.isSupportedPair).to.have.been.calledWith(tokenB.address, tokenA.address);
       expect(accountSystem.assetPrice).to.have.callCount(0);
     });
@@ -59,12 +59,12 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
 
   describe('baseCurrencyDecimals()', function () {
     it('returns the correct value if base currency = Eth', async function () {
-      await priceResolver.setVariable('_baseCurrency', ADDRESS_ETH);
+      await priceResolver.setBaseCurrency(ADDRESS_ETH);
       expect(await priceResolver.baseCurrencyDecimals()).to.be.equal(18);
     });
 
     it('returns the correct value if base currency = ERC 20 token', async function () {
-      await priceResolver.setVariable('_baseCurrency', tokenA.address);
+      await priceResolver.setBaseCurrency(tokenA.address);
       await tokenA.decimals.returns(5);
       expect(await priceResolver.baseCurrencyDecimals()).to.be.equal(5);
     });
@@ -72,7 +72,7 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
 
   describe('canResolvePrice()', function () {
     beforeEach(async () => {
-      await priceResolver.setVariable('_baseCurrency', tokenA.address);
+      await priceResolver.setBaseCurrency(tokenA.address);
     });
     it('redirect call to accountSystem correcly if accountSystem support the pair', async function () {
       accountSystem.isSupportedPair.returns(true);

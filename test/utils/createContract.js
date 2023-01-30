@@ -86,6 +86,7 @@ const createAdam = async ({ budgetApprovalAddresses, priceGatewayAddresses }) =>
   ], { kind: 'uups' });
 
   await adam.deployed();
+
   return adam;
 };
 

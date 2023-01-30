@@ -172,13 +172,13 @@ describe('ArbitrumChainlinkPriceGateway', async () => {
       await feedRegistry.setBlockTimestamp(tokenB.address, ADDRESS_USD, Math.round(Date.now() / 1000) - 86400);
     });
     it('get usdAssetPrice fail ', async function () {
-      await expect(priceGateway.usdAssetPrice(tokenB.address, parseEther('1'))).to.be.revertedWith('Stale price in Chainlink 113');
+      await expect(priceGateway.usdAssetPrice(tokenB.address, parseEther('1'))).to.be.revertedWithCustomError(priceGateway, 'StaleTimestamp');
     });
     it('get assetUSDPrice fail ', async function () {
-      await expect(priceGateway.assetUSDPrice(tokenB.address, parseEther('1'))).to.be.revertedWith('Stale price in Chainlink 113');
+      await expect(priceGateway.assetUSDPrice(tokenB.address, parseEther('1'))).to.be.revertedWithCustomError(priceGateway, 'StaleTimestamp');
     });
     it('get assetPrice fail ', async function () {
-      await expect(priceGateway.assetPrice(tokenA.address, tokenB.address, parseEther('1'))).to.be.revertedWith('Stale price in Chainlink 113');
+      await expect(priceGateway.assetPrice(tokenA.address, tokenB.address, parseEther('1'))).to.be.revertedWithCustomError(priceGateway, 'StaleTimestamp');
     });
   });
 });
