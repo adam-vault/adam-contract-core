@@ -1,4 +1,5 @@
 const { gasFeeConfig } = require('../utils/getGasInfo');
+const hre = require('hardhat');
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;

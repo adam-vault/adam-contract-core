@@ -6,7 +6,7 @@ const { gasFeeConfig } = require('../utils/getGasInfo');
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, get, read, execute } = deployments;
   const { deployer } = await getNamedAccounts();
-  const deployNetwork = hre.network.name || 'kovan';
+  const deployNetwork = hre.network.name || 'goerli';
 
   const dao = await get('Dao');
   const membership = await get('Membership');
@@ -24,6 +24,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     get('UniswapLiquidBudgetApproval'),
     get('VestingERC20BudgetApproval'),
   ])).map((deployment) => deployment.address);
+
+  const priceGateway = deployNetwork.includes('arbitrum')
+    ? await get('ArbitrumChainlinkPriceGateway')
+    : await get('EthereumChainlinkPriceGateway');
 
   const daoBeacon = await deploy('DaoBeacon', {
     from: deployer,
@@ -60,6 +64,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
           args: [
             daoBeacon.address,
             budgetApprovalsAddress,
+            [priceGateway.address],
           ],
         },
       },
