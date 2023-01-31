@@ -13,10 +13,12 @@ const {
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
-describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async function () {
-  let adam, tokenA;
+describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', function () {
+  let adam, tokenA, tokenB;
   let creator, daoMember;
-  let ethereumChainlinkPriceGateway, arbitrumChainlinkPriceGateway, dao;
+  let budgetApprovalAddresses;
+  let priceGatewayAddresses, ethereumChainlinkPriceGateway, arbitrumChainlinkPriceGateway, dao, feedRegistry;
+  let tokenBEthAggregator, tokenAEthAggregator;
   let SmockERC20;
 
   function createDao () {
@@ -41,21 +43,27 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async fun
       feedRegistryArticfact.deployedBytecode,
     ]);
 
-    const feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     const MockAggregatorV3 = await ethers.getContractFactory('MockAggregatorV3', { signer: creator });
 
     tokenA = await SmockERC20.deploy('', '');
-    const tokenAUsdAggregator = await MockAggregatorV3.deploy();
-    tokenAUsdAggregator.setPrice(ethers.utils.parseUnits('0.25', 8));
-    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseUnits('0.25', 8));
-    await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
-    await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, tokenAUsdAggregator.address);
+    tokenB = await SmockERC20.deploy('', '');
 
-    // const ethUsdAggregator = await MockAggregatorV3.deploy();
-    // ethUsdAggregator.setPrice(ethers.utils.parseUnits('1000', 8));
-    // await feedRegistry.setPrice(ADDRESS_ETH, ADDRESS_USD, ethers.utils.parseUnits('1000', 8));
-    // await feedRegistry.setDecimal(ADDRESS_ETH, ADDRESS_USD, 8);
-    // await feedRegistry.setAggregator(ADDRESS_ETH, ADDRESS_USD, ethUsdAggregator.address);
+    await tokenA.setVariable('_balances', { [daoMember.address]: ethers.utils.parseEther('100') });
+
+    tokenAEthAggregator = await MockAggregatorV3.deploy();
+    tokenAEthAggregator.setPrice(ethers.utils.parseEther('0.25'));
+    await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.25'));
+    await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
+    await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, tokenAEthAggregator.address);
+
+    await tokenB.setVariable('_balances', { [daoMember.address]: ethers.utils.parseEther('100') });
+
+    tokenBEthAggregator = await MockAggregatorV3.deploy();
+    tokenBEthAggregator.setPrice(ethers.utils.parseEther('0.25'));
+    await feedRegistry.setPrice(tokenB.address, ADDRESS_ETH, ethers.utils.parseEther('0.25'));
+    await feedRegistry.setDecimal(tokenB.address, ADDRESS_ETH, 18);
+    await feedRegistry.setAggregator(tokenB.address, ADDRESS_ETH, tokenBEthAggregator.address);
 
     const result = await createAdam();
     adam = result.adam;

@@ -83,28 +83,35 @@ describe('Integration - Dao.sol to ArbitrumChainlinkPriceGateway.sol', async fun
       await (liquidPool.connect(daoMember)).deposit(daoMember.address, { value: ethers.utils.parseEther('0.5') });
       expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseUnits('0.0003125', 8));
       await (liquidPool.connect(daoMember)).deposit(daoMember.address, { value: ethers.utils.parseEther('0.5') });
-      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseUnits('0.000625', 8));      // 0.000625 USD : 0.00625 LP Token
-      /*
+      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseUnits('0.000625', 8)); // 0.000625 USD : 0.00625 LP Token
+
       // deposit Token A
       await (tokenA.connect(daoMember)).approve(liquidPool.address, ethers.utils.parseEther('100'));
+      await (liquidPool.connect(daoMember)).depositToken(daoMember.address, tokenA.address, ethers.utils.parseEther('1')); // 0.0025 USD
+      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseUnits('0.003125', 8)); // 0.003125 USD : 0.003125 LP Token
       await (liquidPool.connect(daoMember)).depositToken(daoMember.address, tokenA.address, ethers.utils.parseEther('1'));
-      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseEther('1.5'));
-      await (liquidPool.connect(daoMember)).depositToken(daoMember.address, tokenA.address, ethers.utils.parseEther('1'));
-      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseEther('2'));
+      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseUnits('0.005625', 8)); // 0.005625 USD : 0.005625 LP Token
 
       // after someone send ETH to the Pool
       await daoMember.sendTransaction({
         to: liquidPool.address,
-        value: ethers.utils.parseEther('2'),
+        value: ethers.utils.parseEther('2'), // 0.00125 USD   , 0.006875 USD : 0.005625 LP Token, 1.22222222222 USD per Token
       });
-      await (liquidPool.connect(daoMember)).deposit(daoMember.address, { value: ethers.utils.parseEther('1') });
-      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseEther('2.5'));
+
+      expect(await liquidPool.totalPrice()).to.be.equal(ethers.utils.parseUnits('0.006875', 8));
+      expect(await liquidPool.totalSupply()).to.be.equal(ethers.utils.parseUnits('0.005625', 8));
+      await (liquidPool.connect(daoMember)).deposit(daoMember.address, { value: ethers.utils.parseEther('1') }); // 0.000625 USD
+      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseUnits('0.00613636', 8)); // 0.000511363636 + 0.005625
 
       // after someone send Token A to the Pool
-      await (tokenA.connect(daoMember)).transfer(liquidPool.address, ethers.utils.parseEther('20'));
-      await (liquidPool.connect(daoMember)).depositToken(daoMember.address, tokenA.address, ethers.utils.parseEther('40'));
-      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseEther('5'));
-      */
+
+      expect(await liquidPool.totalPrice()).to.be.equal(ethers.utils.parseUnits('0.0075', 8));
+      expect(await liquidPool.totalSupply()).to.be.equal(ethers.utils.parseUnits('0.00613636', 8));
+      await (tokenA.connect(daoMember)).transfer(liquidPool.address, ethers.utils.parseEther('20')); // 0.05 USD , 0.0575 USD : 0.00613636 LP Token, 9.37037592319 USD per Token
+
+      expect(await liquidPool.totalPrice()).to.be.equal(ethers.utils.parseUnits('0.0575', 8));
+      await (liquidPool.connect(daoMember)).depositToken(daoMember.address, tokenA.address, ethers.utils.parseEther('40')); // 0.1 USD
+      expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(ethers.utils.parseUnits('0.01680829', 8)); // 0.01067193043 + 0.00613636
     });
   });
 });

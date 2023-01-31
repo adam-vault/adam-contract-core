@@ -3,6 +3,7 @@
 pragma solidity 0.8.7;
 
 interface IUniswapLiquidBudgetApproval {
+    error PairNotSupport(address asset, address base);
     event AllowAddress(address target);
     event AllowAmount(uint256 amount);
     event AllowToToken(address token);

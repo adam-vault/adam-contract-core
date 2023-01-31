@@ -3,6 +3,7 @@
 pragma solidity 0.8.7;
 
 interface ITransferLiquidERC20BudgetApproval {
+    error PairNotSupport(address asset, address base);
     event AllowAddress(address target);
     event AllowAmount(uint256 amount);
     event AllowTeam(uint256 indexed teamId);
