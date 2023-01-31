@@ -12,10 +12,11 @@ const {
 } = require('../utils/constants');
 
 describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', function () {
-  let adam, tokenA;
+  let adam, tokenA, tokenB;
   let creator, daoMember;
   let budgetApprovalAddresses;
-  let priceGatewayAddresses, ethereumChainlinkPriceGateway, arbitrumChainlinkPriceGateway, dao;
+  let priceGatewayAddresses, ethereumChainlinkPriceGateway, arbitrumChainlinkPriceGateway, dao, feedRegistry;
+  let tokenBEthAggregator, tokenAEthAggregator;
 
   function createDao () {
     return adam.createDao(...getCreateDaoParams({
@@ -28,22 +29,29 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', function 
 
   beforeEach(async function () {
     [creator, daoMember] = await ethers.getSigners();
-    ({ tokenA } = await createTokens());
+    ({ tokenA, tokenB } = await createTokens());
 
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
       feedRegistryArticfact.deployedBytecode,
     ]);
 
-    const feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
+    feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     const MockAggregatorV3 = await ethers.getContractFactory('MockAggregatorV3', { signer: creator });
 
     await tokenA.mint(daoMember.address, ethers.utils.parseEther('100'));
-    const tokenAEthAggregator = await MockAggregatorV3.deploy();
+    tokenAEthAggregator = await MockAggregatorV3.deploy();
     tokenAEthAggregator.setPrice(ethers.utils.parseEther('0.25'));
     await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.25'));
     await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, tokenAEthAggregator.address);
+
+    await tokenB.mint(daoMember.address, ethers.utils.parseEther('100'));
+    tokenBEthAggregator = await MockAggregatorV3.deploy();
+    tokenBEthAggregator.setPrice(ethers.utils.parseEther('0.25'));
+    await feedRegistry.setPrice(tokenB.address, ADDRESS_ETH, ethers.utils.parseEther('0.25'));
+    await feedRegistry.setDecimal(tokenB.address, ADDRESS_ETH, 18);
+    await feedRegistry.setAggregator(tokenB.address, ADDRESS_ETH, tokenBEthAggregator.address);
 
     priceGatewayAddresses = await createPriceGateways(creator);
     arbitrumChainlinkPriceGateway = priceGatewayAddresses[0];

@@ -14,6 +14,9 @@ describe('EthereumChainlinkPriceGateway', async () => {
   let tokenA, tokenB, tokenC;
   let EthereumChainlinkPriceGateway, priceGateway;
   let feedRegistry;
+  let tokenAEthAggregator, tokenBEthAggregator;
+  const TOKEN_A_DECIMALS = 18;
+  const TOKEN_B_DECIMALS = 6;
 
   beforeEach(async () => {
     [creator, unknown] = await ethers.getSigners();
@@ -31,7 +34,7 @@ describe('EthereumChainlinkPriceGateway', async () => {
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
 
     tokenA = await MockToken.deploy();
-    const tokenAEthAggregator = await MockAggregatorV3.deploy();
+    tokenAEthAggregator = await MockAggregatorV3.deploy();
     tokenAEthAggregator.setPrice(parseEther('0.25'));
     await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, parseEther('0.25'));
     await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
@@ -39,7 +42,7 @@ describe('EthereumChainlinkPriceGateway', async () => {
 
     tokenB = await MockToken.deploy();
     await tokenB.setDecimals(6);
-    const tokenBEthAggregator = await MockAggregatorV3.deploy();
+    tokenBEthAggregator = await MockAggregatorV3.deploy();
     tokenBEthAggregator.setPrice(parseEther('0.5'));
     await feedRegistry.setPrice(tokenB.address, ADDRESS_ETH, parseEther('0.5'));
     await feedRegistry.setDecimal(tokenB.address, ADDRESS_ETH, 18);
@@ -174,4 +177,45 @@ describe('EthereumChainlinkPriceGateway', async () => {
       await expect(priceGateway.assetPrice(tokenA.address, tokenB.address, parseEther('1'))).to.be.revertedWithCustomError(priceGateway, 'StaleTimestamp');
     });
   });
+
+  describe(
+    `When 1 A = 0.0000001 ETH, 1 B = 0.5 ETH, A with ${TOKEN_A_DECIMALS} decimals, B with ${TOKEN_B_DECIMALS} decimals`,
+    async function () {
+      beforeEach(async function () {
+        await tokenA.setDecimals(TOKEN_A_DECIMALS);
+        tokenAEthAggregator.setPrice(ethers.utils.parseEther('0.0000001'));
+        await feedRegistry.setPrice(tokenA.address, ADDRESS_ETH, ethers.utils.parseEther('0.0000001'));
+
+        await tokenB.setDecimals(TOKEN_B_DECIMALS);
+        tokenBEthAggregator.setPrice(ethers.utils.parseEther('0.5'));
+        await feedRegistry.setPrice(tokenB.address, ADDRESS_ETH, ethers.utils.parseEther('0.5'));
+      });
+
+      it('answers 1 A = 0.0000001 ETH', async function () {
+        expect(await priceGateway.assetPrice(tokenA.address, ADDRESS_ETH, parseUnits('1', TOKEN_A_DECIMALS))).to.eq(parseEther('0.0000001'));
+        expect(await priceGateway.assetEthPrice(tokenA.address, parseUnits('1', TOKEN_A_DECIMALS))).to.eq(parseEther('0.0000001'));
+        expect(await priceGateway.ethAssetPrice(tokenA.address, parseEther('1'))).to.eq(parseUnits('10000000', TOKEN_A_DECIMALS));
+      });
+
+      it('answers 1 B = 0.5 ETH', async function () {
+        expect(await priceGateway.assetPrice(tokenB.address, ADDRESS_ETH, parseUnits('1', TOKEN_B_DECIMALS))).to.eq(parseEther('0.5'));
+        expect(await priceGateway.assetEthPrice(tokenB.address, parseUnits('1', TOKEN_B_DECIMALS))).to.eq(parseEther('0.5'));
+        expect(await priceGateway.ethAssetPrice(tokenB.address, parseEther('1'))).to.eq(parseUnits('2', TOKEN_B_DECIMALS));
+      });
+      it('answers 1 B = 5000000 A', async function () {
+        expect(await priceGateway.assetPrice(tokenB.address, tokenA.address, parseUnits('1', TOKEN_B_DECIMALS))).to.eq(parseUnits('5000000', TOKEN_A_DECIMALS));
+      });
+
+      it('answers 1000000000000000000000000000000000000 B = 5000000000000000000000000000000000000000000 A', async function () {
+        expect(await priceGateway.assetPrice(tokenB.address, tokenA.address, parseUnits('1000000000000000000000000000000000000', TOKEN_B_DECIMALS))).to.eq(parseUnits('5000000000000000000000000000000000000000000', TOKEN_A_DECIMALS));
+      });
+
+      it('answers 1 A = 0.00000005 B = 0 B', async function () {
+        expect(await priceGateway.assetPrice(tokenA.address, tokenB.address, parseUnits('1', TOKEN_A_DECIMALS))).to.eq(parseUnits('0', TOKEN_B_DECIMALS));
+      });
+
+      it('answers 5 A = 0.000001 B', async function () {
+        expect(await priceGateway.assetPrice(tokenA.address, tokenB.address, parseUnits('5', TOKEN_A_DECIMALS))).to.eq(parseUnits('0.000001', TOKEN_B_DECIMALS));
+      });
+    });
 });
