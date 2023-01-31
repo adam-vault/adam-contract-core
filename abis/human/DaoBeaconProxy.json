@@ -1,0 +1,5 @@
+[
+  "constructor(address _daoBeacon, bytes _data) payable",
+  "error InvalidContract(address _contract)",
+  "function daoBeacon() view returns (address)"
+]

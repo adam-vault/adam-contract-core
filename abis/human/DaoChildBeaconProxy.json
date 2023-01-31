@@ -1,0 +1,4 @@
+[
+  "constructor(address _daoProxy, bytes32 _contractName, bytes _data) payable",
+  "error InvalidContract(address _contract)"
+]
