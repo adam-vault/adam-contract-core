@@ -1,17 +1,18 @@
 const { gasFeeConfig } = require('../utils/getGasInfo');
 
 const toBeAddBudgetApprovals = [
-  { name: 'TransferLiquidERC20BudgetApprovalV2', contract: 'TransferLiquidERC20BudgetApproval' },
-  { name: 'TransferERC721BudgetApprovalV2', contract: 'TransferERC721BudgetApproval' },
-  { name: 'TransferERC20BudgetApprovalV2', contract: 'TransferERC20BudgetApproval' },
+  { name: 'TransferLiquidERC20BudgetApproval', contract: 'TransferLiquidERC20BudgetApproval' },
+  { name: 'TransferERC721BudgetApproval', contract: 'TransferERC721BudgetApproval' },
+  { name: 'TransferERC20BudgetApproval', contract: 'TransferERC20BudgetApproval' },
   { name: 'DepositRewardBudgetApproval', contract: 'DepositRewardBudgetApproval' },
   { name: 'VestingERC20BudgetApproval', contract: 'VestingERC20BudgetApproval' },
+  { name: 'UniswapAnyTokenBudgetApproval', contract: 'UniswapAnyTokenBudgetApproval' },
+  { name: 'UniswapLiquidBudgetApproval', contract: 'UniswapLiquidBudgetApproval' },
+
 ];
 
 const toBeRemoveBudgetApprovals = [
-  'TransferLiquidERC20BudgetApproval',
-  'TransferERC721BudgetApproval',
-  'TransferERC20BudgetApproval',
+
 ];
 
 module.exports = async ({ getNamedAccounts, deployments }) => {

@@ -23,6 +23,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     get('UniswapAnyTokenBudgetApproval'),
     get('UniswapLiquidBudgetApproval'),
     get('VestingERC20BudgetApproval'),
+    get('DepositRewardBudgetApproval'),
   ])).map((deployment) => deployment.address);
 
   const priceGateway = deployNetwork.includes('arbitrum')
