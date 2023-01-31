@@ -1,4 +1,4 @@
-const { expect } = require('chai');
+const chai = require('chai');
 const { smock } = require('@defi-wonderland/smock');
 const { ethers, upgrades, network, testUtils } = require('hardhat');
 const { parseEther } = ethers.utils;
@@ -7,6 +7,10 @@ const {
   ADDRESS_ETH,
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
+
+const { expect } = chai;
+chai.should();
+chai.use(smock.matchers);
 
 describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', async function () {
   let lp, lpAsSigner1, lpAsSigner2, unknown;
@@ -344,7 +348,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', async function () {
           false, // allow unlimited usage
           10, // usage count
         ],
-      ])])).to.be.revertedWithCustomError(lp, 'TemplateNotWhitelist');
+      ])])).to.be.revertedWithCustomError(lp, 'TemplateNotWhitelisted');
     });
   });
   describe('assetsShares()', async function () {

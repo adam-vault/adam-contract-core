@@ -14,7 +14,7 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
   let executor, approver, receiver;
   let tokenC721, budgetApprovalAddresses;
 
-  before(async function () {
+  beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenC721 } = await createTokens());
@@ -124,6 +124,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
+    ({ tokenC721 } = await createTokens());
 
     TransferERC721BudgetApproval = await ethers.getContractFactory('TransferERC721BudgetApproval', { signer: executor });
     const Team = await ethers.getContractFactory('Team', { signer: executor });
@@ -135,9 +136,6 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
   });
 
   describe('Create Budget Approval', async function () {
-    before(async function () {
-      ({ tokenC721 } = await createTokens());
-    });
     it('creates budget approval', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
