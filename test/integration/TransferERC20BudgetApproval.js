@@ -304,7 +304,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
           [transferErc20BAImplementation.address],
           [initData],
         ),
-      ).to.be.revertedWith('Invalid approver list');
+      ).to.be.revertedWithCustomError(transferErc20BAImplementation, 'InvalidApproverList');
     });
   });
 
@@ -361,7 +361,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     });
 
     context('not executed by executor', () => {
-      it('throws "Executor not whitelisted in budget"', async function () {
+      it('throws "UnauthorizedExecutor"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
           [tokenA.address, receiver.address, '10'],
@@ -374,12 +374,12 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         await budgetApproval.connect(approver).approveTransaction(id, '');
         await expect(
           budgetApproval.connect(approver).executeTransaction(id),
-        ).to.be.revertedWith('Executor not whitelisted in budget');
+        ).to.be.revertedWithCustomError(budgetApproval, 'UnauthorizedExecutor');
       });
     });
 
     context('Approve Incorrect Transaction Id ', () => {
-      it('throws "Invaild TransactionId"', async function () {
+      it('throws "InvalidTransactionId"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenA.address,
           receiver.address,
@@ -389,12 +389,12 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         const { id } = await findEventArgs(tx, 'CreateTransaction');
 
         await expect(budgetApproval.connect(approver).approveTransaction(id + 1, ''))
-          .to.be.revertedWith('Invaild TransactionId');
+          .to.be.revertedWithCustomError(budgetApproval, 'InvalidTransactionId');
       });
     });
 
     context('not created by executor', () => {
-      it('throws "Executor not whitelisted in budget"', async function () {
+      it('throws "UnauthorizedExecutor"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
           [tokenA.address, receiver.address, '10'],
@@ -403,12 +403,12 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
           budgetApproval
             .connect(approver)
             .createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, ''),
-        ).to.be.revertedWith('Executor not whitelisted in budget');
+        ).to.be.revertedWithCustomError(budgetApproval, 'UnauthorizedExecutor');
       });
     });
 
     context('not approved by approver', () => {
-      it('throws "Transaction status invalid"', async function () {
+      it('throws "InvalidTransactionStatus"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
           [tokenA.address, receiver.address, '10'],
@@ -420,12 +420,12 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
 
         await expect(
           budgetApproval.connect(executor).executeTransaction(id),
-        ).to.be.revertedWith('Transaction status invalid');
+        ).to.be.revertedWithCustomError(budgetApproval, 'InvalidTransactionStatus');
       });
     });
 
     context('revoked by executor', () => {
-      it('throws "Transaction status invalid"', async function () {
+      it('throws "InvalidTransactionStatus"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
           [tokenA.address, receiver.address, '10'],
@@ -438,12 +438,12 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         await budgetApproval.connect(executor).revokeTransaction(id);
         await expect(
           budgetApproval.connect(executor).executeTransaction(id),
-        ).to.be.revertedWith('Transaction status invalid');
+        ).to.be.revertedWithCustomError(budgetApproval, 'InvalidTransactionStatus');
       });
     });
 
     context('revoked incorrect transaction id', () => {
-      it('throws "Invaild TransactionId"', async function () {
+      it('throws "InvalidTransactionId"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenA.address,
           receiver.address,
@@ -453,7 +453,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         ;
         await expect(budgetApproval.connect(executor).revokeTransaction(id + 1))
-          .to.be.revertedWith('Invaild TransactionId');
+          .to.be.revertedWithCustomError(budgetApproval, 'InvalidTransactionId');
       });
     });
 
@@ -532,7 +532,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
               true,
               '',
             ),
-        ).to.be.revertedWith('Budget usage period not started');
+        ).to.be.revertedWithCustomError(budgetApproval, 'BudgetNotStarted');
       });
     });
 
@@ -579,7 +579,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
               true,
               '',
             ),
-        ).to.be.revertedWith('Budget usage period has ended');
+        ).to.be.revertedWithCustomError(budgetApproval, 'BudgetHasEnded');
       });
     });
 
@@ -594,7 +594,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
             toAddresses: [receiver.address],
             token: tokenA.address,
             startTime: 0,
-            endTime: 0,
+            endTime: 100000000000000,
             usageCount: 1,
             team: team.address,
           }),
@@ -635,7 +635,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
               true,
               '',
             ),
-        ).to.be.revertedWith('Exceeded budget usage limit');
+        ).to.be.revertedWithCustomError(budgetApproval, 'BudgetUsageExceeded');
       });
     });
   });
@@ -703,7 +703,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         );
       });
 
-      it('throws "Approver not whitelisted in budget"', async function () {
+      it('throws "UnauthorizedApprover"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
           [tokenA.address, receiver.address, '10'],
@@ -715,10 +715,10 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         await expect(
           budgetApproval.connect(executor).approveTransaction(id, ''),
-        ).to.be.revertedWith('Approver not whitelisted in budget');
+        ).to.be.revertedWithCustomError(budgetApproval, 'UnauthorizedApprover');
       });
 
-      it('throws "Executor not whitelisted in budget"', async function () {
+      it('throws "UnauthorizedExecutor"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
           [tokenA.address, receiver.address, '10'],
@@ -731,7 +731,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         await budgetApproval.connect(approver).approveTransaction(id, '');
         await expect(
           budgetApproval.connect(approver).executeTransaction(id),
-        ).to.be.revertedWith('Executor not whitelisted in budget');
+        ).to.be.revertedWithCustomError(budgetApproval, 'UnauthorizedExecutor');
       });
     });
   });

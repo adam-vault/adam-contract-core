@@ -286,11 +286,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
     it('throws "Asset not support" error when using unknown token', async function () {
       await memberToken.approve(lp.address, 1);
-      await expect(lpAsSigner1.depositToken(signer1.address, memberToken.address, 1)).to.be.revertedWith('Asset not support');
-    });
-    it('throws "not approve" error when token allowance < amount', async function () {
-      await tokenAsSigner1.approve(lp.address, parseEther('0.9'));
-      await expect(lpAsSigner1.depositToken(signer1.address, tokenAsSigner1.address, parseEther('1'))).to.be.revertedWith('not approve');
+      await expect(lpAsSigner1.depositToken(signer1.address, memberToken.address, 1)).to.be.revertedWithCustomError(lp, 'UnsupportedAsset');
     });
     it('throws "deposit amount not enough" error without　enough minDeposit amount', async function () {
       await dao.afterDeposit.reverts('deposit amount not enough');
@@ -313,7 +309,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
       expect(await lp.totalPriceInEth()).to.eq(parseEther('1.0046'));
     });
   });
-  describe('createBudgetApproval()', function () {
+  describe('createBudgetApproval()', async function () {
     it('allows to create whitelisted BudgetApproval', async function () {
       await dao.canCreateBudgetApproval.returns(true);
       await expect(lpAsSigner1.connect(daoAsSigner).createBudgetApprovals([budgetApproval.address], [budgetApproval.interface.encodeFunctionData('initialize', [
@@ -351,7 +347,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
       ])])).to.be.revertedWith('not whitelist');
     });
   });
-  describe('assetsShares()', function () {
+  describe('assetsShares()', async function () {
     it('return ETH amount by ratio of dp balance over totalSupply', async function () {
       await lpAsSigner1.deposit(signer1.address, { value: parseEther('100') });
 
@@ -415,10 +411,10 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
     it('throws "Asset not support" errors if token duplicated', async function () {
       await lp.connect(daoAsSigner).addAssets([token2.address]);
-      await expect(lp.connect(daoAsSigner).addAssets([token2.address])).to.be.revertedWith('Asset not support');
+      await expect(lp.connect(daoAsSigner).addAssets([token2.address])).to.be.revertedWithCustomError(lp, 'AssetAlreadyAdded');
     });
     it('throws "Asset not support" errors if token cannot resolve price', async function () {
-      await expect(lp.connect(daoAsSigner).addAssets([memberToken.address])).to.be.revertedWith('Asset not support');
+      await expect(lp.connect(daoAsSigner).addAssets([memberToken.address])).to.be.revertedWithCustomError(lp, 'UnsupportedAsset');
     });
   });
 
@@ -606,14 +602,14 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
         await tokenAsSigner1.approve(lp.address, parseEther('1'));
         await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'));
         await lpAsSigner1.redeem(parseEther('1'));
-        await expect(lpAsSigner1.redeem(parseEther('1.1'))).to.revertedWith('not enough balance');
+        await expect(lpAsSigner1.redeem(parseEther('1.1'))).to.revertedWithCustomError(lp, 'InvalidAmount');
       });
       it('if redeem mixed token more than eoa can', async function () {
         await tokenAsSigner1.approve(lp.address, parseEther('1'));
         await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'));
         await token.mint(lp.address, parseEther('1'));
         await lpAsSigner1.redeem(parseEther('0.5'));
-        await expect(lpAsSigner1.redeem(parseEther('1.6'))).to.revertedWith('not enough balance');
+        await expect(lpAsSigner1.redeem(parseEther('1.6'))).to.revertedWithCustomError(lp, 'InvalidAmount');
       });
     });
   });

@@ -276,14 +276,14 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
     });
 
     context('when using non contract Admission Token', async function () {
-      it('throws "init fail - Admission Token not Support!" error', async function () {
+      it('throws ContractCallFail', async function () {
         await expect(adam.createDao(
           ...paramsStruct.getCreateDaoParams({
             admissionTokens: [
               [ethers.constants.AddressZero, 1, 0, false],
             ],
           }),
-        )).to.be.revertedWith('init fail - Admission Token not Support!');
+        )).to.be.revertedWithCustomError(dao, 'ContractCallFail');
       });
     });
 
@@ -307,8 +307,8 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
         expect(await ethers.provider.getBalance(lp.address)).to.equal(100);
       });
 
-      it('throws "deposit amount not enough" error with amount < minDepositAmount', async function () { // todo: need to create another test case for non DAO creator
-        await expect(lp.deposit(creator.address, { value: 1 })).to.revertedWith('deposit amount not enough');
+      it('throws "InsufficientDeposit" error with amount < minDepositAmount', async function () { // todo: need to create another test case for non DAO creator
+        await expect(lp.deposit(creator.address, { value: 1 })).to.revertedWithCustomError(dao, 'InsufficientDeposit');
       });
     });
 
@@ -366,7 +366,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
       expect(await lp.balanceOf(creator.address)).to.equal(ethers.utils.parseEther('120'));
     });
     it('cannot redeem and burn exact amount of eth inside lockup period', async function () {
-      await expect(lp.redeem(ethers.utils.parseEther('3'))).to.be.revertedWith('lockup time');
+      await expect(lp.redeem(ethers.utils.parseEther('3'))).to.be.revertedWithCustomError(lp, 'BlockedByLocktime');
     });
   });
 });

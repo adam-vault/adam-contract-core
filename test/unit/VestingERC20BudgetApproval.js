@@ -330,7 +330,7 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
                 it('throws if cliff not passed', async function () {
                   await expect(vestingERC20BA.connect(executor).createTransaction(
                     [encodeTxData(1)], Math.round(Date.now() / 1000) + 86400, true, 'comment'))
-                    .to.be.revertedWith('Budget usage period not started');
+                    .to.be.revertedWithCustomError(vestingERC20BA, 'BudgetNotStarted');
                 });
               } else if (!expectedResult.isCliffPassed) {
                 it('throws if cliff not passed', async function () {

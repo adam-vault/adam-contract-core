@@ -10,6 +10,11 @@ chai.use(smock.matchers);
 describe('Integration - Adam.sol - test/integration/Adam.js', function () {
   let creator;
   let adam, ethereumChainlinkPriceGateway;
+  let Dao;
+
+  before(async function () {
+    Dao = await ethers.getContractFactory('Dao');
+  });
 
   beforeEach(async function () {
     [creator] = await ethers.getSigners();
@@ -38,13 +43,13 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
       )).to.not.be.reverted;
     });
 
-    it('throws "init fail - Admission Token not Support!" error when set non-contract address as admission token', async function () {
+    it('throws "" error when set non-contract address as admission token', async function () {
       await expect(adam.createDao(
         ...paramsStruct.getCreateDaoParams({
           mintMemberToken: true,
           admissionTokens: [[creator.address, 50, 0, false]],
         }),
-      )).to.be.revertedWith('init fail - Admission Token not Support!');
+      )).to.be.revertedWithCustomError(Dao, 'ContractCallFail');
     });
   });
 });
