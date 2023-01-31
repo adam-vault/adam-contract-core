@@ -8,7 +8,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 chai.should();
 chai.use(smock.matchers);
 
-describe('Dao.sol - test/unit/Dao.js', function () {
+describe('Dao.sol - test/unit/Dao.js', async function () {
   let creator, member, mockGovern;
   let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockTeam;
   let tokenA, tokenC721, tokenD1155;
@@ -102,7 +102,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     lpAsSigner = await testUtils.address.impersonate(await dao.liquidPool());
   });
 
-  describe('setFirstDepositTime()', function () {
+  describe('setFirstDepositTime()', async function () {
     it('sets first deposit time when msg.sender is liquid pool', async function () {
       await testUtils.address.setBalance(lpAsSigner.address, ethers.utils.parseEther('1'));
       await dao.connect(lpAsSigner).setFirstDepositTime(creator.address, 10);
@@ -113,7 +113,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     });
   });
 
-  describe('canCreateBudgetApproval()', function () {
+  describe('canCreateBudgetApproval()', async function () {
     it('returns value of adam.budgetApprovals()', async function () {
       await mockAdam.budgetApprovals.returns(true);
       expect(await dao.canCreateBudgetApproval(creator.address)).to.equal(true);
@@ -123,19 +123,19 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     });
   });
 
-  describe('liquidPool()', function () {
+  describe('liquidPool()', async function () {
     it('returns address from dao.plugins()', async function () {
       expect(await dao.liquidPool()).to.be.equal(await dao.plugins(ethers.utils.id('adam.dao.liquid_pool')));
     });
   });
 
-  describe('govern()', function () {
+  describe('govern()', async function () {
     it('returns address from dao.govern()', async function () {
       expect(await dao.govern('General')).to.be.not.equal(ethers.constants.AddressZero);
     });
   });
 
-  describe('byPassGovern()', function () {
+  describe('byPassGovern()', async function () {
     it('return true when it is the only member', async function () {
       mockMembership.totalSupply.returns(1);
       mockMembership.isMember.returns(true);
@@ -155,35 +155,35 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     });
   });
 
-  describe('setMinDepositAmount()', function () {
+  describe('setMinDepositAmount()', async function () {
     it('updates minDepositAmount', async function () {
       await dao.connect(mockGovern).setMinDepositAmount(10);
       expect(await dao.minDepositAmount()).to.equal(10);
     });
   });
 
-  describe('setDescription()', function () {
+  describe('setDescription()', async function () {
     it('updates description', async function () {
       await dao.connect(mockGovern).setDescription('desc');
       expect(await dao.description()).to.equal('desc');
     });
   });
 
-  describe('setLocktime()', function () {
+  describe('setLocktime()', async function () {
     it('updates locktime', async function () {
       await dao.connect(mockGovern).setLocktime(123);
       expect(await dao.locktime()).to.equal(123);
     });
   });
 
-  describe('setLogoCID()', function () {
+  describe('setLogoCID()', async function () {
     it('updates Logo CID', async function () {
       await dao.connect(mockGovern).setLogoCID('cid');
       expect(await dao.logoCID()).to.equal('cid');
     });
   });
 
-  describe('createGovern()', function () {
+  describe('createGovern()', async function () {
     it('calls dao and create govern', async function () {
       const tx = await dao.connect(mockGovern).createGovern('governA', 2, 3, 0, ethers.constants.AddressZero, 0);
       const tx2 = await dao.connect(mockGovern).createGovern('governB', 5, 6, 1, ethers.constants.AddressZero, 5);
@@ -194,7 +194,7 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     });
   });
 
-  describe('addAssets()', function () {
+  describe('addAssets()', async function () {
     it('adds supported asset', async function () {
       await dao.connect(mockGovern).addAssets([tokenA.address]);
       expect(await dao.isAssetSupported(tokenA.address)).to.equal(true);

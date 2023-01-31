@@ -224,7 +224,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
   });
 });
 
-describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/TransferERC20BudgetApproval.js', function () {
+describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/TransferERC20BudgetApproval.js', async function () {
   let transferErc20BAImplementation, budgetApproval, dao, team;
   let executor, approver, receiver;
   let tokenA, tokenB, executee, TransferERC20BudgetApproval;
@@ -243,7 +243,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     executee.setVariable('_team', team.address);
   });
 
-  describe('Create Budget Approval', function () {
+  describe('Create Budget Approval', async function () {
     it('creates budget approval', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
@@ -308,7 +308,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     });
   });
 
-  describe('Execute Transaction (Transfer illiquid token)', function () {
+  describe('Execute Transaction (Transfer illiquid token)', async function () {
     beforeEach(async function () {
       await tokenA.mint(executee.address, '200');
       const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
@@ -339,7 +339,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       );
     });
 
-    context('ERC20 complete flow', () => {
+    context('ERC20 complete flow', async () => {
       it('executes transfer ERC20', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
@@ -360,7 +360,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('not executed by executor', () => {
+    context('not executed by executor', async () => {
       it('throws "UnauthorizedExecutor"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
@@ -378,7 +378,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('Approve Incorrect Transaction Id ', () => {
+    context('Approve Incorrect Transaction Id ', async () => {
       it('throws "InvalidTransactionId"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenA.address,
@@ -393,7 +393,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('not created by executor', () => {
+    context('not created by executor', async () => {
       it('throws "UnauthorizedExecutor"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
@@ -407,7 +407,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('not approved by approver', () => {
+    context('not approved by approver', async () => {
       it('throws "InvalidTransactionStatus"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
@@ -424,7 +424,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('revoked by executor', () => {
+    context('revoked by executor', async () => {
       it('throws "InvalidTransactionStatus"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
@@ -442,7 +442,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('revoked incorrect transaction id', () => {
+    context('revoked incorrect transaction id', async () => {
       it('throws "InvalidTransactionId"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenA.address,
@@ -457,7 +457,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('not allowed address', () => {
+    context('not allowed address', async () => {
       it('throws "Recipient not whitelisted in budget"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
@@ -475,7 +475,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('exceed amount', () => {
+    context('exceed amount', async () => {
       it('throws "Exceeded max budget transferable amount"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenA.address,
@@ -490,7 +490,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('execute before startTime', () => {
+    context('execute before startTime', async () => {
       it('throws "Budget usage period not started"', async function () {
         const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
           getCreateTransferERC20BAParams({
@@ -536,7 +536,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('execute after endTime', () => {
+    context('execute after endTime', async () => {
       it('throws "Budget usage period has ended"', async function () {
         const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
           getCreateTransferERC20BAParams({
@@ -583,7 +583,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       });
     });
 
-    context('execute if not enough usage count', () => {
+    context('execute if not enough usage count', async () => {
       it('throws "Exceeded budget usage limit"', async function () {
         const initData = transferErc20BAImplementation.interface.encodeFunctionData('initialize',
           getCreateTransferERC20BAParams({
@@ -640,7 +640,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     });
   });
 
-  describe('Execute Transaction with team (Transfer illiquid token)', function () {
+  describe('Execute Transaction with team (Transfer illiquid token)', async function () {
     beforeEach(async function () {
       await tokenA.mint(executee.address, '200');
       await team.setVariables({
@@ -683,7 +683,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       );
     });
 
-    context('ERC20 complete flow', () => {
+    context('ERC20 complete flow', async () => {
       it('executes transfer ERC20', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
@@ -736,7 +736,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     });
   });
 
-  describe('Execute Transaction (allowAllTokens = true)', function () {
+  describe('Execute Transaction (allowAllTokens = true)', async function () {
     beforeEach(async function () {
       await tokenA.mint(executee.address, '200');
       await tokenB.mint(executee.address, '200');
@@ -756,7 +756,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
       budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
     });
 
-    context('complete flow with 2 tokens', () => {
+    context('complete flow with 2 tokens', async () => {
       it('executes transfer 2 ERC20s', async function () {
         const transactionData1 = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenA.address,

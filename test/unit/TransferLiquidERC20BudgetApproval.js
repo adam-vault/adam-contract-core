@@ -12,7 +12,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC20BudgetApprovalV2.js', function () {
+describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC20BudgetApprovalV2.js', async function () {
   let transferLiquidERC20BAImplementation, budgetApproval, team, accountingSystem;
   let executor, approver, receiver;
   let tokenA, executee, TransferLiquidERC20BudgetApproval;
@@ -38,7 +38,7 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
     });
   });
 
-  describe('Create Budget Approval', function () {
+  describe('Create Budget Approval', async function () {
     it('creates liquid ERC20 Budget Approval', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
@@ -110,7 +110,7 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
     });
   });
 
-  describe('Execute Transaction (Transfer ETH)', function () {
+  describe('Execute Transaction (Transfer ETH)', async function () {
     beforeEach(async function () {
       await executor.sendTransaction({ to: executee.address, value: parseEther('200') });
 
@@ -136,7 +136,7 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
       budgetApproval = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', budgetApprovalAddress);
     });
 
-    context('ETH complete flow', () => {
+    context('ETH complete flow', async () => {
       it('executes transfer ERC20', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
@@ -158,7 +158,7 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
       });
     });
 
-    context('ERC20 complete flow', () => {
+    context('ERC20 complete flow', async () => {
       it('executes transfer ERC20', async function () {
         await tokenA.mint(executee.address, parseEther('10'));
         const transactionData = abiCoder.encode(
@@ -181,7 +181,7 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
       });
     });
 
-    context('multiple outflowLiquid', () => {
+    context('multiple outflowLiquid', async () => {
       it('executes transfer ERC20', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
@@ -199,7 +199,7 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
       });
     });
 
-    context('not allowed address', () => {
+    context('not allowed address', async () => {
       it('throws "Recipient not whitelisted in budget"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,
@@ -216,7 +216,7 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test/unit/TransferLiquidERC2
       });
     });
 
-    context('exceed amount', () => {
+    context('exceed amount', async () => {
       it('throws "Exceeded max budget transferable amount"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           ADDRESS_ETH,

@@ -61,7 +61,7 @@ describe('ArbitrumChainlinkPriceGateway', async () => {
     await feedRegistry.setAggregator(ADDRESS_ETH, ADDRESS_USD, ethUsdAggregator.address);
   });
 
-  describe('isSupportedPair()', function () {
+  describe('isSupportedPair()', async function () {
     it('returns fail if asset is not support', async function () {
       expect(await priceGateway.isSupportedPair(ADDRESS_USD, unknown.address)).to.eq(false);
     });
@@ -81,7 +81,7 @@ describe('ArbitrumChainlinkPriceGateway', async () => {
     });
   });
 
-  describe('assetPrice(): base currency = ETH', function () {
+  describe('assetPrice(): base currency = ETH', async function () {
     it('asset = 1ETH, should return 1 base currency', async function () {
       expect(await priceGateway.assetPrice(ADDRESS_ETH, ADDRESS_ETH, parseEther('1'))).to.eq(parseEther('1'));
     });
@@ -93,7 +93,7 @@ describe('ArbitrumChainlinkPriceGateway', async () => {
     });
   });
 
-  describe('assetPrice(): base currency = tokenA', function () {
+  describe('assetPrice(): base currency = tokenA', async function () {
     it('asset = 1ETH, should return 4 base currency', async function () {
       expect(await priceGateway.assetPrice(ADDRESS_ETH, tokenA.address, parseEther('1'))).to.eq(parseEther('40'));
     });
@@ -107,7 +107,7 @@ describe('ArbitrumChainlinkPriceGateway', async () => {
     });
   });
 
-  describe('assetPrice(): base currency = tokenB', function () {
+  describe('assetPrice(): base currency = tokenB', async function () {
     it('asset = 1ETH, should return 2 base currency', async function () {
       expect(await priceGateway.assetPrice(ADDRESS_ETH, tokenB.address, parseEther('1'))).to.eq(parseUnits('20', 6));
     });
@@ -121,25 +121,25 @@ describe('ArbitrumChainlinkPriceGateway', async () => {
     });
   });
 
-  describe('assetPrice(): base currency = tokenC ,  price < 0', function () {
+  describe('assetPrice(): base currency = tokenC ,  price < 0', async function () {
     it('asset = 1ETH, should return 0 ', async function () {
       expect(await priceGateway.assetPrice(tokenA.address, tokenC.address, parseEther('1'))).to.eq(parseUnits('0', 6));
     });
   });
 
-  describe('assetUSDPrice(): base currency = tokenC ,  price < 0', function () {
+  describe('assetUSDPrice(): base currency = tokenC ,  price < 0', async function () {
     it('asset = 1ETH, should return 0 ', async function () {
       expect(await priceGateway.assetUSDPrice(tokenC.address, parseEther('1'))).to.eq(parseUnits('0', 6));
     });
   });
 
-  describe('usdAssetPrice(): base currency = tokenC ,  price < 0', function () {
+  describe('usdAssetPrice(): base currency = tokenC ,  price < 0', async function () {
     it('asset = 1ETH, should return 0 ', async function () {
       expect(await priceGateway.usdAssetPrice(tokenC.address, parseEther('1'))).to.eq(parseUnits('0', 6));
     });
   });
 
-  describe('assetUSDPrice()', function () {
+  describe('assetUSDPrice()', async function () {
     it('asset = 1ETH, return 1', async function () {
       expect(await priceGateway.assetUSDPrice(ADDRESS_ETH, parseEther('1'))).to.eq(parseUnits('10', 8));
     });
@@ -153,7 +153,7 @@ describe('ArbitrumChainlinkPriceGateway', async () => {
     });
   });
 
-  describe('usdAssetPrice()', function () {
+  describe('usdAssetPrice()', async function () {
     it('give 1ETH, return 1ETH', async function () {
       expect(await priceGateway.usdAssetPrice(ADDRESS_ETH, parseUnits('1', 8))).to.eq(parseEther('0.1'));
     });
@@ -167,7 +167,7 @@ describe('ArbitrumChainlinkPriceGateway', async () => {
     });
   });
 
-  describe('Expiry Timestamp in Chainlink', function () {
+  describe('Expiry Timestamp in Chainlink', async function () {
     beforeEach(async () => {
       await feedRegistry.setBlockTimestamp(tokenB.address, ADDRESS_USD, Math.round(Date.now() / 1000) - 86400);
     });

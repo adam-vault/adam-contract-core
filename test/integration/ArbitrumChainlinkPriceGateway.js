@@ -12,7 +12,7 @@ const {
   ADDRESS_USD,
 } = require('../utils/constants');
 
-describe('Integration - Dao.sol to ArbitrumChainlinkPriceGateway.sol', function () {
+describe('Integration - Dao.sol to ArbitrumChainlinkPriceGateway.sol', async function () {
   let adam, tokenA;
   let creator, daoMember;
   let budgetApprovalAddresses;
@@ -62,7 +62,7 @@ describe('Integration - Dao.sol to ArbitrumChainlinkPriceGateway.sol', function 
     dao = await ethers.getContractAt('Dao', daoAddr);
   });
 
-  describe('CreateDao()', function () {
+  describe('CreateDao()', async function () {
     it('creates Dao successfully with correct param', async function () {
       const accountingSystem = await ethers.getContractAt('AccountingSystem', await dao.accountingSystem());
       expect(await accountingSystem.priceGateways(ethereumChainlinkPriceGateway)).to.be.equal(false);
@@ -76,7 +76,7 @@ describe('Integration - Dao.sol to ArbitrumChainlinkPriceGateway.sol', function 
     });
   });
 
-  describe('Deposit()', function () {
+  describe('Deposit()', async function () {
     it('creates mint correct amount of Liquid Pool token', async function () {
       const liquidPool = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       // deposit ETH

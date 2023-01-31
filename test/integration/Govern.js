@@ -10,7 +10,7 @@ const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-describe('Integration - Govern.sol - test/integration/Govern.js', function () {
+describe('Integration - Govern.sol - test/integration/Govern.js', async function () {
   let adam, dao, lp;
   let creator, owner1, owner2;
   let tokenA;
@@ -136,7 +136,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
       });
     });
 
-    context('For voting with membership ERC721Vote tokens', function () {
+    context('For voting with membership ERC721Vote tokens', async function () {
       it('success due to 10% pass threshold (1 against 1 for)', async function () {
         const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
           budgetApproval: [300, 1000, 1000, 0], // budgetApproval

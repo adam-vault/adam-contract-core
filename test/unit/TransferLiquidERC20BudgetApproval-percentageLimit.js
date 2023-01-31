@@ -14,7 +14,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Percentage limit - test/unit/TransferLiquidERC20BudgetApprovalV2-percentageLimit.js', function () {
+describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Percentage limit - test/unit/TransferLiquidERC20BudgetApprovalV2-percentageLimit.js', async function () {
   let transferLiquidERC20BAImplementation, budgetApproval;
   let executor, executee, approver, receiver, team, accountingSystem;
   let tokenA;

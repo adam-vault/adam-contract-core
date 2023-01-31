@@ -6,7 +6,7 @@ const { ethers, upgrades } = require('hardhat');
 chai.should();
 chai.use(smock.matchers);
 
-describe('Govern.sol - test/unit/Govern.js', function () {
+describe('Govern.sol - test/unit/Govern.js', async function () {
   let creator, owner, unknown, govern, voteToken, nonVotableToken;
 
   beforeEach(async function () {
@@ -36,17 +36,17 @@ describe('Govern.sol - test/unit/Govern.js', function () {
     govern = await ethers.getContractAt('Govern', govern.address);
   });
 
-  describe('votingPeriod()', function () {
+  describe('votingPeriod()', async function () {
     it('adding duration with durationInBlock together', async function () {
       expect(await govern.votingPeriod()).to.equal(ethers.BigNumber.from('5'));
     });
   });
-  describe('votingDelay()', function () {
+  describe('votingDelay()', async function () {
     it('returns always 0', async function () {
       expect(await govern.votingDelay()).to.equal(ethers.BigNumber.from('0'));
     });
   });
-  describe('proposalThreshold()', function () {
+  describe('proposalThreshold()', async function () {
     it('returns always 0', async function () {
       expect(await govern.proposalThreshold()).to.equal(ethers.BigNumber.from('0'));
     });

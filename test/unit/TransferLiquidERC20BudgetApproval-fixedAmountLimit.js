@@ -13,7 +13,7 @@ const { smock } = require('@defi-wonderland/smock');
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Fixed Price limit - test/unit/v2/TransferLiquidERC20BudgetApprovalV2-fixedAmountLimit.js', function () {
+describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Fixed Price limit - test/unit/v2/TransferLiquidERC20BudgetApprovalV2-fixedAmountLimit.js', async function () {
   let transferLiquidERC20BAImplementation, budgetApproval;
   let executor, executee, approver, receiver, team, accountingSystem;
   let tokenA;

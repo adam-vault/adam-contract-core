@@ -8,7 +8,7 @@ const {
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
-describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
+describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', async function () {
   let lp, lpAsSigner1, lpAsSigner2, unknown;
   let daoAsSigner;
   let creator;
@@ -85,7 +85,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     await testUtils.address.setBalance(daoAsSigner.address,
       parseEther('1000').toHexString());
   });
-  describe('deposit()', function () {
+  describe('deposit()', async function () {
     it('mints shares based on ETH price when 0 value in pool', async function () {
       await lpAsSigner1.deposit(signer1.address, { value: parseEther('1') });
       expect(await lp.balanceOf(signer1.address)).to.eq(parseEther('1'));
@@ -121,7 +121,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
   });
 
-  describe('redeem()', function () {
+  describe('redeem()', async function () {
     describe('redeem all assets', async function () {
       beforeEach(async function () {
         await lpAsSigner1.deposit(signer1.address, { value: parseEther('1') });
@@ -162,7 +162,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
   });
 
-  describe('totalPrice()', function () {
+  describe('totalPrice()', async function () {
     it('default returns 0', async function () {
       expect(await lp.totalPrice()).to.eq(0);
     });
@@ -199,7 +199,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
   });
 
-  describe('assetBaseCurrencyPrice()', function () {
+  describe('assetBaseCurrencyPrice()', async function () {
     it('redirect call to accountingSystem correcly if accountingSystem support the pair', async function () {
       await lp.assetBaseCurrencyPrice(token.address, parseEther('1'));
       expect(accountingSystem.isSupportedPair).to.have.been.calledWith(token.address, ADDRESS_ETH);
@@ -207,7 +207,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
   });
 
-  describe('quote()', function () {
+  describe('quote()', async function () {
     it('quotes shares based on ETH value if 0 value in pool', async function () {
       expect(await lp.quote(parseEther('1'))).to.eq(parseEther('1'));
     });
@@ -232,7 +232,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
   });
 
-  describe('depositToken()', function () {
+  describe('depositToken()', async function () {
     beforeEach(async function () {
       accountingSystem.assetPrice.whenCalledWith(token.address, ADDRESS_ETH, parseEther('1')).returns(parseEther('0.0046'));
     });
@@ -299,7 +299,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
       await expect(lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'))).to.be.reverted;
     });
   });
-  describe('totalPriceInEth()', function () {
+  describe('totalPriceInEth()', async function () {
     it('returns price in eth', async function () {
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await signer1.sendTransaction({ to: lp.address, value: parseEther('1') });
@@ -328,7 +328,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
         ],
       ])])).to.not.be.reverted;
     });
-    it('allows to create whitelisted BudgetApproval', async function () {
+    it('disallows to create non whitelisted BudgetApproval', async function () {
       await dao.canCreateBudgetApproval.returns(false);
       await expect(lpAsSigner1.connect(daoAsSigner).createBudgetApprovals([budgetApproval.address], [budgetApproval.interface.encodeFunctionData('initialize', [
         [
@@ -344,7 +344,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
           false, // allow unlimited usage
           10, // usage count
         ],
-      ])])).to.be.revertedWith('not whitelist');
+      ])])).to.be.revertedWithCustomError(lp, 'TemplateNotWhitelist');
     });
   });
   describe('assetsShares()', async function () {
@@ -388,7 +388,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
   });
 
-  describe('canAddAsset()', function () {
+  describe('canAddAsset()', async function () {
     it('returns true if feed registry resolvable', async function () {
       expect(await lp.canAddAsset(token.address)).to.eq(true);
     });
@@ -401,7 +401,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
   });
 
-  describe('addAssets()', function () {
+  describe('addAssets()', async function () {
     it('emits AllowDepositToken', async function () {
       const tx = await lp.connect(daoAsSigner).addAssets([token2.address]);
       const receipt = await tx.wait();
@@ -418,7 +418,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
   });
 
-  describe('removeAssets()', function () {
+  describe('removeAssets()', async function () {
     it('emits DisallowDepositToken', async function () {
       await testUtils.address.setBalance(daoAsSigner.address, parseEther('1'));
       await lp.connect(daoAsSigner).addAssets([token2.address]);
@@ -440,14 +440,14 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', function () {
     });
   });
 
-  describe('assetsLength()', function () {
+  describe('assetsLength()', async function () {
     it('return assets length', async function () {
       expect(await lp.assetsLength()).to.eq(ethers.BigNumber.from('2'));
     });
   });
 });
 
-describe('LiquidPool.sol - one ERC20 asset only', function () {
+describe('LiquidPool.sol - one ERC20 asset only', async function () {
   let lp, lpAsSigner1, lpAsSigner2;
   let creator;
   let signer1, signer2;
@@ -516,7 +516,7 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
       parseEther('1000').toHexString());
   });
 
-  describe('depositToken()', function () {
+  describe('depositToken()', async function () {
     it('mints shares based on ERC20 token amount when 0 value in pool', async function () {
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'));
@@ -559,7 +559,7 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     });
   });
 
-  describe('redeem()', function () {
+  describe('redeem()', async function () {
     describe('redeem all assets', async function () {
       beforeEach(async function () {
         await tokenAsSigner1.approve(lp.address, parseEther('1'));
@@ -614,7 +614,7 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     });
   });
 
-  describe('totalPrice()', function () {
+  describe('totalPrice()', async function () {
     it('default returns 0', async function () {
       expect(await lp.totalPrice()).to.eq(0);
     });
@@ -644,7 +644,7 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     });
   });
 
-  describe('assetBaseCurrencyPrice()', function () {
+  describe('assetBaseCurrencyPrice()', async function () {
     it('return 1:1 price', async function () {
       expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1'))).to.eq(parseEther('1'));
       expect(await lp.assetBaseCurrencyPrice(token.address, parseEther('1000'))).to.eq(parseEther('1000'));
@@ -652,7 +652,7 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     });
   });
 
-  describe('quote()', function () {
+  describe('quote()', async function () {
     it('quotes shares based on token amount if 0 value in pool', async function () {
       expect(await lp.quote(parseEther('1'))).to.eq(parseEther('1'));
     });
@@ -671,7 +671,7 @@ describe('LiquidPool.sol - one ERC20 asset only', function () {
     });
   });
 
-  describe('assetsShares()', function () {
+  describe('assetsShares()', async function () {
     it('return ERC20 token amount by ratio of dp balance over totalSupply', async function () {
       await tokenAsSigner1.approve(lp.address, parseEther('100'));
       await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('100'));

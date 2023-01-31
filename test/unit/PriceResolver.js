@@ -8,7 +8,7 @@ const {
 } = require('../utils/constants');
 const { smock } = require('@defi-wonderland/smock');
 
-describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
+describe('PriceResolver.sol - test/unit/PriceResolver.js', async () => {
   let creator;
   let accountingSystem;
   let tokenA, tokenB;
@@ -24,7 +24,7 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
     tokenB = await smock.fake('TokenB');
   });
 
-  describe('assetBaseCurrency()', function () {
+  describe('assetBaseCurrency()', async function () {
     beforeEach(async () => {
       await priceResolver.setVariable('_baseCurrency', tokenA.address);
     });
@@ -42,7 +42,7 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
     });
   });
 
-  describe('assetPrice()', function () {
+  describe('assetPrice()', async function () {
     it('redirect call to accountingSystem correcly if accountingSystem support the pair', async function () {
       accountingSystem.isSupportedPair.returns(true);
       await priceResolver.assetPrice(tokenB.address, tokenA.address, parseEther('1'));
@@ -57,7 +57,7 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
     });
   });
 
-  describe('baseCurrencyDecimals()', function () {
+  describe('baseCurrencyDecimals()', async function () {
     it('returns the correct value if base currency = Eth', async function () {
       await priceResolver.setVariable('_baseCurrency', ADDRESS_ETH);
       expect(await priceResolver.baseCurrencyDecimals()).to.be.equal(18);
@@ -70,7 +70,7 @@ describe('PriceResolver.sol - test/unit/PriceResolver.js', () => {
     });
   });
 
-  describe('canResolvePrice()', function () {
+  describe('canResolvePrice()', async function () {
     beforeEach(async () => {
       await priceResolver.setVariable('_baseCurrency', tokenA.address);
     });

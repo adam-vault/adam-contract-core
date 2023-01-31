@@ -8,7 +8,7 @@ const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-describe('Adam.sol - test/unit/Adam.js', function () {
+describe('Adam.sol - test/unit/Adam.js', async function () {
   let deployer, daoCreator, unknown;
   let dao, membership, liquidPool, memberToken, govern, team;
   let budgetApproval, beacon;
@@ -117,7 +117,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
     });
   });
 
-  describe('upgradeTo()', function () {
+  describe('upgradeTo()', async function () {
     let mockV2Impl;
     let adam;
     beforeEach(async function () {

@@ -97,7 +97,7 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
     });
   });
 
-  describe('Execute Transaction', function () {
+  describe('Execute Transaction', async function () {
     beforeEach(async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;

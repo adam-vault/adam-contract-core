@@ -6,7 +6,7 @@ const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-describe('MemberToken.sol - test/unit/MemberToken.js', function () {
+describe('MemberToken.sol - test/unit/MemberToken.js', async function () {
   let member, minter;
   let memberToken, MemberToken;
   let DaoChildBeaconProxy, daoProxy, impl;
@@ -51,7 +51,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
   });
 
-  describe('mint()', function () {
+  describe('mint()', async function () {
     it('mints when msg.sender is minter', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       expect(await memberToken.balanceOf(member.address)).to.equal(10);
@@ -62,7 +62,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
   });
 
-  describe('getVotes()', function () {
+  describe('getVotes()', async function () {
     it('returns correct votes of non minter', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       expect(await memberToken.getVotes(member.address)).to.equal(10);
@@ -74,7 +74,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
   });
 
-  describe('getPastVotes()', function () {
+  describe('getPastVotes()', async function () {
     it('returns correct votes of non minter', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       const blockNumber = await ethers.provider.getBlockNumber();
@@ -92,7 +92,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
   });
 
-  describe('getPastTotalSupply', function () {
+  describe('getPastTotalSupply', async function () {
     it('returns total amount without balance of minter', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       await memberToken.connect(minter).mint(minter.address, 10);
@@ -103,7 +103,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
   });
 
-  describe('delegate', function () {
+  describe('delegate', async function () {
     it('delegate fail for Member Token', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       await expect(
@@ -113,7 +113,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
         .to.be.revertedWith('Not support delegate Vote');
     });
   });
-  describe('delegateBySig', function () {
+  describe('delegateBySig', async function () {
     it('delegateBySig fail for Member Token', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       await expect(

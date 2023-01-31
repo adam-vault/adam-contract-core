@@ -7,7 +7,7 @@ const { createAdam } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
 chai.use(smock.matchers);
 
-describe('Integration - Adam.sol - test/integration/Adam.js', function () {
+describe('Integration - Adam.sol - test/integration/Adam.js', async function () {
   let creator;
   let adam, ethereumChainlinkPriceGateway;
   let Dao;
@@ -23,7 +23,7 @@ describe('Integration - Adam.sol - test/integration/Adam.js', function () {
     ethereumChainlinkPriceGateway = result.ethPriceGateway;
   });
 
-  describe('when createDao() called', function () {
+  describe('when createDao() called', async function () {
     it('creates successfully', async function () {
       await expect(adam.createDao(...paramsStruct.getCreateDaoParams({
         name: 'A Company',

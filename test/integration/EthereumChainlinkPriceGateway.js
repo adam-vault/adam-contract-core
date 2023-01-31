@@ -67,7 +67,7 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async fun
     dao = await ethers.getContractAt('Dao', daoAddr);
   });
 
-  describe('CreateDao()', function () {
+  describe('CreateDao()', async function () {
     it('creates Dao successfully with correct param', async function () {
       const accountingSystem = await ethers.getContractAt('AccountingSystem', await dao.accountingSystem());
       expect(await accountingSystem.priceGateways(ethereumChainlinkPriceGateway)).to.be.equal(true);

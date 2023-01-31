@@ -13,7 +13,7 @@ const {
   ADDRESS_MOCK_AGGRGATOR,
 } = require('../utils/constants');
 
-describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', function () {
+describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async function () {
   let adam, tokenC721, tokenA, tokenD1155;
   let creator, member, anyone, feedRegistry, ethereumChainlinkPriceGateway;
 
@@ -189,7 +189,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', functi
       });
     });
 
-    describe('when using ERC20 member token as Admission token', function () {
+    describe('when using ERC20 member token as Admission token', async function () {
       beforeEach(async function () {
         const tx1 = await adam.createDao(
           ...paramsStruct.getCreateDaoParams({

@@ -9,7 +9,7 @@ const { smock } = require('@defi-wonderland/smock');
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('Integration - TransferERC721BudgetApproval.sol - test/integration/TransferERC721BudgetApproval.js', function () {
+describe('Integration - TransferERC721BudgetApproval.sol - test/integration/TransferERC721BudgetApproval.js', async function () {
   let adam, dao, transferERC721BAImplementation, budgetApproval, team;
   let executor, approver, receiver;
   let tokenC721, budgetApprovalAddresses;
@@ -117,7 +117,7 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
   });
 });
 
-describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/TransferERC721BudgetApproval.js', function () {
+describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/TransferERC721BudgetApproval.js', async function () {
   let transferERC721BAImplementation, budgetApproval;
   let executor, approver, receiver;
   let tokenC721, executee, TransferERC721BudgetApproval, team;
@@ -134,7 +134,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
     executee.team.returns(team.address);
   });
 
-  describe('Create Budget Approval', function () {
+  describe('Create Budget Approval', async function () {
     before(async function () {
       ({ tokenC721 } = await createTokens());
     });
@@ -206,7 +206,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
     });
   });
 
-  describe('Execute Transaction (Transfer ERC721)', function () {
+  describe('Execute Transaction (Transfer ERC721)', async function () {
     beforeEach(async function () {
       ({ tokenC721 } = await createTokens());
 
@@ -325,7 +325,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
     });
   });
 
-  describe('Execute Transaction (allowAllTokens = true)', function () {
+  describe('Execute Transaction (allowAllTokens = true)', async function () {
     beforeEach(async function () {
       await tokenC721.mint(executee.address, 37754);
 
@@ -345,7 +345,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
       budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
     });
 
-    context('complete flow', () => {
+    context('complete flow', async () => {
       it('execute transfer ERC721', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenC721.address,
