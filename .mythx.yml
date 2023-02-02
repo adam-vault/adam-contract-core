@@ -15,7 +15,6 @@ analyze:
         - contracts/interface/IAdam.sol
         - contracts/interface/IMembership.sol
         - contracts/interface/IDao.sol
-        - contracts/interface/IGovernFactory.sol
         - contracts/interface/ITransferLiquidERC20BudgetApproval.sol
         - contracts/interface/ICommonBudgetApproval.sol
         - contracts/interface/IBudgetApprovalExecutee.sol
@@ -51,4 +50,3 @@ analyze:
         - contracts/base/PriceResolver.sol
         - contracts/base/BudgetApprovalExecutee.sol
         - contracts/base/CommonBudgetApproval.sol
-        - contracts/GovernFactory.sol

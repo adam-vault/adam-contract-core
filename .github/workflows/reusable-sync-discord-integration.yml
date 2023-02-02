@@ -31,8 +31,7 @@ jobs:
 
       - name: Replace ABIs
         run: |
-          cp ${{ runner.temp }}/deployment/abis/machine/GovernFactory.json \
-            ${{ runner.temp }}/deployment/abis/machine/Govern.json \
+          cp ${{ runner.temp }}/deployment/abis/machine/Govern.json \
             ${{ runner.temp }}/deployment/abis/machine/Dao.json \
             ./src/abis
       
