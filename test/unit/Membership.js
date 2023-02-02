@@ -3,7 +3,7 @@ const { ethers, upgrades } = require('hardhat');
 const { createTokens } = require('../utils/createContract');
 const { smock } = require('@defi-wonderland/smock');
 
-describe('Membership.sol - test/unit/Membership.js', function () {
+describe('Membership.sol - test/unit/Membership.js', async function () {
   let dao, creator, member, member2, member3;
   let membership, membershipImpl;
   let Membership, ERC1967Proxy;
@@ -24,7 +24,7 @@ describe('Membership.sol - test/unit/Membership.js', function () {
     });
   });
 
-  describe('initialize()', function () {
+  describe('initialize()', async function () {
     it('init with name and symbol', async function () {
       const proxy = await ERC1967Proxy.deploy(membershipImpl.address, '0x');
       const contract = await ethers.getContractAt('Membership', proxy.address);
@@ -35,7 +35,7 @@ describe('Membership.sol - test/unit/Membership.js', function () {
     });
   });
 
-  describe('createMember()', function () {
+  describe('createMember()', async function () {
     it('creates member when success', async function () {
       await membership.connect(dao).createMember(member.address);
 
@@ -62,7 +62,7 @@ describe('Membership.sol - test/unit/Membership.js', function () {
     });
   });
 
-  describe('tokenURI()', function () {
+  describe('tokenURI()', async function () {
     it('returns tokenURI', async function () {
       await membership.connect(dao).createMember(member.address);
 
@@ -70,14 +70,14 @@ describe('Membership.sol - test/unit/Membership.js', function () {
     });
   });
 
-  describe('transferFrom()', function () {
+  describe('transferFrom()', async function () {
     it('throws "Membership: Transfer of membership is aboundand"', async function () {
       await membership.connect(dao).createMember(member.address);
       await expect(membership.connect(member).transferFrom(member.address, member2.address, 1)).to.be.revertedWith('Membership: Transfer of membership is aboundand');
     });
   });
 
-  describe('_afterTokenTransfer()', function () {
+  describe('_afterTokenTransfer()', async function () {
     it('delegates vote when minting', async function () {
       const tx = await membership.connect(dao).createMember(member.address);
       const receipt = await tx.wait();
@@ -127,7 +127,7 @@ describe('Membership.sol - test/unit/Membership.js', function () {
     });
   });
 
-  describe('countAdmissionTokens()', function () {
+  describe('countAdmissionTokens()', async function () {
     let tokenA, tokenC721, tokenD1155;
     beforeEach(async function () {
       ({ tokenA, tokenC721, tokenD1155 } = await createTokens());

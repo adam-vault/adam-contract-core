@@ -6,7 +6,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 
 const { AddressZero } = ethers.constants;
 
-describe('Team.sol - test/unit/Team.js', function () {
+describe('Team.sol - test/unit/Team.js', async function () {
   let creator, member1, member2, member3;
   let team;
   let teamId;
@@ -30,7 +30,7 @@ describe('Team.sol - test/unit/Team.js', function () {
     expect(await team.owner()).to.eq(creator.address);
   });
 
-  describe('safeTransferFrom()', function () {
+  describe('safeTransferFrom()', async function () {
     it('throws "TransferNotAllowed" error if member transfer their token', async function () {
       await expect(
         team
@@ -45,7 +45,7 @@ describe('Team.sol - test/unit/Team.js', function () {
     });
   });
 
-  describe('addTeam()', function () {
+  describe('addTeam()', async function () {
     it('adds a team', async function () {
       const tx = await team.addTeam(
         'Team Name',
@@ -72,7 +72,7 @@ describe('Team.sol - test/unit/Team.js', function () {
     });
   });
 
-  describe('uri()', function () {
+  describe('uri()', async function () {
     it('returns uri with name, creator, minter', async function () {
       const res = decodeBase64(await team.uri(teamId));
 
@@ -82,7 +82,7 @@ describe('Team.sol - test/unit/Team.js', function () {
     });
   });
 
-  describe('addMembers()', function () {
+  describe('addMembers()', async function () {
     it('mints token to members', async function () {
       await team.connect(member1).addMembers([member3.address], teamId);
       expect(await team.balanceOf(member3.address, teamId)).to.eq(1);
@@ -98,7 +98,7 @@ describe('Team.sol - test/unit/Team.js', function () {
     });
   });
 
-  describe('removeMembers()', function () {
+  describe('removeMembers()', async function () {
     it('removes members', async function () {
       await team.connect(member1).removeMembers([member1.address], teamId);
       expect(await team.balanceOf(member1.address, teamId)).to.eq(0);
@@ -114,7 +114,7 @@ describe('Team.sol - test/unit/Team.js', function () {
     });
   });
 
-  describe('setInfo()', function () {
+  describe('setInfo()', async function () {
     it('updates name, description', async function () {
       await team.connect(member1).setInfo('newName', 'newDescription', teamId);
       expect(await team.nameOf(teamId)).to.eq('newName');
@@ -128,7 +128,7 @@ describe('Team.sol - test/unit/Team.js', function () {
     });
   });
 
-  describe('setMinter()', function () {
+  describe('setMinter()', async function () {
     it('updates minter', async function () {
       await team.connect(creator).setMinter(member2.address, teamId);
       expect(await team.minterOf(teamId)).to.eq(member2.address);

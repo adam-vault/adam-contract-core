@@ -6,7 +6,7 @@ const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-describe('DaoBeacon.sol - test/unit/DaoBeacon.js', function () {
+describe('DaoBeacon.sol - test/unit/DaoBeacon.js', async function () {
   let daoBeacon, dao, membership, DaoBeacon;
   beforeEach(async function () {
     dao = await smock.fake('Dao');

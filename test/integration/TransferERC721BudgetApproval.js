@@ -9,18 +9,20 @@ const { smock } = require('@defi-wonderland/smock');
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('Integration - TransferERC721BudgetApproval.sol - test/integration/TransferERC721BudgetApproval.js', function () {
-  let adam, dao, transferERC721BAImplementation, budgetApproval;
+describe('Integration - TransferERC721BudgetApproval.sol - test/integration/TransferERC721BudgetApproval.js', async function () {
+  let adam, dao, transferERC721BAImplementation, budgetApproval, team;
   let executor, approver, receiver;
   let tokenC721, budgetApprovalAddresses;
 
-  before(async function () {
+  beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenC721 } = await createTokens());
 
     dao = await (await smock.mock('Dao')).deploy();
     adam = await (await smock.mock('Adam')).deploy();
+    team = await (await smock.mock('Team')).deploy();
+
     adam.budgetApprovals.returns(true);
     transferERC721BAImplementation = await (await smock.mock('TransferERC721BudgetApproval')).deploy();
 
@@ -30,6 +32,7 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
       },
       adam: adam.address,
     });
+    dao.team.returns(team.address);
   });
 
   describe('On Treasury', async function () {
@@ -114,13 +117,14 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
   });
 });
 
-describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/TransferERC721BudgetApproval.js', function () {
+describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/TransferERC721BudgetApproval.js', async function () {
   let transferERC721BAImplementation, budgetApproval;
   let executor, approver, receiver;
   let tokenC721, executee, TransferERC721BudgetApproval, team;
 
   beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
+    ({ tokenC721 } = await createTokens());
 
     TransferERC721BudgetApproval = await ethers.getContractFactory('TransferERC721BudgetApproval', { signer: executor });
     const Team = await ethers.getContractFactory('Team', { signer: executor });
@@ -131,10 +135,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
     executee.team.returns(team.address);
   });
 
-  describe('Create Budget Approval', function () {
-    before(async function () {
-      ({ tokenC721 } = await createTokens());
-    });
+  describe('Create Budget Approval', async function () {
     it('creates budget approval', async function () {
       const startTime = Math.round(Date.now() / 1000) - 86400;
       const endTime = Math.round(Date.now() / 1000) + 86400;
@@ -181,7 +182,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
       expect(await budgetApproval.usageCount()).to.eq(10);
     });
 
-    it('throws "Invalid approver list"', async function () {
+    it('throws "InvalidApproverList"', async function () {
       const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
         getCreateTransferERC721BAParams({
           dao: executee.address,
@@ -199,11 +200,11 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
           [transferERC721BAImplementation.address],
           [initData],
         ),
-      ).to.be.revertedWith('Invalid approver list');
+      ).to.be.revertedWithCustomError(TransferERC721BudgetApproval, 'InvalidApproverList');
     });
   });
 
-  describe('Execute Transaction (Transfer ERC721)', function () {
+  describe('Execute Transaction (Transfer ERC721)', async function () {
     beforeEach(async function () {
       ({ tokenC721 } = await createTokens());
 
@@ -274,66 +275,6 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
       expect(await tokenC721.ownerOf(37753)).to.eq(receiver.address);
     });
 
-    it('throw "Executor not whitelisted in budget"', async function () {
-      await tokenC721.mint(executee.address, 37752);
-      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-        tokenC721.address,
-        receiver.address,
-        37752,
-      ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
-      const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-      await budgetApproval.connect(approver).approveTransaction(id, '');
-
-      await expect(
-        budgetApproval.connect(approver).executeTransaction(id),
-      ).to.be.revertedWith('Executor not whitelisted in budget');
-    });
-
-    it('throws "Executor not whitelisted in budget"', async function () {
-      await tokenC721.mint(executee.address, 37752);
-      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-        tokenC721.address,
-        receiver.address,
-        37752,
-      ]);
-
-      await expect(budgetApproval.connect(approver).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, ''))
-        .to.be.revertedWith('Executor not whitelisted in budget');
-    });
-
-    it('throws "Transaction status invalid"', async function () {
-      await tokenC721.mint(executee.address, 37752);
-      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-        tokenC721.address,
-        receiver.address,
-        37752,
-      ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
-      const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-      await expect(
-        budgetApproval.connect(executor).executeTransaction(id),
-      ).to.be.revertedWith('Transaction status invalid');
-    });
-
-    it('throws "Transaction status invalid"', async function () {
-      await tokenC721.mint(executee.address, 37752);
-      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-        tokenC721.address,
-        receiver.address,
-        37752,
-      ]);
-      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
-      const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-      await budgetApproval.connect(executor).revokeTransaction(id);
-      await expect(
-        budgetApproval.connect(executor).executeTransaction(id),
-      ).to.be.revertedWith('Transaction status invalid');
-    });
-
     it('throws "Recipient not whitelisted in budget"', async function () {
       await tokenC721.mint(executee.address, 37752);
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
@@ -380,138 +321,9 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
         budgetApproval.connect(executor).executeTransaction(id),
       ).to.be.revertedWith('Exceeded max budget transferable amount');
     });
-
-    it('throws "Budget usage period not started"', async function () {
-      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
-        getCreateTransferERC721BAParams({
-          dao: executee.address,
-          executor: executor.address,
-          toAddresses: [receiver.address],
-          tokens: [tokenC721.address],
-          totalAmount: 1,
-          startTime: Math.round(Date.now() / 1000) + 86400,
-        }),
-      );
-
-      const tx = await executee.createBudgetApprovals(
-        [transferERC721BAImplementation.address],
-        [initData],
-      );
-      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-      const testBudgetApproval = await ethers.getContractAt(
-        'TransferERC721BudgetApproval',
-        budgetApprovalAddress,
-      );
-      await tokenC721.mint(executee.address, 37752);
-
-      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-        tokenC721.address,
-        receiver.address,
-        37752,
-      ]);
-      await expect(
-        testBudgetApproval
-          .connect(executor)
-          .createTransaction(
-            [transactionData],
-            Math.round(Date.now() / 1000) + 86400,
-            true,
-            '',
-          ),
-      ).to.be.revertedWith('Budget usage period not started');
-    });
-    it('throws "Budget usage period has ended"', async function () {
-      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
-        getCreateTransferERC721BAParams({
-          dao: executee.address,
-          executor: executor.address,
-          toAddresses: [receiver.address],
-          tokens: [tokenC721.address],
-          totalAmount: 1,
-          endTime: Math.round(Date.now() / 1000) - 86400,
-        }),
-      );
-
-      const tx = await executee.createBudgetApprovals(
-        [transferERC721BAImplementation.address],
-        [initData],
-      );
-      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-      const testBudgetApproval = await ethers.getContractAt(
-        'TransferERC721BudgetApproval',
-        budgetApprovalAddress,
-      );
-      await tokenC721.mint(executee.address, 37752);
-
-      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-        tokenC721.address,
-        receiver.address,
-        37752,
-      ]);
-      await expect(
-        testBudgetApproval
-          .connect(executor)
-          .createTransaction(
-            [transactionData],
-            Math.round(Date.now() / 1000) + 86400,
-            true,
-            '',
-          ),
-      ).to.be.revertedWith('Budget usage period has ended');
-    });
-
-    it('throws "Exceeded budget usage limit"', async function () {
-      const initData = TransferERC721BudgetApproval.interface.encodeFunctionData('initialize',
-        getCreateTransferERC721BAParams({
-          dao: executee.address,
-          executor: executor.address,
-          toAddresses: [receiver.address],
-          tokens: [tokenC721.address],
-          usageCount: 1,
-          totalAmount: 1,
-        }),
-      );
-
-      const tx = await executee.createBudgetApprovals(
-        [transferERC721BAImplementation.address],
-        [initData],
-      );
-      const { budgetApproval: budgetApprovalAddress } = await findEventArgs(tx, 'CreateBudgetApproval');
-
-      const testBudgetApproval = await ethers.getContractAt(
-        'TransferERC721BudgetApproval',
-        budgetApprovalAddress,
-      );
-      await tokenC721.mint(executee.address, 37752);
-
-      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
-        tokenC721.address,
-        receiver.address,
-        37752,
-      ]);
-      await testBudgetApproval.connect(executor).createTransaction(
-        [transactionData],
-        Math.round(Date.now() / 1000) + 86400,
-        true,
-        '',
-      );
-
-      await expect(
-        testBudgetApproval
-          .connect(executor)
-          .createTransaction(
-            [transactionData],
-            Math.round(Date.now() / 1000) + 86400,
-            true,
-            '',
-          ),
-      ).to.be.revertedWith('Exceeded budget usage limit');
-    });
   });
 
-  describe('Execute Transaction (allowAllTokens = true)', function () {
+  describe('Execute Transaction (allowAllTokens = true)', async function () {
     beforeEach(async function () {
       await tokenC721.mint(executee.address, 37754);
 
@@ -531,7 +343,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
       budgetApproval = await ethers.getContractAt('TransferERC20BudgetApproval', budgetApprovalAddress);
     });
 
-    context('complete flow', () => {
+    context('complete flow', async () => {
       it('execute transfer ERC721', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenC721.address,

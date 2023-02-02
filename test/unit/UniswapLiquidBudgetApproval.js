@@ -17,7 +17,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 describe('UniswapLiquidBudgetApproval.sol - test/unit/UniswapLiquidBudgetApproval.js', async function () {
   let executor;
   let mockToken, mockTokenB, team, executee, mockUniswapRouter;
-  let executeeAsSigner, UniswapLiquidBudgetApproval, ERC1967Proxy, uniswapBAImpl;
+  let executeeAsSigner, UniswapLiquidBudgetApproval, ERC1967Proxy, uniswapBAImpl, accountingSystem;
 
   function initializeParser (params = {}) {
     return [[
@@ -72,11 +72,18 @@ describe('UniswapLiquidBudgetApproval.sol - test/unit/UniswapLiquidBudgetApprova
     [executor] = await ethers.getSigners();
 
     team = await smock.fake('Team');
-    executee = await smock.fake('MockBudgetApprovalExecutee');
+    accountingSystem = await smock.fake('AccountingSystem');
+    executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
+    await executee.setVariable('_accountingSystem', accountingSystem.address);
+    await executee.setVariable('_team', team.address);
+
+    accountingSystem.isSupportedPair.whenCalledWith(ADDRESS_ETH, ADDRESS_ETH).returns(accountingSystem.address);
+    accountingSystem.assetPrice.returns(([,, amount]) => {
+      return amount;
+    });
     mockToken = await smock.fake('ERC20');
     mockTokenB = await smock.fake('ERC20');
     mockUniswapRouter = await smock.fake('MockUniswapRouter');
-    executee.team.returns(team.address);
 
     await network.provider.request({
       method: 'hardhat_impersonateAccount',
@@ -336,6 +343,7 @@ describe('UniswapLiquidBudgetApproval.sol - test/unit/UniswapLiquidBudgetApprova
             toTokens: [mockTokenB.address],
           })));
         uniswapBA = await ethers.getContractAt('UniswapLiquidBudgetApproval', contract.address);
+        executee.executeByBudgetApproval.returns('0x');
       });
 
       it('allows user to swap to toTokens', async function () {

@@ -54,7 +54,7 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
         weth.address,
         weth.interface.encodeFunctionData('deposit'),
         parseEther('1'),
-      )).to.be.revertedWith('Reverted by external contract');
+      )).to.be.revertedWith('Reverted by external contract - ');
     });
     it('throws "BudgetApprovalExecutee: access denied" error if not call be budget approval', async () => {
       await expect(executee.connect(unknown).executeByBudgetApproval(

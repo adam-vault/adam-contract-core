@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20Metadat
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
@@ -16,13 +17,24 @@ import "./interface/IDao.sol";
 contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApprovalExecutee, OwnableUpgradeable {
     using Concat for string;
     using SafeERC20Upgradeable for IERC20MetadataUpgradeable;
+    using AddressUpgradeable for address;
     
+    address private _baseCurrency;
     address[] public assets;
     mapping(address => uint256) private _assetIndex;
 
     event AllowDepositToken(address token);
     event DisallowDepositToken(address token);
     event Deposit(address account, address token, uint256 depositAmount);
+
+    error AccountingSystemRequired();
+    error UnsupportedAsset(address token);
+    error AssetAlreadyAdded(address token);
+    error AssetNotFound(address token);
+    error InvalidAmount();
+    error TemplateNotWhitelisted(address template);
+    error TransferFailed(bytes result);
+    error BlockedByLocktime();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -31,18 +43,30 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
 
     function initialize(
         address[] memory depositTokens,
-        address _baseCurrency
+        address __baseCurrency
     )
         public initializer
     {
         __Ownable_init();
+        if (!accountingSystem().isContract()) {
+            revert AccountingSystemRequired();
+        }
+
         __ERC20_init("LiquidPool", "LP");
-        __PriceResolver_init(_baseCurrency);
+        _baseCurrency = __baseCurrency;
         _addAssets(depositTokens);
+            }
+
+    function baseCurrency() public view override returns(address) {
+        return _baseCurrency;
     }
 
     function team() public view override returns(address) {
         return _dao().team();
+    }
+
+    function accountingSystem() public view override(PriceResolver, BudgetApprovalExecutee) returns(address) {
+        return _dao().accountingSystem();
     }
     
     function _dao() internal view returns (IDao) {
@@ -52,8 +76,12 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     function assetsShares(address asset, uint256 amount) public view returns (uint256) {
         uint256 _totalSupply = totalSupply();
 
-        require(amount <= _totalSupply, "gt totalSupply");
-        require(isAssetSupported(asset), "Asset not support");
+        if (amount > _totalSupply) {
+            revert InvalidAmount();
+        }
+        if (!isAssetSupported(asset)) {
+            revert UnsupportedAsset(asset);
+        }
         if (_totalSupply == 0) return 0;
 
         return _assetBalance(asset) * amount / _totalSupply;
@@ -87,7 +115,7 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
 
         for (uint256 i = 0; i < _assetsLength; i++) {
             address _asset = assets[i];
-            total += assetEthPrice(_asset,  _assetBalance(_asset));
+            total += assetPrice(_asset, Denominations.ETH, _assetBalance(_asset));
         }
         return total;
     }
@@ -97,8 +125,9 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function deposit(address receiver) public payable {
-        require(isAssetSupported(Denominations.ETH), "asset not support");
-
+        if (!isAssetSupported(Denominations.ETH)) {
+            revert UnsupportedAsset(Denominations.ETH);
+        }
         uint256 _totalSupply = totalSupply();
         uint256 ethPriceInBaseCurrency = assetBaseCurrencyPrice(Denominations.ETH, msg.value);
 
@@ -117,9 +146,13 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function redeem(uint256 amount) public {
-        IDao _dao = _dao();
-        require(balanceOf(msg.sender) >= amount, "not enough balance");
-        require(_dao.firstDepositTime(msg.sender) + _dao.locktime() <= block.timestamp, "lockup time");
+        IDao __dao = _dao();
+        if (balanceOf(msg.sender) < amount) {
+            revert InvalidAmount();
+        }
+        if (__dao.firstDepositTime(msg.sender) + __dao.locktime() > block.timestamp) {
+            revert BlockedByLocktime();
+        }
 
         uint256 _assetsLength = assets.length;
         for (uint256 i = 0; i < _assetsLength; i++) {
@@ -130,8 +163,9 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function depositToken(address receiver, address asset, uint256 amount) public {
-        require(isAssetSupported(asset), "Asset not support");
-        require(IERC20MetadataUpgradeable(asset).allowance(msg.sender, address(this)) >= amount, "not approve");
+        if (!isAssetSupported(asset)) {
+            revert UnsupportedAsset(asset);
+        }
 
         uint256 assetPriceInBaseCurrency = assetBaseCurrencyPrice(asset, amount);
         _mint(receiver, quote(assetPriceInBaseCurrency));
@@ -150,7 +184,9 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyOwner {
-        require(_dao().canCreateBudgetApproval(budgetApproval), "not whitelist");
+        if (!_dao().canCreateBudgetApproval(budgetApproval)) {
+            revert TemplateNotWhitelisted(budgetApproval);
+        }
     }
 
     function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyOwner {}
@@ -165,8 +201,11 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
 
     function _transferAsset(address target, address asset, uint256 amount) internal {
         if(asset == Denominations.ETH) {
-            (bool success, ) = payable(target).call{ value: amount }("");
-            require(success, "Failed to send Ether");
+            (bool success, bytes memory result) = payable(target).call{ value: amount }("");
+            if (!success) {
+                revert TransferFailed(result);
+            }
+
         } else {
             IERC20MetadataUpgradeable(asset).safeTransfer(target, amount);
         }
@@ -189,7 +228,12 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function _addAsset(address erc20) internal {
-        require(canAddAsset(erc20) && !isAssetSupported(erc20), "Asset not support");
+        if (isAssetSupported(erc20)) {
+            revert AssetAlreadyAdded(erc20);
+        }
+        if (!canAddAsset(erc20)) {
+            revert UnsupportedAsset(erc20);
+        }
         assets.push(erc20);
         _assetIndex[erc20] = assets.length;
 
@@ -197,7 +241,9 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function _removeAsset(address erc20) internal {
-        require(isAssetSupported(erc20), "Asset not in list");
+        if (!isAssetSupported(erc20)) {
+            revert AssetNotFound(erc20);
+        }
         uint256 index = _assetIndex[erc20] - 1;
         address lastEl = assets[assets.length - 1];
         assets[index] = lastEl;

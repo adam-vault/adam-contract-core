@@ -1,0 +1,13 @@
+[
+  "constructor()",
+  "error InvaildDecimal(uint8 decimals)",
+  "error StaleRoundId(uint80 roundID, uint80 answeredInRound)",
+  "error StaleTimestamp(uint256 currentTimeStamp, uint256 updatedAtTimeStamp)",
+  "function assetDecimals(address asset) view returns (uint8)",
+  "function assetPrice(address asset, address base, uint256 amount) view returns (uint256)",
+  "function assetUSDPrice(address asset, uint256 amount) view returns (uint256)",
+  "function derivedAssetPrice(address asset, address base, uint256 amount) view returns (uint256)",
+  "function isSupportedPair(address asset, address base) view returns (bool)",
+  "function name() view returns (string)",
+  "function usdAssetPrice(address asset, uint256 usdAmount) view returns (uint256)"
+]

@@ -1,0 +1,22 @@
+[
+  "constructor()",
+  "error InputLengthNotMatch(uint256 count1, uint256 count2)",
+  "error OwnerNotPermit(address priceGateway)",
+  "error PairNotSupport(address asset, address base)",
+  "error PriceGatewayExist(address priceGateway)",
+  "error PriceGatewayOmit(address priceGateway)",
+  "event AddPriceGateway(address priceGateway)",
+  "event Initialized(uint8 version)",
+  "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)",
+  "function addPriceGateway(address priceGateway)",
+  "function assetPrice(address asset, address base, uint256 amount) view returns (uint256)",
+  "function defaultPriceGateway() view returns (address)",
+  "function initialize(address[] _priceGateways)",
+  "function isSupportedPair(address asset, address base) view returns (bool)",
+  "function owner() view returns (address)",
+  "function priceGateways(address) view returns (bool)",
+  "function renounceOwnership()",
+  "function setTokenPairPriceGatewayMap(address[] _assets, address[] _bases, address priceGateway)",
+  "function tokenPairPriceGatewayMap(address, address) view returns (address)",
+  "function transferOwnership(address newOwner)"
+]

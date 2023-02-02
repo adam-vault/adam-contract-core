@@ -76,7 +76,6 @@ abstract contract CommonBudgetApproval is Initializable {
     uint256 private _startTime;
     uint256 private _endTime;
 
-    address private _team;
 
     struct InitializeParams {
         address executor;
@@ -92,46 +91,58 @@ abstract contract CommonBudgetApproval is Initializable {
         uint256 usageCount;
     }
 
+    error UnauthorizedExecutee();
+    error UnauthorizedExecutor();
+    error UnauthorizedApprover();
+    error InvalidTransactionStatus(uint256 id, Status status);
+    error TransactionExpired(uint256 id);
+    error BudgetNotStarted();
+    error BudgetHasEnded();
+    error InvalidApproverList();
+    error InvalidExecuteeTeam();
+    error BudgetUsageExceeded();
+    error InvalidTransactionId(uint256 id);
+    error ActionDuplicated();
+
     modifier onlyExecutee() {
-        require(msg.sender == executee(), "Executee not whitelisted in budget");
+        if (msg.sender != executee()) {
+            revert UnauthorizedExecutee();
+        }
         _;
     }
 
     modifier matchStatus(uint256 id, Status status) {
-        require(
-            transactions[id].status == status,
-            "Transaction status invalid"
-        );
+        Status _status = transactions[id].status;
+        if (_status != status) {
+            revert InvalidTransactionStatus(id, _status);
+        }
         _;
     }
 
     modifier checkTime(uint256 id) {
-        require(
-            block.timestamp <= transactions[id].deadline,
-            "Transaction expired"
-        );
-        require(
-            block.timestamp >= startTime(),
-            "Budget usage period not started"
-        );
-
-        uint256 __endtime = endTime();
-        if (__endtime != 0) {
-            require(
-                block.timestamp < __endtime,
-                "Budget usage period has ended"
-            );
+        if (block.timestamp > transactions[id].deadline) {
+            revert TransactionExpired(id);
+        }
+        if (block.timestamp < startTime()) {
+            revert BudgetNotStarted();
+        }
+        if (block.timestamp >= endTime()) {
+            revert BudgetHasEnded();
         }
         _;
     }
 
     modifier onlyApprover() {
-        require(_isApprover(msg.sender), "Approver not whitelisted in budget");
+        if (!_isApprover(msg.sender)) {
+            revert UnauthorizedApprover();
+        }
         _;
     }
 
     modifier onlyExecutor() {
-        require(_isExecutor(msg.sender), "Executor not whitelisted in budget");
+        if (!_isExecutor(msg.sender)) {
+            revert UnauthorizedExecutor();
+        }
         _;
     }
 
@@ -210,11 +221,9 @@ abstract contract CommonBudgetApproval is Initializable {
         internal
         onlyInitializing
     {
-        require(
-            params.approverTeamId > 0 ||
-                (params.minApproval <= params.approvers.length),
-            "Invalid approver list"
-        );
+        if (params.approverTeamId == 0 && (params.minApproval > params.approvers.length)) {
+            revert InvalidApproverList();
+        }
 
         _executee = msg.sender;
         _executor = params.executor;
@@ -235,6 +244,10 @@ abstract contract CommonBudgetApproval is Initializable {
             _approversMapping[params.approvers[i]] = true;
             emit SetApprover(params.approvers[i]);
         }
+
+        if (team() == address(0)) {
+            revert InvalidExecuteeTeam();
+        }
     }
 
     function afterInitialized() external virtual onlyExecutee {}
@@ -252,7 +265,9 @@ abstract contract CommonBudgetApproval is Initializable {
         bytes[] memory data = transactions[id].data;
 
         for (uint256 i = 0; i < data.length; i++) {
-            require(unlimited || count > 0, "Exceeded budget usage limit");
+            if (!unlimited && count == 0) {
+                revert BudgetUsageExceeded();
+            }
             if (!unlimited) {
                 count--;
             }
@@ -306,25 +321,24 @@ abstract contract CommonBudgetApproval is Initializable {
         virtual
         onlyApprover
     {
-        require(_transactionIds.current() >= id, "Invaild TransactionId");
+        if (_transactionIds.current() < id) {
+            revert InvalidTransactionId(id);
+        }
 
-        Status _transactionStatus = transactions[id].status;
-        uint256 _transactionApprovedCount = transactions[id].approvedCount + 1;
+        Status _status = transactions[id].status;
+        uint256 _approvedCount = transactions[id].approvedCount + 1;
 
-        require(
-            _transactionStatus == Status.Pending ||
-                _transactionStatus == Status.Approved,
-            "Unexpected transaction status"
-        );
-        require(
-            !transactions[id].approved[msg.sender],
-            "Transaction has been approved before"
-        );
+        if (_status != Status.Pending && _status != Status.Approved) {
+            revert InvalidTransactionStatus(id, _status);
+        }
+        if (transactions[id].approved[msg.sender]) {
+            revert ActionDuplicated();
+        }
 
         transactions[id].approved[msg.sender] = true;
-        transactions[id].approvedCount = _transactionApprovedCount;
+        transactions[id].approvedCount = _approvedCount;
 
-        if (_transactionApprovedCount >= minApproval()) {
+        if (_approvedCount >= minApproval()) {
             transactions[id].status = Status.Approved;
         }
 
@@ -332,11 +346,15 @@ abstract contract CommonBudgetApproval is Initializable {
     }
 
     function revokeTransaction(uint256 id) external virtual onlyExecutor {
-        require(_transactionIds.current() >= id, "Invaild TransactionId");
-        require(
-            transactions[id].status != Status.Completed,
-            "Transaction has been completed before"
-        );
+        if (_transactionIds.current() < id) {
+            revert InvalidTransactionId(id);
+        }
+
+        Status _status = transactions[id].status;
+        if (_status == Status.Completed) {
+            revert InvalidTransactionStatus(id, _status);
+        }
+
         transactions[id].status = Status.Cancelled;
 
         emit RevokeTransaction(id);

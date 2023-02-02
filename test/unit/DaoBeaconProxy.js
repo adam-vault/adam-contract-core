@@ -7,7 +7,7 @@ chai.should();
 chai.use(smock.matchers);
 const { AddressZero } = ethers.constants;
 
-describe('DaoBeaconProxy.sol - test/unit/DaoBeaconProxy.js', function () {
+describe('DaoBeaconProxy.sol - test/unit/DaoBeaconProxy.js', async function () {
   let dao, daoBeacon;
   let DaoBeaconProxy;
   beforeEach(async function () {

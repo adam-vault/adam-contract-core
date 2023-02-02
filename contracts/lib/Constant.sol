@@ -8,6 +8,7 @@ library Constant {
     bytes32 public constant BEACON_NAME_LIQUID_POOL = bytes32(keccak256("adam.dao.liquid_pool"));
     bytes32 public constant BEACON_NAME_GOVERN = bytes32(keccak256("adam.dao.govern"));
     bytes32 public constant BEACON_NAME_TEAM = bytes32(keccak256("adam.dao.team"));
+    bytes32 public constant BEACON_NAME_ACCOUNTING_SYSTEM = bytes32(keccak256("adam.dao.accounting_system"));
 
     address public constant WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public constant UNISWAP_ROUTER = 0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45;

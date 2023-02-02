@@ -8,11 +8,11 @@ const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-describe('Adam.sol - test/unit/Adam.js', function () {
+describe('Adam.sol - test/unit/Adam.js', async function () {
   let deployer, daoCreator, unknown;
   let dao, membership, liquidPool, memberToken, govern, team;
   let budgetApproval, beacon;
-  let Adam, DaoBeacon;
+  let Adam, DaoBeacon, ethereumChainlinkPriceGateway;
   beforeEach(async function () {
     [deployer, daoCreator, unknown] = await ethers.getSigners();
 
@@ -21,6 +21,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
     memberToken = await smock.fake('MemberToken');
     liquidPool = await smock.fake('LiquidPool');
     budgetApproval = await smock.fake('TransferERC20BudgetApproval');
+    ethereumChainlinkPriceGateway = await smock.fake('EthereumChainlinkPriceGateway');
     govern = await smock.fake('Govern');
     team = await smock.fake('Team');
     Adam = await ethers.getContractFactory('Adam', { signer: deployer });
@@ -41,6 +42,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       const adam = await upgrades.deployProxy(Adam, [
         beacon.address,
         [budgetApproval.address],
+        [ethereumChainlinkPriceGateway.address],
       ], { kind: 'uups' });
       expect(await adam.budgetApprovals(budgetApproval.address)).to.be.eq(true);
       expect(await adam.budgetApprovals(ethers.constants.AddressZero)).to.be.eq(false);
@@ -49,6 +51,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       const tx = upgrades.deployProxy(Adam, [
         beacon.address,
         [budgetApproval.address, budgetApproval.address],
+        [ethereumChainlinkPriceGateway.address],
       ], { kind: 'uups' });
       await expect(tx).to.be.revertedWithCustomError(Adam, 'BudgetApprovalAlreadyInitialized');
     });
@@ -56,10 +59,13 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       const adam = await upgrades.deployProxy(Adam, [
         beacon.address,
         [budgetApproval.address],
+        [ethereumChainlinkPriceGateway.address],
       ], { kind: 'uups' });
 
       await expect(adam.initialize(beacon.address,
-        [budgetApproval.address])).to.be.revertedWith('Initializable: contract is already initialized');
+        [budgetApproval.address],
+        [ethereumChainlinkPriceGateway.address],
+      )).to.be.revertedWith('Initializable: contract is already initialized');
     });
   });
 
@@ -72,6 +78,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       adam = await upgrades.deployProxy(Adam, [
         beaconV1.address,
         [budgetApproval.address],
+        [ethereumChainlinkPriceGateway.address],
       ], { kind: 'uups' });
       await adam.setDaoBeacon(beaconV2.address);
     });
@@ -92,6 +99,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       adam = await upgrades.deployProxy(Adam, [
         beaconV1.address,
         [budgetApproval.address],
+        [ethereumChainlinkPriceGateway.address],
       ], { kind: 'uups' });
     });
     it('updates daoBeacon', async function () {
@@ -109,13 +117,14 @@ describe('Adam.sol - test/unit/Adam.js', function () {
     });
   });
 
-  describe('upgradeTo()', function () {
+  describe('upgradeTo()', async function () {
     let mockV2Impl;
     let adam;
     beforeEach(async function () {
       adam = await upgrades.deployProxy(Adam, [
         beacon.address,
         [budgetApproval.address],
+        [ethereumChainlinkPriceGateway.address],
       ], { kind: 'uups' });
 
       const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
@@ -139,6 +148,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       adam = await upgrades.deployProxy(Adam, [
         beacon.address,
         [budgetApproval.address],
+        [ethereumChainlinkPriceGateway.address],
       ], { kind: 'uups' });
       newBudgetApproval1 = await smock.fake('TransferERC20BudgetApproval');
       newBudgetApproval2 = await smock.fake('TransferERC20BudgetApproval');
@@ -185,6 +195,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       adam = await upgrades.deployProxy(Adam, [
         beacon.address,
         [budgetApproval.address, newBudgetApproval1.address],
+        [ethereumChainlinkPriceGateway.address],
       ], { kind: 'uups' });
     });
     it('removes budgetApprovals from whitelist', async () => {
@@ -221,6 +232,7 @@ describe('Adam.sol - test/unit/Adam.js', function () {
       adamForCreatrDao = await upgrades.deployProxy(Adam, [
         beacon.address,
         [budgetApproval.address],
+        [ethereumChainlinkPriceGateway.address],
       ], { signer: daoCreator, kind: 'uups' });
     });
     it('createDao successfully', async () => {

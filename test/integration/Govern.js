@@ -1,38 +1,46 @@
 const chai = require('chai');
 const { ethers } = require('hardhat');
-const findEventArgs = require('../../utils/findEventArgs');
-const { createAdam, createBudgetApprovals } = require('../utils/createContract');
-const paramsStruct = require('../../utils/paramsStruct');
 const { smock } = require('@defi-wonderland/smock');
+
+const findEventArgs = require('../../utils/findEventArgs');
+const { createAdam } = require('../utils/createContract');
+const paramsStruct = require('../../utils/paramsStruct');
 
 const { expect } = chai;
 chai.should();
 chai.use(smock.matchers);
 
-
-describe('Integration - Govern.sol - test/integration/Govern.js', function () {
+describe('Integration - Govern.sol - test/integration/Govern.js', async function () {
   let adam, dao, lp;
   let creator, owner1, owner2;
-  let tokenA, budgetApprovalAddresses;
+  let tokenA;
   let memberToken;
-  let ERC1967Proxy, impl, LiquidPool, MemberToken, govern;
+  let govern;
+  let SmockDao, SmockMemberToken, SmockLiquidPool, SmockGovern, SmockERC20;
 
-  before(async function() {
-    ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy');
-    MemberToken = await ethers.getContractFactory('MemberToken');
-    LiquidPool = await ethers.getContractFactory('LiquidPool');
-  });
-  beforeEach(async function () {
+  before(async function () {
     [creator, owner1, owner2] = await ethers.getSigners();
-    budgetApprovalAddresses = await createBudgetApprovals(creator);
-    adam = await createAdam(budgetApprovalAddresses);
+    SmockDao = await smock.mock('Dao');
+    SmockMemberToken = await smock.mock('MemberToken');
+    SmockLiquidPool = await smock.mock('LiquidPool');
+    SmockGovern = await smock.mock('Govern');
+    SmockERC20 = await smock.mock('ERC20');
+  });
 
-    dao = await (await smock.mock('Dao')).deploy();
-    memberToken = await (await smock.mock('MemberToken')).deploy();
-    lp = await (await smock.mock('LiquidPool')).deploy();
-    govern = await (await smock.mock('Govern')).deploy();
-    await govern.setVariable('voteToken', memberToken.address);
-    await govern.setVariable('durationInBlock', 5);
+  beforeEach(async function () {
+    const result = await createAdam();
+    adam = result.adam;
+
+    dao = await SmockDao.deploy();
+    memberToken = await SmockMemberToken.deploy();
+    lp = await SmockLiquidPool.deploy();
+    govern = await SmockGovern.deploy();
+    tokenA = await SmockERC20.deploy('Name', 'Symbol');
+
+    await govern.setVariables({
+      voteToken: memberToken.address,
+      durationInBlock: 5,
+    });
 
     await dao.setVariables({
       plugins: {
@@ -47,8 +55,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
         [ethers.utils.id('General')]: govern.address,
       },
     });
-
-    tokenA = await (await smock.mock('ERC20')).deploy('Name', 'Symbol');
   });
 
   describe('Voting and executing proposals', async function () {
@@ -130,7 +136,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', function () {
       });
     });
 
-    context('For voting with membership ERC721Vote tokens', function () {
+    context('For voting with membership ERC721Vote tokens', async function () {
       it('success due to 10% pass threshold (1 against 1 for)', async function () {
         const tx1 = await adam.createDao(...paramsStruct.getCreateDaoParams({
           budgetApproval: [300, 1000, 1000, 0], // budgetApproval

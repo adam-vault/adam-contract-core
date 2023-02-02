@@ -5,10 +5,12 @@ import "../base/PriceResolver.sol";
 
 contract MockPriceResolver is PriceResolver {
     address private _baseCurrency;
+    address private _accountingSystem;
+
     function baseCurrency() public view override returns (address) {
         return _baseCurrency;
     }
-    function setBaseCurrency(address asset) public {
-        _baseCurrency = asset;
+    function accountingSystem() public view override returns (address) {
+        return _accountingSystem;
     }
 }
