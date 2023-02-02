@@ -31,7 +31,6 @@ describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApp
       params.endTime || Math.round(Date.now() / 1000) + 86400,
       params.allowUnlimitedUsageCount || true,
       params.usageCount || 0,
-      params.team || team.address,
     ],
     params.allowAllFromTokens ?? true,
     params.fromToken || ethers.constants.AddressZero,
@@ -76,7 +75,7 @@ describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApp
     mockToken = await smock.fake('ERC20');
     mockTokenB = await smock.fake('ERC20');
     mockUniswapRouter = await smock.fake('MockUniswapRouter');
-
+    executee.team.returns(team.address);
     await network.provider.request({
       method: 'hardhat_impersonateAccount',
       params: [executee.address],

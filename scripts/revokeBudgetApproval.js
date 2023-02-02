@@ -52,17 +52,24 @@ async function main () {
   ]);
   const budgetApproval = await hre.ethers.getContractAt(budgetApprovalOptions.key, budgetApprovalOptions.address);
 
-  let target = await hre.ethers.getContractAt('Dao', daoAddress);
+  let tx;
   if (dest === 'LiquidPool') {
-    target = await hre.ethers.getContractAt('LiquidPool', await target.liquidPool());
+    tx = await dao.executePlugin(
+      hre.ethers.utils.id('adam.dao.liquid_pool'),
+      dao.interface.encodeFunctionData('revokeBudgetApprovals', [
+        [budgetApproval.address],
+      ]),
+      0,
+    );
+  } else {
+    tx = await dao.revokeBudgetApprovals(
+      [budgetApproval.address],
+    );
   }
 
-  const tx1 = await target.revokeBudgetApprovals(
-    [budgetApproval.address],
-  );
-  console.log(tx1);
+  console.log(tx);
 
-  const receipt1 = await tx1.wait();
+  const receipt1 = await tx.wait();
   console.log(receipt1);
   const RevokeEventLogs1 = _.filter(receipt1.events, { event: 'RevokeBudgetApproval' });
   console.log(RevokeEventLogs1);

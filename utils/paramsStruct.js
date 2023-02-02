@@ -2,6 +2,12 @@
 const { constants } = require('ethers');
 const { ethers } = require('hardhat');
 const daoArtifact = require('../artifacts/contracts/Dao.sol/Dao.json');
+const membershipArtifact = require('../artifacts/contracts/Membership.sol/Membership.json');
+const memberTokenArtifact = require('../artifacts/contracts/MemberToken.sol/MemberToken.json');
+const liquidPoolArtifact = require('../artifacts/contracts/LiquidPool.sol/LiquidPool.json');
+const governArtifact = require('../artifacts/contracts/Govern.sol/Govern.json');
+const teamArtifact = require('../artifacts/contracts/Team.sol/Team.json');
+const accountingSystemArtifact = require('../artifacts/contracts/AccountingSystem.sol/AccountingSystem.json');
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
@@ -23,7 +29,6 @@ function getCreateTransferERC20BAParams ({
   token = ethers.constants.AddressZero,
   allowAnyAmount,
   totalAmount = 0,
-  team,
   toTeamIds = [],
 }) {
   return Object.entries({
@@ -39,7 +44,6 @@ function getCreateTransferERC20BAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
-      team,
     }),
     allowAllAddresses: allowAllAddresses ?? toAddresses.length === 0,
     toAddresses,
@@ -69,33 +73,83 @@ function getCreateDaoParams ({
   logoCID = '',
   maxMemberLimit = ethers.constants.MaxUint256,
   referer = constants.AddressZero,
+  creator,
+  priceGateways = [],
 }) {
   const iface = new ethers.utils.Interface(daoArtifact.abi);
+  const membershipIface = new ethers.utils.Interface(membershipArtifact.abi);
+  const memberTokenIface = new ethers.utils.Interface(memberTokenArtifact.abi);
+  const liquidPoolIface = new ethers.utils.Interface(liquidPoolArtifact.abi);
+  const teamIface = new ethers.utils.Interface(teamArtifact.abi);
+  const accountingSystemIface = new ethers.utils.Interface(accountingSystemArtifact.abi);
 
   return [
-    Object.values({
-      name,
-      description,
-      baseCurrency,
-      maxMemberLimit,
-      tokenName,
-      tokenSymbol,
-      depositTokens,
-      referer,
-    }),
+    name,
+    description,
+    baseCurrency,
     [
+      iface.encodeFunctionData('createPlugin', [
+        ethers.utils.id('adam.dao.membership'),
+        membershipIface.encodeFunctionData('initialize', [name, maxMemberLimit]),
+      ]),
+      iface.encodeFunctionData('createPlugin', [
+        ethers.utils.id('adam.dao.accounting_system'),
+        accountingSystemIface.encodeFunctionData('initialize', [priceGateways]),
+      ]),
+      iface.encodeFunctionData('createPlugin', [
+        ethers.utils.id('adam.dao.liquid_pool'),
+        liquidPoolIface.encodeFunctionData('initialize', [depositTokens, baseCurrency]),
+      ]),
+      iface.encodeFunctionData('createPlugin', [
+        ethers.utils.id('adam.dao.member_token'),
+        memberTokenIface.encodeFunctionData('initialize', [tokenName, tokenSymbol]),
+      ]),
+      iface.encodeFunctionData('createPlugin', [
+        ethers.utils.id('adam.dao.team'),
+        teamIface.encodeFunctionData('initialize', []),
+      ]),
       lockTime ? iface.encodeFunctionData('setLocktime', [lockTime]) : '',
       minDepositAmount ? iface.encodeFunctionData('setMinDepositAmount', [minDepositAmount]) : '',
-      iface.encodeFunctionData('createGovern', ['General', ...generalGovernSetting]),
-      tokenAmount ? iface.encodeFunctionData('mintMemberToken', [tokenAmount]) : '',
+      iface.encodeFunctionData('createGovern', [
+        'General',
+        generalGovernSetting[1],
+        generalGovernSetting[2],
+        generalGovernSetting[3],
+        generalGovernSetting[4],
+        generalGovernSetting[5],
+      ]),
+      creator
+        ? iface.encodeFunctionData('executePlugin', [
+          ethers.utils.id('adam.dao.membership'),
+          membershipIface.encodeFunctionData('createMember', [creator]),
+          0,
+        ])
+        : '',
+      tokenAmount
+        ? iface.encodeFunctionData('executePlugin', [
+          ethers.utils.id('adam.dao.member_token'),
+          memberTokenIface.encodeFunctionData('mintToOwner', [tokenAmount]),
+          0,
+        ])
+        : '',
       logoCID ? iface.encodeFunctionData('setLogoCID', [logoCID]) : '',
+
       ...admissionTokens.map(([token, minTokenToAdmit, tokenId, isMemberToken]) => {
         if (isMemberToken) {
-          return iface.encodeFunctionData('setMemberTokenAsAdmissionToken', [minTokenToAdmit]);
+          return iface.encodeFunctionData('executePlugin', [
+            ethers.utils.id('adam.dao.membership'),
+            membershipIface.encodeFunctionData('setMemberTokenAsAdmissionToken', [minTokenToAdmit]),
+            0,
+          ]);
         }
-        return iface.encodeFunctionData('addAdmissionToken', [token, minTokenToAdmit, tokenId]);
+        return iface.encodeFunctionData('executePlugin', [
+          ethers.utils.id('adam.dao.membership'),
+          membershipIface.encodeFunctionData('addAdmissionToken', [token, minTokenToAdmit, tokenId]),
+          0,
+        ]);
       }),
     ].filter((str) => !!str),
+    referer,
   ];
 };
 
@@ -117,7 +171,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
   allowAnyAmount,
   totalAmount = 0,
   baseCurrency = ETH,
-  team,
   toTeamIds = [],
 }) {
   return Object.entries({
@@ -133,7 +186,6 @@ function getCreateTransferLiquidErc20TokenBAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
-      team,
     }),
     allowAllAddresses: allowAllAddresses ?? toAddresses.length === 0,
     toAddresses,
@@ -166,7 +218,6 @@ function getCreateUniswapBAParams ({
   totalAmount = 0,
   amountPercentage = 100,
   baseCurrency = ETH,
-  team,
 }) {
   return Object.entries({
     params: getCreateCommonBudgetApprovalParams({
@@ -181,7 +232,6 @@ function getCreateUniswapBAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
-      team,
     }),
     fromTokens,
     allowAllToTokens: allowAllToTokens ?? toTokens.length === 0,
@@ -213,7 +263,6 @@ function getCreateTransferERC721BAParams ({
   tokens = [],
   allowAnyAmount,
   totalAmount = 0,
-  team,
   toTeamIds = [],
 }) {
   return Object.entries({
@@ -229,7 +278,6 @@ function getCreateTransferERC721BAParams ({
       endTime,
       allowUnlimitedUsageCount,
       usageCount,
-      team,
     }),
     allowAllAddresses: allowAllAddresses ?? toAddresses.length === 0,
     toAddresses,
@@ -303,7 +351,6 @@ function getCreateCommonBudgetApprovalParams ({
   endTime = constants.MaxUint256,
   allowUnlimitedUsageCount,
   usageCount = 0,
-  team = ethers.constants.AddressZero,
 }) {
   return Object.entries({
     executor,
@@ -317,7 +364,6 @@ function getCreateCommonBudgetApprovalParams ({
     endTime,
     allowUnlimitedUsageCount: allowUnlimitedUsageCount ?? usageCount === 0,
     usageCount,
-    team,
   }).map(([key, value]) => {
     return value;
   });
@@ -335,7 +381,6 @@ function getCreateBasicBudgetApprovalParams ({
   endTime,
   allowUnlimitedUsageCount,
   usageCount,
-  team,
 }) {
   return [getCreateCommonBudgetApprovalParams({
     executor,
@@ -349,7 +394,6 @@ function getCreateBasicBudgetApprovalParams ({
     endTime,
     allowUnlimitedUsageCount,
     usageCount,
-    team,
   })];
 }
 module.exports = {

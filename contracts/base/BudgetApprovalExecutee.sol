@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity 0.8.7;
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "../interface/ICommonBudgetApproval.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+
+import "../interface/ICommonBudgetApproval.sol";
 import "../lib/RevertMsg.sol";
 import "../lib/Concat.sol";
 
-contract BudgetApprovalExecutee is Initializable {
+abstract contract BudgetApprovalExecutee {
     using Concat for string;
-
-    address private _team;
 
     mapping(address => bool) private _budgetApprovals;
 
@@ -24,18 +22,8 @@ contract BudgetApprovalExecutee is Initializable {
         _;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-      _disableInitializers();
-    }
-
-    function ___BudgetApprovalExecutee_init(address __team) internal onlyInitializing {
-        _team = __team;
-    }
-
-    function team() public view virtual returns (address) {
-        return _team;
-    }
+    function team() public view virtual returns (address);
+    function accountingSystem() public view virtual returns (address);
 
     function budgetApprovals(address template) public view virtual returns (bool) {
         return _budgetApprovals[template];
@@ -44,7 +32,7 @@ contract BudgetApprovalExecutee is Initializable {
     function executeByBudgetApproval(address _to, bytes memory _data, uint256 _value) external onlyBudgetApproval returns (bytes memory) {
         (bool success, bytes memory result) = _to.call{ value: _value }(_data);
         if(!success) {
-            revert(string("Reverted by external contract").concat(RevertMsg.ToString(result)));
+            revert(string("Reverted by external contract - ").concat(RevertMsg.ToString(result)));
         }
         emit ExecuteByBudgetApproval(msg.sender, _data);
 

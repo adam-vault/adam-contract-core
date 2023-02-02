@@ -160,22 +160,33 @@ async function main () {
     }),
   );
 
-  let target = await hre.ethers.getContractAt('Dao', answers.daoAddress);
-  if (answers.dest === 'LiquidPool') {
-    target = await hre.ethers.getContractAt('LiquidPool', await target.liquidPool());
-  }
+  const dao = await hre.ethers.getContractAt('Dao', answers.daoAddress);
 
   if (answers.exportEncodeData) {
-    console.log('address', target.address);
-    console.log('encodeFunctionData', target.interface.encodeFunctionData('createBudgetApprovals', [[answers.budgetApprovalOptions.address], [dataErc20]]));
+    console.log('address', dao.address);
+    console.log('encodeFunctionData', dao.interface.encodeFunctionData('createBudgetApprovals', [[answers.budgetApprovalOptions.address], [dataErc20]]));
     return;
   }
 
-  const tx1 = await target.createBudgetApprovals(
-    [answers.budgetApprovalOptions.address],
-    [dataErc20]); console.log(tx1);
+  let tx;
+  if (answers.dest === 'LiquidPool') {
+    tx = await dao.executePlugin(
+      ethers.utils.id('adam.dao.liquid_pool'),
+      dao.interface.encodeFunctionData('createBudgetApprovals', [
+        [answers.budgetApprovalOptions.address],
+        [dataErc20],
+      ]),
+      0,
+    );
+  } else {
+    tx = await dao.createBudgetApprovals(
+      [answers.budgetApprovalOptions.address],
+      [dataErc20]);
+  }
 
-  const receipt1 = await tx1.wait();
+  console.log(tx);
+
+  const receipt1 = await tx.wait();
   console.log(receipt1);
   const creationEventLogs1 = _.filter(receipt1.events, { event: 'CreateBudgetApproval' });
   console.log(creationEventLogs1);

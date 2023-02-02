@@ -1,10 +1,12 @@
 const { expect } = require('chai');
-const { ethers, upgrades } = require('hardhat');
+const { ethers } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 const decodeBase64 = require('../utils/decodeBase64');
 const findEventArgs = require('../../utils/findEventArgs');
 
-describe('Team.sol - test/unit/Team.js', function () {
+const { AddressZero } = ethers.constants;
+
+describe('Team.sol - test/unit/Team.js', async function () {
   let creator, member1, member2, member3;
   let team;
   let teamId;
@@ -13,10 +15,9 @@ describe('Team.sol - test/unit/Team.js', function () {
     [creator, member1, member2, member3] = await ethers.getSigners();
 
     // contract
-    const Team = await ethers.getContractFactory('Team', { signer: creator });
-    team = await upgrades.deployProxy(Team, [], { kind: 'uups' });
+    team = await (await smock.mock('Team')).deploy();
+    await team.setVariable('_owner', creator.address);
 
-    // create teamId
     const tx = await team.addTeam(
       'Team Name',
       member1.address,
@@ -29,25 +30,8 @@ describe('Team.sol - test/unit/Team.js', function () {
     expect(await team.owner()).to.eq(creator.address);
   });
 
-  describe('upgradeTo()', function () {
-    let mockV2Impl;
-    beforeEach(async function () {
-      mockV2Impl = await (await smock.mock('MockVersionUpgrade')).deploy();
-    });
-    it('allows owner to upgrade', async function () {
-      await team.upgradeTo(mockV2Impl.address);
-      const v2Contract = await ethers.getContractAt('MockVersionUpgrade', team.address);
-
-      expect(await v2Contract.v2()).to.equal(true);
-    });
-    it('throws "Ownable: caller is not the owner" error if upgrade by non owner', async function () {
-      await expect(team.connect(member2).upgradeTo(mockV2Impl.address))
-        .to.revertedWith('Ownable: caller is not the owner');
-    });
-  });
-
-  describe('safeTransferFrom()', function () {
-    it('throws "Team: Transfer of team ownership is aboundand" error if member transfer their token', async function () {
+  describe('safeTransferFrom()', async function () {
+    it('throws "TransferNotAllowed" error if member transfer their token', async function () {
       await expect(
         team
           .connect(member2)
@@ -57,11 +41,11 @@ describe('Team.sol - test/unit/Team.js', function () {
             teamId, // tokenId
             1, // amount
             '0x'),
-      ).to.revertedWith('Team: Transfer of team ownership is aboundand');
+      ).to.revertedWithCustomError(team, 'TransferNotAllowed');
     });
   });
 
-  describe('addTeam()', function () {
+  describe('addTeam()', async function () {
     it('adds a team', async function () {
       const tx = await team.addTeam(
         'Team Name',
@@ -70,7 +54,6 @@ describe('Team.sol - test/unit/Team.js', function () {
         'Description');
       teamId = await findEventArgs(tx, 'TransferSingle', 'id');
 
-      expect(await team.creatorOf(teamId)).to.eq(creator.address);
       expect(await team.minterOf(teamId)).to.eq(member1.address);
       expect(await team.nameOf(teamId)).to.eq('Team Name');
     });
@@ -78,18 +61,18 @@ describe('Team.sol - test/unit/Team.js', function () {
       expect(await team.balanceOf(member1.address, teamId)).to.eq(1);
       expect(await team.balanceOf(member2.address, teamId)).to.eq(1);
     });
-    it('throws "minter is null" error if null is set', async function () {
+    it('throws "InvalidAddress" error if null is set', async function () {
       await expect(
         team.addTeam(
           'Team Name',
           ethers.constants.AddressZero,
           [member1.address, member2.address],
           'Description'),
-      ).to.revertedWith('minter is null');
+      ).to.revertedWithCustomError(team, 'InvalidAddress');
     });
   });
 
-  describe('uri()', function () {
+  describe('uri()', async function () {
     it('returns uri with name, creator, minter', async function () {
       const res = decodeBase64(await team.uri(teamId));
 
@@ -99,49 +82,65 @@ describe('Team.sol - test/unit/Team.js', function () {
     });
   });
 
-  describe('addMembers()', function () {
+  describe('addMembers()', async function () {
     it('mints token to members', async function () {
       await team.connect(member1).addMembers([member3.address], teamId);
       expect(await team.balanceOf(member3.address, teamId)).to.eq(1);
     });
     it('will not mint twice to member', async function () {
-      await expect(team.connect(member1).addMembers([member1.address], teamId)).to.revertedWith('Team: Member/Members already added');
+      await expect(team.connect(member1).addMembers([member1.address], teamId)).to.revertedWithCustomError(team, 'MemberExists');
     });
-    it('throw "Team: only selected minter" error if not minter', async function () {
-      await expect(team.connect(member2).addMembers([member3.address], teamId)).to.revertedWith('Team: only selected minter');
+    it('throw "Unauthorized" error if not minter', async function () {
+      await expect(team.connect(member2).addMembers([member3.address], teamId)).to.revertedWithCustomError(team, 'Unauthorized');
     });
-    it('throw "Team: only selected minter" error if team not exists', async function () {
-      await expect(team.connect(member2).addMembers([member3.address], 0)).to.revertedWith('Team: only selected minter');
+    it('throw "Unauthorized" error if team not exists', async function () {
+      await expect(team.connect(member2).addMembers([member3.address], 0)).to.revertedWithCustomError(team, 'Unauthorized');
     });
   });
 
-  describe('removeMembers()', function () {
+  describe('removeMembers()', async function () {
     it('removes members', async function () {
       await team.connect(member1).removeMembers([member1.address], teamId);
       expect(await team.balanceOf(member1.address, teamId)).to.eq(0);
     });
-    it('throw "Team: only selected minter" error if removes non-member', async function () {
-      await expect(team.connect(member1).removeMembers([member3.address], teamId)).to.revertedWith('Team: Member/Members not exists');
+    it('throw "Unauthorized" error if removes non-member', async function () {
+      await expect(team.connect(member1).removeMembers([member3.address], teamId)).to.revertedWithCustomError(team, 'MemberNotFound');
     });
-    it('throw "Team: only selected minter" error if not minter', async function () {
-      await expect(team.connect(member2).removeMembers([member1.address], teamId)).to.revertedWith('Team: only selected minter');
+    it('throw "Unauthorized" error if not minter', async function () {
+      await expect(team.connect(member2).removeMembers([member1.address], teamId)).to.revertedWithCustomError(team, 'Unauthorized');
     });
-    it('throw "Team: only selected minter" error if team not exists', async function () {
-      await expect(team.connect(member2).removeMembers([member3.address], 0)).to.revertedWith('Team: only selected minter');
+    it('throw "Unauthorized" error if team not exists', async function () {
+      await expect(team.connect(member2).removeMembers([member3.address], 0)).to.revertedWithCustomError(team, 'Unauthorized');
     });
   });
 
-  describe('setInfo()', function () {
+  describe('setInfo()', async function () {
     it('updates name, description', async function () {
       await team.connect(member1).setInfo('newName', 'newDescription', teamId);
       expect(await team.nameOf(teamId)).to.eq('newName');
       expect(await team.descriptionOf(teamId)).to.eq('newDescription');
     });
-    it('throw "Team: only selected minter" error if not minter', async function () {
-      await expect(team.connect(member2).setInfo('newName', 'newDescription', teamId)).to.revertedWith('Team: only selected minter');
+    it('throw "Unauthorized" error if not minter', async function () {
+      await expect(team.connect(member2).setInfo('newName', 'newDescription', teamId)).to.revertedWithCustomError(team, 'Unauthorized');
     });
-    it('throw "Team: only selected minter" error if team not exists', async function () {
-      await expect(team.connect(member2).setInfo('newName', 'newDescription', 0)).to.revertedWith('Team: only selected minter');
+    it('throw "Unauthorized" error if team not exists', async function () {
+      await expect(team.connect(member2).setInfo('newName', 'newDescription', 0)).to.revertedWithCustomError(team, 'Unauthorized');
+    });
+  });
+
+  describe('setMinter()', async function () {
+    it('updates minter', async function () {
+      await team.connect(creator).setMinter(member2.address, teamId);
+      expect(await team.minterOf(teamId)).to.eq(member2.address);
+    });
+    it('throw "Ownable: caller is not the owner" error if not minter', async function () {
+      await expect(team.connect(member2).setMinter(member2.address, teamId)).to.revertedWith('Ownable: caller is not the owner');
+    });
+    it('throw "Ownable: caller is not the owner" error if team not exists', async function () {
+      await expect(team.connect(member2).setMinter(member2.address, 0)).to.revertedWith('Ownable: caller is not the owner');
+    });
+    it('throw "InvalidAddress" error if team not exists', async function () {
+      await expect(team.connect(creator).setMinter(AddressZero, 0)).to.revertedWithCustomError(team, 'InvalidAddress');
     });
   });
 });

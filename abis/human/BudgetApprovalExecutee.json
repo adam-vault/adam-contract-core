@@ -1,0 +1,11 @@
+[
+  "event CreateBudgetApproval(address budgetApproval, bytes data)",
+  "event ExecuteByBudgetApproval(address budgetApproval, bytes data)",
+  "event RevokeBudgetApproval(address budgetApproval)",
+  "function accountingSystem() view returns (address)",
+  "function budgetApprovals(address template) view returns (bool)",
+  "function createBudgetApprovals(address[] __budgetApprovals, bytes[] data)",
+  "function executeByBudgetApproval(address _to, bytes _data, uint256 _value) returns (bytes)",
+  "function revokeBudgetApprovals(address[] __budgetApprovals)",
+  "function team() view returns (address)"
+]

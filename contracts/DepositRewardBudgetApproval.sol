@@ -2,12 +2,12 @@
 
 pragma solidity 0.8.7;
 
-import "./base/CommonBudgetApproval.sol";
-import "./lib/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
+import "./base/CommonBudgetApproval.sol";
+import "./lib/BytesLib.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 import "./interface/ILiquidPool.sol";
 import "./interface/IDao.sol";
@@ -37,6 +37,11 @@ contract DepositRewardBudgetApproval is CommonBudgetApproval {
         uint256 _referrerRewardAmount,
         uint256 _refereeRewardAmount
     );
+    error InvalidContract(address addr);
+    error MsgValueNotMatch();
+    error InsufficientSupply();
+    error NotQualify();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -53,8 +58,12 @@ contract DepositRewardBudgetApproval is CommonBudgetApproval {
     ) external initializer {
         __BudgetApproval_init(params);
 
-        require(_liquidPool != address(0), "invalid liquidPool");
-        require(_token != address(0) && _token.isContract(), "invalid token");
+        if (!_liquidPool.isContract()) {
+            revert InvalidContract(_liquidPool);
+        }
+        if (!_token.isContract()) {
+            revert InvalidContract(_token);
+        }
 
         liquidPool = payable(_liquidPool);
         token = _token;
@@ -89,7 +98,9 @@ contract DepositRewardBudgetApproval is CommonBudgetApproval {
         );
 
         if (_asset == Denominations.ETH) {
-            require(msg.value == _amount, "amount not match");
+            if (msg.value != _amount) {
+                revert MsgValueNotMatch();
+            }
             deposit(_receiver);
         } else {
             depositToken(_receiver, _asset, _amount);
@@ -118,13 +129,17 @@ contract DepositRewardBudgetApproval is CommonBudgetApproval {
         address _executee = executee();
         address _token = token;
 
-        address dao = ILiquidPool(liquidPool).dao();
+        address dao = ILiquidPool(liquidPool).owner();
         address membership = IDao(payable(dao)).membership();
 
-        require(_allowAnyAmount || _totalAmount >= _referrerRewardAmount + _refereeRewardAmount, "not enough supply");
-        require(!IMembership(membership).isMember(referee) && !IMembership(membership).wasMember(referee), "not qualify");
+        if (IMembership(membership).isMember(referee) || IMembership(membership).wasMember(referee)) {
+            revert NotQualify();
+        }
 
         if (!_allowAnyAmount) {
+            if (_totalAmount < _referrerRewardAmount + _refereeRewardAmount) {
+                revert InsufficientSupply();
+            }
             totalAmount = _totalAmount - _referrerRewardAmount - _refereeRewardAmount;
         }
 

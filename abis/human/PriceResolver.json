@@ -1,0 +1,9 @@
+[
+  "error PairNotSupport(address asset, address base)",
+  "function accountingSystem() view returns (address)",
+  "function assetBaseCurrencyPrice(address asset, uint256 amount) view returns (uint256)",
+  "function assetPrice(address asset, address base, uint256 amount) view returns (uint256)",
+  "function baseCurrency() view returns (address)",
+  "function baseCurrencyDecimals() view returns (uint8)",
+  "function canResolvePrice(address asset) view returns (bool)"
+]

@@ -1,68 +1,68 @@
-const { expect } = require('chai');
+const chai = require('chai');
 const { ethers, upgrades } = require('hardhat');
+const { smock } = require('@defi-wonderland/smock');
 
-describe('MemberToken.sol - test/unit/MemberToken.js', function () {
-  let dao, member, minter;
+const { expect } = chai;
+chai.should();
+chai.use(smock.matchers);
+
+describe('MemberToken.sol - test/unit/MemberToken.js', async function () {
+  let member, minter;
   let memberToken, MemberToken;
+  let DaoChildBeaconProxy, daoProxy, impl;
 
-  beforeEach(async function () {
-    [dao, minter, member] = await ethers.getSigners();
-
+  before(async function () {
+    [minter, member] = await ethers.getSigners();
     MemberToken = await ethers.getContractFactory('MemberToken');
-    // Use creator address to simulate minter address
-    memberToken = await upgrades.deployProxy(MemberToken, [minter.address, 'MemberTokenName', 'MT'], { kind: 'uups' });
+    DaoChildBeaconProxy = await ethers.getContractFactory('DaoChildBeaconProxy');
   });
 
-  describe('initialize()', function () {
-    it('init with minter, name and symbol', async function () {
-      const contract = await upgrades.deployProxy(MemberToken, [
-        minter.address, 'MemberTokenName', 'MT',
-      ], { kind: 'uups', signer: dao });
+  beforeEach(async function () {
+    const daoBeacon = await smock.fake('DaoBeacon');
+    daoProxy = await smock.fake('DaoBeaconProxy');
+    impl = await MemberToken.deploy();
 
-      expect(await contract.minter()).to.equal(minter.address);
+    daoBeacon.implementation.returns(impl.address);
+    daoProxy.daoBeacon.returns(daoBeacon.address);
+
+    memberToken = await (DaoChildBeaconProxy).deploy(
+      daoProxy.address,
+      ethers.utils.id('adam.dao.member_token'),
+      impl.interface.encodeFunctionData('initialize', ['MemberTokenName', 'MT']),
+    );
+
+    memberToken = await ethers.getContractAt('MemberToken', memberToken.address);
+  });
+
+  describe('initialize()', async function () {
+    it('init with minter, name and symbol', async function () {
+      let contract = await DaoChildBeaconProxy.deploy(
+        daoProxy.address,
+        ethers.utils.id('adam.dao.member_token'),
+        impl.interface.encodeFunctionData('initialize', [
+          'MemberTokenName', 'MT',
+        ]),
+      );
+      contract = await ethers.getContractAt('MemberToken', contract.address);
+
+      expect(await contract.owner()).to.equal(minter.address);
       expect(await contract.name()).to.equal('MemberTokenName');
       expect(await contract.symbol()).to.equal('MT');
     });
-    it('throws "minter is null" error if set minter as null', async function () {
-      await expect(
-        upgrades.deployProxy(MemberToken, [
-          ethers.constants.AddressZero,
-          'MemberTokenName',
-          'MT',
-        ], { kind: 'uups', signer: dao }),
-      ).to.revertedWith('minter is null');
-    });
   });
 
-  describe('upgradeTo()', function () {
-    let mockV2Impl;
-    beforeEach(async function () {
-      const MockUpgrade = await ethers.getContractFactory('MockVersionUpgrade');
-      mockV2Impl = await MockUpgrade.deploy();
-      await mockV2Impl.deployed();
-    });
-    it('allows owner to upgrade', async function () {
-      await memberToken.connect(dao).upgradeTo(mockV2Impl.address);
-      const v2Contract = await ethers.getContractAt('MockVersionUpgrade', memberToken.address);
-      expect(await v2Contract.v2()).to.equal(true);
-    });
-    it('throws "Not dao" error if upgrade by non dao', async function () {
-      await expect(memberToken.connect(minter).upgradeTo(mockV2Impl.address)).to.revertedWith('Not dao');
-    });
-  });
-
-  describe('mint()', function () {
+  describe('mint()', async function () {
     it('mints when msg.sender is minter', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       expect(await memberToken.balanceOf(member.address)).to.equal(10);
     });
 
-    it('throws "Not minter" error if not called by minter', async function () {
-      await expect(memberToken.connect(member).mint(member.address, 10)).to.be.revertedWith('Not minter');
+    it('throws "Ownable: caller is not the owner" error if not called by minter', async function () {
+      await expect(memberToken.connect(member).mint(member.address, 10)).to.be.revertedWith('Ownable: caller is not the owner');
     });
   });
 
-  describe('getVotes()', function () {
+  describe('getVotes()', async function () {
     it('returns correct votes of non minter', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       expect(await memberToken.getVotes(member.address)).to.equal(10);
@@ -74,7 +74,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
   });
 
-  describe('getPastVotes()', function () {
+  describe('getPastVotes()', async function () {
     it('returns correct votes of non minter', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       const blockNumber = await ethers.provider.getBlockNumber();
@@ -92,7 +92,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
   });
 
-  describe('getPastTotalSupply', function () {
+  describe('getPastTotalSupply', async function () {
     it('returns total amount without balance of minter', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       await memberToken.connect(minter).mint(minter.address, 10);
@@ -103,7 +103,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
     });
   });
 
-  describe('delegate', function () {
+  describe('delegate', async function () {
     it('delegate fail for Member Token', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       await expect(
@@ -113,7 +113,7 @@ describe('MemberToken.sol - test/unit/MemberToken.js', function () {
         .to.be.revertedWith('Not support delegate Vote');
     });
   });
-  describe('delegateBySig', function () {
+  describe('delegateBySig', async function () {
     it('delegateBySig fail for Member Token', async function () {
       await memberToken.connect(minter).mint(member.address, 10);
       await expect(

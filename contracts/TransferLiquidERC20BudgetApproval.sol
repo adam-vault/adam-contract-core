@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
 
 pragma solidity 0.8.7;
-
-import "./base/CommonBudgetApproval.sol";
-import "./lib/BytesLib.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./base/PriceResolver.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
+import "./lib/BytesLib.sol";
+import "./base/CommonBudgetApproval.sol";
+import "./base/PriceResolver.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 
 contract TransferLiquidERC20BudgetApproval is
@@ -19,6 +18,7 @@ contract TransferLiquidERC20BudgetApproval is
     string public constant override name =
         "Transfer Liquid ERC20 Budget Approval";
 
+    address private _baseCurrency;
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
     address[] public tokens;
@@ -51,13 +51,17 @@ contract TransferLiquidERC20BudgetApproval is
         address[] memory _tokens,
         bool _allowAnyAmount,
         uint256 _totalAmount,
-        address _baseCurrency,
+        address __baseCurrency,
         // v2
         uint256[] memory _toTeamIds
     ) external initializer {
         __BudgetApproval_init(params);
 
         allowAllAddresses = _allowAllAddresses;
+        allowAnyAmount = _allowAnyAmount;
+        totalAmount = _totalAmount;
+        _baseCurrency = __baseCurrency;
+        
         for (uint256 i = 0; i < _toAddresses.length; i++) {
             _addToAddress(_toAddresses[i]);
         }
@@ -70,9 +74,14 @@ contract TransferLiquidERC20BudgetApproval is
             _addToTeam(_toTeamIds[i]);
         }
 
-        allowAnyAmount = _allowAnyAmount;
-        totalAmount = _totalAmount;
-        __PriceResolver_init(_baseCurrency);
+        require(accountingSystem() != address(0), "AccountingSystem is required");
+    }
+
+    function baseCurrency() public view override returns(address) {
+        return _baseCurrency;
+    }
+    function accountingSystem() public view override returns(address) {
+        return IBudgetApprovalExecutee(executee()).accountingSystem();
     }
 
     function executeParams() external pure override returns (string[] memory) {

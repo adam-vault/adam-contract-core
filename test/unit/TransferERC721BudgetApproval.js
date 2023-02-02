@@ -27,7 +27,6 @@ describe('TransferERC721BudgetApprovalV2.sol - test/unit/v2/TransferERC721Budget
       params.endTime || Math.round(Date.now() / 1000) + 86400,
       params.allowUnlimitedUsageCount || true,
       params.usageCount || 0,
-      params.team || team.address,
     ],
     params.allowAllToAddresses !== undefined ? params.allowAllToAddresses : true,
     params.toAddresses || [],
@@ -59,7 +58,9 @@ describe('TransferERC721BudgetApprovalV2.sol - test/unit/v2/TransferERC721Budget
     [creator, executor, receiver] = await ethers.getSigners();
 
     team = await smock.fake('Team');
-    executee = await smock.fake('MockBudgetApprovalExecutee');
+    executee = await (await smock.mock('MockBudgetApprovalExecutee')).deploy();
+    executee.team.returns(team.address);
+
     mockToken = await smock.fake('ERC721');
 
     await network.provider.request({
@@ -301,10 +302,16 @@ describe('TransferERC721BudgetApprovalV2.sol - test/unit/v2/TransferERC721Budget
             toTeamIds: [10],
           })));
         transferErc721BA = await ethers.getContractAt('TransferERC721BudgetApproval', contract.address);
+        await executee.setVariables({
+          _budgetApprovals: {
+            [contract.address]: true,
+          },
+        });
       });
 
       it('allows user to transfer to member of whitelisted team', async function () {
         team.balanceOfBatch.whenCalledWith([receiver.address], [10]).returns([1]);
+
         await expect(transferErc721BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;

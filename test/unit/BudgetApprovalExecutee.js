@@ -12,14 +12,15 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
   let executee, weth;
   beforeEach(async function () {
     [deployer, team, budgetApproval, unknown] = await ethers.getSigners();
-    executee = await (await smock.mock('BudgetApprovalExecutee', deployer)).deploy();
+    executee = await (await smock.mock('MockBudgetApprovalExecutee', deployer)).deploy();
     weth = await smock.fake('MockWETH9');
 
-    await executee.setVariable('_budgetApprovals', {
-      [budgetApproval.address]: true,
+    await executee.setVariables({
+      _team: team.address,
+      _budgetApprovals: {
+        [budgetApproval.address]: true,
+      },
     });
-
-    await executee.setVariable('_team', team.address);
 
     await ethers.provider.send('hardhat_setBalance', [
       executee.address,
@@ -53,7 +54,7 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
         weth.address,
         weth.interface.encodeFunctionData('deposit'),
         parseEther('1'),
-      )).to.be.revertedWith('Reverted by external contract');
+      )).to.be.revertedWith('Reverted by external contract - ');
     });
     it('throws "BudgetApprovalExecutee: access denied" error if not call be budget approval', async () => {
       await expect(executee.connect(unknown).executeByBudgetApproval(
@@ -79,7 +80,6 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
         0, // endTime
         false, // allow unlimited usage
         10, // usage count
-        team.address, // team
       ]];
     });
     it('executes call and values to target contract', async () => {

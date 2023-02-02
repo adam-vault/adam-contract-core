@@ -2,13 +2,12 @@
 
 pragma solidity 0.8.7;
 
+import "./base/PriceResolver.sol";
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
-import "./dex/UniswapSwapper.sol";
 import "./lib/Constant.sol";
-
-import "./base/PriceResolver.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
+import "./dex/UniswapSwapper.sol";
 
 contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, PriceResolver {
 
@@ -21,6 +20,7 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
 
     string public constant override name = "Uniswap Liquid Budget Approval";
 
+    address private _baseCurrency;
     address[] public fromTokens;
     mapping(address => bool) public fromTokensMapping;
     bool public allowAnyAmount;
@@ -45,9 +45,14 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         bool _allowAnyAmount,
         uint256 _totalAmount,
         uint8 _amountPercentage,
-        address _baseCurrency
+        address __baseCurrency
     ) external initializer {
         __BudgetApproval_init(params);
+
+        allowAnyAmount = _allowAnyAmount;
+        totalAmount = _totalAmount;
+        amountPercentage = _amountPercentage;
+        _baseCurrency = __baseCurrency;
         
         for(uint i = 0; i < _fromTokens.length; i++) {
             _addFromToken(_fromTokens[i]);
@@ -58,12 +63,14 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
             _addToToken(_toTokens[i]);
         }
 
-        allowAnyAmount = _allowAnyAmount;
-        totalAmount = _totalAmount;
-        amountPercentage = _amountPercentage;
+        require(accountingSystem() != address(0), "AccountingSystem is required");
+    }
 
-        __PriceResolver_init(_baseCurrency);
-
+    function baseCurrency() public view override returns(address) {
+        return _baseCurrency;
+    }
+    function accountingSystem() public view override returns(address) {
+        return IBudgetApprovalExecutee(executee()).accountingSystem();
     }
 
     function afterInitialized() external override onlyExecutee {

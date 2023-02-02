@@ -8,10 +8,11 @@ const findEventArgs = require('../../utils/findEventArgs');
 chai.should();
 chai.use(smock.matchers);
 
-describe('Dao.sol - test/unit/Dao.js', function () {
+describe('Dao.sol - test/unit/Dao.js', async function () {
   let creator, member, mockGovern;
-  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockGovernFactory, mockTeam;
+  let dao, mockAdam, mockMembership, lpAsSigner, mockMemberToken, mockTeam;
   let tokenA, tokenC721, tokenD1155;
+  let mockGovernImp;
 
   beforeEach(async function () {
     [creator, member, mockGovern] = await ethers.getSigners();
@@ -20,63 +21,99 @@ describe('Dao.sol - test/unit/Dao.js', function () {
 
     mockAdam = await smock.fake('Adam');
     mockMembership = await (await smock.mock('Membership')).deploy();
+    mockGovernImp = await (await smock.mock('Govern')).deploy();
     const mockLiquidPool = await smock.fake('LiquidPool');
-    mockGovernFactory = await smock.fake('GovernFactory');
     mockTeam = await smock.fake('Team');
     mockMemberToken = await (await smock.mock('MemberToken')).deploy();
 
     const adamAsSigner = await testUtils.address.impersonate(mockAdam.address);
     await testUtils.address.setBalance(mockAdam.address, ethers.utils.parseEther('1'));
-    lpAsSigner = await testUtils.address.impersonate(mockLiquidPool.address);
 
-    mockMembership.createMember.returns();
     mockMembership.totalSupply.returns(1);
     mockMembership.isMember.returns(true);
-
-    mockGovernFactory.createGovern.returns();
-
     mockMemberToken.mint.returns();
     mockMemberToken.initialize.returns();
 
-    const ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy', { signer: adamAsSigner });
+    const DaoBeaconProxy = await ethers.getContractFactory('DaoBeaconProxy', { signer: adamAsSigner });
     const Dao = await ethers.getContractFactory('Dao', { signer: adamAsSigner });
     const implDao = await Dao.deploy();
-    const proxyDao = await ERC1967Proxy.deploy(implDao.address, '0x');
+
+    const DaoBeacon = await ethers.getContractFactory('DaoBeacon', { signer: adamAsSigner });
+    const beacon = await DaoBeacon.deploy('v1', [
+      [ethers.utils.id('adam.dao'), implDao.address],
+      [ethers.utils.id('adam.dao.membership'), mockMembership.address],
+      [ethers.utils.id('adam.dao.member_token'), mockMemberToken.address],
+      [ethers.utils.id('adam.dao.liquid_pool'), mockLiquidPool.address],
+      [ethers.utils.id('adam.dao.govern'), mockGovernImp.address],
+      [ethers.utils.id('adam.dao.team'), mockTeam.address],
+    ]);
+    const proxyDao = await DaoBeaconProxy.deploy(beacon.address, '0x');
 
     dao = await ethers.getContractAt('Dao', proxyDao.address, adamAsSigner);
-    await dao.initialize([
+    await mockMembership.setVariable('_owner', proxyDao.address);
+    await mockMembership.setVariable('maxMemberLimit', 1);
+
+    await dao.initialize(
       creator.address,
-      mockMembership.address,
-      mockLiquidPool.address,
-      mockGovernFactory.address,
-      mockTeam.address,
-      mockMemberToken.address,
       'Name',
       'Description',
       '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
-      'tokenName', 'T1',
-      ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'],
-    ], [
-      Dao.interface.encodeFunctionData('createGovern', ['General', 0, 0, 0, 0, ethers.constants.AddressZero, 0]),
-      Dao.interface.encodeFunctionData('addAdmissionToken', [tokenA.address, 10, 0]),
-      Dao.interface.encodeFunctionData('addAdmissionToken', [tokenC721.address, 1, 1]),
-      Dao.interface.encodeFunctionData('addAdmissionToken', [tokenD1155.address, 1, 1]),
-    ]);
+      [
+        Dao.interface.encodeFunctionData('createPlugin', [
+          ethers.utils.id('adam.dao.membership'),
+          mockMembership.interface.encodeFunctionData('initialize', [
+            'DaoName',
+            1000,
+          ]),
+        ]),
+        Dao.interface.encodeFunctionData('createPlugin', [
+          ethers.utils.id('adam.dao.team'), '0x',
+        ]),
+        Dao.interface.encodeFunctionData('createPlugin', [
+          ethers.utils.id('adam.dao.member_token'),
+          mockMemberToken.interface.encodeFunctionData('initialize', ['tokenName', 'T1']),
+        ]),
+        Dao.interface.encodeFunctionData('createPlugin', [
+          ethers.utils.id('adam.dao.liquid_pool'),
+          mockLiquidPool.interface.encodeFunctionData('initialize', [
+            ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'],
+            '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+          ]),
+        ]),
+        Dao.interface.encodeFunctionData('createGovern', ['General', 0, 0, 0, ethers.constants.AddressZero, 0]),
+        Dao.interface.encodeFunctionData('executePlugin', [
+          ethers.utils.id('adam.dao.membership'),
+          mockMembership.interface.encodeFunctionData('addAdmissionToken', [tokenA.address, 10, 0]),
+          0,
+        ]),
+        Dao.interface.encodeFunctionData('executePlugin', [
+          ethers.utils.id('adam.dao.membership'),
+          mockMembership.interface.encodeFunctionData('addAdmissionToken', [tokenC721.address, 1, 1]),
+          0,
+        ]),
+        Dao.interface.encodeFunctionData('executePlugin', [
+          ethers.utils.id('adam.dao.membership'),
+          mockMembership.interface.encodeFunctionData('addAdmissionToken', [tokenD1155.address, 1, 1]),
+          0,
+        ]),
+      ],
+    );
+
+    lpAsSigner = await testUtils.address.impersonate(await dao.liquidPool());
   });
 
-  describe('setFirstDepositTime()', function () {
+  describe('setFirstDepositTime()', async function () {
     it('sets first deposit time when msg.sender is liquid pool', async function () {
       await testUtils.address.setBalance(lpAsSigner.address, ethers.utils.parseEther('1'));
-      const { blockNumber } = await dao.connect(lpAsSigner).setFirstDepositTime(creator.address);
-      const { timestamp } = await ethers.provider.getBlock(blockNumber);
-      expect(await dao.firstDepositTime(creator.address)).to.equal(timestamp);
+      await dao.connect(lpAsSigner).setFirstDepositTime(creator.address, 10);
+      expect(await dao.firstDepositTime(creator.address)).to.equal(10);
     });
-    it('throws "only LP"', async function () {
-      await expect(dao.setFirstDepositTime(creator.address)).to.be.revertedWith('only LP');
+    it('throws "Unauthorized"', async function () {
+      await expect(dao.setFirstDepositTime(creator.address, 0)).to.be.revertedWithCustomError(dao, 'Unauthorized');
     });
   });
 
-  describe('canCreateBudgetApproval()', function () {
+  describe('canCreateBudgetApproval()', async function () {
     it('returns value of adam.budgetApprovals()', async function () {
       await mockAdam.budgetApprovals.returns(true);
       expect(await dao.canCreateBudgetApproval(creator.address)).to.equal(true);
@@ -86,20 +123,19 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     });
   });
 
-  describe('govern()', function () {
-    it('returns address from governFactory.governMap()', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
-      expect(await dao.govern('General')).to.equal(mockGovern.address);
+  describe('liquidPool()', async function () {
+    it('returns address from dao.plugins()', async function () {
+      expect(await dao.liquidPool()).to.be.equal(await dao.plugins(ethers.utils.id('adam.dao.liquid_pool')));
     });
   });
 
-  describe('admissionTokensLength()', function () {
-    it('counts admissionTokens', async function () {
-      expect(await dao.admissionTokensLength()).to.equal(ethers.BigNumber.from('3'));
+  describe('govern()', async function () {
+    it('returns address from dao.govern()', async function () {
+      expect(await dao.govern('General')).to.be.not.equal(ethers.constants.AddressZero);
     });
   });
 
-  describe('byPassGovern()', function () {
+  describe('byPassGovern()', async function () {
     it('return true when it is the only member', async function () {
       mockMembership.totalSupply.returns(1);
       mockMembership.isMember.returns(true);
@@ -119,94 +155,49 @@ describe('Dao.sol - test/unit/Dao.js', function () {
     });
   });
 
-  describe('isMember()', function () {
-    it('returns value from membership.isMember()', async function () {
-      mockMembership.isMember.returns(true);
-      expect(await dao.isMember(creator.address)).to.equal(true);
-
-      mockMembership.isMember.returns(false);
-      expect(await dao.isMember(creator.address)).to.equal(false);
-    });
-  });
-
-  describe('setMinDepositAmount()', function () {
+  describe('setMinDepositAmount()', async function () {
     it('updates minDepositAmount', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       await dao.connect(mockGovern).setMinDepositAmount(10);
       expect(await dao.minDepositAmount()).to.equal(10);
     });
   });
 
-  describe('setLocktime()', function () {
+  describe('setDescription()', async function () {
+    it('updates description', async function () {
+      await dao.connect(mockGovern).setDescription('desc');
+      expect(await dao.description()).to.equal('desc');
+    });
+  });
+
+  describe('setLocktime()', async function () {
     it('updates locktime', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       await dao.connect(mockGovern).setLocktime(123);
       expect(await dao.locktime()).to.equal(123);
     });
   });
 
-  describe('setLogoCID()', function () {
+  describe('setLogoCID()', async function () {
     it('updates Logo CID', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       await dao.connect(mockGovern).setLogoCID('cid');
       expect(await dao.logoCID()).to.equal('cid');
     });
   });
 
-  describe('createGovern()', function () {
-    it('calls governFactory and create govern', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
-      await dao.connect(mockGovern).createGovern('governA', 1, 2, 3, 0, ethers.constants.AddressZero, 0);
-      await dao.connect(mockGovern).createGovern('governB', 4, 5, 6, 1, ethers.constants.AddressZero, 5);
-      await dao.connect(mockGovern).createGovern('governC', 7, 8, 9, 2, tokenA.address, 6);
-      mockGovernFactory.createGovern.atCall(1).should.be.calledWith('governA', 1, 2, 3, await dao.membership(), 0);
-      mockGovernFactory.createGovern.atCall(2).should.be.calledWith('governB', 4, 5, 6, await dao.memberToken(), 5);
-      mockGovernFactory.createGovern.atCall(3).should.be.calledWith('governC', 7, 8, 9, tokenA.address, 6);
+  describe('createGovern()', async function () {
+    it('calls dao and create govern', async function () {
+      const tx = await dao.connect(mockGovern).createGovern('governA', 2, 3, 0, ethers.constants.AddressZero, 0);
+      const tx2 = await dao.connect(mockGovern).createGovern('governB', 5, 6, 1, ethers.constants.AddressZero, 5);
+      const tx3 = await dao.connect(mockGovern).createGovern('governC', 8, 9, 2, tokenA.address, 6);
+      expect(await dao.govern('governA')).to.equal(await findEventArgs(tx, 'CreateGovern', 'govern'));
+      expect(await dao.govern('governB')).to.equal(await findEventArgs(tx2, 'CreateGovern', 'govern'));
+      expect(await dao.govern('governC')).to.equal(await findEventArgs(tx3, 'CreateGovern', 'govern'));
     });
   });
 
-  describe('addAssets()', function () {
+  describe('addAssets()', async function () {
     it('adds supported asset', async function () {
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
       await dao.connect(mockGovern).addAssets([tokenA.address]);
       expect(await dao.isAssetSupported(tokenA.address)).to.equal(true);
-    });
-  });
-
-  describe('createTeam()', function () {
-    it('creates team', async function () {
-      mockTeam.addTeam.returns(1);
-      mockGovernFactory.governMap.whenCalledWith(dao.address, 'General').returns(mockGovern.address);
-      const tx = await dao.connect(mockGovern).createTeam('title', creator.address, [member.address], 'description');
-      const { tokenId: teamId } = await findEventArgs(tx, 'WhitelistTeam');
-      expect(await dao.teamWhitelist(teamId)).to.equal(true);
-    });
-  });
-
-  describe('isPassAdmissionToken()', function () {
-    it('returns true when all pass', async function () {
-      await tokenA.mint(member.address, 10);
-      await tokenC721.mint(member.address, 1);
-      await tokenD1155.mint(member.address, 1, 1, 0);
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(true);
-    });
-    it('returns false when lack ERC20', async function () {
-      await tokenC721.mint(member.address, 1);
-      await tokenD1155.mint(member.address, 1, 1, 0);
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
-    });
-    it('returns false when lack ERC721', async function () {
-      await tokenA.mint(member.address, 10);
-      await tokenD1155.mint(member.address, 1, 1, 0);
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
-    });
-    it('returns false when lack ERC1155', async function () {
-      await tokenA.mint(member.address, 10);
-      await tokenC721.mint(member.address, 1);
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
-    });
-    it('returns false when lack all tokens', async function () {
-      expect(await dao.isPassAdmissionToken(member.address)).to.equal(false);
     });
   });
 });

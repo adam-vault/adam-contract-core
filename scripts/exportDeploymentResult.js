@@ -9,26 +9,14 @@ async function main () {
 
   const adamDeployment = await get('Adam');
 
-  const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);
-  const events = await adam.queryFilter(adam.filters.ImplementationUpgrade());
-
-  const {
-    daoImplementation: dao,
-    membershipImplementation: membership,
-    liquidPoolImplementation: liquidPool,
-    memberTokenImplementation: memberToken,
-    governImplementation: govern,
-  } = events.pop().args;
-
   const contractAddresses = {
     adam: adamDeployment.address,
-    dao,
-    membership,
-    govern,
-    memberToken,
-    liquidPool,
+    dao: (await get('Dao')).address,
+    membership: (await get('Membership')).address,
+    govern: (await get('Govern')).address,
+    memberToken: (await get('MemberToken')).address,
+    liquidPool: (await get('LiquidPool')).address,
     team: (await get('Team')).address,
-    governFactory: (await get('GovernFactory')).address,
     transferLiquidERC20BudgetApproval: (await get('TransferLiquidERC20BudgetApproval')).address,
     transferErc721BudgetApproval: (await get('TransferERC721BudgetApproval')).address,
     transferERC20BudgetApproval: (await get('TransferERC20BudgetApproval')).address,

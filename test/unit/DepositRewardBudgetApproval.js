@@ -12,7 +12,7 @@ const abiCoder = ethers.utils.defaultAbiCoder;
 describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetApproval.js', async function () {
   let creator, executor, referee, referrer;
   let executee, depositToken;
-  let executeeAsSigner, DepositRewardBudgetApproval, ERC1967Proxy, depositRewardBAImpl;
+  let executeeAsSigner, DepositRewardBudgetApproval, ERC1967Proxy, depositRewardBAImpl, team;
 
   let liquidPool, dao, membership, rewardToken;
 
@@ -29,7 +29,6 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
       params.endTime || Math.round(Date.now() / 1000) + 86400,
       params.allowUnlimitedUsageCount || true,
       params.usageCount || 0,
-      params.team || ethers.constants.AddressZero,
     ],
     params.liquidPool,
     params.token,
@@ -63,11 +62,14 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
     dao = await smock.fake('Dao');
     membership = await smock.fake('Membership');
 
-    liquidPool.dao.returns(dao.address);
+    liquidPool.owner.returns(dao.address);
     dao.membership.returns(membership.address);
 
     executee = await smock.fake('MockBudgetApprovalExecutee');
     rewardToken = await smock.fake('ERC20');
+    team = await smock.fake('Team');
+    executee.team.returns(team.address);
+
     depositToken = await smock.fake('ERC20');
 
     await network.provider.request({
@@ -137,7 +139,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           totalAmount: ethers.BigNumber.from('1000'),
           referrerRewardAmount: 1,
           refereeRewardAmount: 2,
-        })))).to.be.revertedWith('invalid token');
+        })))).to.be.revertedWithCustomError(depositRewardBAImpl, 'InvalidContract');
       await expect(ERC1967Proxy.deploy(
         depositRewardBAImpl.address,
         DepositRewardBudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
@@ -147,7 +149,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           totalAmount: ethers.BigNumber.from('1000'),
           referrerRewardAmount: 1,
           refereeRewardAmount: 2,
-        })))).to.be.revertedWith('invalid token');
+        })))).to.be.revertedWithCustomError(depositRewardBAImpl, 'InvalidContract');
     });
     it('throws "invalid liquidPool', async () => {
       await expect(ERC1967Proxy.deploy(
@@ -159,7 +161,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
           totalAmount: ethers.BigNumber.from('1000'),
           referrerRewardAmount: 1,
           refereeRewardAmount: 2,
-        })))).to.be.revertedWith('invalid liquidPool');
+        })))).to.be.revertedWithCustomError(depositRewardBAImpl, 'InvalidContract');
     });
   });
 
@@ -276,7 +278,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
       executee.executeByBudgetApproval.returns('0x');
       await expect(depositRewardBA.connect(referee).createTransaction([
         encodeTxData(referee.address, depositToken.address, 1000, referrer.address),
-      ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('not enough supply');
+      ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWithCustomError(depositRewardBA, 'InsufficientSupply');
     });
 
     it('deposits Tokens to LP', async function () {
@@ -322,7 +324,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
 
       await expect(depositRewardBA.connect(referee).createTransaction([
         encodeTxData(referee.address, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', BigNumber.from('1000'), referrer.address),
-      ], Math.round(Date.now() / 1000) + 86400, true, '', { value: BigNumber.from('1001') })).to.be.revertedWith('amount not match');
+      ], Math.round(Date.now() / 1000) + 86400, true, '', { value: BigNumber.from('1001') })).to.be.revertedWithCustomError(depositRewardBA, 'MsgValueNotMatch');
     });
 
     it('blocks members if joined before', async function () {
@@ -342,7 +344,7 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
       membership.wasMember.returns(false);
       await expect(depositRewardBA.connect(referee).createTransaction([
         encodeTxData(referee.address, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', 1000, referrer.address),
-      ], Math.round(Date.now() / 1000) + 86400, true, '', { value: 1000 })).to.be.revertedWith('not qualify');
+      ], Math.round(Date.now() / 1000) + 86400, true, '', { value: 1000 })).to.be.revertedWithCustomError(depositRewardBA, 'NotQualify');
     });
 
     it('blocks members if quit before', async function () {
@@ -362,9 +364,8 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
       membership.wasMember.returns(true);
       await expect(depositRewardBA.connect(referee).createTransaction([
         encodeTxData(referee.address, '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', 1000, referrer.address),
-      ], Math.round(Date.now() / 1000) + 86400, true, '', { value: 1000 })).to.be.revertedWith('not qualify');
+      ], Math.round(Date.now() / 1000) + 86400, true, '', { value: 1000 })).to.be.revertedWithCustomError(depositRewardBA, 'NotQualify');
     });
-
 
     // context('allow limited absolute amount', async function () {
     //   let depositRewardBA;

@@ -13,6 +13,6 @@ library RevertMsg {
             // Slice the sighash.
             _returnData := add(_returnData, 0x04)
         }
-        return string(" - ").concat(abi.decode(_returnData, (string))); // All that remains is the revert string
+        return abi.decode(_returnData, (string)); // All that remains is the revert string
     }
 }

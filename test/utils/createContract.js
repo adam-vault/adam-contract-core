@@ -37,47 +37,87 @@ const createAdam = async (budgetApprovalAddresses) => {
   const [creator] = await ethers.getSigners();
 
   const Dao = await ethers.getContractFactory('MockDao', { signer: creator });
-
   const Membership = await ethers.getContractFactory('Membership', { signer: creator });
   const Adam = await ethers.getContractFactory('Adam', { signer: creator });
-  const GovernFactory = await ethers.getContractFactory('GovernFactory', { signer: creator });
   const Govern = await ethers.getContractFactory('Govern', { signer: creator });
   const LiquidPool = await ethers.getContractFactory('LiquidPool', { signer: creator });
   const Team = await ethers.getContractFactory('Team', { signer: creator });
-
   const MemberToken = await ethers.getContractFactory('MemberToken', { signer: creator });
+  const DaoBeacon = await ethers.getContractFactory('DaoBeacon', { signer: creator });
+  const AccountingSystem = await ethers.getContractFactory('AccountingSystem', { signer: creator });
+  const EthereumChainlinkPriceGateway = await ethers.getContractFactory('EthereumChainlinkPriceGateway', { signer: creator });
+  const ArbitrumChainlinkPriceGateway = await ethers.getContractFactory('ArbitrumChainlinkPriceGateway', { signer: creator });
+  const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory('TransferLiquidERC20BudgetApproval', { signer: creator });
+  const UniswapLiquidBudgetApproval = await ethers.getContractFactory('UniswapLiquidBudgetApproval', { signer: creator });
+  const TransferERC721BudgetApproval = await ethers.getContractFactory('TransferERC721BudgetApproval', { signer: creator });
+  const TransferERC20BudgetApproval = await ethers.getContractFactory('TransferERC20BudgetApproval', { signer: creator });
 
   const dao = await Dao.deploy();
-  if (!budgetApprovalAddresses) {
-    budgetApprovalAddresses = await createBudgetApprovals(creator);
-  }
   const membership = await Membership.deploy();
   const liquidPool = await LiquidPool.deploy();
   const team = await Team.deploy();
-
   const govern = await Govern.deploy();
   const memberToken = await MemberToken.deploy();
+  const accountingSystem = await AccountingSystem.deploy();
+  const ethPriceGateway = await EthereumChainlinkPriceGateway.deploy();
+  const arbPriceGateway = await ArbitrumChainlinkPriceGateway.deploy();
+  const transferLiquidERC20BudgetApproval = await TransferLiquidERC20BudgetApproval.deploy();
+  const uniswapLiquidBudgetApproval = await UniswapLiquidBudgetApproval.deploy();
+  const transferERC721BudgetApproval = await TransferERC721BudgetApproval.deploy();
+  const transferERC20BudgetApproval = await TransferERC20BudgetApproval.deploy();
+
   await dao.deployed();
   await membership.deployed();
   await govern.deployed();
   await liquidPool.deployed();
   await memberToken.deployed();
   await team.deployed();
+  await accountingSystem.deployed();
+  await ethPriceGateway.deployed();
+  await arbPriceGateway.deployed();
+  await transferLiquidERC20BudgetApproval.deployed();
+  await uniswapLiquidBudgetApproval.deployed();
+  await transferERC721BudgetApproval.deployed();
+  await transferERC20BudgetApproval.deployed();
 
-  const governFactory = await upgrades.deployProxy(GovernFactory, [govern.address], { kind: 'uups' });
-  await governFactory.deployed();
+  const beacon = await DaoBeacon.deploy(
+    '',
+    [
+      [ethers.utils.id('adam.dao'), dao.address],
+      [ethers.utils.id('adam.dao.membership'), membership.address],
+      [ethers.utils.id('adam.dao.member_token'), memberToken.address],
+      [ethers.utils.id('adam.dao.liquid_pool'), liquidPool.address],
+      [ethers.utils.id('adam.dao.govern'), govern.address],
+      [ethers.utils.id('adam.dao.team'), team.address],
+      [ethers.utils.id('adam.dao.accounting_system'), accountingSystem.address],
+    ],
+  );
+
   const adam = await upgrades.deployProxy(Adam, [
-    dao.address,
-    membership.address,
-    liquidPool.address,
-    memberToken.address,
-    budgetApprovalAddresses,
-    governFactory.address,
-    team.address,
+    beacon.address,
+    [transferLiquidERC20BudgetApproval.address, uniswapLiquidBudgetApproval.address, transferERC721BudgetApproval.address, transferERC20BudgetApproval.address],
+    [ethPriceGateway.address, arbPriceGateway.address],
   ], { kind: 'uups' });
 
   await adam.deployed();
-  return adam;
+
+  return {
+    adam,
+    ethPriceGateway,
+    arbPriceGateway,
+    dao,
+    membership,
+    govern,
+    liquidPool,
+    memberToken,
+    team,
+    accountingSystem,
+    beacon,
+    transferLiquidERC20BudgetApproval,
+    uniswapLiquidBudgetApproval,
+    transferERC721BudgetApproval,
+    transferERC20BudgetApproval,
+  };
 };
 
 const createTokens = async () => {

@@ -1,0 +1,5 @@
+[
+  "function assetPrice(address asset, address base, uint256 amount) view returns (uint256)",
+  "function isSupportedPair(address asset, address base) view returns (bool)",
+  "function name() returns (string)"
+]

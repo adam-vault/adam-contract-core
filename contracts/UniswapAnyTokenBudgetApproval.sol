@@ -4,15 +4,14 @@ pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "./base/PriceResolver.sol";
 import "./base/CommonBudgetApproval.sol";
 import "./lib/BytesLib.sol";
-import "./dex/UniswapSwapper.sol";
 import "./lib/Constant.sol";
-
-import "./base/PriceResolver.sol";
 import "./interface/IDao.sol";
 import "./interface/IAdam.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
+import "./dex/UniswapSwapper.sol";
 
 contract UniswapAnyTokenBudgetApproval is CommonBudgetApproval, UniswapSwapper {
 

@@ -1,5 +1,5 @@
 const chai = require('chai');
-const { ethers, network } = require('hardhat');
+const { ethers, network, testUtils } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 
 const { expect } = chai;
@@ -9,9 +9,9 @@ chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe.only('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApproval.js', async function () {
-  let executor, receiver;
-  let mockToken, team, executee;
+describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApproval.js', async function () {
+  let executor, receiver, team;
+  let mockToken, executee;
   let executeeAsSigner, VestingERC20BudgetApproval, ERC1967Proxy, vestingErc20BAImpl;
 
   function initializeParser (params = {}) {
@@ -27,7 +27,6 @@ describe.only('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetA
       params.endTime || Math.round(Date.now() / 1000) + 86400,
       params.allowUnlimitedUsageCount || true,
       params.usageCount || 0,
-      params.team || team.address,
     ],
     params.token,
     params.toAddress,
@@ -52,29 +51,21 @@ describe.only('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetA
     ]);
   }
 
-  beforeEach(async function () {
+  before(async function () {
     [executor, receiver] = await ethers.getSigners();
+    VestingERC20BudgetApproval = await ethers.getContractFactory('VestingERC20BudgetApproval');
+    vestingErc20BAImpl = await VestingERC20BudgetApproval.deploy();
+  });
 
-    team = await smock.fake('Team');
+  beforeEach(async function () {
     executee = await smock.fake('MockBudgetApprovalExecutee');
     mockToken = await smock.fake('ERC20');
+    team = await smock.fake('Team');
+    executee.team.returns(team.address);
+    await testUtils.address.setBalance(executee.address, ethers.utils.parseEther('1'));
 
-    await network.provider.request({
-      method: 'hardhat_impersonateAccount',
-      params: [executee.address],
-    });
-    await network.provider.send(
-      'hardhat_setBalance', [
-        executee.address,
-        '0x10000000000000000000000000000',
-      ]);
-
-    executeeAsSigner = await ethers.getSigner(executee.address);
-    VestingERC20BudgetApproval = await ethers.getContractFactory('VestingERC20BudgetApproval', { signer: executeeAsSigner });
-
+    executeeAsSigner = await testUtils.address.impersonate(executee.address);
     ERC1967Proxy = await ethers.getContractFactory('ERC1967Proxy', { signer: executeeAsSigner });
-
-    vestingErc20BAImpl = await VestingERC20BudgetApproval.deploy();
   });
 
   describe('initialize()', async function () {
@@ -339,7 +330,7 @@ describe.only('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetA
                 it('throws if cliff not passed', async function () {
                   await expect(vestingERC20BA.connect(executor).createTransaction(
                     [encodeTxData(1)], Math.round(Date.now() / 1000) + 86400, true, 'comment'))
-                    .to.be.revertedWith('Budget usage period not started');
+                    .to.be.revertedWithCustomError(vestingERC20BA, 'BudgetNotStarted');
                 });
               } else if (!expectedResult.isCliffPassed) {
                 it('throws if cliff not passed', async function () {

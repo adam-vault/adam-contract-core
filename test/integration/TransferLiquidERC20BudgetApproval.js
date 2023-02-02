@@ -1,9 +1,10 @@
 const { expect } = require('chai');
-const { ethers } = require('hardhat');
+const { ethers, testUtils } = require('hardhat');
 const findEventArgs = require('../../utils/findEventArgs');
-const { getCreateTransferLiquidErc20TokenBAParams, getCreateDaoParams } = require('../../utils/paramsStruct');
+const { getCreateTransferLiquidErc20TokenBAParams } = require('../../utils/paramsStruct');
 
-const { createTokens, createAdam, createBudgetApprovals } = require('../utils/createContract');
+const { createTokens, createAdam } = require('../utils/createContract');
+const paramsStruct = require('../../utils/paramsStruct');
 
 const {
   ADDRESS_ETH,
@@ -14,12 +15,12 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration/TransferLiquidERC20BudgetApproval.js', function () {
+describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration/TransferLiquidERC20BudgetApproval.js', async function () {
   let adam, dao, transferLiquidERC20BAImplementation, budgetApproval, lp;
-  let executor, approver, receiver;
-  let tokenA, feedRegistry, budgetApprovalAddresses;
+  let executor, approver, receiver, daoSigner;
+  let tokenA, feedRegistry, budgetApprovalAddresses, priceGatewayAddresses, ethereumChainlinkPriceGateway;
 
-  before(async function () {
+  beforeEach(async function () {
     [executor, approver, receiver] = await ethers.getSigners();
 
     ({ tokenA } = await createTokens());
@@ -32,20 +33,26 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
     feedRegistry = await ethers.getContractAt('MockFeedRegistry', ADDRESS_MOCK_FEED_REGISTRY);
     await feedRegistry.setAggregator(tokenA.address, ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR);
 
-    budgetApprovalAddresses = await createBudgetApprovals(executor);
-    adam = await createAdam(budgetApprovalAddresses);
+    const result = await createAdam({ budgetApprovalAddresses, priceGatewayAddresses });
+    adam = result.adam;
+    ethereumChainlinkPriceGateway = result.ethPriceGateway.address;
+    transferLiquidERC20BAImplementation = result.transferLiquidERC20BudgetApproval;
 
     const tx1 = await adam.createDao(
-      ...getCreateDaoParams({}),
+      ...paramsStruct.getCreateDaoParams({
+        depositTokens: [ADDRESS_ETH, tokenA.address],
+        priceGateways: [ethereumChainlinkPriceGateway],
+      }),
     );
     const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
     dao = await ethers.getContractAt('Dao', daoAddr);
     lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-    const transferLiquidERC20BAImplementationAddr = budgetApprovalAddresses[0];
-    transferLiquidERC20BAImplementation = await ethers.getContractAt('TransferLiquidERC20BudgetApproval', transferLiquidERC20BAImplementationAddr);
+
+    daoSigner = await testUtils.address.impersonate(dao.address);
+    await testUtils.address.setBalance(dao.address, parseEther('1'));
   });
 
-  describe('On Liquid Pool', function () {
+  describe('On Liquid Pool', async function () {
     let budgetApprovalAddress;
     beforeEach(async function () {
       const initData = transferLiquidERC20BAImplementation.interface.encodeFunctionData('initialize',
@@ -57,11 +64,10 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
           toAddresses: [receiver.address],
           minApproval: 1,
           usageCount: 10,
-          team: await adam.team(),
         }),
       );
 
-      const tx = await lp.createBudgetApprovals(
+      const tx = await lp.connect(daoSigner).createBudgetApprovals(
         [transferLiquidERC20BAImplementation.address], [initData],
       );
       budgetApprovalAddress = (await findEventArgs(tx, 'CreateBudgetApproval')).budgetApproval;

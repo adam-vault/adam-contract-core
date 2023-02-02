@@ -2,70 +2,27 @@
 
 pragma solidity 0.8.7;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
-
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import "@openzeppelin/contracts/utils/StorageSlot.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
+import "./base/DaoChildBeaconProxy.sol";
 
 import "./interface/IAdam.sol";
 import "./interface/IMembership.sol";
-import "./interface/IGovernFactory.sol";
+import "./interface/IGovern.sol";
 import "./interface/IMemberToken.sol";
 import "./interface/ITeam.sol";
 import "./interface/ILiquidPool.sol";
 
-import "./lib/Concat.sol";
 import "./lib/Constant.sol";
 
-import "./lib/InterfaceChecker.sol";
-import "./lib/ToString.sol";
-import "./lib/RevertMsg.sol";
 
-interface IInbox {
-    function createRetryableTicket(
-        address destAddr,
-        uint256 l2CallValue,
-        uint256 maxSubmissionCost,
-        address excessFeeRefundAddress,
-        address callValueRefundAddress,
-        uint256 maxGas,
-        uint256 gasPriceBid,
-        bytes calldata data
-    ) external payable returns (uint256);
-}
-
-contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
+contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable, BudgetApprovalExecutee {
     using Concat for string;
     using AddressUpgradeable for address;
-    using InterfaceChecker for address;
-
-    struct InitializeParams {
-        address _creator;
-        address _membership;
-        address _liquidPool;
-        address _governFactory;
-        address _team;
-        address _memberTokenImplementation;
-        string _name;
-        string _description;
-        address baseCurrency;
-        string _memberTokenName;
-        string _memberTokenSymbol;
-        address[] depositTokens;
-    }
-
-    struct AdmissionTokenSetting{
-        uint256 minTokenToAdmit;
-        uint256 tokenId;
-        bool active;
-    }
 
     enum VoteType {
         Membership,
@@ -73,349 +30,327 @@ contract Dao is Initializable, UUPSUpgradeable, ERC721HolderUpgradeable, ERC1155
         ExistingToken
     }
 
-    address public memberToken;
     address public creator;
     address public adam;
-    address public membership;
-    address public liquidPool;
-    address public governFactory;
     string public name;
+    string public description;
     uint256 public locktime;
     uint256 public minDepositAmount;
     address public baseCurrency;
     string public logoCID;
-    address[] public admissionTokens;
     bool private _initializing;
 
     mapping(address => uint256) public firstDepositTime;
     mapping(address => bool) public isAssetSupported;
-    mapping(uint256 => bool) public teamWhitelist;
-    mapping(address => AdmissionTokenSetting) public admissionTokenSetting;
+
+    mapping(string => address) public govern;
+    mapping(bytes32 => address) public plugins;
+    mapping(address => bool) public isPlugin;
 
     event AllowDepositToken(address token);
-    event CreateMemberToken(address creator, address token);
+    event CreateMemberToken(address token);
     event SetFirstDepositTime(address owner, uint256 time);
     event WhitelistTeam(uint256 tokenId);
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
     event CreateMember(address account, uint256 depositAmount);
     event Deposit(address account, uint256 amount);
-    event UpgradeDao(string remark);
+    event UpgradeDaoBeacon(address daoBeacon);
 
     event RemoveAdmissionToken(address token);
+    event UpdateName(string newName);
     event UpdateLocktime(uint256 locktime);
     event UpdateMinDepositAmount(uint256 amount);
     event UpdateLogoCID(string logoCID);
-    event MemberQuit(address member);
+    event UpdateDescription(string description);
+    event CreatePlugin(bytes32 contractName, address plugin);
+    event CreateGovern(
+        string name,
+        address govern,
+        address voteToken
+    );
+
+    error InvalidAddress(address addr);
+    error InvalidContract(address _contract);
+    error ContractCallFail(bytes result);
+    error Unauthorized();
+    error PluginRequired(bytes32 contractName);
+    error PluginAlreadyExists(bytes32 contractName);
+    error PluginNotAllowed(bytes32 contractName);
+    error GovernAlreadyExists(string gName);
+    error InsufficientDeposit();
+    error BudgetApprovalTemplateNotWhitelisted(address template);
+    error UnsupportedDowngrade();
+    error InputLengthNotMatch(uint count1, uint count2);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
     }
 
-    function initialize(InitializeParams memory params, bytes[] memory data) public initializer {
-        require( 
-            address(params._creator) != address(0)
-            && address(params._membership) != address(0)
-            && address(params._liquidPool) != address(0)
-            && address(params._governFactory) != address(0)
-            && address(params._team) != address(0)
-            && address(params._memberTokenImplementation) != address(0)
-            && address(params.baseCurrency) != address(0)
-        , "Invaild Dao Setting");
-        _initializing = true;
-
-        ___BudgetApprovalExecutee_init(params._team);
-
-        adam = msg.sender;
-        name = params._name;
-        creator = params._creator;
-        membership = params._membership;
-        liquidPool = params._liquidPool;
-        governFactory = params._governFactory;
-        baseCurrency = params.baseCurrency;
-        _mintMember(params._creator);
-        _createMemberToken(params._memberTokenImplementation, params._memberTokenName, params._memberTokenSymbol);
-        _addAssets(params.depositTokens);
-
-        for (uint256 i = 0; i< data.length; i++) {
-            (bool success, bytes memory result) = address(this).call(data[i]);
-            require(success, 
-                string("init fail").concat(RevertMsg.ToString(result)));
-
+    function initialize(
+        address _creator,
+        string calldata _name,
+        string calldata _description,
+        address _baseCurrency,
+        bytes[] calldata _data) public initializer {
+        if (_creator == address(0)) {
+            revert InvalidAddress(_creator);
         }
+        if (_baseCurrency == address(0)) {
+            revert InvalidAddress(_baseCurrency);
+        }
+
+        _initializing = true;
+        adam = msg.sender;
+        creator = _creator;
+        setName(_name);
+        setDescription(_description);
+        baseCurrency = _baseCurrency;
+
+        for (uint256 i = 0; i< _data.length; i++) {
+            (bool success, bytes memory result) = address(this).call(_data[i]);
+            if (!success) {
+                revert ContractCallFail(result);
+            }
+        }
+
         _initializing = false;
     }
     
 
-    modifier onlyGovern(string memory category) {
-        require(
-            byPassGovern(msg.sender) ||
-            msg.sender == govern(category) ||
-            _initializing, "Action not permitted");
+    modifier onlyGovernGeneral() {
+        if (!byPassGovern(msg.sender) &&
+            msg.sender != govern["General"] &&
+            !_initializing) {
+                revert Unauthorized();
+            }
         _;
+    }
+    modifier onlyPlugins() {
+        if (!isPlugin[msg.sender]) {
+                revert Unauthorized();
+            }
+        _;
+    }
+
+    modifier requirePlugin(bytes32 contractName) {
+        if (plugins[contractName] == address(0)) {
+            revert PluginRequired(contractName);
+        }
+        _;
+    }
+
+    function membership() public view returns(address) {
+        return plugins[Constant.BEACON_NAME_MEMBERSHIP];
+    }
+    function liquidPool() public view returns(address) {
+        return plugins[Constant.BEACON_NAME_LIQUID_POOL];
+    }
+    function memberToken() public view returns(address) {
+        return plugins[Constant.BEACON_NAME_MEMBER_TOKEN];
+    }
+    function team() public view override returns(address) {
+        return plugins[Constant.BEACON_NAME_TEAM];
+    }
+    function accountingSystem() public view override returns(address) {
+        return plugins[Constant.BEACON_NAME_ACCOUNTING_SYSTEM];
+    }
+
+    function createPlugin(bytes32 contractName, bytes calldata data) public onlyGovernGeneral returns(address) {
+        DaoChildBeaconProxy _plugin = new DaoChildBeaconProxy(address(this), contractName, data);
+        _addToPlugins(contractName, address(_plugin));
+        return address(_plugin);
+    }
+
+    function executePlugin(bytes32 contractName, bytes calldata data, uint256 value) public onlyGovernGeneral requirePlugin(contractName) returns(bytes memory) {
+        (bool success, bytes memory result) = address(plugins[contractName]).call{value: value}(data);
+        if (!success) {
+            revert ContractCallFail(result);
+        }
+        return result;
+    }
+
+    function _addToPlugins(bytes32 contractName, address dest) internal {
+        if(contractName == Constant.BEACON_NAME_DAO) {
+            revert PluginNotAllowed(contractName);
+        }
+        if (plugins[contractName] != address(0)) {
+            revert PluginAlreadyExists(contractName);
+        }
+        plugins[contractName] = dest;
+        isPlugin[dest] = true;
+
+        emit CreatePlugin(contractName, dest);
     }
 
     function canCreateBudgetApproval(address budgetApproval) public view returns (bool) {
         return IAdam(adam).budgetApprovals(budgetApproval);
     }
-
-    function govern(string memory gName) public view returns (address) {
-        return IGovernFactory(governFactory).governMap(address(this), gName);
+    function canAddPriceGateway(address priceGateway) public view returns (bool) {
+        return IAdam(adam).priceGateways(priceGateway);
     }
 
     function byPassGovern(address account) public view returns (bool) {
-        return (IMembership(membership).totalSupply() == 1 && isMember(account));
+        if (membership() == address(0))
+            return true;
+        return (IMembership(membership()).totalSupply() == 1 && IMembership(membership()).isMember(account));
     }
 
-    function isMember(address account) public view returns (bool) {
-        return IMembership(membership).isMember(account);
+    function setFirstDepositTime(address owner, uint256 timestamp) public onlyPlugins {
+        firstDepositTime[owner] = timestamp;
+        emit SetFirstDepositTime(owner, timestamp);
     }
 
-    function admissionTokensLength() external view returns(uint256) {
-        return admissionTokens.length;
+    function setName(string calldata _name) public onlyGovernGeneral {
+        name = _name;
+        emit UpdateName(_name);
     }
 
-    function setFirstDepositTime(address owner) public {
-        require(msg.sender == liquidPool, "only LP");
-        firstDepositTime[owner] = block.timestamp;
-        emit SetFirstDepositTime(owner, block.timestamp);
-    }
-
-    function transferMemberToken(address to, uint amount) public onlyGovern("General") {
-        _transferMemberToken(to, amount);
-    }
-
-    function setLocktime(uint256 _locktime) public onlyGovern("General") {
+    function setLocktime(uint256 _locktime) public onlyGovernGeneral {
         locktime = _locktime;
         emit UpdateLocktime(_locktime);
     }
 
-    function setMinDepositAmount(uint256 _minDepositAmount) public onlyGovern("General") {
+    function setMinDepositAmount(uint256 _minDepositAmount) public onlyGovernGeneral {
         minDepositAmount = _minDepositAmount;
         emit UpdateMinDepositAmount(_minDepositAmount);
     }
 
-    function setLogoCID(string calldata _logoCID) public onlyGovern("General") {
+    function setDescription(string calldata _description) public onlyGovernGeneral {
+        description = _description;
+        emit UpdateDescription(_description);
+    }
+
+    function setLogoCID(string calldata _logoCID) public onlyGovernGeneral {
         logoCID = _logoCID;
         emit UpdateLogoCID(_logoCID);
     }
 
-
-    function mintMemberToken(uint amount) public onlyGovern("General") {
-        _mintMemberToken(amount);
-    }
-
     function createGovern(
         string calldata _name,
-        uint256 duration,
         uint256 quorum,
         uint256 passThreshold,
         VoteType voteType,
         address externalVoteToken,
         uint256 durationInBlock
-    ) public onlyGovern("General") {
+    ) public onlyGovernGeneral {
         address _voteToken;
 
+        if (govern[_name] != address(0)) {
+            revert GovernAlreadyExists(_name);
+        }
+
         if (voteType == VoteType.Membership) {
-            address _membership = membership;
-            require(_membership != address(0), "Membership not yet initialized");
+            address _membership = membership();
+            if (_membership == address(0)) {
+                revert PluginRequired(Constant.BEACON_NAME_MEMBERSHIP);
+            }
             _voteToken = _membership;
         } else if (voteType ==  VoteType.MemberToken) {
-            address _memberToken = memberToken;
-            require(_memberToken != address(0), "MemberToken not yet initialized");
+            address _memberToken = memberToken();
+            if (_memberToken == address(0)) {
+                revert PluginRequired(Constant.BEACON_NAME_MEMBER_TOKEN);
+            }
             _voteToken = _memberToken;
         } else if (voteType == VoteType.ExistingToken) {
-            require(externalVoteToken != address(0), "Vote token not exist");
+            if (!externalVoteToken.isContract()) {
+                revert InvalidContract(externalVoteToken);
+            }
             _voteToken = externalVoteToken;
         }
 
-        IGovernFactory(governFactory).createGovern(
+        DaoChildBeaconProxy _govern = new DaoChildBeaconProxy(address(this), Constant.BEACON_NAME_GOVERN, "");
+        govern[_name] = address(_govern);
+
+        IGovern(payable(address(_govern))).initialize(
             _name,
-            duration,
             quorum,
             passThreshold,
             _voteToken,
             durationInBlock
         );
-    }
-
-    function setMemberTokenAsAdmissionToken(uint256 minTokenToAdmit) public onlyGovern("General") {
-        address _memberToken = memberToken;
-        _addAdmissionToken(_memberToken, minTokenToAdmit, 0);
-        emit AddAdmissionToken(
-            _memberToken,
-            minTokenToAdmit,
-            0,
-            true
+        emit CreateGovern(
+            _name,
+            address(_govern),
+            _voteToken
         );
     }
 
-    function addAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId) public onlyGovern("General") {
-        _addAdmissionToken(token, minTokenToAdmit, tokenId);
-        emit AddAdmissionToken(
-            token,
-            minTokenToAdmit,
-            tokenId,
-            false
-        );
-    }
-
-    function removeAdmissionToken(uint256 index) public onlyGovern("General") {
-        require(admissionTokens.length > index, "index overflow");
-        address token = admissionTokens[index];
-        admissionTokenSetting[token].active = false;
-
-        address lastEl = admissionTokens[admissionTokens.length - 1];
-        admissionTokens[index] = lastEl;
-        admissionTokens.pop();
-
-        emit RemoveAdmissionToken(token);
-    }
-
-    function addAssets(address[] calldata erc20s) public onlyGovern("General") {
+    function addAssets(address[] calldata erc20s) public onlyGovernGeneral {
         _addAssets(erc20s);
     }
 
-    function createTeam(string memory title, address minter, address[] memory members, string memory description) public onlyGovern("General") {
-      uint256 id = ITeam(team()).addTeam(title, minter, members, description);
-      teamWhitelist[id] = true;
-
-      emit WhitelistTeam(id);
-    }
-
-    function _createMemberToken(address memberTokenImplementation, string memory _name, string memory _symbol) internal {
-        require(memberToken == address(0), "Member token already initialized");
-
-        ERC1967Proxy _memberTokenContract = new ERC1967Proxy(memberTokenImplementation, "");
-        address _memberToken = address(_memberTokenContract);
-        memberToken = _memberToken;
-        IMemberToken(_memberToken).initialize(address(this), _name, _symbol);
-        _addAsset(_memberToken);
-
-        emit CreateMemberToken(msg.sender, _memberToken);
-    }
-
-    function isPassAdmissionToken(address account) public view returns (bool){
-        uint _admissionTokenLength = admissionTokens.length;
-        for (uint i = 0; i < _admissionTokenLength; i++){
-            address token = admissionTokens[i];
-            uint256 _minTokenToAdmit = admissionTokenSetting[token].minTokenToAdmit;
-
-            if(_minTokenToAdmit > 0 ){
-                uint256 balance;
-                if(token.isERC721()){
-                    balance = IERC721(token).balanceOf(account);
-                }else if(token.isERC1155()){
-                    balance = IERC1155(token).balanceOf(account, admissionTokenSetting[token].tokenId);
-                }else if(token.isERC20()){
-                    balance = IERC20(token).balanceOf(account);
-                }
-                if(balance < _minTokenToAdmit){
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    function afterDeposit(address account, uint256 amount) external {
-        require(msg.sender == liquidPool, "only LP");
+    function afterDeposit(address account, uint256 amount) external onlyPlugins {
         if (firstDepositTime[account] == 0) {
-            setFirstDepositTime(account);
-            require(amount >= minDepositAmount, "deposit amount not enough");
+            setFirstDepositTime(account, block.timestamp);
+            if (amount < minDepositAmount) {
+                revert InsufficientDeposit();
+            }
             
-            if (isMember(account)) {
+            if (IMembership(membership()).isMember(account)) {
                 return;
             }
-            require(isPassAdmissionToken(account), "Admission token not enough");
             _mintMember(account);
 
             emit CreateMember(account, amount);
         }
     }
 
-    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {
-        require(canCreateBudgetApproval(budgetApproval), "Budget Implementation not whitelisted");
+    function _beforeCreateBudgetApproval(address budgetApproval) internal view override onlyGovernGeneral {
+        if (!IAdam(adam).budgetApprovals(budgetApproval)) {
+            revert BudgetApprovalTemplateNotWhitelisted(budgetApproval);
+        }
     }
 
-    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyGovern("General") {}
+    function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyGovernGeneral {}
 
-
-    function _addAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId) internal {
-        require(admissionTokenSetting[token].active == false, "Admission Token existed");
-        require(token.isContract(), "Admission Token not Support!");
-
-        admissionTokens.push(token);
-        admissionTokenSetting[token] = AdmissionTokenSetting(
-            minTokenToAdmit,
-            tokenId,
-            true
-        );
-        require(admissionTokens.length <= 3, "Admission Token length too long." );
-    }
-
-    function _mintMemberToken(uint256 amount) internal {
-        address _memberToken = memberToken;
-        require(address(_memberToken) != address(0), "Member Token not Exist.");
-        IMemberToken(address(_memberToken)).mint(address(this), amount);
-    }
-    function _transferMemberToken(address to, uint amount) internal {
-        address _memberToken = memberToken;
-        require(address(_memberToken) != address(0), "Member Token not Exist.");
-        
-        IMemberToken(address(_memberToken)).transfer(to, amount);
-    }
     function _addAssets(address[] memory erc20s) internal {
         for (uint256 i = 0; i < erc20s.length; i++) {
-            require(address(erc20s[i]) != address(0), "Not Supported ERC20 Token");
-            _addAsset(erc20s[i]);
+            address erc20 = erc20s[i];
+            if (!erc20.isContract()) {
+                revert InvalidContract(erc20);
+            }
+            _addAsset(erc20);
         }
     }
     function _addAsset(address erc20) internal {
         isAssetSupported[erc20] = true;
         emit AllowDepositToken(erc20);
     }
-    function _mintMember(address owner) internal {
-        IMembership(membership).createMember(owner);
+
+    function _mintMember(address owner) internal requirePlugin(Constant.BEACON_NAME_MEMBERSHIP) {
+        IMembership(membership()).createMember(owner);
     }
 
-    function _authorizeUpgrade(address) internal view override onlyGovern("General") {}
+    function upgradeTo(address _daoBeacon) external onlyGovernGeneral {
+        address curBeacon = IDaoBeaconProxy(address(this)).daoBeacon();
 
-    function upgradeImplementations(address[] calldata targets, address[] calldata newImplementations, string memory remark) public onlyGovern("General") {
-        require(targets.length == newImplementations.length, "params length not match");
-        for (uint256 i = 0; i < targets.length; i++) {
-            if (targets[i] == address(this)) {
-                _upgradeTo(newImplementations[i]);
-            } else {
-                UUPSUpgradeable(targets[i]).upgradeTo(newImplementations[i]);
-            }
+        if (!_daoBeacon.isContract()) {
+            revert InvalidContract(_daoBeacon);
         }
-        
-        emit UpgradeDao(remark);
+        if (IAdam(adam).daoBeaconIndex(_daoBeacon) <= IAdam(adam).daoBeaconIndex(curBeacon)) {
+            revert UnsupportedDowngrade();
+        }
+
+        StorageSlot.getAddressSlot(bytes32(keccak256("adam.proxy.beacon.slot"))).value = _daoBeacon;
+
+        emit UpgradeDaoBeacon(_daoBeacon);
     }
 
-    function quit(uint256 membershipTokenId) public {
-        address _membership = membership;
-        address _member = IMembership(_membership).ownerOf(membershipTokenId);
-
-        require(msg.sender == _member, "Permission denied");
-        require(ILiquidPool(payable(liquidPool)).balanceOf(_member) == 0, "LP balance is not zero");
-        require(IMembership(_membership).isMember(_member) == true, "Not a member");
-    
-        IMembership(_membership).removeMember(membershipTokenId);
-        firstDepositTime[_member] = 0;
-
-        emit MemberQuit(_member);
-    }
-
-    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) public onlyGovern("General") returns (bytes[] memory) {
-        require(targets.length == values.length ||
-            targets.length == data.length , "length not match");
+    function multicall(address[] calldata targets, uint256[] calldata values, bytes[] calldata data) public onlyGovernGeneral returns (bytes[] memory) {
+        if (targets.length != values.length) {
+            revert InputLengthNotMatch(targets.length, values.length);
+        }
+        if (targets.length != data.length) {
+            revert InputLengthNotMatch(targets.length, data.length);
+        }
 
         bytes[] memory results = new bytes[](targets.length);
         for (uint256 i = 0; i< targets.length; i++) {
             (bool success, bytes memory result) = address(targets[i]).call{value: values[i]}(data[i]);
-            require(success, "executionFail");
+            if (!success) {
+                revert ContractCallFail(result);
+            }
             results[i] = result;
         }
         return results;

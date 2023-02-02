@@ -11,7 +11,7 @@
     "prepare:arbitrum-goerli": "mustache constant/arbitrum-goerli.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "prepare:arbitrum-one": "mustache constant/arbitrum-one.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "compile": "hardhat compile",
-    "coverage": "hardhat coverage && COVERAGE=true npm run test",
+    "coverage": "hardhat coverage",
     "size": "hardhat size-contracts",
     "interface": "hardhat interface",
     "export-abi-human": "npx hardhat export-abi-human"
@@ -59,6 +59,7 @@
     "hardhat-test-utils": "^0.1.1",
     "inquirer": "^8.2.5",
     "lodash": "^4.17.21",
-    "minimatch": "^5.0.1"
+    "minimatch": "^5.0.1",
+    "nyc": "^15.1.0"
   }
 }
