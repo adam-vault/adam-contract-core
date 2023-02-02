@@ -58,7 +58,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async function
   });
 
   describe('Voting and executing proposals', async function () {
-    context('For one toke only', async function () {
+    context('For one token only', async function () {
       it('proposes a proposal and vote', async function () {
         memberToken.getPastVotes.returns(1);
 
