@@ -62,5 +62,6 @@ jobs:
 
           commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
           reviewers: |
-            ayame30
             chikchoi6
+            ayame30
+            lokwkin

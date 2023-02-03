@@ -34,7 +34,7 @@ jobs:
           path: ${{ runner.temp }}/deployment
 
       - name: Replace SDK ABIs
-        run: cp ${{ runner.temp }}/deployment/abis/human/* ./src/abis/v2
+        run: cp ${{ runner.temp }}/deployment/abis/human/* ./src/abis
       
       - name: Make Pull Request
         uses: peter-evans/create-pull-request@v4
@@ -49,9 +49,8 @@ jobs:
 
           commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
           reviewers: |
-            redocsss
-            ayame30
             chikchoi6
+            ayame30
             lokwkin
 
 
