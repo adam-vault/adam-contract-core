@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgra
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts/utils/StorageSlot.sol";
+import "@chainlink/contracts/src/v0.8/Denominations.sol";
 
 import "./base/BudgetApprovalExecutee.sol";
 import "./base/DaoChildBeaconProxy.sol";
@@ -307,7 +308,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     function _addAssets(address[] memory erc20s) internal {
         for (uint256 i = 0; i < erc20s.length; i++) {
             address erc20 = erc20s[i];
-            if (!erc20.isContract()) {
+            if (erc20 != Denominations.ETH && !erc20.isContract()) {
                 revert InvalidContract(erc20);
             }
             _addAsset(erc20);
