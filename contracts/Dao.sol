@@ -81,7 +81,6 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     error InsufficientDeposit();
     error BudgetApprovalTemplateNotWhitelisted(address template);
     error UnsupportedDowngrade();
-    error InputLengthNotMatch(uint count1, uint count2);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {

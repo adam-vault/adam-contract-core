@@ -48,6 +48,19 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
     event RemoveAdmissionToken(address token);
 
+    error MemberAlreadyExists(address member);
+    // error MemberNotFound(address member);
+    error InsufficientAdmissionToken(address member);
+    error MemberLimitExceeds();
+    error TransferNotAllow();
+    error OwnerMemberTokenRequired();
+    error InvalidAdmissionTokenIndex();
+    error AdmissionTokenAlreadyExists(address token);
+    error InvalidContract(address _contract);
+    error AdmissionTokenLimitExceeds();
+    error Unauthorized();
+    error OwnerLiquidPoolBalanceNonZero();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
@@ -63,9 +76,15 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
 
     function createMember(address to) external onlyOwner {
         uint256 _totalSupply = totalSupply;
-        require(!isMember[to], "Member already created");
-        require(_totalSupply < maxMemberLimit, "member count exceed limit");
-        require(isPassAdmissionToken(to), "Admission token not enough");
+        if (isMember[to]) {
+            revert MemberAlreadyExists(to);
+        }
+        if (_totalSupply >= maxMemberLimit) {
+            revert MemberLimitExceeds();
+        }
+        if (!isPassAdmissionToken(to)) {
+            revert InsufficientAdmissionToken(to);
+        }
 
         _tokenIds.increment();
         uint256 newId = _tokenIds.current();
@@ -104,14 +123,11 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
       uint256 tokenId
     ) internal override {
         if (from != address(0) && to != address(0)) {
-		    revert("Membership: Transfer of membership is aboundand");
+            revert TransferNotAllow();
 		}
         super._beforeTokenTransfer(from, to, tokenId); 
     }
 
-function test() public {
-
-}
     function _afterTokenTransfer(
         address from,
         address to,
@@ -131,7 +147,9 @@ function test() public {
 
     function setMemberTokenAsAdmissionToken(uint256 minTokenToAdmit) public onlyOwner {
         address _memberToken = _dao().memberToken();
-        require(_memberToken != address(0), "member token not init");
+        if (_memberToken == address(0)) {
+            revert OwnerMemberTokenRequired();
+        }
 
         _addAdmissionToken(_memberToken, minTokenToAdmit, 0);
         emit AddAdmissionToken(
@@ -153,7 +171,9 @@ function test() public {
     }
 
     function removeAdmissionToken(uint256 index) public onlyOwner {
-        require(admissionTokens.length > index, "index overflow");
+        if (admissionTokens.length <= index) {
+            revert InvalidAdmissionTokenIndex();
+        }
         address token = admissionTokens[index];
         admissionTokenSetting[token].active = false;
 
@@ -188,8 +208,12 @@ function test() public {
     }
 
     function _addAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId) internal {
-        require(admissionTokenSetting[token].active == false, "Admission Token existed");
-        require(token.isContract(), "Admission Token not Support!");
+        if (admissionTokenSetting[token].active) {
+            revert AdmissionTokenAlreadyExists(token);
+        }
+        if (!token.isContract()) {
+            revert InvalidContract(token);
+        }
 
         admissionTokens.push(token);
         admissionTokenSetting[token] = AdmissionTokenSetting(
@@ -197,7 +221,9 @@ function test() public {
             tokenId,
             true
         );
-        require(admissionTokens.length <= 3, "Admission Token length too long." );
+        if (admissionTokens.length > 3) {
+            revert AdmissionTokenLimitExceeds();
+        }
     }
 
 
@@ -205,8 +231,12 @@ function test() public {
         address owner = ownerOf(tokenId);
         address liquidPool = _dao().liquidPool();
 
-        require(msg.sender == owner, "Permission denied");
-        require(ILiquidPool(payable(liquidPool)).balanceOf(owner) == 0, "LP balance is not zero");
+        if (msg.sender != owner) {
+            revert Unauthorized();
+        }
+        if (liquidPool != address(0) && ILiquidPool(payable(liquidPool)).balanceOf(owner) != 0) {
+            revert OwnerLiquidPoolBalanceNonZero();
+        }
     
         _burn(tokenId);
         isMember[owner] = false;

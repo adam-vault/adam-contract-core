@@ -56,12 +56,12 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
         parseEther('1'),
       )).to.be.revertedWith('Reverted by external contract - ');
     });
-    it('throws "BudgetApprovalExecutee: access denied" error if not call be budget approval', async () => {
+    it('throws "OnlyBudgetApproval" error if not call be budget approval', async () => {
       await expect(executee.connect(unknown).executeByBudgetApproval(
         weth.address,
         weth.interface.encodeFunctionData('deposit'),
         parseEther('1'),
-      )).to.be.revertedWith('BudgetApprovalExecutee: access denied');
+      )).to.be.revertedWithCustomError(executee, 'OnlyBudgetApproval');
     });
   });
   describe('createBudgetApprovals()', async function () {
@@ -88,11 +88,11 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
         [mockBudgetApproval.interface.encodeFunctionData('initialize', params)]);
       await expect(tx).to.emit(executee, 'CreateBudgetApproval');
     });
-    it('throws "Incorrect Calldata" if params length not match', async () => {
+    it('throws "InputLengthNotMatch" if params length not match', async () => {
       await expect(executee.createBudgetApprovals(
         [mockBudgetApproval.address, mockBudgetApproval.address],
         [mockBudgetApproval.interface.encodeFunctionData('initialize', params)]),
-      ).to.be.revertedWith('Incorrect Calldata');
+      ).to.be.revertedWithCustomError(executee, 'InputLengthNotMatch');
     });
   });
 
@@ -102,8 +102,8 @@ describe('BudgetApprovalExecuteeV2.sol - test/unit/BudgetApprovalExecutee.js', a
       await expect(tx).to.emit(executee, 'RevokeBudgetApproval');
     });
 
-    it('throws "BudgetApprovalExecutee: budget approval is not valid"', async () => {
-      await expect(executee.revokeBudgetApprovals([unknown.address])).to.be.revertedWith('BudgetApprovalExecutee: budget approval is not valid');
+    it('throws "BudgetApprovalNotExists"', async () => {
+      await expect(executee.revokeBudgetApprovals([unknown.address])).to.be.revertedWithCustomError(executee, 'BudgetApprovalNotExists');
     });
   });
 });

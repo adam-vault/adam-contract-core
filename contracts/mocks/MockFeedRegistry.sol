@@ -54,7 +54,9 @@ contract MockFeedRegistry {
     }
 
   function getFeed(address base, address quote) external view returns (address aggregator) {
-      require(_aggregator[base][quote] != address(0), "Feed not supported");
-      return _aggregator[base][quote];
+    if (_aggregator[base][quote] == address(0)) {
+      revert("Feed not supported");
+    }
+    return _aggregator[base][quote];
   }
 }

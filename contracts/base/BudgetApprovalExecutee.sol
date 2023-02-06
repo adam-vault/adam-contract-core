@@ -17,8 +17,14 @@ abstract contract BudgetApprovalExecutee {
     event ExecuteByBudgetApproval(address budgetApproval, bytes data);
     event RevokeBudgetApproval(address budgetApproval);
 
+    error OnlyBudgetApproval();
+    error InputLengthNotMatch(uint count1, uint count2);
+    error BudgetApprovalNotExists(address budgetApproval);
+
     modifier onlyBudgetApproval {
-        require(budgetApprovals(msg.sender), "BudgetApprovalExecutee: access denied");
+        if (!budgetApprovals(msg.sender)) {
+            revert OnlyBudgetApproval();
+        }
         _;
     }
 
@@ -42,7 +48,9 @@ abstract contract BudgetApprovalExecutee {
     function _beforeCreateBudgetApproval(address) virtual internal {}
 
     function createBudgetApprovals(address[] memory __budgetApprovals, bytes[] memory data) external virtual {
-        require(__budgetApprovals.length == data.length, "Incorrect Calldata");
+        if (__budgetApprovals.length != data.length) {
+            revert InputLengthNotMatch(__budgetApprovals.length, data.length);
+        }
 
         for(uint i = 0; i < __budgetApprovals.length; i++) {
             _beforeCreateBudgetApproval(__budgetApprovals[i]);
@@ -59,11 +67,14 @@ abstract contract BudgetApprovalExecutee {
 
     function revokeBudgetApprovals(address[] memory __budgetApprovals) public {
         for(uint i = 0; i < __budgetApprovals.length; i++) {
-            require(_budgetApprovals[__budgetApprovals[i]], "BudgetApprovalExecutee: budget approval is not valid");
-            _beforeRevokeBudgetApproval(__budgetApprovals[i]);
+            address ba = __budgetApprovals[i];
+            if (!_budgetApprovals[ba]) {
+                revert BudgetApprovalNotExists(ba);
+            }
+            _beforeRevokeBudgetApproval(ba);
 
-            _budgetApprovals[__budgetApprovals[i]] = false;
-            emit RevokeBudgetApproval(__budgetApprovals[i]);
+            _budgetApprovals[ba] = false;
+            emit RevokeBudgetApproval(ba);
         }
     }
 
