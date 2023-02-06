@@ -5,7 +5,6 @@ const daoArtifact = require('../artifacts/contracts/Dao.sol/Dao.json');
 const membershipArtifact = require('../artifacts/contracts/Membership.sol/Membership.json');
 const memberTokenArtifact = require('../artifacts/contracts/MemberToken.sol/MemberToken.json');
 const liquidPoolArtifact = require('../artifacts/contracts/LiquidPool.sol/LiquidPool.json');
-const governArtifact = require('../artifacts/contracts/Govern.sol/Govern.json');
 const teamArtifact = require('../artifacts/contracts/Team.sol/Team.json');
 const accountingSystemArtifact = require('../artifacts/contracts/AccountingSystem.sol/AccountingSystem.json');
 
@@ -194,6 +193,50 @@ function getCreateTransferLiquidErc20TokenBAParams ({
     totalAmount,
     baseCurrency,
     toTeamIds,
+  }).map(([key, value]) => {
+    return value;
+  });
+}
+
+function getCreateSelfClaimErc20TokenBAParams ({
+  executor,
+  executorTeamId,
+  approvers = [],
+  approverTeamId,
+  minApproval = 0,
+  text = 'Self Claim ERC20 Token',
+  transactionType = 'selfClaimERC20',
+  startTime,
+  endTime,
+  allowUnlimitedUsageCount,
+  usageCount,
+  allowAllAddresses,
+  toAddresses = [],
+  token,
+  allowAllTokens = true,
+  fixAmount = 0,
+  validator = '0x0000000000000000000000000000000000000000',
+}) {
+  return Object.entries({
+    params: getCreateCommonBudgetApprovalParams({
+      executor,
+      executorTeamId,
+      approvers,
+      approverTeamId,
+      minApproval,
+      text,
+      transactionType,
+      startTime,
+      endTime,
+      allowUnlimitedUsageCount,
+      usageCount,
+    }),
+    allowAllAddresses: allowAllAddresses ?? toAddresses.length === 0,
+    toAddresses,
+    allowAllTokens,
+    token,
+    fixAmount,
+    validator,
   }).map(([key, value]) => {
     return value;
   });
@@ -400,6 +443,7 @@ module.exports = {
   getCreateDaoParams,
   getCreateTransferERC20BAParams,
   getCreateTransferLiquidErc20TokenBAParams,
+  getCreateSelfClaimErc20TokenBAParams,
   getCreateUniswapBAParams,
   getCreateTransferERC721BAParams,
   getCreateVestingERC20BAParams,
