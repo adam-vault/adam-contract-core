@@ -135,7 +135,7 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
       await budgetApproval.connect(approver).approveTransaction(id, '');
-      await expect(budgetApproval.connect(executor).executeTransaction(id)).to.be.revertedWith('Transfer amount should not be zero');
+      await expect(budgetApproval.connect(executor).executeTransaction(id)).to.be.revertedWithCustomError(budgetApproval, 'InvalidAmountZero');
     });
 
     it('transfer multiple ETH should success', async function () {

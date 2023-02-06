@@ -39,6 +39,16 @@ contract TransferLiquidERC20BudgetApproval is
         uint256 amount
     );
 
+    error AccountingSystemRequired();
+    error InvalidAmountZero();
+    error InvalidRecipient(address recipient);
+    error InvalidToken(address _token);
+    error AmountLimitExceeded();
+    error UnresolvableToken(address _token);
+    error TokenAlreadyAdded(address _token);
+    error RecipientAlreadyAdded(address recipient);
+    error TeamAlreadyAdded(uint256 teamId);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -74,7 +84,9 @@ contract TransferLiquidERC20BudgetApproval is
             _addToTeam(_toTeamIds[i]);
         }
 
-        require(accountingSystem() != address(0), "AccountingSystem is required");
+        if (accountingSystem() == address(0)) {
+            revert AccountingSystemRequired();
+        }
     }
 
     function baseCurrency() public view override returns(address) {
@@ -124,20 +136,20 @@ contract TransferLiquidERC20BudgetApproval is
         }
 
         amountInBaseCurrency = assetBaseCurrencyPrice(token, value);
-        require(
-            allowAllAddresses ||
-                addressesMapping[to] ||
-                _checkIsToTeamsMember(to),
-            "Recipient not whitelisted in budget"
-        );
-        require(tokensMapping[token], "Token not whitelisted in budget");
-        require(amountInBaseCurrency > 0, "Transfer amount should not be zero");
-        require(
-            _allowAnyAmount || amountInBaseCurrency <= _totalAmount,
-            "Exceeded max budget transferable amount"
-        );
+        if (!allowAllAddresses && !addressesMapping[to] && !_checkIsToTeamsMember(to)) {
+            revert InvalidRecipient(to);
+        }
+        if (!tokensMapping[token]) {
+            revert InvalidToken(token);
+        }
+        if (amountInBaseCurrency == 0) {
+            revert InvalidAmountZero();
+        }
 
         if (!_allowAnyAmount) {
+            if (amountInBaseCurrency > _totalAmount) {
+                revert AmountLimitExceeded();
+            }
             totalAmount = _totalAmount - amountInBaseCurrency;
         }
         emit ExecuteTransferLiquidERC20Transaction(
@@ -150,11 +162,12 @@ contract TransferLiquidERC20BudgetApproval is
     }
 
     function _addToken(address token) internal {
-        require(!tokensMapping[token], "Duplicated Item in source token list.");
-        require(
-            canResolvePrice(token),
-            "Unresolvable token in target token list."
-        );
+        if (tokensMapping[token]) {
+            revert TokenAlreadyAdded(token);
+        }
+        if (!canResolvePrice(token)) {
+            revert UnresolvableToken(token);
+        }
 
         tokens.push(token);
         tokensMapping[token] = true;
@@ -162,10 +175,9 @@ contract TransferLiquidERC20BudgetApproval is
     }
 
     function _addToAddress(address to) internal {
-        require(
-            !addressesMapping[to],
-            "Duplicated address in target address list"
-        );
+        if (addressesMapping[to]) {
+            revert RecipientAlreadyAdded(to);
+        }
         addressesMapping[to] = true;
         emit AllowAddress(to);
     }
@@ -195,10 +207,9 @@ contract TransferLiquidERC20BudgetApproval is
     }
 
     function _addToTeam(uint256 teamId) internal {
-        require(
-            !toTeamIdsMapping[teamId],
-            "Duplicated team in target team list"
-        );
+        if (toTeamIdsMapping[teamId]) {
+            revert TeamAlreadyAdded(teamId);
+        }
         toTeamIdsMapping[teamId] = true;
         toTeamIds.push(teamId);
         emit AllowTeam(teamId);

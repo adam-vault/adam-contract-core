@@ -101,7 +101,7 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Fixed Price l
     await budgetApproval.connect(approver).approveTransaction(id, '');
     await expect(
       budgetApproval.connect(executor).executeTransaction(id),
-    ).to.be.revertedWith('Exceeded max budget transferable amount');
+    ).to.be.revertedWithCustomError(budgetApproval, 'AmountLimitExceeded');
   });
 
   it('can send 10 Token', async function () {
@@ -140,6 +140,6 @@ describe('TransferLiquidERC20BudgetApprovalV2.sol - test Chainlink Fixed Price l
     await budgetApproval.connect(approver).approveTransaction(id, '');
     await expect(
       budgetApproval.connect(executor).executeTransaction(id),
-    ).to.be.revertedWith('Exceeded max budget transferable amount');
+    ).to.be.revertedWithCustomError(budgetApproval, 'AmountLimitExceeded');
   });
 });

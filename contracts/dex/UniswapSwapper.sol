@@ -27,6 +27,10 @@ contract UniswapSwapper is Initializable {
         MulticallResultAttribute resultType;
     }
 
+    error DecodeFailed(bytes result);
+    error DecodeWETHDataFail();
+    error TooMuchETH();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
@@ -60,12 +64,16 @@ contract UniswapSwapper is Initializable {
 
         for (uint i = 0; i < executions.length; i++) {
             (bool success, bytes memory rawSwapData) = address(this).staticcall(executions[i]);
-            require(success, "fail to decode uniswap multicall");
+            if (!success) {
+                revert DecodeFailed(rawSwapData);
+            }
 
             MulticallData memory swapData = abi.decode(rawSwapData, (MulticallData));
             
             if (swapData.tokenIn == WETH9() && remainEth != 0) {
-                require(swapData.amountIn <= remainEth, "fail to decode WETH swap data");
+                if (swapData.amountIn > remainEth) {
+                    revert DecodeWETHDataFail();
+                }
                 swapData.tokenIn = Denominations.ETH;
                 remainEth -= swapData.amountIn;
             }
@@ -78,8 +86,9 @@ contract UniswapSwapper is Initializable {
             }
             multicalData[i] = swapData;
         }
-
-        require(remainEth == 0, "passing too much ETH to uniswap");
+        if (remainEth != 0) {
+            revert TooMuchETH();
+        }
     }
 
     function _decodeMulticall(bytes memory _data) internal pure returns (bytes[] memory executions) {

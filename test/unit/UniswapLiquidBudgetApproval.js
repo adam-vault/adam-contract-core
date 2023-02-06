@@ -210,7 +210,7 @@ describe('UniswapLiquidBudgetApproval.sol - test/unit/UniswapLiquidBudgetApprova
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
-      it('throws "Exceeded max budget transferable amount" error if the 1st time outflow exceeds amount limit', async function () {
+      it('throws "AmountLimitExceeded" error if the 1st time outflow exceeds amount limit', async function () {
         const callData = encodeExactInputSwapData(ADDRESS_ETH, mockTokenB.address, executee.address, 101, 10);
 
         await expect(uniswapBA.connect(executor).createTransaction([
@@ -218,7 +218,7 @@ describe('UniswapLiquidBudgetApproval.sol - test/unit/UniswapLiquidBudgetApprova
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded max amount');
       });
 
-      it('throws "Exceeded max budget transferable amount" error if the 2nd time outflow exceeds amount limit', async function () {
+      it('throws "AmountLimitExceeded" error if the 2nd time outflow exceeds amount limit', async function () {
         const callData = encodeExactInputSwapData(ADDRESS_ETH, mockTokenB.address, executee.address, 50, 10);
 
         await uniswapBA.connect(executor).createTransaction([

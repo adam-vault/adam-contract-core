@@ -411,20 +411,20 @@ describe('DepositRewardBudgetApproval.sol - test/unit/v2/DepositRewardBudgetAppr
     //     ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
     //   });
 
-    //   it('throws "Exceeded max budget transferable amount" error if the 1st time outflow exceeds amount limit', async function () {
+    //   it('throws "AmountLimitExceeded" error if the 1st time outflow exceeds amount limit', async function () {
     //     await expect(depositRewardBA.connect(executor).createTransaction([
     //       encodeTxData(mockToken.address, receiver.address, 101),
-    //     ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
+    //     ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('AmountLimitExceeded');
     //   });
 
-    //   it('throws "Exceeded max budget transferable amount" error if the 2nd time outflow exceeds amount limit', async function () {
+    //   it('throws "AmountLimitExceeded" error if the 2nd time outflow exceeds amount limit', async function () {
     //     await depositRewardBA.connect(executor).createTransaction([
     //       encodeTxData(mockToken.address, receiver.address, 50),
     //     ], Math.round(Date.now() / 1000) + 86400, true, '');
 
     //     await expect(depositRewardBA.connect(executor).createTransaction([
     //       encodeTxData(mockToken.address, receiver.address, 51),
-    //     ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
+    //     ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('AmountLimitExceeded');
     //   });
     // });
 

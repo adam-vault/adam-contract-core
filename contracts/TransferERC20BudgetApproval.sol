@@ -32,6 +32,12 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
         uint256 amount
     );
 
+    error InvalidRecipient(address recipient);
+    error InvalidToken(address _token);
+    error AmountLimitExceeded();
+    error RecipientAlreadyAdded(address recipient);
+    error TeamAlreadyAdded(uint256 teamId);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -95,24 +101,20 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
             0
         );
 
-        require(
-            allowAllAddresses ||
-                addressesMapping[to] ||
-                _checkIsToTeamsMember(to),
-            "Recipient not whitelisted in budget"
-        );
-        require(
-            allowAllTokens || token == _token,
-            "Token not whitelisted in budget"
-        );
-        require(
-            _allowAnyAmount || value <= _totalAmount,
-            "Exceeded max budget transferable amount"
-        );
-
+        if (!allowAllAddresses && !addressesMapping[to] && !_checkIsToTeamsMember(to)) {
+            revert InvalidRecipient(to);
+        }
+        if (!allowAllTokens && token != _token) {
+            revert InvalidToken(_token);
+        }
+        
         if (!_allowAnyAmount) {
+            if (value > _totalAmount) {
+                revert AmountLimitExceeded();
+            }
             totalAmount = _totalAmount - value;
         }
+
         emit ExecuteTransferERC20Transaction(
             transactionId,
             msg.sender,
@@ -123,10 +125,9 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     }
 
     function _addToAddress(address to) internal {
-        require(
-            !addressesMapping[to],
-            "Duplicated address in target address list"
-        );
+        if (addressesMapping[to]) {
+            revert RecipientAlreadyAdded(to);
+        }
         addressesMapping[to] = true;
         emit AllowAddress(to);
     }
@@ -152,10 +153,9 @@ contract TransferERC20BudgetApproval is CommonBudgetApproval {
     }
 
     function _addToTeam(uint256 teamId) internal {
-        require(
-            !toTeamIdsMapping[teamId],
-            "Duplicated team in target team list"
-        );
+        if (toTeamIdsMapping[teamId]) {
+            revert TeamAlreadyAdded(teamId);
+        }
         toTeamIdsMapping[teamId] = true;
         toTeamIds.push(teamId);
         emit AllowTeam(teamId);

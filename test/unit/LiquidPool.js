@@ -297,8 +297,8 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', async function () {
       await tokenAsSigner1.approve(lp.address, parseEther('0.99'));
       await expect(lpAsSigner1.depositToken(signer1.address, token.address, parseEther('0.99'))).to.be.reverted;
     });
-    it('throws "Admission token not enough" error without　enough minTokenToAdmit amount', async function () {
-      await dao.afterDeposit.reverts('Admission token not enough');
+    it('throws "InsufficientAdmissionToken" error without　enough minTokenToAdmit amount', async function () {
+      await dao.afterDeposit.reverts('InsufficientAdmissionToken');
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await expect(lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'))).to.be.reverted;
     });
@@ -556,8 +556,8 @@ describe('LiquidPool.sol - one ERC20 asset only', async function () {
       await tokenAsSigner1.approve(lp.address, parseEther('0.99'));
       await expect(lpAsSigner1.depositToken(signer1.address, token.address, parseEther('0.99'))).to.be.reverted;
     });
-    it('throws "Admission token not enough" error without　enough minTokenToAdmit amount', async function () {
-      await dao.afterDeposit.reverts('Admission token not enough');
+    it('throws "InsufficientAdmissionToken" error without　enough minTokenToAdmit amount', async function () {
+      await dao.afterDeposit.reverts('InsufficientAdmissionToken');
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await expect(lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'))).to.be.reverted;
     });
