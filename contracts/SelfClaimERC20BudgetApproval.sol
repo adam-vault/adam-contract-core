@@ -25,7 +25,7 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
-    mapping(address => uint256) private claimedAmounts;
+    mapping(address => bool) private claimedAddresses;
     bool public allowAllTokens;
     address public token;
     uint256 public fixAmount; //is the maximum amount that can be claimed.
@@ -94,7 +94,7 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
     function executeParams() external pure override returns (string[] memory) {
         string[] memory arr = new string[](3);
         arr[0] = "address to";
-        arr[1] = "uint256 value";
+        arr[1] = "uint256 nonce";
         arr[2] = "bytes signature";
         return arr;
     }
@@ -111,12 +111,12 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
         internal
         override
     {
-        (address to, uint256 value, bytes memory signature) = abi.decode(
+        (address to, uint256 nonce, bytes memory signature) = abi.decode(
             data,
             (address, uint256, bytes)
         );
 
-        if (validator != address(0) && !verifySignature(to, signature)) {
+        if (validator != address(0) && !verifySignature(to, nonce, signature)) {
             revert SignatureNotCorrrect();
         }
 
@@ -124,13 +124,13 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
             IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
                 to,
                 "",
-                value
+                fixAmount
             );
         } else {
             bytes memory executeData = abi.encodeWithSelector(
                 IERC20.transfer.selector,
                 to,
-                value
+                fixAmount
             );
             IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
                 token,
@@ -143,18 +143,18 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
             revert RecipientNotWhitelisted();
         }
 
-        if (claimedAmounts[to] + value > fixAmount) {
+        if (claimedAddresses[to]) {
             revert AddressClaimed();
         }
 
-        claimedAmounts[to] += value;
+        claimedAddresses[to] = true;
 
         emit ExecuteTransferERC20Transaction(
             transactionId,
             msg.sender,
             to,
             token,
-            value
+            fixAmount
         );
     }
 
@@ -177,12 +177,12 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
      * @param signature Signature of the address.
      * @return True if the signature is signed by validator.
      */
-    function verifySignature(address to, bytes memory signature)
-        public
-        view
-        returns (bool)
-    {
-        bytes32 hash = ECDSA.toEthSignedMessageHash(getMessageHash(to));
+    function verifySignature(
+        address to,
+        uint256 nonce,
+        bytes memory signature
+    ) public view returns (bool) {
+        bytes32 hash = ECDSA.toEthSignedMessageHash(getMessageHash(to, nonce));
         (address signer, ECDSA.RecoverError error) = ECDSA.tryRecover(
             hash,
             signature
@@ -193,8 +193,14 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
         return signer == validator;
     }
 
-    function getMessageHash(address _entity) public pure returns (bytes32) {
+    function getMessageHash(address _entity, uint256 nonce)
+        public
+        pure
+        returns (bytes32)
+    {
         return
-            keccak256(abi.encodePacked("This address is validated.", _entity));
+            keccak256(
+                abi.encodePacked("This address is validated.", _entity, nonce)
+            );
     }
 }

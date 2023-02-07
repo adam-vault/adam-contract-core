@@ -12,7 +12,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetApproval.js', async function () {
+describe.only('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetApproval.js', async function () {
   let selfERC20BAImplementation, budgetApproval, team;
   let executor, approver, receiver, validator;
   let tokenA, executee, SelfClaimERC20BudgetApproval;
@@ -123,6 +123,7 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
   });
 
   describe('Execute Transaction (Transfer ETH)', async function () {
+    const fixAmount = ethers.utils.parseEther('10');
     beforeEach(async function () {
       await executor.sendTransaction({ to: executee.address, value: parseEther('200') });
       const initData = SelfClaimERC20BudgetApproval.interface.encodeFunctionData('initialize',
@@ -135,7 +136,7 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
           minApproval: 1,
           usageCount: 10,
           team: team.address,
-          fixAmount: ethers.utils.parseEther('10'),
+          fixAmount,
           validator: validator.address,
         }),
       );
@@ -150,12 +151,13 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
 
     it('executes transfer ETH', async function () {
       const entity = receiver.address;
-      const messageHash = await budgetApproval.getMessageHash(entity);
+      const nonce = 1;
+      const messageHash = await budgetApproval.getMessageHash(entity, nonce);
       const signature = await validator.signMessage(ethers.utils.arrayify(messageHash));
 
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
-        [receiver.address, parseEther('10'), signature],
+        [receiver.address, nonce, signature],
       );
 
       const tx = await budgetApproval
@@ -168,18 +170,19 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
       await budgetApproval.connect(executor).executeTransaction(id);
 
       expect(await receiver.getBalance()).to.eq(
-        originalBalance.add(parseEther('10')),
+        originalBalance.add(fixAmount),
       );
     });
 
     it('throws RecipientNotWhitelisted if Receiver not whitelisted', async function () {
       const entity = executor.address;
-      const messageHash = await budgetApproval.getMessageHash(entity);
+      const nonce = 2;
+      const messageHash = await budgetApproval.getMessageHash(entity, nonce);
       const signature = await validator.signMessage(ethers.utils.arrayify(messageHash));
 
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
         executor.address,
-        parseEther('10'),
+        nonce,
         signature,
       ]);
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
@@ -193,14 +196,23 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
 
     it('throws "AddressClaimed" if the accumulated amount > fix amount', async function () {
       const entity = receiver.address;
-      const messageHash = await budgetApproval.getMessageHash(entity);
+      const nonce = 3;
+      const messageHash = await budgetApproval.getMessageHash(entity, nonce);
       const signature = await validator.signMessage(ethers.utils.arrayify(messageHash));
 
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
         receiver.address,
-        parseEther('101'),
+        nonce,
         signature,
       ]);
+
+      const firstTx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
+      const { id: firstTxId } = await findEventArgs(firstTx, 'CreateTransaction');
+
+      await budgetApproval.connect(approver).approveTransaction(firstTxId, '');
+      await expect(budgetApproval.connect(executor).executeTransaction(firstTxId))
+        .to.not.be.reverted;
+
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
@@ -209,14 +221,35 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
         .to.be.revertedWithCustomError(SelfClaimERC20BudgetApproval, 'AddressClaimed');
     });
 
-    it('throws "SignatureNotCorrrect" if the content not match', async function () {
+    it('throws "SignatureNotCorrrect" if the entity not match', async function () {
       const entity = executor.address;
-      const messageHash = await budgetApproval.getMessageHash(entity);
+      const nonce = 4;
+      const messageHash = await budgetApproval.getMessageHash(entity, nonce);
       const signature = await validator.signMessage(ethers.utils.arrayify(messageHash));
 
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
         receiver.address,
-        parseEther('5'),
+        nonce,
+        signature,
+      ]);
+      const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
+      const { id } = await findEventArgs(tx, 'CreateTransaction');
+
+      await budgetApproval.connect(approver).approveTransaction(id, '');
+      await expect(budgetApproval.connect(executor).executeTransaction(id))
+        .to.be.revertedWithCustomError(SelfClaimERC20BudgetApproval, 'SignatureNotCorrrect');
+    });
+
+    it('throws "SignatureNotCorrrect" if the nonce not match', async function () {
+      const entity = executor.address;
+      const nonce = 5;
+      const wrongNonce = 77;
+      const messageHash = await budgetApproval.getMessageHash(entity, nonce);
+      const signature = await validator.signMessage(ethers.utils.arrayify(messageHash));
+
+      const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
+        receiver.address,
+        wrongNonce,
         signature,
       ]);
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
@@ -229,11 +262,12 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
 
     it('throws "SignatureNotCorrrect" if the signature not signed correctly', async function () {
       const entity = executor.address;
-      const messageHash = await budgetApproval.getMessageHash(entity);
+      const nonce = 5;
+      const messageHash = await budgetApproval.getMessageHash(entity, nonce);
 
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
         receiver.address,
-        parseEther('5'),
+        nonce,
         messageHash,
       ]);
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
@@ -246,6 +280,7 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
   });
 
   describe('Execute Transaction (Transfer ERC20)', async function () {
+    const fixAmount = ethers.utils.parseEther('10');
     beforeEach(async function () {
       await executor.sendTransaction({ to: executee.address, value: parseEther('200') });
       const initData = SelfClaimERC20BudgetApproval.interface.encodeFunctionData('initialize',
@@ -258,7 +293,7 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
           minApproval: 1,
           usageCount: 10,
           team: team.address,
-          fixAmount: ethers.utils.parseEther('10'),
+          fixAmount,
           validator: validator.address,
         }),
       );
@@ -274,12 +309,13 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
 
     it('executes transfer ETH', async function () {
       const entity = receiver.address;
-      const messageHash = await budgetApproval.getMessageHash(entity);
+      const nonce = 8;
+      const messageHash = await budgetApproval.getMessageHash(entity, nonce);
       const signature = await validator.signMessage(ethers.utils.arrayify(messageHash));
 
       const transactionData = abiCoder.encode(
         await budgetApproval.executeParams(),
-        [receiver.address, parseEther('10'), signature],
+        [receiver.address, nonce, signature],
       );
 
       const tx = await budgetApproval
@@ -292,18 +328,19 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
       await budgetApproval.connect(executor).executeTransaction(id);
 
       expect(await tokenA.balanceOf(receiver.address)).to.eq(
-        originalBalance.add(parseEther('10')),
+        originalBalance.add(fixAmount),
       );
     });
 
     it('throws RecipientNotWhitelisted if Receiver not whitelisted', async function () {
       const entity = executor.address;
-      const messageHash = await budgetApproval.getMessageHash(entity);
+      const nonce = 9;
+      const messageHash = await budgetApproval.getMessageHash(entity, nonce);
       const signature = await validator.signMessage(ethers.utils.arrayify(messageHash));
 
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
         executor.address,
-        parseEther('10'),
+        nonce,
         signature,
       ]);
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
@@ -317,14 +354,22 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
 
     it('throws "AddressClaimed" if the accumulated amount > fix amount', async function () {
       const entity = receiver.address;
-      const messageHash = await budgetApproval.getMessageHash(entity);
+      const nonce = 10;
+      const messageHash = await budgetApproval.getMessageHash(entity, nonce);
       const signature = await validator.signMessage(ethers.utils.arrayify(messageHash));
 
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
         receiver.address,
-        parseEther('50'),
+        nonce,
         signature,
       ]);
+      const firstTx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
+      const { id: firstTxId } = await findEventArgs(firstTx, 'CreateTransaction');
+
+      await budgetApproval.connect(approver).approveTransaction(firstTxId, '');
+      await expect(budgetApproval.connect(executor).executeTransaction(firstTxId))
+        .to.not.be.reverted;
+
       const tx = await budgetApproval.connect(executor).createTransaction([transactionData], Math.round(Date.now() / 1000) + 86400, false, '');
       const { id } = await findEventArgs(tx, 'CreateTransaction');
 
