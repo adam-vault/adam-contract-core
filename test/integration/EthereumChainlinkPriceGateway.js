@@ -13,7 +13,7 @@ const {
   ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
-describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', function () {
+describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async function () {
   let adam, tokenA, tokenB;
   let creator, daoMember;
   let budgetApprovalAddresses;
