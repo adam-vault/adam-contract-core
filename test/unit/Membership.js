@@ -5,7 +5,7 @@ const { BigNumber } = require('ethers');
 
 const { parseEther } = ethers.utils;
 
-describe.only('Membership.sol - test/unit/Membership.js', async function () {
+describe('Membership.sol - test/unit/Membership.js', async function () {
   let MockMembership, MockERC20, MockERC721, MockERC1155, MockDao, MockLiquidPool;
 
   let signerDao, signerUnknown, member, member2, member3;
