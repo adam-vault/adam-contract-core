@@ -31,6 +31,7 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
         uint256 minTokenToAdmit;
         uint256 tokenId;
         bool active;
+        uint256 index;
     }
 
     uint256 public totalSupply;
@@ -49,12 +50,11 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
     event RemoveAdmissionToken(address token);
 
     error MemberAlreadyExists(address member);
-    // error MemberNotFound(address member);
     error InsufficientAdmissionToken(address member);
     error MemberLimitExceeds();
     error TransferNotAllow();
     error OwnerMemberTokenRequired();
-    error InvalidAdmissionTokenIndex();
+    error AdmissionTokenNotExists();
     error AdmissionTokenAlreadyExists(address token);
     error InvalidContract(address _contract);
     error AdmissionTokenLimitExceeds();
@@ -92,7 +92,6 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
         totalSupply = _totalSupply + 1;
         isMember[to] = true;
         wasMember[to] = false;
-
 
         emit CreateMember(to);
     }
@@ -170,14 +169,16 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
         );
     }
 
-    function removeAdmissionToken(uint256 index) public onlyOwner {
-        if (admissionTokens.length <= index) {
-            revert InvalidAdmissionTokenIndex();
+    function removeAdmissionToken(address token) public onlyOwner {
+        if (!admissionTokenSetting[token].active) {
+            revert AdmissionTokenNotExists();
         }
-        address token = admissionTokens[index];
-        admissionTokenSetting[token].active = false;
-
+        uint256 index = admissionTokenSetting[token].index;
         address lastEl = admissionTokens[admissionTokens.length - 1];
+
+        admissionTokenSetting[token].active = false;
+        admissionTokenSetting[lastEl].index = index;
+
         admissionTokens[index] = lastEl;
         admissionTokens.pop();
 
@@ -219,7 +220,8 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
         admissionTokenSetting[token] = AdmissionTokenSetting(
             minTokenToAdmit,
             tokenId,
-            true
+            true,
+            admissionTokens.length - 1
         );
         if (admissionTokens.length > 3) {
             revert AdmissionTokenLimitExceeds();
