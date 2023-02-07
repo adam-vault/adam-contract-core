@@ -86,7 +86,7 @@ jobs:
         run: npx hardhat export-abi-human # This generates json files into "abis/human" folder
       
       - name: Deploy Contracts
-        run: npx hardhat deploy --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
+        run: DAO_VERSION=${{ env.GIT_REF }} npx hardhat deploy --network $CONTRACT_DEPLOY_NETWORK # Deploy contracts
         timeout-minutes: 60
 
       - name: Export Deployment Result
