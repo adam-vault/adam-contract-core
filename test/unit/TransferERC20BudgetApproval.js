@@ -119,7 +119,7 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
       expect(await transferErc20BA.allowAnyAmount()).to.be.eq(false);
       expect(await transferErc20BA.totalAmount()).to.be.eq(ethers.BigNumber.from('1000'));
     });
-    it('throws "Duplicated address in target address list" error if toAddresses duplicated', async () => {
+    it('throws "RecipientAlreadyAdded" error if toAddresses duplicated', async () => {
       await expect(ERC1967Proxy.deploy(
         transferErc20BAImpl.address,
         TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
@@ -129,15 +129,15 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
           token: ethers.constants.AddressZero,
           allowAnyAmount: true,
           totalAmount: 0,
-        })))).to.be.revertedWith('Duplicated address in target address list');
+        })))).to.be.revertedWithCustomError(TransferERC20BudgetApproval, 'RecipientAlreadyAdded');
     });
-    it('throws "Duplicated team in target team list" error if toTeams duplicated', async () => {
+    it('throws "InvalidTeam" error if toTeams duplicated', async () => {
       await expect(ERC1967Proxy.deploy(
         transferErc20BAImpl.address,
         TransferERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           allowAllToAddresses: false,
           toTeamIds: [10, 10],
-        })))).to.be.revertedWith('Duplicated team in target team list');
+        })))).to.be.revertedWithCustomError(TransferERC20BudgetApproval, 'TeamAlreadyAdded');
     });
   });
 
@@ -199,20 +199,20 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
-      it('throws "Exceeded max budget transferable amount" error if the 1st time outflow exceeds amount limit', async function () {
+      it('throws "AmountLimitExceeded" error if the 1st time outflow exceeds amount limit', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 101),
-        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWithCustomError(transferErc20BA, 'AmountLimitExceeded');
       });
 
-      it('throws "Exceeded max budget transferable amount" error if the 2nd time outflow exceeds amount limit', async function () {
+      it('throws "AmountLimitExceeded" error if the 2nd time outflow exceeds amount limit', async function () {
         await transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
         ], Math.round(Date.now() / 1000) + 86400, true, '');
 
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 51),
-        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Exceeded max budget transferable amount');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWithCustomError(transferErc20BA, 'AmountLimitExceeded');
       });
     });
 
@@ -277,10 +277,10 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
-      it('throws "Recipient not whitelisted in budget" error if send to non-permitted receiver', async function () {
+      it('throws "InvalidRecipient" error if send to non-permitted receiver', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, executor.address, 25),
-        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Recipient not whitelisted in budget');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWithCustomError(transferErc20BA, 'InvalidRecipient');
       });
     });
 
@@ -306,7 +306,7 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
       it('throws "Token not whitelisted in budget" error if send to non-permitted receiver', async function () {
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(unknownToken.address, receiver.address, 25),
-        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Token not whitelisted in budget');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWithCustomError(transferErc20BA, 'InvalidToken');
       });
     });
 
@@ -329,11 +329,11 @@ describe('TransferERC20BudgetApprovalV2.sol - test/unit/v2/TransferERC20BudgetAp
         ], Math.round(Date.now() / 1000) + 86400, true, '')).to.not.be.reverted;
       });
 
-      it('throws "Recipient not whitelisted in budget" error if send to non-member of whitelisted team', async function () {
+      it('throws "InvalidRecipient" error if send to non-member of whitelisted team', async function () {
         team.balanceOfBatch.whenCalledWith([receiver.address], [10]).returns([0]);
         await expect(transferErc20BA.connect(executor).createTransaction([
           encodeTxData(mockToken.address, receiver.address, 50),
-        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWith('Recipient not whitelisted in budget');
+        ], Math.round(Date.now() / 1000) + 86400, true, '')).to.be.revertedWithCustomError(transferErc20BA, 'InvalidRecipient');
       });
     });
   });

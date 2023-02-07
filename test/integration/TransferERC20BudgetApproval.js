@@ -458,7 +458,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
     });
 
     context('not allowed address', async () => {
-      it('throws "Recipient not whitelisted in budget"', async function () {
+      it('throws "InvalidRecipient"', async function () {
         const transactionData = abiCoder.encode(
           await budgetApproval.executeParams(),
           [tokenA.address, executor.address, '10'],
@@ -471,12 +471,12 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         await budgetApproval.connect(approver).approveTransaction(id, '');
         await expect(
           budgetApproval.connect(executor).executeTransaction(id),
-        ).to.be.revertedWith('Recipient not whitelisted in budget');
+        ).to.be.revertedWithCustomError(budgetApproval, 'InvalidRecipient');
       });
     });
 
     context('exceed amount', async () => {
-      it('throws "Exceeded max budget transferable amount"', async function () {
+      it('throws "AmountLimitExceeded"', async function () {
         const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
           tokenA.address,
           receiver.address,
@@ -486,7 +486,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
         const { id } = await findEventArgs(tx, 'CreateTransaction');
         await budgetApproval.connect(approver).approveTransaction(id, '');
         await expect(budgetApproval.connect(executor).executeTransaction(id))
-          .to.be.revertedWith('Exceeded max budget transferable amount');
+          .to.be.revertedWithCustomError(budgetApproval, 'AmountLimitExceeded');
       });
     });
 

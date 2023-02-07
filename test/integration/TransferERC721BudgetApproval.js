@@ -275,7 +275,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
       expect(await tokenC721.ownerOf(37753)).to.eq(receiver.address);
     });
 
-    it('throws "Recipient not whitelisted in budget"', async function () {
+    it('throws "InvalidRecipient"', async function () {
       await tokenC721.mint(executee.address, 37752);
       const transactionData = abiCoder.encode(await budgetApproval.executeParams(), [
         tokenC721.address,
@@ -289,10 +289,10 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
 
       await expect(
         budgetApproval.connect(executor).executeTransaction(id),
-      ).to.be.revertedWith('Recipient not whitelisted in budget');
+      ).to.be.revertedWithCustomError(budgetApproval, 'InvalidRecipient');
     });
 
-    it('throws "Exceeded max budget transferable amount"', async function () {
+    it('throws "AmountLimitExceeded"', async function () {
       await tokenC721.mint(executee.address, 37752);
       await tokenC721.mint(executee.address, 37753);
       await tokenC721.mint(executee.address, 37754);
@@ -319,7 +319,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
 
       await expect(
         budgetApproval.connect(executor).executeTransaction(id),
-      ).to.be.revertedWith('Exceeded max budget transferable amount');
+      ).to.be.revertedWithCustomError(budgetApproval, 'AmountLimitExceeded');
     });
   });
 

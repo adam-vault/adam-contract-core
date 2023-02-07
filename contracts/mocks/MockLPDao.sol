@@ -66,8 +66,12 @@ contract MockLPDao {
         _isPassDepositAmount = ipda;
     }
     function afterDeposit(address, uint256) public view {
-        require(_isPassAdmissionToken, "Admission token not enough");
-        require(_isPassDepositAmount, "deposit amount not enough");
+        if (_isPassAdmissionToken) {
+            revert("Admission token not enough");
+        }
+        if (_isPassDepositAmount) {
+            revert("deposit amount not enough");
+        }
     }
     function setMinDepositAmount(uint256 amount) public {
         minDepositAmount = amount;

@@ -918,18 +918,18 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
       it('throws "passing too much ETH to uniswap" when too much ETH passed to contract', async () => {
         const call1 = encodeCall('refundETH()');
         const data = encodeCall('multicall(bytes32,bytes[])', [ethers.utils.formatBytes32String('text'), [call1]]);
-        await expect(contract.decodeUniswapMulticall(data, 1, '0x')).to.be.revertedWith('passing too much ETH to uniswap');
+        await expect(contract.decodeUniswapMulticall(data, 1, '0x')).to.be.revertedWithCustomError(contract, 'TooMuchETH');
       });
 
-      it('throws "fail to decode uniswap multicall" when unknown funcsig passed to contract', async () => {
+      it('throws "DecodeFailed" when unknown funcsig passed to contract', async () => {
         const call1 = encodeCall('refundETH2()');
         const data = encodeCall('multicall(bytes32,bytes[])', [ethers.utils.formatBytes32String('text'), [call1]]);
-        await expect(contract.decodeUniswapMulticall(data, 0, '0x')).to.be.revertedWith('fail to decode uniswap multicall');
+        await expect(contract.decodeUniswapMulticall(data, 0, '0x')).to.be.revertedWithCustomError(contract, 'DecodeFailed');
       });
 
-      it('throws "fail to decode WETH swap data" when not enough ETH pass to contract', async () => {
+      it('throws "DecodeWETHDataFail" when not enough ETH pass to contract', async () => {
         const data = '0x5ae401dc0000000000000000000000000000000000000000000000000000000062146545000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000000e442712a67000000000000000000000000000000000000003f1bdf10116048a5934000000000000000000000000000000000000000000000000000000000f29597c26d49cf0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc1630000000000000000000000000000000000000000000000000000000000000002000000000000000000000000C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc47350000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e45023b4df000000000000000000000000C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2000000000000000000000000c7ad46e0b8a400bb3c915120d284aafba8fc47350000000000000000000000000000000000000000000000000000000000000bb8000000000000000000000000bfaa947b65a4350f14895980d0c8f420576fc163000000000000000000000000000000000000003f1bdf10116048a5934000000000000000000000000000000000000000000000000000000000f1eab8757de498000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
-        await expect(contract.decodeUniswapMulticall(data, 1, '0x')).to.be.revertedWith('fail to decode WETH swap data');
+        await expect(contract.decodeUniswapMulticall(data, 1, '0x')).to.be.revertedWithCustomError(contract, 'DecodeWETHDataFail');
       });
 
       it('throws "Failed to decode Uniswap multicall bytecode" when bytes not match multicall', async () => {

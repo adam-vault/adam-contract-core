@@ -99,7 +99,7 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
         VestingERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           ...getNormalParams(),
           ...{ cycleTokenAmount: ethers.BigNumber.from(0) },
-        })))).to.be.revertedWith('Cycle token amount and Cycle period must be larager than 0');
+        })))).to.be.revertedWithCustomError(VestingERC20BudgetApproval, 'InvalidCycleTokenAmount');
     });
     it('initialized failed for invalid cycle token amount or cycle period', async () => {
       await expect(ERC1967Proxy.deploy(
@@ -107,7 +107,7 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
         VestingERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           ...getNormalParams(),
           ...{ cyclePeriod: ethers.BigNumber.from(0) },
-        })))).to.be.revertedWith('Cycle token amount and Cycle period must be larager than 0');
+        })))).to.be.revertedWithCustomError(VestingERC20BudgetApproval, 'InvalidCyclePeriod');
     });
     it('initialized ignores cycle token amount and cycle period if no cycle defined', async () => {
       const contract = await ERC1967Proxy.deploy(
@@ -134,7 +134,7 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
         VestingERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           ...getNormalParams(),
           ...{ cliffPeriod: ethers.BigNumber.from(86400 * 7) },
-        })))).to.be.revertedWith('Vesting period must be long than Cliff Period');
+        })))).to.be.revertedWithCustomError(VestingERC20BudgetApproval, 'VestingPeriodShorterThanCliffPeriod');
     });
     it('initialized failed if vesting period shorter than cliff period', async () => {
       await expect(ERC1967Proxy.deploy(
@@ -142,7 +142,7 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
         VestingERC20BudgetApproval.interface.encodeFunctionData('initialize', initializeParser({
           ...getNormalParams(),
           ...{ cliffPeriod: ethers.BigNumber.from(86400 * 7) },
-        })))).to.be.revertedWith('Vesting period must be long than Cliff Period');
+        })))).to.be.revertedWithCustomError(VestingERC20BudgetApproval, 'VestingPeriodShorterThanCliffPeriod');
     });
     it('initialized failed if total vesting amount is 0', async () => {
       await expect(ERC1967Proxy.deploy(
@@ -155,7 +155,7 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
             cycleTokenAmount: ethers.BigNumber.from(0),
             initTokenAmount: ethers.BigNumber.from(0),
           },
-        })))).to.be.revertedWith('Vesting amount must be larger than 0');
+        })))).to.be.revertedWithCustomError(VestingERC20BudgetApproval, 'InvalidVestingAmount');
     });
   });
 
@@ -336,13 +336,13 @@ describe('VestingERC20BudgetApproval.sol - test/unit/v2/VestingERC20BudgetApprov
                 it('throws if cliff not passed', async function () {
                   await expect(vestingERC20BA.connect(executor).createTransaction(
                     [encodeTxData(1)], Math.round(Date.now() / 1000) + 86400, true, 'comment'))
-                    .to.be.revertedWith('Cliff Period not passed');
+                    .to.be.revertedWithCustomError(vestingERC20BA, 'CliffPeriodNotPassed');
                 });
               } else {
                 it('throws if request amount larger than current releasable amount', async function () {
                   await expect(vestingERC20BA.connect(executor).createTransaction(
                     [encodeTxData(expectedResult.currentReleasableAmount + 1)], Math.round(Date.now() / 1000) + 86400, true, 'comment'))
-                    .to.be.revertedWith('Exceeded current releasable token amount');
+                    .to.be.revertedWithCustomError(vestingERC20BA, 'InsufficientReleasableToken');
                 });
                 if (expectedResult.currentReleasableAmount > 0) {
                   it('passes if cliff period passed and request amount less than current releasable amount', async function () {

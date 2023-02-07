@@ -48,17 +48,17 @@ describe('Membership.sol - test/unit/Membership.js', async function () {
       await expect(membership.connect(member).createMember(member.address)).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
-    it('throws "Member already created" if member count exceeds limit', async function () {
+    it('throws "MemberAlreadyExists" if member count exceeds limit', async function () {
       await membership.connect(dao).createMember(member.address);
 
-      await expect(membership.connect(dao).createMember(member.address)).to.be.revertedWith('Member already created');
+      await expect(membership.connect(dao).createMember(member.address)).to.be.revertedWithCustomError(membership, 'MemberAlreadyExists');
     });
 
-    it('throws "member count exceed limit" if member count exceeds limit', async function () {
+    it('throws "MemberLimitExceeds" if member count exceeds limit', async function () {
       await membership.connect(dao).createMember(member.address);
       await membership.connect(dao).createMember(member2.address);
 
-      await expect(membership.connect(dao).createMember(member3.address)).to.be.revertedWith('member count exceed limit');
+      await expect(membership.connect(dao).createMember(member3.address)).to.be.revertedWithCustomError(membership, 'MemberLimitExceeds');
     });
   });
 
@@ -71,9 +71,9 @@ describe('Membership.sol - test/unit/Membership.js', async function () {
   });
 
   describe('transferFrom()', async function () {
-    it('throws "Membership: Transfer of membership is aboundand"', async function () {
+    it('throws "TransferNotAllow"', async function () {
       await membership.connect(dao).createMember(member.address);
-      await expect(membership.connect(member).transferFrom(member.address, member2.address, 1)).to.be.revertedWith('Membership: Transfer of membership is aboundand');
+      await expect(membership.connect(member).transferFrom(member.address, member2.address, 1)).to.be.revertedWithCustomError(membership, 'TransferNotAllow');
     });
   });
 

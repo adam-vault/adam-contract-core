@@ -57,6 +57,14 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
     // Amount of tokens released
     uint256 private releasedTokenAmount;
 
+
+    error InvalidCycleTokenAmount();
+    error InvalidCyclePeriod();
+    error InvalidVestingAmount();
+    error VestingPeriodShorterThanCliffPeriod();
+    error CliffPeriodNotPassed();
+    error InsufficientReleasableToken();
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -84,17 +92,20 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
         releasedTokenAmount = 0;
 
         if (cycleCount > 0) {
-            require(
-                cycleTokenAmount > 0 && cyclePeriod > 0,
-                "Cycle token amount and Cycle period must be larager than 0"
-            );
+            if (cycleTokenAmount == 0) {
+                revert InvalidCycleTokenAmount();
+            }
+            if (cyclePeriod == 0) {
+                revert InvalidCyclePeriod();
+            }
         }
 
-        require(
-            cyclePeriod * cycleCount >= cliffPeriod,
-            "Vesting period must be long than Cliff Period"
-        );
-        require(totalAmount() > 0, "Vesting amount must be larger than 0");
+        if (cliffPeriod > cyclePeriod * cycleCount) {
+            revert VestingPeriodShorterThanCliffPeriod();
+        }
+        if (totalAmount() == 0) {
+            revert InvalidVestingAmount();
+        }
     }
 
     function executeParams() external pure override returns (string[] memory) {
@@ -123,13 +134,14 @@ contract VestingERC20BudgetApproval is CommonBudgetApproval {
         );
 
         // Check if cliff period passed
-        require(isCliffPassed(), "Cliff Period not passed");
+        if (!isCliffPassed()) {
+            revert CliffPeriodNotPassed();
+        }
 
         // Check current releasable amount
-        require(
-            amount <= currentReleasableAmount(),
-            "Exceeded current releasable token amount"
-        );
+        if (amount > currentReleasableAmount()) {
+            revert InsufficientReleasableToken();
+        }
 
         releasedTokenAmount = _releasedTokenAmount + amount;
 

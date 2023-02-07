@@ -15,7 +15,7 @@ const {
 
 describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async function () {
   let adam, tokenC721, tokenA, tokenD1155;
-  let creator, member, anyone, feedRegistry, ethereumChainlinkPriceGateway;
+  let creator, member, anyone, feedRegistry, ethereumChainlinkPriceGateway, membership;
 
   function createDao () {
     return adam.createDao(...paramsStruct.getCreateDaoParams({
@@ -37,6 +37,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
 
     const result = await createAdam();
     adam = result.adam;
+    membership = result.membership;
     ethereumChainlinkPriceGateway = result.ethPriceGateway.address;
   });
 
@@ -125,8 +126,8 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
         expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
       });
 
-      it('throws "Admission token not enough" error with not enough ERC721 Admission Token', async function () {
-        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+      it('throws "InsufficientAdmissionToken" error with not enough ERC721 Admission Token', async function () {
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWithCustomError(membership, 'InsufficientAdmissionToken');
       });
     });
 
@@ -160,8 +161,8 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
         expect(await ethers.provider.getBalance(lp.address)).to.equal(1);
       });
 
-      it('throws "Admission token not enough" error with not enough ERC20 Admission Token', async function () {
-        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+      it('throws "InsufficientAdmissionToken" error with not enough ERC20 Admission Token', async function () {
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWithCustomError(membership, 'InsufficientAdmissionToken');
       });
     });
 
@@ -184,8 +185,8 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.not.be.reverted;
       });
 
-      it('throws "Admission token not enough" error with not enough ERC1155 Member Token', async function () {
-        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+      it('throws "InsufficientAdmissionToken" error with not enough ERC1155 Member Token', async function () {
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWithCustomError(membership, 'InsufficientAdmissionToken');
       });
     });
 
@@ -205,8 +206,8 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
 
-      it('throws "Admission token not enough" error with not enough ERC20 Member Token', async function () {
-        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+      it('throws "InsufficientAdmissionToken" error with not enough ERC20 Member Token', async function () {
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWithCustomError(membership, 'InsufficientAdmissionToken');
       });
     });
 
@@ -234,21 +235,21 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
         await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.not.be.reverted;
       });
 
-      it('throws "Admission token not enough" error with both admission tokens not enough', async function () {
+      it('throws "InsufficientAdmissionToken" error with both admission tokens not enough', async function () {
         await tokenA.mint(member.address, 1);
         await tokenD1155.mint(member.address, 111, 1, 0);
-        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWithCustomError(membership, 'InsufficientAdmissionToken');
       });
 
-      it('throws "Admission token not enough" error with two admission token not enough', async function () {
+      it('throws "InsufficientAdmissionToken" error with two InsufficientAdmissionToken', async function () {
         await tokenC721.mint(member.address, 222);
-        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWithCustomError(membership, 'InsufficientAdmissionToken');
       });
 
-      it('throws "Admission token not enough" error with one admission token not enough', async function () {
+      it('throws "InsufficientAdmissionToken" error with one InsufficientAdmissionToken', async function () {
         await tokenC721.mint(member.address, 222);
         await tokenD1155.mint(member.address, 111, 2, 0);
-        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWithCustomError(membership, 'InsufficientAdmissionToken');
       });
     });
 
@@ -270,8 +271,8 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
         lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
       });
 
-      it('throws "Admission token not enough" error when deposit', async function () {
-        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWith('Admission token not enough');
+      it('throws "InsufficientAdmissionToken" error when deposit', async function () {
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.be.revertedWithCustomError(membership, 'InsufficientAdmissionToken');
       });
     });
 
@@ -333,9 +334,9 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
         expect(await membership.totalSupply()).to.equal(1);
       });
 
-      it('throws "member count exceed limit" error when member limit exceed', async function () {
+      it('throws "MemberLimitExceeds" error when member limit exceed', async function () {
         await lp.deposit(creator.address, { value: 100 });
-        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.revertedWith('member count exceed limit');
+        await expect(lp.connect(member).deposit(member.address, { value: 1 })).to.revertedWithCustomError(membership, 'MemberLimitExceeds');
       });
     });
   });
