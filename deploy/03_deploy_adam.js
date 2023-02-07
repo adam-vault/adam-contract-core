@@ -36,7 +36,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     gasLimit: 5000000,
     ...(await gasFeeConfig()),
     args: [
-      'v2.0.0',
+      process.env.DAO_VERSION || 'v3.0.0',
       [
         [ethers.utils.id('adam.dao'), dao.address],
         [ethers.utils.id('adam.dao.membership'), membership.address],
