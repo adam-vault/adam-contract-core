@@ -12,7 +12,7 @@ const {
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
-describe.only('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetApproval.js', async function () {
+describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetApproval.js', async function () {
   let selfERC20BAImplementation, budgetApproval, team;
   let executor, approver, receiver, validator;
   let tokenA, executee, SelfClaimERC20BudgetApproval;
