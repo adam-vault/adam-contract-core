@@ -8,7 +8,7 @@ const toBeAddBudgetApprovals = [
   { name: 'VestingERC20BudgetApproval', contract: 'VestingERC20BudgetApproval' },
   { name: 'UniswapAnyTokenBudgetApproval', contract: 'UniswapAnyTokenBudgetApproval' },
   { name: 'UniswapLiquidBudgetApproval', contract: 'UniswapLiquidBudgetApproval' },
-
+  { name: 'SelfClaimERC20BudgetApproval', contract: 'SelfClaimERC20BudgetApproval' },
 ];
 
 const toBeRemoveBudgetApprovals = [
