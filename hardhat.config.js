@@ -55,6 +55,16 @@ const goerliConfig = {
   },
 };
 
+const mumbaiConfig = {
+  chainId: 80001,
+  url: process.env.MUMBAI_URL || '',
+  accounts:
+    process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+  verify: {
+    etherscan: 'https://mumbai.polygonscan.com/',
+  },
+};
+
 module.exports = {
   defaultNetwork: 'hardhat',
   solidity: {
@@ -104,6 +114,7 @@ module.exports = {
     'goerli-qa': goerliConfig,
     'goerli-stg': goerliConfig,
     'goerli-alpha': goerliConfig,
+    'mumbai-dev': mumbaiConfig,
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,

@@ -9,6 +9,7 @@ const {
   getCreateUniswapBAParams,
   getCreateVestingERC20BAParams,
   getCreateBasicBudgetApprovalParams,
+  getCreateSelfClaimErc20TokenBAParams,
 } = require('../utils/paramsStruct');
 
 const commonTransferERC20Prompts = [
@@ -75,6 +76,17 @@ const questions = {
     { type: 'input', name: 'cycleTokenAmount', message: 'Vesting Amount in each cycle', default: 10000 },
     { type: 'input', name: 'initTokenAmount', message: 'Init Token Amount before Vesting ', default: 5000 },
   ],
+  SelfClaimERC20BudgetApproval: [
+    { type: 'input', name: 'text', message: 'Text', default: 'Self Claim ERC20 Token' },
+    { type: 'input', name: 'transactionType', message: 'Transaction Type', default: 'selfClaimERC20' },
+    { type: 'confirm', name: 'allowAllAddress', message: 'Allow all toAddresses?' },
+    { type: 'input', name: 'toAddresses', message: 'To addresses? (comma separated)', when: ({ allowAllAddress }) => !allowAllAddress },
+    { type: 'confirm', name: 'allowAllTokens', message: 'Allow all tokens?' },
+    { type: 'input', name: 'token', message: 'Specific token?', when: ({ allowAllTokens }) => !allowAllTokens },
+    { type: 'confirm', name: 'allowAnyAmount', message: 'Allow all amount?' },
+    { type: 'number', name: 'fixAmount', message: 'Fix Amount limited?', when: ({ allowAnyAmount }) => !allowAnyAmount },
+    { type: 'input', name: 'validator', message: 'Validator address?', default: ethers.constants.AddressZero },
+  ],
   CreateArbitrumDaoBudgetApproval: [
     { type: 'input', name: 'text', message: 'Text', default: 'Create Arb Dao' },
     { type: 'input', name: 'transactionType', message: 'Transaction Type', default: 'others' },
@@ -93,6 +105,7 @@ const encodeFn = {
   TransferERC721BudgetApproval: getCreateTransferERC721BAParams,
   UniswapLiquidBudgetApproval: getCreateUniswapBAParams,
   VestingERC20BudgetApproval: getCreateVestingERC20BAParams,
+  SelfClaimERC20BudgetApproval: getCreateSelfClaimErc20TokenBAParams,
   CreateArbitrumDaoBudgetApproval: getCreateBasicBudgetApprovalParams,
   GMXAnyTokenBudgetApproval: getCreateBasicBudgetApprovalParams,
 
@@ -107,6 +120,7 @@ const BA_TYPES = [
   'UniswapAnyTokenBudgetApproval',
   'UniswapLiquidBudgetApproval',
   'VestingERC20BudgetApproval',
+  'SelfClaimERC20BudgetApproval',
   'GMXAnyTokenBudgetApproval',
   'CreateArbitrumDaoBudgetApproval',
 ];
