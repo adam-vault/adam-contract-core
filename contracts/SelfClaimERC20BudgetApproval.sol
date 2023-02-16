@@ -1,12 +1,4 @@
-/**
- * SelfClaimERC20BudgetApproval Contract
- *
- * This contract is a budget approval for self claimed transactions for ERC20 tokens. It implements the CommonBudgetApproval contract
- * and the IBudgetApprovalExecutee interface. The transactions must be signed by a validator and are subject to conditions
- * such as recipient address whitelist and claim amount limit.
- *
- * SPDX-License-Identifier: GPL-3.0
- **/
+// SPDX-License-Identifier: GPL-3.0
 
 pragma solidity 0.8.7;
 
@@ -18,6 +10,14 @@ import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
 import "hardhat/console.sol";
 
+/**
+ * SelfClaimERC20BudgetApproval Contract
+ *
+ * This contract is a budget approval for self claimed transactions for ERC20 tokens. It implements the CommonBudgetApproval contract
+ * and the IBudgetApprovalExecutee interface. The transactions must be signed by a validator and are subject to conditions
+ * such as recipient address whitelist and claim amount limit.
+ *
+ **/
 contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;
 
