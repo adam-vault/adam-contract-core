@@ -6,7 +6,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deployer } = await getNamedAccounts();
   const deployNetwork = hre.network.name || 'goerli';
 
-  if (deployNetwork.includes('arbitrum')) {
+  if (deployNetwork.includes('mumbai') || deployNetwork.includes('polygon')) {
+    await deploy('PolygonChainlinkPriceGateway', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 6000000, ...(await gasFeeConfig()) });
+  } else if (deployNetwork.includes('arbitrum')) {
     await deploy('ArbitrumChainlinkPriceGateway', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 6000000, ...(await gasFeeConfig()) });
   } else {
     await deploy('EthereumChainlinkPriceGateway', { from: deployer, log: true, skipIfAlreadyDeployed: true, gasLimit: 6000000, ...(await gasFeeConfig()) });
