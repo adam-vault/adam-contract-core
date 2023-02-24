@@ -115,6 +115,7 @@ module.exports = {
     'goerli-stg': goerliConfig,
     'goerli-alpha': goerliConfig,
     'mumbai-dev': mumbaiConfig,
+    'mumbai-qa': mumbaiConfig,
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
