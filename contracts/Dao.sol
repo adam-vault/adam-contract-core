@@ -307,7 +307,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     function _addAssets(address[] memory erc20s) internal {
         for (uint256 i = 0; i < erc20s.length; i++) {
             address erc20 = erc20s[i];
-            if (erc20 != Denominations.ETH && !erc20.isContract()) {
+            if (erc20 != Constant.NATIVE_TOKEN && !erc20.isContract()) {
                 revert InvalidContract(erc20);
             }
             _addAsset(erc20);

@@ -18,7 +18,7 @@ which provides basic functions to check the support of the pair and calculate as
 
 contract PolygonChainlinkPriceGateway is PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
-    string public constant override name = "Ploygon Chainlink Price Gateway";
+    string public constant override name = "Polygon Chainlink Price Gateway";
 
     error StaleRoundId(uint80 roundID, uint80 answeredInRound);
     error StaleTimestamp(uint256 currentTimeStamp, uint256 updatedAtTimeStamp);
@@ -278,7 +278,7 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
             asset = Denominations.ETH;
         }
         if (asset == _WMATIC()) {
-            // Feed Registry doesn't provide any WETH Price Feed, redirect to ETH case here
+            // Feed Registry doesn't provide any WMATIC Price Feed, redirect to MATIC case here
             asset = Constant.MATIC_ADDRESS;
         }
 

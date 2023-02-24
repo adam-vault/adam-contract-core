@@ -35,7 +35,7 @@ abstract contract PriceResolver {
 
     function baseCurrencyDecimals() public view virtual returns (uint8) {
         address _baseCurrency = baseCurrency();
-        if (_baseCurrency == Denominations.ETH) return 18;
+        if (_baseCurrency == Constant.NATIVE_TOKEN) return 18;
         try IERC20Metadata(_baseCurrency).decimals() returns (uint8 _decimals) {
             return _decimals;
         } catch {
