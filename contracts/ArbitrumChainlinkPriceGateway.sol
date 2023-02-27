@@ -255,10 +255,6 @@ contract ArbitrumChainlinkPriceGateway is PriceGateway {
     }
 
     function canResolvePrice(address asset) internal view returns (bool) {
-        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:259 ~ canResolvePrice ~ asset:", asset);
-        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:259 ~ canResolvePrice ~ canResolvePrice:");
-        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:264 ~ canResolvePrice ~ _WRAP_NATIVE_TOKEN():", _WRAP_NATIVE_TOKEN());
-        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:267 ~ canResolvePrice ~ _NATIVE_TOKEN():", _NATIVE_TOKEN());
         if (asset == Denominations.USD) return true;
 
         if (asset == _WRAP_NATIVE_TOKEN()) {
@@ -272,10 +268,8 @@ contract ArbitrumChainlinkPriceGateway is PriceGateway {
                 Denominations.USD
             )
         {
-            console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:281 ~ canResolvePrice ~ true:", true);
             return true;
         } catch (bytes memory) {
-            console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:281 ~ canResolvePrice ~ false:", false);
             return false;
         }
     }
