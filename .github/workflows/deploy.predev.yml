@@ -31,14 +31,14 @@ jobs:
           echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_OUTPUT|
           echo "CONTRACT_DEPLOY_NETWORK=goerli-predev" >> $GITHUB_OUTPUT
       - name: Export polygon Network Info
-        id: ethereum-network
+        id: polygon-network
         if: ${{steps.split.outputs._2 == 'polygon'}}
         run: |
           echo "LIB_CONSTANT_NETWORK=mumbai" >> $GITHUB_OUTPUT|
           echo "CONTRACT_DEPLOY_NETWORK=mumbai-predev" >> $GITHUB_OUTPUT
     outputs:
-      LIB_CONSTANT_NETWORK: ${{ steps.ethereum-network.outputs.LIB_CONSTANT_NETWORK || steps.arbitrum-network.outputs.LIB_CONSTANT_NETWORK}}
-      CONTRACT_DEPLOY_NETWORK: ${{ steps.ethereum-network.outputs.CONTRACT_DEPLOY_NETWORK || steps.arbitrum-network.outputs.CONTRACT_DEPLOY_NETWORK}}
+      LIB_CONSTANT_NETWORK: ${{ steps.ethereum-network.outputs.LIB_CONSTANT_NETWORK || steps.arbitrum-network.outputs.LIB_CONSTANT_NETWORK || steps.polygon-network.outputs.LIB_CONSTANT_NETWORK}}
+      CONTRACT_DEPLOY_NETWORK: ${{ steps.ethereum-network.outputs.CONTRACT_DEPLOY_NETWORK || steps.arbitrum-network.outputs.CONTRACT_DEPLOY_NETWORK || steps.polygon-network.outputs.CONTRACT_DEPLOY_NETWORK}}
       
   deploy-contracts:
     needs: config-network-const
