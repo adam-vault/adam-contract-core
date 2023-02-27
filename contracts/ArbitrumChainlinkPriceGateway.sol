@@ -46,8 +46,8 @@ contract ArbitrumChainlinkPriceGateway is PriceGateway {
         address base,
         uint256 amount
     ) public view virtual override returns (uint256) {
-        asset = asset == _WETH9() ? Denominations.ETH : asset;
-        base = base == _WETH9() ? Denominations.ETH : base;
+        asset = asset == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : asset;
+        base = base == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : base;
         // Feed Registry doesn't provide any WETH Price Feed, redirect to ETH case here
 
         if (asset == base) return amount;
@@ -75,7 +75,7 @@ contract ArbitrumChainlinkPriceGateway is PriceGateway {
         returns (uint256)
     {
         if (asset == Denominations.USD) return amount;
-        asset = asset == _WETH9() ? Denominations.ETH : asset;
+        asset = asset == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : asset;
 
         (
             uint80 roundID,
@@ -126,7 +126,7 @@ contract ArbitrumChainlinkPriceGateway is PriceGateway {
         returns (uint256)
     {
         if (asset == Denominations.USD) return usdAmount;
-        asset = asset == _WETH9() ? Denominations.ETH : asset;
+        asset = asset == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : asset;
         (
             uint80 roundID,
             int256 price,
@@ -255,11 +255,15 @@ contract ArbitrumChainlinkPriceGateway is PriceGateway {
     }
 
     function canResolvePrice(address asset) internal view returns (bool) {
+        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:259 ~ canResolvePrice ~ asset:", asset);
+        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:259 ~ canResolvePrice ~ canResolvePrice:");
+        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:264 ~ canResolvePrice ~ _WRAP_NATIVE_TOKEN():", _WRAP_NATIVE_TOKEN());
+        console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:267 ~ canResolvePrice ~ _NATIVE_TOKEN():", _NATIVE_TOKEN());
         if (asset == Denominations.USD) return true;
 
-        if (asset == _WETH9()) {
+        if (asset == _WRAP_NATIVE_TOKEN()) {
             // Feed Registry doesn't provide any WETH Price Feed, redirect to ETH case here
-            asset = Denominations.ETH;
+            asset = _NATIVE_TOKEN();
         }
 
         try
@@ -268,14 +272,16 @@ contract ArbitrumChainlinkPriceGateway is PriceGateway {
                 Denominations.USD
             )
         {
+            console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:281 ~ canResolvePrice ~ true:", true);
             return true;
         } catch (bytes memory) {
+            console.log("MC: ~ file: ArbitrumChainlinkPriceGateway.sol:281 ~ canResolvePrice ~ false:", false);
             return false;
         }
     }
 
     function assetDecimals(address asset) public view virtual returns (uint8) {
-        if (asset == Denominations.ETH) return 18;
+        if (asset == _NATIVE_TOKEN()) return 18;
         if (asset == Denominations.USD) return 8;
         try IERC20Metadata(asset).decimals() returns (uint8 _decimals) {
             return _decimals;
@@ -284,8 +290,12 @@ contract ArbitrumChainlinkPriceGateway is PriceGateway {
         }
     }
 
-    function _WETH9() internal pure returns (address) {
-        return Constant.WETH_ADDRESS;
+    function _WRAP_NATIVE_TOKEN() internal pure returns (address) {
+        return Constant.WRAP_NATIVE_TOKEN;
+    }
+
+    function _NATIVE_TOKEN() internal pure returns (address) {
+        return Constant.NATIVE_TOKEN;
     }
 
     uint256[50] private __gap;

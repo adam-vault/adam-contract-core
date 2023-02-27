@@ -48,11 +48,11 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
     ) public virtual view override returns (uint256) {
         if (asset == base) return amount;
 
-        if (base == Denominations.ETH || base == _WETH9()) {
+        if (base == _NATIVE_TOKEN() || base == _WRAP_NATIVE_TOKEN()) {
             return assetEthPrice(asset, amount);
         }
 
-        if (asset == Denominations.ETH || asset == _WETH9()) {
+        if (asset == _NATIVE_TOKEN() || asset == _WRAP_NATIVE_TOKEN()) {
             return ethAssetPrice(base, amount);
         }
 
@@ -65,7 +65,7 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         virtual
         returns (uint256)
     {
-        if (asset == Denominations.ETH || asset == _WETH9()) return amount;
+        if (asset == _NATIVE_TOKEN() || asset == _WRAP_NATIVE_TOKEN()) return amount;
 
         (
             uint80 roundID,
@@ -75,10 +75,10 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
             uint80 answeredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 asset,
-                Denominations.ETH
+                _NATIVE_TOKEN()
             );
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(asset, Denominations.ETH);
+            .decimals(asset, _NATIVE_TOKEN());
 
         if (answeredInRound < roundID) {
             revert StaleRoundId(roundID, answeredInRound);
@@ -108,7 +108,7 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         virtual
         returns (uint256)
     {
-        if (asset == Denominations.ETH || asset == _WETH9()) return ethAmount;
+        if (asset == _NATIVE_TOKEN() || asset == _WRAP_NATIVE_TOKEN()) return ethAmount;
 
         (
             uint80 roundID,
@@ -118,10 +118,10 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
             uint80 answeredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 asset,
-                Denominations.ETH
+                _NATIVE_TOKEN()
             );
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(asset, Denominations.ETH);
+            .decimals(asset, _NATIVE_TOKEN());
 
         if (answeredInRound < roundID) {
             revert StaleRoundId(roundID, answeredInRound);
@@ -184,7 +184,7 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
             uint80 _baseAnsweredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 _base,
-                Denominations.ETH
+                _NATIVE_TOKEN()
             );
 
         if (_baseAnsweredInRound < _baseRoundID) {
@@ -195,7 +195,7 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         }
 
         uint8 baseDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(_base, Denominations.ETH);
+            .decimals(_base, _NATIVE_TOKEN());
         basePrice = scalePrice(basePrice, baseDecimals, _decimals);
         (
             uint80 _quoteRoundID,
@@ -205,7 +205,7 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
             uint80 _quoteAnsweredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 _quote,
-                Denominations.ETH
+                _NATIVE_TOKEN()
             );
         if (_quoteAnsweredInRound < _quoteRoundID) {
             revert StaleRoundId(_quoteRoundID, _quoteAnsweredInRound);
@@ -215,7 +215,7 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         }
 
         uint8 quoteDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(_quote, Denominations.ETH);
+            .decimals(_quote, _NATIVE_TOKEN());
         quotePrice = scalePrice(quotePrice, quoteDecimals, _decimals);
 
         return (basePrice * decimals) / quotePrice;
@@ -234,11 +234,11 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
     }
 
     function canResolvePrice(address asset) internal view returns (bool) {
-        if (asset == Denominations.ETH || asset == _WETH9()) return true;
+        if (asset == _NATIVE_TOKEN() || asset == _WRAP_NATIVE_TOKEN()) return true;
         try
             FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(
                 asset,
-                Denominations.ETH
+                _NATIVE_TOKEN()
             )
         {
             return true;
@@ -248,7 +248,7 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
     }
 
     function assetDecimals(address asset) public view virtual returns (uint8) {
-        if (asset == Denominations.ETH) return 18;
+        if (asset == _NATIVE_TOKEN()) return 18;
         try IERC20Metadata(asset).decimals() returns (uint8 _decimals) {
             return _decimals;
         } catch {
@@ -256,7 +256,11 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         }
     }
 
-    function _WETH9() internal pure returns (address) {
-        return Constant.WETH_ADDRESS;
+    function _WRAP_NATIVE_TOKEN() internal pure returns (address) {
+        return Constant.WRAP_NATIVE_TOKEN;
+    }
+
+    function _NATIVE_TOKEN() internal pure returns (address) {
+        return Constant.NATIVE_TOKEN;
     }
 }

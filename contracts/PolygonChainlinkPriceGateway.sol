@@ -11,7 +11,7 @@ import "./lib/Constant.sol";
 /**
 @title PolygonChainlinkPriceGateway
 @dev A price gateway that uses Chainlink price feeds to calculate asset prices in terms of base tokens.
-It supports ETH, WETH, MATIC, WMATIC and other ERC20 tokens as assets or base tokens.
+It supports WETH, MATIC, WMATIC and other ERC20 tokens as assets or base tokens.
 This contract is inherited from the PriceGateway base contract, 
 which provides basic functions to check the support of the pair and calculate asset prices.
 */
@@ -28,8 +28,8 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
 
     /// @notice inherited from PriceGateway, help to check the imported pair support or not
     /// @dev Custom price gateway is allowed, but need to implement priceGateway.sol and set by govern
-    /// @param asset the asset token address, support ETH , WETH, MATIC, WMATIC and other ERC20
-    /// @param base the base token address, support ETH , WETH, MATIC, WMATIC and other ERC20
+    /// @param asset the asset token address, support WETH, MATIC, WMATIC and other ERC20
+    /// @param base the base token address, support WETH, MATIC, WMATIC and other ERC20
     /// @return boolean Is support or not
     function isSupportedPair(address asset, address base)
         public
@@ -45,8 +45,8 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
     /// @dev For those outside contract , Please used this as the entry point
     /// @dev this Function will help to route the calculate to other cal function,
     /// @dev Please do not directly call the below cal function
-    /// @param asset the asset token address, support ETH , WETH, MATIC, WMATIC and other ERC20
-    /// @param base the base token address, support ETH , WETH, MATIC, WMATIC and other ERC20
+    /// @param asset the asset token address, support WETH, MATIC, WMATIC and other ERC20
+    /// @param base the base token address, support WETH, MATIC, WMATIC and other ERC20
     /// @param amount the amount of asset, in asset decimal
     /// @return uint256 the Asset Price in term of base token in base token decimal
     function assetPrice(
@@ -54,11 +54,8 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
         address base,
         uint256 amount
     ) public view virtual override returns (uint256) {
-        asset = asset == _WETH9() ? Denominations.ETH : asset;
-        base = base == _WETH9() ? Denominations.ETH : base;
-        asset = asset == _WMATIC() ? Constant.MATIC_ADDRESS : asset;
-        base = base == _WMATIC() ? Constant.MATIC_ADDRESS : base;
-        // Feed Registry doesn't provide any WETH Price Feed, redirect to ETH case here
+        asset = asset == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : asset;
+        base = base == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : base;
         // Feed Registry doesn't provide any WMATIC Price Feed, redirect to MATIC case here
 
         if (asset == base) return amount;
@@ -76,7 +73,7 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
 
     /// @notice Get Asset Price in Term of USD
     /// @dev Get the rate in Chainlink and scale the Price to decimal 8
-    /// @param asset the asset token address, support ETH , WETH, MATIC, WMATIC and other ERC20
+    /// @param asset the asset token address, support WETH, MATIC, WMATIC and other ERC20
     /// @param amount Asset Amount in term of asset's decimal
     /// @return uint256 the Asset Price in term of USD with hardcoded decimal 8
     function assetUSDPrice(address asset, uint256 amount)
@@ -86,8 +83,7 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
         returns (uint256)
     {
         if (asset == Denominations.USD) return amount;
-        asset = asset == _WETH9() ? Denominations.ETH : asset;
-        asset = asset == _WMATIC() ? Constant.MATIC_ADDRESS : asset;
+        asset = asset == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : asset;
 
         (
             uint80 roundID,
@@ -128,7 +124,7 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
 
     /// @notice Get USD Price in term of Asset
     /// @dev Get the rate in Chainlink and scale the Price to asset decimal
-    /// @param asset the asset token address, support ETH , WETH, MATIC, WMATIC and other ERC20, used as base token address
+    /// @param asset the asset token address, support WETH, MATIC, WMATIC and other ERC20, used as base token address
     /// @param usdAmount Usd Amount with 8 decimal (arbitrum)
     /// @return uint256 the price by using asset as base with assets decimal
     function usdAssetPrice(address asset, uint256 usdAmount)
@@ -138,8 +134,7 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
         returns (uint256)
     {
         if (asset == Denominations.USD) return usdAmount;
-        asset = asset == _WETH9() ? Denominations.ETH : asset;
-        asset = asset == _WMATIC() ? Constant.MATIC_ADDRESS : asset;
+        asset = asset == _WRAP_NATIVE_TOKEN() ? Denominations.ETH : asset;
         (
             uint80 roundID,
             int256 price,
@@ -268,18 +263,14 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
     }
 
     /// @notice Check if the asset is supported by the feed registry
-    /// @param asset The asset token address, support ETH, WETH, MATIC, WMATIC and other ERC20
+    /// @param asset The asset token address, support WETH, MATIC, WMATIC and other ERC20
     /// @return boolean True if the asset is supported, false otherwise
     function canResolvePrice(address asset) internal view returns (bool) {
         if (asset == Denominations.USD) return true;
 
-        if (asset == _WETH9()) {
-            // Feed Registry doesn't provide any WETH Price Feed, redirect to ETH case here
-            asset = Denominations.ETH;
-        }
-        if (asset == _WMATIC()) {
+        if (asset == _WRAP_NATIVE_TOKEN()) {
             // Feed Registry doesn't provide any WMATIC Price Feed, redirect to MATIC case here
-            asset = Constant.MATIC_ADDRESS;
+            asset = _NATIVE_TOKEN();
         }
 
         try
@@ -304,12 +295,12 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
         }
     }
 
-    function _WETH9() internal pure returns (address) {
-        return Constant.WETH_ADDRESS;
+    function _WRAP_NATIVE_TOKEN() internal pure returns (address) {
+        return Constant.WRAP_NATIVE_TOKEN;
     }
 
-    function _WMATIC() internal pure returns (address) {
-        return Constant.WMATIC_ADDRESS;
+    function _NATIVE_TOKEN() internal pure returns (address) {
+        return Constant.NATIVE_TOKEN;
     }
 
     uint256[50] private __gap;
