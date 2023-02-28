@@ -45,6 +45,11 @@ async function main () {
         default: ethers.constants.AddressZero,
       },
       { type: 'number', name: 'generalGovernSetting.5', message: 'Govern proposal duration? (in block)', default: 600 },
+      {
+        type: 'input',
+        name: 'creator',
+        message: 'creator? This Creator will be the first member of the dao.',
+      },
     ]);
 
   const adamDeployment = await get('Adam');

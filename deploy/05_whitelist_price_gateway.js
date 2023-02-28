@@ -6,9 +6,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deployer } = await getNamedAccounts();
   const deployNetwork = hre.network.name || 'goerli';
 
-  const priceGateway = deployNetwork.includes('arbitrum') ? await get('ArbitrumChainlinkPriceGateway') : await get('EthereumChainlinkPriceGateway');
+  let priceGateway;
+
+  if (deployNetwork.includes('mumbai') || deployNetwork.includes('polygon')) {
+    priceGateway = await get('PolygonChainlinkPriceGateway');
+  } else if (deployNetwork.includes('arbitrum')) {
+    priceGateway = await get('ArbitrumChainlinkPriceGateway');
+  } else {
+    priceGateway = await get('EthereumChainlinkPriceGateway');
+  }
+
   if (!await read('Adam', 'priceGateways', priceGateway.address)) {
-    await execute('Adam', { from: deployer, log: true, ...(await gasFeeConfig()) }, 'whitelistPriceGateways', priceGateway.address);
+    await execute('Adam', { from: deployer, log: true, ...(await gasFeeConfig()) }, 'whitelistPriceGateways', [priceGateway.address]);
   }
 };
 

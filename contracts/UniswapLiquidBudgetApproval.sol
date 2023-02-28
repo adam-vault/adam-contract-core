@@ -81,7 +81,7 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         for(uint i = 0; i < _fromTokenLength; i++) {
             address _fromToken = fromTokens[i];
 
-            if(_fromToken != Denominations.ETH) {
+            if(_fromToken != Constant.NATIVE_TOKEN) {
                 IBudgetApprovalExecutee(_executee).executeByBudgetApproval(_fromToken, data, 0);
             }
         }
@@ -202,8 +202,8 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
 
         for (uint i = 0; i < _fromTokenLength; i++) {
             address _fromToken = fromTokens[i];
-            if (_fromToken == Denominations.ETH) {
-                totalBalance += assetBaseCurrencyPrice(Denominations.ETH, _executee.balance);
+            if (_fromToken == Constant.NATIVE_TOKEN) {
+                totalBalance += assetBaseCurrencyPrice(Constant.NATIVE_TOKEN, _executee.balance);
             } else {
                 totalBalance += assetBaseCurrencyPrice(_fromToken, IERC20(_fromToken).balanceOf(_executee));
             }

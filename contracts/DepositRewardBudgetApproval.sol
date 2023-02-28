@@ -12,6 +12,7 @@ import "./interface/IBudgetApprovalExecutee.sol";
 import "./interface/ILiquidPool.sol";
 import "./interface/IDao.sol";
 import "./interface/IMembership.sol";
+import "./lib/Constant.sol";
 
 contract DepositRewardBudgetApproval is CommonBudgetApproval {
     using BytesLib for bytes;
@@ -97,7 +98,7 @@ contract DepositRewardBudgetApproval is CommonBudgetApproval {
             (address, address, uint256, address)
         );
 
-        if (_asset == Denominations.ETH) {
+        if (_asset == Constant.NATIVE_TOKEN) {
             if (msg.value != _amount) {
                 revert MsgValueNotMatch();
             }

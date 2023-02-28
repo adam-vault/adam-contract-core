@@ -8,9 +8,17 @@ import "@chainlink/contracts/src/v0.8/interfaces/FeedRegistryInterface.sol";
 import "./base/PriceGateway.sol";
 import "./lib/Constant.sol";
 
-contract EthereumChainlinkPriceGateway is PriceGateway {
+/**
+@title PolygonChainlinkPriceGateway
+@dev A price gateway that uses Chainlink price feeds to calculate asset prices in terms of base tokens.
+It supports WETH, MATIC, WMATIC and other ERC20 tokens as assets or base tokens.
+This contract is inherited from the PriceGateway base contract, 
+which provides basic functions to check the support of the pair and calculate asset prices.
+*/
+
+contract PolygonChainlinkPriceGateway is PriceGateway {
     /// @custom:oz-upgrades-unsafe-allow constructor
-    string public constant override name = "Ethereum Chainlink Price Gateway";
+    string public constant override name = "Polygon Chainlink Price Gateway";
 
     error StaleRoundId(uint80 roundID, uint80 answeredInRound);
     error StaleTimestamp(uint256 currentTimeStamp, uint256 updatedAtTimeStamp);
@@ -20,8 +28,8 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
 
     /// @notice inherited from PriceGateway, help to check the imported pair support or not
     /// @dev Custom price gateway is allowed, but need to implement priceGateway.sol and set by govern
-    /// @param asset the asset token address, support ETH , WETH and other ERC20
-    /// @param base the base token address, support ETH , WETH and other ERC20
+    /// @param asset the asset token address, support WETH, MATIC, WMATIC and other ERC20
+    /// @param base the base token address, support WETH, MATIC, WMATIC and other ERC20
     /// @return boolean Is support or not
     function isSupportedPair(address asset, address base)
         public
@@ -29,7 +37,7 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         view
         override
         returns (bool)
-    {   
+    {
         return canResolvePrice(asset) && canResolvePrice(base);
     }
 
@@ -37,35 +45,45 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
     /// @dev For those outside contract , Please used this as the entry point
     /// @dev this Function will help to route the calculate to other cal function,
     /// @dev Please do not directly call the below cal function
-    /// @param asset the asset token address, support ETH , WETH and other ERC20
-    /// @param base the base token address, support ETH , WETH and other ERC20
+    /// @param asset the asset token address, support WETH, MATIC, WMATIC and other ERC20
+    /// @param base the base token address, support WETH, MATIC, WMATIC and other ERC20
     /// @param amount the amount of asset, in asset decimal
     /// @return uint256 the Asset Price in term of base token in base token decimal
     function assetPrice(
         address asset,
         address base,
         uint256 amount
-    ) public virtual view override returns (uint256) {
+    ) public view virtual override returns (uint256) {
+        asset = asset == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : asset;
+        base = base == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : base;
+        // Feed Registry doesn't provide any WMATIC Price Feed, redirect to MATIC case here
+
         if (asset == base) return amount;
 
-        if (base == _NATIVE_TOKEN() || base == _WRAP_NATIVE_TOKEN()) {
-            return assetEthPrice(asset, amount);
+        if (base == Denominations.USD) {
+            return assetUSDPrice(asset, amount);
         }
 
-        if (asset == _NATIVE_TOKEN() || asset == _WRAP_NATIVE_TOKEN()) {
-            return ethAssetPrice(base, amount);
+        if (asset == Denominations.USD) {
+            return usdAssetPrice(base, amount);
         }
 
         return derivedAssetPrice(asset, base, amount);
     }
 
-    function assetEthPrice(address asset, uint256 amount)
+    /// @notice Get Asset Price in Term of USD
+    /// @dev Get the rate in Chainlink and scale the Price to decimal 8
+    /// @param asset the asset token address, support WETH, MATIC, WMATIC and other ERC20
+    /// @param amount Asset Amount in term of asset's decimal
+    /// @return uint256 the Asset Price in term of USD with hardcoded decimal 8
+    function assetUSDPrice(address asset, uint256 amount)
         public
         view
         virtual
         returns (uint256)
     {
-        if (asset == _NATIVE_TOKEN() || asset == _WRAP_NATIVE_TOKEN()) return amount;
+        if (asset == Denominations.USD) return amount;
+        asset = asset == _WRAP_NATIVE_TOKEN() ? _NATIVE_TOKEN() : asset;
 
         (
             uint80 roundID,
@@ -75,10 +93,11 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
             uint80 answeredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 asset,
-                _NATIVE_TOKEN()
+                Denominations.USD
             );
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(asset, _NATIVE_TOKEN());
+            .decimals(asset, Denominations.USD);
+
 
         if (answeredInRound < roundID) {
             revert StaleRoundId(roundID, answeredInRound);
@@ -90,26 +109,32 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         price = scalePrice(
             price,
             priceDecimals,
-            18 /* ETH decimals */
+            8 /* USD decimals */
         );
 
         if (price > 0) {
+            // return price with decimal = price Decimal (8) + amount decimal (Asset decimal) - Asset decimal = price decimal(8)
             return
                 (uint256(price) * amount) /
-                10**IERC20Metadata(asset).decimals();
+                10**assetDecimals(asset);
         }
 
         return 0;
     }
 
-    function ethAssetPrice(address asset, uint256 ethAmount)
+    /// @notice Get USD Price in term of Asset
+    /// @dev Get the rate in Chainlink and scale the Price to asset decimal
+    /// @param asset the asset token address, support WETH, MATIC, WMATIC and other ERC20, used as base token address
+    /// @param usdAmount Usd Amount with 8 decimal (arbitrum)
+    /// @return uint256 the price by using asset as base with assets decimal
+    function usdAssetPrice(address asset, uint256 usdAmount)
         public
         view
         virtual
         returns (uint256)
     {
-        if (asset == _NATIVE_TOKEN() || asset == _WRAP_NATIVE_TOKEN()) return ethAmount;
-
+        if (asset == Denominations.USD) return usdAmount;
+        asset = asset == _WRAP_NATIVE_TOKEN() ? Denominations.ETH : asset;
         (
             uint80 roundID,
             int256 price,
@@ -118,10 +143,10 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
             uint80 answeredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 asset,
-                _NATIVE_TOKEN()
+                Denominations.USD
             );
         uint8 priceDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(asset, _NATIVE_TOKEN());
+            .decimals(asset, Denominations.USD);
 
         if (answeredInRound < roundID) {
             revert StaleRoundId(roundID, answeredInRound);
@@ -129,14 +154,16 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         if (block.timestamp > updatedAt + Constant.STALE_PRICE_DELAY) {
             revert StaleTimestamp(block.timestamp, updatedAt);
         }
+
         price = scalePrice(
             price,
             priceDecimals,
-            18 /* ETH decimals */
+            8 /* USD decimals */
         );
         if (price > 0) {
+            // return price with decimal = 8 + asset Decimal - price Decimal (8) = asset Decimal
             return
-                (ethAmount * (10**IERC20Metadata(asset).decimals())) /
+                (usdAmount * (10**assetDecimals(asset))) /
                 uint256(price);
         }
 
@@ -184,18 +211,18 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
             uint80 _baseAnsweredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 _base,
-                _NATIVE_TOKEN()
+                Denominations.USD
             );
 
         if (_baseAnsweredInRound < _baseRoundID) {
-            revert StaleRoundId(_baseRoundID, _baseAnsweredInRound);
+            revert StaleRoundId(_baseAnsweredInRound, _baseRoundID);
         }
         if (block.timestamp > _baseUpdatedAt + Constant.STALE_PRICE_DELAY) {
             revert StaleTimestamp(block.timestamp, _baseUpdatedAt);
         }
 
         uint8 baseDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(_base, _NATIVE_TOKEN());
+            .decimals(_base, Denominations.USD);
         basePrice = scalePrice(basePrice, baseDecimals, _decimals);
         (
             uint80 _quoteRoundID,
@@ -205,26 +232,28 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
             uint80 _quoteAnsweredInRound
         ) = FeedRegistryInterface(Constant.FEED_REGISTRY).latestRoundData(
                 _quote,
-                _NATIVE_TOKEN()
+                Denominations.USD
             );
         if (_quoteAnsweredInRound < _quoteRoundID) {
-            revert StaleRoundId(_quoteRoundID, _quoteAnsweredInRound);
+            revert StaleRoundId(_quoteAnsweredInRound, _quoteRoundID);
         }
         if (block.timestamp > _quoteUpdatedAt + Constant.STALE_PRICE_DELAY) {
             revert StaleTimestamp(block.timestamp, _quoteUpdatedAt);
         }
 
         uint8 quoteDecimals = FeedRegistryInterface(Constant.FEED_REGISTRY)
-            .decimals(_quote, _NATIVE_TOKEN());
+            .decimals(_quote, Denominations.USD);
         quotePrice = scalePrice(quotePrice, quoteDecimals, _decimals);
 
         return (basePrice * decimals) / quotePrice;
     }
+
     function scalePrice(
         int256 _price,
         uint8 _priceDecimals,
         uint8 _decimals
     ) internal pure virtual returns (int256) {
+        
         if (_priceDecimals < _decimals) {
             return _price * int256(10**uint256(_decimals - _priceDecimals));
         } else if (_priceDecimals > _decimals) {
@@ -233,12 +262,21 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
         return _price;
     }
 
+    /// @notice Check if the asset is supported by the feed registry
+    /// @param asset The asset token address, support WETH, MATIC, WMATIC and other ERC20
+    /// @return boolean True if the asset is supported, false otherwise
     function canResolvePrice(address asset) internal view returns (bool) {
-        if (asset == _NATIVE_TOKEN() || asset == _WRAP_NATIVE_TOKEN()) return true;
+        if (asset == Denominations.USD) return true;
+
+        if (asset == _WRAP_NATIVE_TOKEN()) {
+            // Feed Registry doesn't provide any WMATIC Price Feed, redirect to MATIC case here
+            asset = _NATIVE_TOKEN();
+        }
+
         try
             FeedRegistryInterface(Constant.FEED_REGISTRY).getFeed(
                 asset,
-                _NATIVE_TOKEN()
+                Denominations.USD
             )
         {
             return true;
@@ -248,7 +286,8 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
     }
 
     function assetDecimals(address asset) public view virtual returns (uint8) {
-        if (asset == _NATIVE_TOKEN()) return 18;
+        if (asset == Denominations.ETH) return 18;
+        if (asset == Denominations.USD) return 8;
         try IERC20Metadata(asset).decimals() returns (uint8 _decimals) {
             return _decimals;
         } catch {
@@ -263,4 +302,6 @@ contract EthereumChainlinkPriceGateway is PriceGateway {
     function _NATIVE_TOKEN() internal pure returns (address) {
         return Constant.NATIVE_TOKEN;
     }
+
+    uint256[50] private __gap;
 }

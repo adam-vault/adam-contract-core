@@ -109,13 +109,13 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
         return total;
     }
 
-    function totalPriceInEth() public view returns (uint256) {
+    function totalPriceInNativeToken() public view returns (uint256) {
         uint256 total;
         uint256 _assetsLength = assets.length;
 
         for (uint256 i = 0; i < _assetsLength; i++) {
             address _asset = assets[i];
-            total += assetPrice(_asset, Denominations.ETH, _assetBalance(_asset));
+            total += assetPrice(_asset, Constant.NATIVE_TOKEN, _assetBalance(_asset));
         }
         return total;
     }
@@ -125,24 +125,24 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function deposit(address receiver) public payable {
-        if (!isAssetSupported(Denominations.ETH)) {
-            revert UnsupportedAsset(Denominations.ETH);
+        if (!isAssetSupported(Constant.NATIVE_TOKEN)) {
+            revert UnsupportedAsset(Constant.NATIVE_TOKEN);
         }
         uint256 _totalSupply = totalSupply();
-        uint256 ethPriceInBaseCurrency = assetBaseCurrencyPrice(Denominations.ETH, msg.value);
+        uint256 nativeTokenPriceInBaseCurrency = assetBaseCurrencyPrice(Constant.NATIVE_TOKEN, msg.value);
 
         if (_totalSupply == 0) {
-            _mint(receiver, ethPriceInBaseCurrency);
-            _afterDeposit(receiver, ethPriceInBaseCurrency);
-            emit Deposit(receiver, Denominations.ETH, msg.value);
+            _mint(receiver, nativeTokenPriceInBaseCurrency);
+            _afterDeposit(receiver, nativeTokenPriceInBaseCurrency);
+            emit Deposit(receiver, Constant.NATIVE_TOKEN, msg.value);
             return;
         }
-        uint256 total = totalPrice() - ethPriceInBaseCurrency;
-        _mint(receiver, ethPriceInBaseCurrency * _totalSupply / total);
+        uint256 total = totalPrice() - nativeTokenPriceInBaseCurrency;
+        _mint(receiver, nativeTokenPriceInBaseCurrency * _totalSupply / total);
 
-        _afterDeposit(receiver, ethPriceInBaseCurrency);
+        _afterDeposit(receiver, nativeTokenPriceInBaseCurrency);
 
-        emit Deposit(receiver, Denominations.ETH, msg.value);
+        emit Deposit(receiver, Constant.NATIVE_TOKEN, msg.value);
     }
 
     function redeem(uint256 amount) public {
@@ -192,7 +192,7 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     function _beforeRevokeBudgetApproval(address budgetApproval) internal view override onlyOwner {}
 
     function _assetBalance(address asset) internal view returns (uint256) {
-        if(asset == Denominations.ETH) {
+        if(asset == Constant.NATIVE_TOKEN) {
             return address(this).balance;
         }
         
@@ -200,7 +200,7 @@ contract LiquidPool is Initializable, ERC20Upgradeable, PriceResolver, BudgetApp
     }
 
     function _transferAsset(address target, address asset, uint256 amount) internal {
-        if(asset == Denominations.ETH) {
+        if(asset == Constant.NATIVE_TOKEN) {
             (bool success, bytes memory result) = payable(target).call{ value: amount }("");
             if (!success) {
                 revert TransferFailed(result);

@@ -116,7 +116,7 @@ contract TransferLiquidERC20BudgetApproval is
         uint256 _totalAmount = totalAmount;
         bool _allowAnyAmount = allowAnyAmount;
 
-        if (token == Denominations.ETH) {
+        if (token == Constant.NATIVE_TOKEN) {
             IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
                 to,
                 "",

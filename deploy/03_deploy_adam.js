@@ -26,9 +26,15 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     get('DepositRewardBudgetApproval'),
   ])).map((deployment) => deployment.address);
 
-  const priceGateway = deployNetwork.includes('arbitrum')
-    ? await get('ArbitrumChainlinkPriceGateway')
-    : await get('EthereumChainlinkPriceGateway');
+  let priceGateway;
+
+  if (deployNetwork.includes('mumbai') || deployNetwork.includes('polygon')) {
+    priceGateway = await get('PolygonChainlinkPriceGateway');
+  } else if (deployNetwork.includes('arbitrum')) {
+    priceGateway = await get('ArbitrumChainlinkPriceGateway');
+  } else {
+    priceGateway = await get('EthereumChainlinkPriceGateway');
+  }
 
   const daoBeacon = await deploy('DaoBeacon', {
     from: deployer,

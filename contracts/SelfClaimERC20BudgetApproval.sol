@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@chainlink/contracts/src/v0.8/Denominations.sol";
 import "./interface/IBudgetApprovalExecutee.sol";
-import "hardhat/console.sol";
+import "./lib/Constant.sol";
 
 /**
  * SelfClaimERC20BudgetApproval Contract
@@ -120,7 +120,7 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
             revert SignatureNotCorrrect();
         }
 
-        if (token == Denominations.ETH) {
+        if (token == Constant.NATIVE_TOKEN) {
             IBudgetApprovalExecutee(executee()).executeByBudgetApproval(
                 to,
                 "",

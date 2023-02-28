@@ -30,7 +30,6 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', async function () {
 
     daoAsSigner = await testUtils.address.impersonate(dao.address);
 
-
     const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
     await ethers.provider.send('hardhat_setCode', [
       ADDRESS_MOCK_FEED_REGISTRY,
@@ -307,10 +306,10 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', async function () {
     it('returns price in eth', async function () {
       await tokenAsSigner1.approve(lp.address, parseEther('1'));
       await signer1.sendTransaction({ to: lp.address, value: parseEther('1') });
-      expect(await lp.totalPriceInEth()).to.eq(parseEther('1'));
+      expect(await lp.totalPriceInNativeToken()).to.eq(parseEther('1'));
 
       await lpAsSigner1.depositToken(signer1.address, token.address, parseEther('1'));
-      expect(await lp.totalPriceInEth()).to.eq(parseEther('1.0046'));
+      expect(await lp.totalPriceInNativeToken()).to.eq(parseEther('1.0046'));
     });
   });
   describe('createBudgetApproval()', async function () {

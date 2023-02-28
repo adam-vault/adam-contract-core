@@ -147,7 +147,7 @@ contract UniswapAnyTokenBudgetApproval is CommonBudgetApproval, UniswapSwapper {
                 uint256 amount = _tokenInAmount[tokenIn];
 
                 uint256 tokenInBalanceBeforeSwap;
-                if(tokenIn == Denominations.ETH) {
+                if(tokenIn == Constant.NATIVE_TOKEN) {
                     tokenInBalanceBeforeSwap = __executee.balance + amount;
                 } else {
                     tokenInBalanceBeforeSwap = IERC20(tokenIn).balanceOf(__executee) + amount;
@@ -175,7 +175,7 @@ contract UniswapAnyTokenBudgetApproval is CommonBudgetApproval, UniswapSwapper {
         ) = this.decodeWETH9Call(executeData, value);
 
         uint256 tokenInBalanceBeforeSwap;
-        if(tokenIn == Denominations.ETH) {
+        if(tokenIn == Constant.NATIVE_TOKEN) {
             tokenInBalanceBeforeSwap = __executee.balance + amount;
         } else {
             tokenInBalanceBeforeSwap = IERC20(tokenIn).balanceOf(__executee) + amount;
