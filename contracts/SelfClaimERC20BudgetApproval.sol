@@ -149,7 +149,7 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
 
         claimedAddresses[to] = true;
 
-        emit ExecuteTransferERC20Transaction(
+        emit ExecuteSelfClaimTransferERC20Transaction(
             transactionId,
             msg.sender,
             to,
