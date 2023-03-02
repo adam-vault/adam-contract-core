@@ -36,7 +36,7 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
     error RecipientNotWhitelisted(); //occurs when the recipient is not whitelisted.
     error DuplicatedToAddress(); //occurs when a duplicate address is added to the whitelist.
 
-    event ExecuteTransferERC20Transaction(
+    event ExecuteSelfClaimTransferERC20Transaction(
         uint256 indexed id,
         address indexed executor,
         address indexed toAddress,
@@ -149,7 +149,7 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
 
         claimedAddresses[to] = true;
 
-        emit ExecuteTransferERC20Transaction(
+        emit ExecuteSelfClaimTransferERC20Transaction(
             transactionId,
             msg.sender,
             to,
