@@ -83,8 +83,7 @@ const questions = {
     { type: 'input', name: 'toAddresses', message: 'To addresses? (comma separated)', when: ({ allowAllAddress }) => !allowAllAddress },
     { type: 'confirm', name: 'allowAllTokens', message: 'Allow all tokens?' },
     { type: 'input', name: 'token', message: 'Specific token?', when: ({ allowAllTokens }) => !allowAllTokens },
-    { type: 'confirm', name: 'allowAnyAmount', message: 'Allow all amount?' },
-    { type: 'number', name: 'fixAmount', message: 'Fix Amount limited?', when: ({ allowAnyAmount }) => !allowAnyAmount },
+    { type: 'number', name: 'fixAmount', message: 'Fix Amount limited?' },
     { type: 'input', name: 'validator', message: 'Validator address?', default: ethers.constants.AddressZero },
   ],
   CreateArbitrumDaoBudgetApproval: [
@@ -183,6 +182,8 @@ async function main () {
   }
 
   let tx;
+  console.log('MC: ~ file: createBudgetApproval.js:199 ~ main ~ answers.budgetApprovalOptions.address:', answers.budgetApprovalOptions.address);
+
   if (answers.dest === 'LiquidPool') {
     tx = await dao.executePlugin(
       ethers.utils.id('adam.dao.liquid_pool'),
@@ -197,7 +198,6 @@ async function main () {
       [answers.budgetApprovalOptions.address],
       [dataErc20]);
   }
-
   console.log(tx);
 
   const receipt1 = await tx.wait();
