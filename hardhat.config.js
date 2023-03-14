@@ -102,6 +102,17 @@ module.exports = {
         },
       },
     },
+    polygon: {
+      url: process.env.POLYGON_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      verify: {
+        etherscan: {
+          apiKey: process.env.POLYGON_API_KEY,
+          apiUrl: 'https://api.polygonscan.com',
+        },
+      },
+    },
 
     'arbitrum-goerli-predev': arbitrumGoerliConfig,
     'arbitrum-goerli-dev': arbitrumGoerliConfig,

@@ -9,8 +9,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     log: true,
     args: [],
     skipIfAlreadyDeployed: true,
-    gasLimit: 5000000,
-    ...(await gasFeeConfig()),
     proxy: {
       proxyContract: 'ERC1967Proxy',
       proxyArgs: ['{implementation}', '{data}'],
@@ -18,8 +16,8 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         init: {
           methodName: 'initialize',
           args: [
-            'FomoToken',
-            'FOMO',
+            'FOMO Token',
+            '$FOMO',
           ],
         },
       },

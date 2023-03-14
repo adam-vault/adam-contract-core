@@ -30,7 +30,7 @@ contract FomoToken is Initializable, ERC20VotesUpgradeable, OwnableUpgradeable {
     }
 
     function decimals() public view virtual override returns (uint8) {
-        return 6;
+        return 10;
     }
 
     uint256[50] private __gap;
