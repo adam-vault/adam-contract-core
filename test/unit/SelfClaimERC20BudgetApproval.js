@@ -4,6 +4,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
 const { smock } = require('@defi-wonderland/smock');
 const { getCreateSelfClaimErc20TokenBAParams } = require('../../utils/paramsStruct');
+const { Wallet } = require('ethers');
 
 const {
   ADDRESS_ETH,
@@ -47,7 +48,7 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
           usageCount: 5,
           startTime,
           endTime,
-          validator: validator.address,
+          validator: '0x2d61d2ea8c296305c4af461f12a172cf1d0af599',
         }),
       );
 
@@ -376,6 +377,25 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
       await budgetApproval.connect(approver).approveTransaction(id, '');
       await expect(budgetApproval.connect(executor).executeTransaction(id))
         .to.be.revertedWithCustomError(SelfClaimERC20BudgetApproval, 'AddressClaimed');
+    });
+    it.only('Check signature', async function () {
+      const accounts = await ethers.getSigners(2);
+      const signer = accounts[0];
+      const to = accounts[1].address;
+      const nonce = 123;
+
+      const hash = await budgetApproval.getMessageHash(to, nonce);
+      const sig = await signer.signMessage(ethers.utils.arrayify(hash));
+
+      // Correct signature and message returns true
+      expect(
+        await budgetApproval.verify(signer.address, to, nonce, sig),
+      ).to.equal(true);
+
+      // Incorrect message returns false
+      expect(
+        await budgetApproval.verify(signer.address, to, nonce + 1, sig),
+      ).to.equal(false);
     });
   });
 });
