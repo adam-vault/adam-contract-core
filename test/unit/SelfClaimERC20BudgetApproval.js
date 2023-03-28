@@ -4,7 +4,6 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
 const { smock } = require('@defi-wonderland/smock');
 const { getCreateSelfClaimErc20TokenBAParams } = require('../../utils/paramsStruct');
-const { Wallet } = require('ethers');
 
 const {
   ADDRESS_ETH,
@@ -378,7 +377,7 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
       await expect(budgetApproval.connect(executor).executeTransaction(id))
         .to.be.revertedWithCustomError(SelfClaimERC20BudgetApproval, 'AddressClaimed');
     });
-    it.only('Check signature', async function () {
+    it('Check signature', async function () {
       const accounts = await ethers.getSigners(2);
       const signer = accounts[0];
       const to = accounts[1].address;
