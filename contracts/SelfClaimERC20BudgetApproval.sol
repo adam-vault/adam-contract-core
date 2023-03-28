@@ -116,7 +116,7 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
             (address, uint256, bytes)
         );
 
-        if (validator != address(0) && !verifySignature(to, nonce, signature)) {
+        if (validator != address(0) && !verify( validator, to, nonce, signature)) {
             revert SignatureNotCorrrect();
         }
 
@@ -170,37 +170,31 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
         addressesMapping[to] = true;
         emit AllowAddress(to);
     }
-
-    /**
-     * @dev Verifies the signature of the given address.
-     * @param to Address to be verified.
-     * @param signature Signature of the address.
-     * @return True if the signature is signed by validator.
-     */
-    function verifySignature(
-        address to,
-        uint256 nonce,
-        bytes memory signature
-    ) public view returns (bool) {
-        bytes32 hash = ECDSA.toEthSignedMessageHash(getMessageHash(to, nonce));
-        (address signer, ECDSA.RecoverError error) = ECDSA.tryRecover(
-            hash,
-            signature
-        );
-        if (error != ECDSA.RecoverError.NoError) {
-            return false;
-        }
-        return signer == validator;
+    
+    function getMessageHash(
+        address _to,
+        uint _nonce
+    ) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_to, _nonce));
     }
 
-    function getMessageHash(address _entity, uint256 nonce)
-        public
-        pure
-        returns (bytes32)
-    {
+    function getEthSignedMessageHash(
+        bytes32 _messageHash
+    ) public pure returns (bytes32) {
         return
             keccak256(
-                abi.encodePacked("This address is validated.", _entity, nonce)
+                abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageHash)
             );
+    }
+
+    function verify(
+        address _signer,
+        address _to,
+        uint _nonce,
+        bytes memory signature
+    ) public pure returns (bool) {
+        bytes32 messageHash = getMessageHash(_to, _nonce);
+        bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
+        return ECDSA.recover(ethSignedMessageHash, signature) == _signer;
     }
 }
