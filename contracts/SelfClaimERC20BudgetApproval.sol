@@ -25,7 +25,7 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
 
     bool public allowAllAddresses;
     mapping(address => bool) public addressesMapping;
-    mapping(address => bool) private claimedAddresses;
+    mapping(address => bool) public claimedAddresses;
     bool public allowAllTokens;
     address public token;
     uint256 public fixAmount; //is the maximum amount that can be claimed.
@@ -116,7 +116,9 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
             (address, uint256, bytes)
         );
 
-        if (validator != address(0) && !verify( validator, to, nonce, signature)) {
+        if (
+            validator != address(0) && !verify(validator, to, nonce, signature)
+        ) {
             revert SignatureNotCorrrect();
         }
 
@@ -170,20 +172,26 @@ contract SelfClaimERC20BudgetApproval is CommonBudgetApproval {
         addressesMapping[to] = true;
         emit AllowAddress(to);
     }
-    
-    function getMessageHash(
-        address _to,
-        uint _nonce
-    ) public pure returns (bytes32) {
+
+    function getMessageHash(address _to, uint _nonce)
+        public
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encodePacked(_to, _nonce));
     }
 
-    function getEthSignedMessageHash(
-        bytes32 _messageHash
-    ) public pure returns (bytes32) {
+    function getEthSignedMessageHash(bytes32 _messageHash)
+        public
+        pure
+        returns (bytes32)
+    {
         return
             keccak256(
-                abi.encodePacked("\x19Ethereum Signed Message:\n32", _messageHash)
+                abi.encodePacked(
+                    "\x19Ethereum Signed Message:\n32",
+                    _messageHash
+                )
             );
     }
 
