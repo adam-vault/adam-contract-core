@@ -275,7 +275,7 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
 
       await budgetApproval.connect(approver).approveTransaction(id, '');
       await expect(budgetApproval.connect(executor).executeTransaction(id))
-        .to.be.revertedWithCustomError(SelfClaimERC20BudgetApproval, 'SignatureNotCorrrect');
+        .to.be.revertedWith('ECDSA: invalid signature length');
     });
   });
 
@@ -376,6 +376,25 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
       await budgetApproval.connect(approver).approveTransaction(id, '');
       await expect(budgetApproval.connect(executor).executeTransaction(id))
         .to.be.revertedWithCustomError(SelfClaimERC20BudgetApproval, 'AddressClaimed');
+    });
+    it('Check signature', async function () {
+      const accounts = await ethers.getSigners(2);
+      const signer = accounts[0];
+      const to = accounts[1].address;
+      const nonce = 123;
+
+      const hash = await budgetApproval.getMessageHash(to, nonce);
+      const sig = await signer.signMessage(ethers.utils.arrayify(hash));
+
+      // Correct signature and message returns true
+      expect(
+        await budgetApproval.verify(signer.address, to, nonce, sig),
+      ).to.equal(true);
+
+      // Incorrect message returns false
+      expect(
+        await budgetApproval.verify(signer.address, to, nonce + 1, sig),
+      ).to.equal(false);
     });
   });
 });
