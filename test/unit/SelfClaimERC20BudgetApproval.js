@@ -275,7 +275,7 @@ describe('SelfClaimERC20BudgetApproval.sol - test/unit/SelfClaimERC20BudgetAppro
 
       await budgetApproval.connect(approver).approveTransaction(id, '');
       await expect(budgetApproval.connect(executor).executeTransaction(id))
-        .to.be.revertedWithCustomError(SelfClaimERC20BudgetApproval, 'SignatureNotCorrrect');
+        .to.be.revertedWith('ECDSA: invalid signature length');
     });
   });
 
