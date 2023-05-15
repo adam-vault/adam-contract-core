@@ -3,8 +3,22 @@ const ethers = require('ethers');
 const inquirer = require('inquirer');
 const paramsStruct = require('../utils/paramsStruct');
 const ETH = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+const MATIC = '0x0000000000000000000000000000000000001010';
+const USD = '0x0000000000000000000000000000000000000348';
+
+const PRICE_GATEWAY_TYPE = [
+  'ArbitrumChainlinkPriceGateway',
+  'EthereumChainlinkPriceGateway',
+  'PolygonChainlinkPriceGateway',
+];
 async function main () {
-  const { get } = hre.deployments;
+  const { get, getOrNull } = hre.deployments;
+
+  const priceGatewayAddresses = (await Promise.all(PRICE_GATEWAY_TYPE.map(async (key) => {
+    const d = await getOrNull(key);
+    if (!d) return null;
+    return [key, d.address];
+  }))).filter(deployment => !!deployment);
 
   const answers = await inquirer
     .prompt([
@@ -20,8 +34,8 @@ async function main () {
 
       { type: 'input', name: 'maxMemberLimit', message: 'Max member allowed?', default: ethers.constants.MaxUint256.toString() },
 
-      { type: 'checkbox', name: 'depositTokens', message: 'Deposit Tokens?', default: [ETH], choices: [ETH] },
-      { type: 'list', name: 'baseCurrency', message: 'BaseCurrency?', default: ETH, choices: [ETH] },
+      { type: 'checkbox', name: 'depositTokens', message: 'Deposit Tokens?', default: [ETH], choices: [ETH, MATIC] },
+      { type: 'list', name: 'baseCurrency', message: 'BaseCurrency?', default: ETH, choices: [ETH, USD] },
       { type: 'number', name: 'minDepositAmount', message: 'Min Deposit Amount?', default: 0 },
 
       { type: 'number', name: 'generalGovernSetting.0', message: 'Govern proposal duration? (in second)', default: 0 },
@@ -50,11 +64,17 @@ async function main () {
         name: 'creator',
         message: 'creator? This Creator will be the first member of the dao.',
       },
+      { type: 'list', name: 'priceGatewayOptions', message: 'Price Gateway Type?', choices: priceGatewayAddresses.map(([key, address]) => ({ name: key, value: { key, address } })) },
+
     ]);
+  console.log('MC: ~ file: createDao.js:85 ~ main ~ answers.priceGatewayOptions.address:', answers.priceGatewayOptions.address);
 
   const adamDeployment = await get('Adam');
   const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);
-  const tx = await adam.createDao(...paramsStruct.getCreateDaoParams(answers));
+  const tx = await adam.createDao(...paramsStruct.getCreateDaoParams({
+    ...answers,
+    priceGateways: [answers.priceGatewayOptions.address],
+  }));
   console.log(tx);
   const receipt = await tx.wait();
   console.log('Dao created at', receipt.events.find(e => e.event === 'CreateDao').args.dao);
