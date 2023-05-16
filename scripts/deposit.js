@@ -43,7 +43,7 @@ async function main () {
         name: 'token',
         message: 'What kind of deposit?',
         default: 0,
-        choices: ['ERC20', 'ETH'],
+        choices: ['ERC20', 'NATIVE'],
       },
       { type: 'input', name: 'tokenAddress', message: 'ERC20 Address?', when: ({ token }) => token === 'ERC20' },
       { type: 'input', name: 'amount', message: 'How much?', default: '0.001' },
@@ -52,7 +52,7 @@ async function main () {
       dest, tokenAddress, token, daoAddress, amount,
     }) => {
       if (dest === 'Treasury') {
-        if (token === 'ETH') {
+        if (token === 'NATIVE') {
           const [signer] = await hre.ethers.getSigners();
           return signer.sendTransaction({
             to: daoAddress,
@@ -68,8 +68,9 @@ async function main () {
         const lpAddress = await dao.liquidPool();
         const lp = await hre.ethers.getContractAt('LiquidPool', lpAddress);
 
-        if (token === 'ETH') {
-          return lp.deposit({ value: hre.ethers.utils.parseEther(amount) });
+        if (token === 'NATIVE') {
+          const [signer] = await hre.ethers.getSigners();
+          return lp.deposit(signer.address, { value: hre.ethers.utils.parseEther(amount) });
         } else {
           const erc20 = await hre.ethers.getContractAt('ERC20', tokenAddress);
           const decimals = await erc20.decimals();
