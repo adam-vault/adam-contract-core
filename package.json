@@ -11,6 +11,7 @@
     "prepare:mainnet": "mustache constant/mainnet.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "prepare:arbitrum-goerli": "mustache constant/arbitrum-goerli.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "prepare:arbitrum-one": "mustache constant/arbitrum-one.json constant/Constant.template.sol > contracts/lib/Constant.sol",
+    "prepare:polygon": "mustache constant/polygon.json constant/Constant.template.sol > contracts/lib/Constant.sol",
     "compile": "hardhat compile",
     "coverage": "hardhat coverage",
     "size": "hardhat size-contracts",
