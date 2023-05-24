@@ -102,6 +102,12 @@ module.exports = {
         },
       },
     },
+    polygon: {
+      chainId: 137,
+      url: process.env.POLYGON_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
 
     'arbitrum-goerli-predev': arbitrumGoerliConfig,
     'arbitrum-goerli-dev': arbitrumGoerliConfig,
