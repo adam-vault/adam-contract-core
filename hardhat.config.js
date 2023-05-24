@@ -91,6 +91,12 @@ module.exports = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    polygon: {
+      chainId: 137,
+      url: process.env.POLYGON_URL || '',
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
     'arbitrum-one': {
       url: process.env.ARBITRUM_URL || '',
       accounts:
