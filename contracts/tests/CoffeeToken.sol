@@ -3,11 +3,12 @@
 pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
 
-contract CoffeeToken is Initializable, ERC20PermitUpgradeable, ERC20VotesUpgradeable, OwnableUpgradeable{
+contract CoffeeToken is Initializable, UUPSUpgradeable, ERC20PermitUpgradeable, ERC20VotesUpgradeable, OwnableUpgradeable{
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -26,10 +27,6 @@ contract CoffeeToken is Initializable, ERC20PermitUpgradeable, ERC20VotesUpgrade
         _mint(account, amount);
     }
 
-    function mintToOwner(uint256 amount) external onlyOwner {
-        _mint(owner(), amount);
-    }
-
     function decimals() public view virtual override returns (uint8) {
         return 6;
     }
@@ -45,6 +42,8 @@ contract CoffeeToken is Initializable, ERC20PermitUpgradeable, ERC20VotesUpgrade
     function _mint(address account, uint256 amount) internal override(ERC20Upgradeable, ERC20VotesUpgradeable) {
         super._mint(account, amount);
     }
+    
+    function _authorizeUpgrade(address) internal view override onlyOwner {}
     
     uint256[50] private __gap;
 
