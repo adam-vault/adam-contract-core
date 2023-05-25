@@ -28,7 +28,7 @@ contract CoffeeToken is Initializable, UUPSUpgradeable, ERC20PermitUpgradeable, 
     }
 
     function decimals() public view virtual override returns (uint8) {
-        return 6;
+        return 18;
     }
     
     function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20Upgradeable, ERC20VotesUpgradeable) {
