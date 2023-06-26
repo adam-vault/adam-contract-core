@@ -83,7 +83,7 @@ const questions = {
     { type: 'input', name: 'toAddresses', message: 'To addresses? (comma separated)', when: ({ allowAllAddress }) => !allowAllAddress },
     { type: 'confirm', name: 'allowAllTokens', message: 'Allow all tokens?' },
     { type: 'input', name: 'token', message: 'Specific token?', when: ({ allowAllTokens }) => !allowAllTokens },
-    { type: 'number', name: 'fixAmount', message: 'Fix Amount limited?' },
+    { type: 'input', name: 'fixAmount', message: 'Fix Amount limited?' },
     { type: 'input', name: 'validator', message: 'Validator address?', default: ethers.constants.AddressZero },
   ],
   CreateArbitrumDaoBudgetApproval: [
