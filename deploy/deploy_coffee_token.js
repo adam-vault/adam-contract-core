@@ -8,10 +8,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     log: true,
     args: [],
-    skipIfAlreadyDeployed: true,
     gasLimit: 5000000,
     proxy: {
-      proxyContract: 'ERC1967Proxy',
+      proxyContract: 'UUPS',
       proxyArgs: ['{implementation}', '{data}'],
       execute: {
         init: {
