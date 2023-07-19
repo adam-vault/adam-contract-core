@@ -48,12 +48,11 @@ async function main() {
             name: 'reason',
         },
     ]);
-
-    if (reason) {
-        await govern.castVoteWithReason(proposalId, support, reason);
-    } else {
-        await govern.castVote(proposalId, support);
-    }
+    const tx = reason
+        ? await govern.castVoteWithReason(proposalId, support, reason)
+        : await govern.castVote(proposalId, support);
+    const result = tx.wait();
+    console.log(result);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
