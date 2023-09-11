@@ -51,7 +51,7 @@ async function main() {
     const tx = reason
         ? await govern.castVoteWithReason(proposalId, support, reason)
         : await govern.castVote(proposalId, support);
-    const result = tx.wait();
+    const result = await tx.wait();
     console.log(result);
 }
 
