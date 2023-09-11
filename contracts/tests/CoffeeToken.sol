@@ -30,6 +30,20 @@ contract CoffeeToken is Initializable, UUPSUpgradeable, ERC20PermitUpgradeable, 
     function decimals() public view virtual override returns (uint8) {
         return 18;
     }
+
+    function permitTransferFrom(
+        address owner,
+        address spender,
+        address to,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public virtual {
+        permit(owner, spender, value, deadline, v, r, s);
+        transferFrom(owner, to, value);
+    }
     
     function _afterTokenTransfer(address from, address to, uint256 amount) internal override(ERC20Upgradeable, ERC20VotesUpgradeable) {
         super._afterTokenTransfer(from, to, amount);
