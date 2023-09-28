@@ -131,7 +131,6 @@ const createAdam = async (budgetApprovalAddresses) => {
     await team.deployed();
     await accountingSystem.deployed();
     await ethPriceGateway.deployed();
-    await arbPriceGateway.deployed();
     await transferLiquidERC20BudgetApproval.deployed();
     await uniswapLiquidBudgetApproval.deployed();
     await transferERC721BudgetApproval.deployed();
@@ -160,7 +159,7 @@ const createAdam = async (budgetApprovalAddresses) => {
                 transferERC721BudgetApproval.address,
                 transferERC20BudgetApproval.address,
             ],
-            [ethPriceGateway.address, arbPriceGateway.address],
+            [ethPriceGateway.address],
         ],
         { kind: 'uups' },
     );
@@ -170,7 +169,6 @@ const createAdam = async (budgetApprovalAddresses) => {
     return {
         adam,
         ethPriceGateway,
-        arbPriceGateway,
         dao,
         membership,
         govern,
