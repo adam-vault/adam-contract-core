@@ -10,16 +10,15 @@ For detailed documentation about ADAM Vault, please see https://docs.adamvault.c
 
 # Env Vars
 
-| key                   | description                                    |
-| --------------------- | ---------------------------------------------- |
-| `ETHERSCAN_API_KEY`   | API KEY that use to verify contract            |
-| `GOERLI_URL`          | Rpc url for goerli                             |
-| `ARBITRUM_GOERLI_URL` | Rpc url for arbitrum                           |
-| `POLYGON_URL`         | Rpc url for polygon mainnet                    |
-| `MUMBAI_URL`          | Rpc url for polygon mumbai testnet             |
-| `MAINNET_URL`         | Rpc url for ethereum mainnet                   |
-| `PRIVATE_KEY`         | EOA that depoly the contract                   |
-| `REPORT_GAS`          | Rather report the gas when execute transaction |
+| key                 | description                                    |
+| ------------------- | ---------------------------------------------- |
+| `ETHERSCAN_API_KEY` | API KEY that use to verify contract            |
+| `GOERLI_URL`        | Rpc url for goerli                             |
+| `POLYGON_URL`       | Rpc url for polygon mainnet                    |
+| `MUMBAI_URL`        | Rpc url for polygon mumbai testnet             |
+| `MAINNET_URL`       | Rpc url for ethereum mainnet                   |
+| `PRIVATE_KEY`       | EOA that depoly the contract                   |
+| `REPORT_GAS`        | Rather report the gas when execute transaction |
 
 ```
 # Install the needed module

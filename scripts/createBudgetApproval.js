@@ -62,8 +62,6 @@ const commonTransferERC20Prompts = [
 
 const questions = {
     TransferERC20BudgetApproval: commonTransferERC20Prompts,
-    TransferToArbitrumERC20BudgetApproval: commonTransferERC20Prompts,
-    TransferFromArbitrumERC20BudgetApproval: commonTransferERC20Prompts,
     TransferLiquidERC20BudgetApproval: [
         {
             type: 'input',
@@ -296,20 +294,6 @@ const questions = {
             default: ethers.constants.AddressZero,
         },
     ],
-    CreateArbitrumDaoBudgetApproval: [
-        {
-            type: 'input',
-            name: 'text',
-            message: 'Text',
-            default: 'Create Arb Dao',
-        },
-        {
-            type: 'input',
-            name: 'transactionType',
-            message: 'Transaction Type',
-            default: 'others',
-        },
-    ],
     GMXAnyTokenBudgetApproval: [
         {
             type: 'input',
@@ -328,30 +312,24 @@ const questions = {
 
 const encodeFn = {
     TransferERC20BudgetApproval: getCreateTransferERC20BAParams,
-    TransferToArbitrumERC20BudgetApproval: getCreateTransferERC20BAParams,
-    TransferFromArbitrumERC20BudgetApproval: getCreateTransferERC20BAParams,
     TransferLiquidERC20BudgetApproval:
         getCreateTransferLiquidErc20TokenBAParams,
     TransferERC721BudgetApproval: getCreateTransferERC721BAParams,
     UniswapLiquidBudgetApproval: getCreateUniswapBAParams,
     VestingERC20BudgetApproval: getCreateVestingERC20BAParams,
     SelfClaimERC20BudgetApproval: getCreateSelfClaimErc20TokenBAParams,
-    CreateArbitrumDaoBudgetApproval: getCreateBasicBudgetApprovalParams,
     GMXAnyTokenBudgetApproval: getCreateBasicBudgetApprovalParams,
 };
 
 const BA_TYPES = [
     'TransferERC20BudgetApproval',
     'TransferERC721BudgetApproval',
-    'TransferFromArbitrumERC20BudgetApproval',
     'TransferLiquidERC20BudgetApproval',
-    'TransferToArbitrumERC20BudgetApproval',
     'UniswapAnyTokenBudgetApproval',
     'UniswapLiquidBudgetApproval',
     'VestingERC20BudgetApproval',
     'SelfClaimERC20BudgetApproval',
     'GMXAnyTokenBudgetApproval',
-    'CreateArbitrumDaoBudgetApproval',
 ];
 
 function toArray(str) {

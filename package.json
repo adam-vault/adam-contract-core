@@ -9,8 +9,6 @@
         "prepare:goerli": "mustache constant/goerli.json constant/Constant.template.sol > contracts/lib/Constant.sol",
         "prepare:mumbai": "mustache constant/mumbai.json constant/Constant.template.sol > contracts/lib/Constant.sol",
         "prepare:mainnet": "mustache constant/mainnet.json constant/Constant.template.sol > contracts/lib/Constant.sol",
-        "prepare:arbitrum-goerli": "mustache constant/arbitrum-goerli.json constant/Constant.template.sol > contracts/lib/Constant.sol",
-        "prepare:arbitrum-one": "mustache constant/arbitrum-one.json constant/Constant.template.sol > contracts/lib/Constant.sol",
         "prepare:polygon": "mustache constant/polygon.json constant/Constant.template.sol > contracts/lib/Constant.sol",
         "compile": "hardhat compile",
         "coverage": "hardhat coverage",

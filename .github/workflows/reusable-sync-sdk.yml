@@ -1,56 +1,54 @@
 on:
-  workflow_call:
-    inputs:
-      GIT_REF:
-        required: true
-        type: string
-      DEPLOY_ENV:
-        required: true
-        type: string
-    secrets:
-      GH_PAT:
-        required: true
+    workflow_call:
+        inputs:
+            GIT_REF:
+                required: true
+                type: string
+            DEPLOY_ENV:
+                required: true
+                type: string
+        secrets:
+            GH_PAT:
+                required: true
 
 env:
-  GIT_REF: ${{ inputs.GIT_REF }}
-  DEPLOY_ENV: ${{ inputs.DEPLOY_ENV }}
+    GIT_REF: ${{ inputs.GIT_REF }}
+    DEPLOY_ENV: ${{ inputs.DEPLOY_ENV }}
 
 jobs:
-  sync-sdk-repo:
-    name: Syncrhonize with SDK Repo
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout SDK Repo
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ github.repository_owner }}/adam-sdk
-          token: ${{ secrets.GH_PAT }}      
-      
-      - name: Fetch Deployment Info
-        uses: actions/download-artifact@v3
-        with:
-          name: deploy_${{ env.GIT_REF }}
-          path: ${{ runner.temp }}/deployment
+    sync-sdk-repo:
+        name: Syncrhonize with SDK Repo
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            - name: Checkout SDK Repo
+              uses: actions/checkout@v3
+              with:
+                  repository: ${{ github.repository_owner }}/adam-sdk
+                  token: ${{ secrets.GH_PAT }}
 
-      - name: Replace SDK ABIs
-        run: cp ${{ runner.temp }}/deployment/abis/human/* ./src/abis
-      
-      - name: Make Pull Request
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.GH_PAT }}
-          branch: autosync/contract_deploy_${{ env.GIT_REF }}
-          title: Sync ${{ env.GIT_REF }} Contract ABIs
-          body: |
-            Syncrhonizing Contract ABIs from adam-contract-core
-            Version: ${{ env.GIT_REF }}
-            Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - name: Fetch Deployment Info
+              uses: actions/download-artifact@v3
+              with:
+                  name: deploy_${{ env.GIT_REF }}
+                  path: ${{ runner.temp }}/deployment
 
-          commit-message: "[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core"
-          reviewers: |
-            chikchoi6
-            ayame30
-            lokwkin
+            - name: Replace SDK ABIs
+              run: cp ${{ runner.temp }}/deployment/abis/human/* ./src/abis
 
+            - name: Make Pull Request
+              uses: peter-evans/create-pull-request@v4
+              with:
+                  token: ${{ secrets.GH_PAT }}
+                  branch: autosync/contract_deploy_${{ env.GIT_REF }}
+                  title: Sync ${{ env.GIT_REF }} Contract ABIs
+                  body: |
+                      Syncrhonizing Contract ABIs from adam-contract-core
+                      Version: ${{ env.GIT_REF }}
+                      Ref. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+                  commit-message: '[Auto Commit] Sync ${{ env.GIT_REF }} deployment from adam-contract-core'
+                  reviewers: |
+                      chikchoi6
+                      ayame30
+                      lokwkin
