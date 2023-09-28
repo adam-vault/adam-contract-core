@@ -1,58 +1,50 @@
 name: Deploy Predev
 on:
-  push:
-    tags:
-      - 'v[0-9].[0-9]+.[0-9]+\-predev\-ethereum'
-      - 'v[0-9].[0-9]+.[0-9]+\-predev\-arbitrum'
-      - 'v[0-9].[0-9]+.[0-9]+\-predev\-polygon'
+    push:
+        tags:
+            - 'v[0-9].[0-9]+.[0-9]+\-predev\-ethereum'
+            - 'v[0-9].[0-9]+.[0-9]+\-predev\-polygon'
 
 concurrency:
-  group: goerli-deployment
+    group: goerli-deployment
 
 jobs:
-  config-network-const:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: jungwinter/split@v2
-        id: split
+    config-network-const:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: jungwinter/split@v2
+              id: split
+              with:
+                  msg: ${{ github.ref_name }}
+                  separator: '-'
+            - name: Export ethereum Network Info
+              id: ethereum-network
+              if: ${{steps.split.outputs._2 == 'ethereum'}}
+              run: |
+                  echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_OUTPUT|
+                  echo "CONTRACT_DEPLOY_NETWORK=goerli-predev" >> $GITHUB_OUTPUT
+            - name: Export polygon Network Info
+              id: polygon-network
+              if: ${{steps.split.outputs._2 == 'polygon'}}
+              run: |
+                  echo "LIB_CONSTANT_NETWORK=mumbai" >> $GITHUB_OUTPUT|
+                  echo "CONTRACT_DEPLOY_NETWORK=mumbai-predev" >> $GITHUB_OUTPUT
+        outputs:
+            LIB_CONSTANT_NETWORK: ${{ steps.ethereum-network.outputs.LIB_CONSTANT_NETWORK || steps.polygon-network.outputs.LIB_CONSTANT_NETWORK}}
+            CONTRACT_DEPLOY_NETWORK: ${{ steps.ethereum-network.outputs.CONTRACT_DEPLOY_NETWORK || steps.polygon-network.outputs.CONTRACT_DEPLOY_NETWORK}}
+
+    deploy-contracts:
+        needs: config-network-const
+        name: Deploy Contract
+        uses: ./.github/workflows/reusable-deploy-contracts.yml
         with:
-          msg: ${{ github.ref_name }}
-          separator: '-'
-      - name: Export arbitrum Network Info
-        id: arbitrum-network
-        if: ${{steps.split.outputs._2 == 'arbitrum'}}
-        run: |
-          echo "LIB_CONSTANT_NETWORK=arbitrum-goerli" >> $GITHUB_OUTPUT|
-          echo "CONTRACT_DEPLOY_NETWORK=arbitrum-goerli-predev" >> $GITHUB_OUTPUT
-      - name: Export ethereum Network Info
-        id: ethereum-network
-        if: ${{steps.split.outputs._2 == 'ethereum'}}
-        run: |
-          echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_OUTPUT|
-          echo "CONTRACT_DEPLOY_NETWORK=goerli-predev" >> $GITHUB_OUTPUT
-      - name: Export polygon Network Info
-        id: polygon-network
-        if: ${{steps.split.outputs._2 == 'polygon'}}
-        run: |
-          echo "LIB_CONSTANT_NETWORK=mumbai" >> $GITHUB_OUTPUT|
-          echo "CONTRACT_DEPLOY_NETWORK=mumbai-predev" >> $GITHUB_OUTPUT
-    outputs:
-      LIB_CONSTANT_NETWORK: ${{ steps.ethereum-network.outputs.LIB_CONSTANT_NETWORK || steps.arbitrum-network.outputs.LIB_CONSTANT_NETWORK || steps.polygon-network.outputs.LIB_CONSTANT_NETWORK}}
-      CONTRACT_DEPLOY_NETWORK: ${{ steps.ethereum-network.outputs.CONTRACT_DEPLOY_NETWORK || steps.arbitrum-network.outputs.CONTRACT_DEPLOY_NETWORK || steps.polygon-network.outputs.CONTRACT_DEPLOY_NETWORK}}
-      
-  deploy-contracts:
-    needs: config-network-const
-    name: Deploy Contract
-    uses: ./.github/workflows/reusable-deploy-contracts.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-      LIB_CONSTANT_NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
-      CONTRACT_DEPLOY_NETWORK: ${{ needs.config-network-const.outputs.CONTRACT_DEPLOY_NETWORK }}
-    secrets:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-      GH_PAT: ${{ secrets.GH_PAT }}
-      ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-      GOERLI_URL: ${{ secrets.GOERLI_URL }}
-      ARBITRUM_GOERLI_URL: ${{ secrets.ARBITRUM_GOERLI_URL }}
-      MUMBAI_URL: ${{ secrets.MUMBAI_URL }}
+            GIT_REF: ${{ github.ref_name }}
+            LIB_CONSTANT_NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
+            CONTRACT_DEPLOY_NETWORK: ${{ needs.config-network-const.outputs.CONTRACT_DEPLOY_NETWORK }}
+        secrets:
+            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+            GH_PAT: ${{ secrets.GH_PAT }}
+            ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+            GOERLI_URL: ${{ secrets.GOERLI_URL }}
+            MUMBAI_URL: ${{ secrets.MUMBAI_URL }}

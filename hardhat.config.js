@@ -15,11 +15,11 @@ require('./tasks/decodeUniswap');
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
+    const accounts = await hre.ethers.getSigners();
 
-  for (const account of accounts) {
-    console.log(account.address);
-  }
+    for (const account of accounts) {
+        console.log(account.address);
+    }
 });
 
 // You need to export an object to set up your config
@@ -33,114 +33,89 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
  * The Solidity compiler exposes this via the `storageLayout` flag, which you need to enable at your hardhat config.
  */
 
-const arbitrumGoerliConfig = {
-  url: process.env.ARBITRUM_GOERLI_URL || '',
-  accounts:
-    process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-  verify: {
-    etherscan: {
-      apiKey: process.env.ETHERSCAN_ARBITRUM_API_KEY,
-      apiUrl: 'https://api-goerli.arbiscan.io',
-    },
-  },
-};
-
 const goerliConfig = {
-  chainId: 5,
-  url: process.env.GOERLI_URL || '',
-  accounts:
-    process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-  verify: {
-    etherscan: 'https://goerli.etherscan.io',
-  },
+    chainId: 5,
+    url: process.env.GOERLI_URL || '',
+    accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    verify: {
+        etherscan: 'https://goerli.etherscan.io',
+    },
 };
 
 const mumbaiConfig = {
-  chainId: 80001,
-  url: process.env.MUMBAI_URL || '',
-  accounts:
-    process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-  verify: {
-    etherscan: 'https://mumbai.polygonscan.com/',
-  },
+    chainId: 80001,
+    url: process.env.MUMBAI_URL || '',
+    accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    verify: {
+        etherscan: 'https://mumbai.polygonscan.com/',
+    },
 };
 
 module.exports = {
-  defaultNetwork: 'hardhat',
-  solidity: {
-    version: '0.8.7',
-    settings: {
-      outputSelection: {
-        '*': {
-          '*': ['storageLayout'],
+    defaultNetwork: 'hardhat',
+    solidity: {
+        version: '0.8.7',
+        settings: {
+            outputSelection: {
+                '*': {
+                    '*': ['storageLayout'],
+                },
+            },
+            optimizer: {
+                enabled: true,
+                runs: 200,
+            },
         },
-      },
-      optimizer: {
-        enabled: true,
-        runs: 200,
-      },
     },
-  },
-  networks: {
-    hardhat: {
-      chainId: 1337,
-    },
-    mainnet: {
-      chainId: 1,
-      url: process.env.MAINNET_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    polygon: {
-      chainId: 137,
-      url: process.env.POLYGON_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-    },
-    'arbitrum-one': {
-      url: process.env.ARBITRUM_URL || '',
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
-      verify: {
-        etherscan: {
-          apiKey: process.env.ETHERSCAN_ARBITRUM_API_KEY,
-          apiUrl: 'https://api.arbiscan.io',
+    networks: {
+        hardhat: {
+            chainId: 1337,
         },
-      },
+        mainnet: {
+            chainId: 1,
+            url: process.env.MAINNET_URL || '',
+            accounts:
+                process.env.PRIVATE_KEY !== undefined
+                    ? [process.env.PRIVATE_KEY]
+                    : [],
+        },
+        polygon: {
+            chainId: 137,
+            url: process.env.POLYGON_URL || '',
+            accounts:
+                process.env.PRIVATE_KEY !== undefined
+                    ? [process.env.PRIVATE_KEY]
+                    : [],
+        },
+
+        'goerli-predev': goerliConfig,
+        'goerli-dev': goerliConfig,
+        'goerli-qa': goerliConfig,
+        'goerli-stg': goerliConfig,
+        'goerli-alpha': goerliConfig,
+        'mumbai-dev': mumbaiConfig,
+        'mumbai-qa': mumbaiConfig,
     },
-
-    'arbitrum-goerli-predev': arbitrumGoerliConfig,
-    'arbitrum-goerli-dev': arbitrumGoerliConfig,
-    'arbitrum-goerli-qa': arbitrumGoerliConfig,
-    'arbitrum-goerli-stg': arbitrumGoerliConfig,
-    'arbitrum-goerli-alpha': arbitrumGoerliConfig,
-
-    'goerli-predev': goerliConfig,
-    'goerli-dev': goerliConfig,
-    'goerli-qa': goerliConfig,
-    'goerli-stg': goerliConfig,
-    'goerli-alpha': goerliConfig,
-    'mumbai-dev': mumbaiConfig,
-    'mumbai-qa': mumbaiConfig,
-  },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
-    currency: 'USD',
-  },
-  etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
-  },
-  mocha: {
-    timeout: 10000000,
-  },
-  verify: {
+    gasReporter: {
+        enabled: process.env.REPORT_GAS !== undefined,
+        currency: 'USD',
+    },
     etherscan: {
-      apiKey: process.env.ETHERSCAN_API_KEY,
+        apiKey: process.env.ETHERSCAN_API_KEY,
     },
-  },
-  namedAccounts: {
-    deployer: {
-      default: 0,
+    mocha: {
+        timeout: 10000000,
     },
-  },
+    verify: {
+        etherscan: {
+            apiKey: process.env.ETHERSCAN_API_KEY,
+        },
+    },
+    namedAccounts: {
+        deployer: {
+            default: 0,
+        },
+    },
 };

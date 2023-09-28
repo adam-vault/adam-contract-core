@@ -1,68 +1,67 @@
 name: Test Contracts
 on:
-  push:
-    branches: [$default-branch]
-    paths:
-      - "contracts/**"
-      - "test/**"
-  pull_request:
-    branches:
-      - "*"
-    paths:
-      - "contracts/**"
-      - "test/**"
-      - ".github/**"
+    push:
+        branches: [$default-branch]
+        paths:
+            - 'contracts/**'
+            - 'test/**'
+    pull_request:
+        branches:
+            - '*'
+        paths:
+            - 'contracts/**'
+            - 'test/**'
+            - '.github/**'
 
 concurrency:
-  group: ${{github.workflow}}-${{github.ref}}
-  cancel-in-progress: true
+    group: ${{github.workflow}}-${{github.ref}}
+    cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
+    test:
+        name: Test
+        runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        ci_index: [0, 1, 2, 3, 4, 5, 6, 7, 8]
-        ci_total: [9]
+        strategy:
+            fail-fast: false
+            matrix:
+                ci_index: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+                ci_total: [9]
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3.0.0
-      
-      - name: Setup Node
-        id: setup_node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          cache: npm
-      
-      - name: Install Dependencies
-        run: npm install --prefer-offline --no-audit
-      
-      - name: Run Tests
-        run: node .github/split.js | xargs npm run test
-        env:
-          CI_TOTAL: ${{ matrix.ci_total }}
-          CI_INDEX: ${{ matrix.ci_index }}
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v3.0.0
 
-  # analyze:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     security-events: write
-  #   steps: 
-  #     - uses: actions/checkout@v3.0.0
-  #     - uses: crytic/slither-action@v0.1.1
-  #       continue-on-error: true
-  #       id: slither
-  #       with:
-  #         node-version: 16
-  #         sarif: results.sarif
-  #     - name: Upload SARIF file
-  #       uses: github/codeql-action/upload-sarif@v1
-  #       with:
-  #         sarif_file: ${{ steps.slither.outputs.sarif }}
-  
+            - name: Setup Node
+              id: setup_node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 16
+                  cache: npm
+
+            - name: Install Dependencies
+              run: npm install --prefer-offline --no-audit
+
+            - name: Run Tests
+              run: node .github/split.js | xargs npm run test
+              env:
+                  CI_TOTAL: ${{ matrix.ci_total }}
+                  CI_INDEX: ${{ matrix.ci_index }}
+
+    # analyze:
+    #   runs-on: ubuntu-latest
+    #   permissions:
+    #     contents: read
+    #     security-events: write
+    #   steps:
+    #     - uses: actions/checkout@v3.0.0
+    #     - uses: crytic/slither-action@v0.1.1
+    #       continue-on-error: true
+    #       id: slither
+    #       with:
+    #         node-version: 16
+    #         sarif: results.sarif
+    #     - name: Upload SARIF file
+    #       uses: github/codeql-action/upload-sarif@v1
+    #       with:
+    #         sarif_file: ${{ steps.slither.outputs.sarif }}

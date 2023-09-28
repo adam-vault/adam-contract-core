@@ -1,108 +1,100 @@
 name: Deploy Dev
 on:
-  push:
-    tags:
-      - 'v[0-9].[0-9]+.[0-9]+\-dev\-ethereum'
-      - 'v[0-9].[0-9]+.[0-9]+\-dev\-arbitrum'
-      - 'v[0-9].[0-9]+.[0-9]+\-dev\-polygon'
+    push:
+        tags:
+            - 'v[0-9].[0-9]+.[0-9]+\-dev\-ethereum'
+            - 'v[0-9].[0-9]+.[0-9]+\-dev\-polygon'
 
 concurrency:
-  group: goerli-deployment
+    group: goerli-deployment
 
 jobs:
-  config-network-const:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: jungwinter/split@v2
-        id: split
+    config-network-const:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: jungwinter/split@v2
+              id: split
+              with:
+                  msg: ${{ github.ref_name }}
+                  separator: '-'
+            - name: Export ethereum Network Info
+              id: ethereum-network
+              if: ${{steps.split.outputs._2 == 'ethereum'}}
+              run: |
+                  echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_OUTPUT|
+                  echo "CONTRACT_DEPLOY_NETWORK=goerli-dev" >> $GITHUB_OUTPUT
+            - name: Export polygon Network Info
+              id: polygon-network
+              if: ${{steps.split.outputs._2 == 'polygon'}}
+              run: |
+                  echo "LIB_CONSTANT_NETWORK=mumbai" >> $GITHUB_OUTPUT|
+                  echo "CONTRACT_DEPLOY_NETWORK=mumbai-dev" >> $GITHUB_OUTPUT
+        outputs:
+            LIB_CONSTANT_NETWORK: ${{ steps.ethereum-network.outputs.LIB_CONSTANT_NETWORK || steps.polygon-network.outputs.LIB_CONSTANT_NETWORK}}
+            CONTRACT_DEPLOY_NETWORK: ${{ steps.ethereum-network.outputs.CONTRACT_DEPLOY_NETWORK || steps.polygon-network.outputs.CONTRACT_DEPLOY_NETWORK}}
+
+    deploy-contracts:
+        needs: config-network-const
+        name: Deploy Contract
+        uses: ./.github/workflows/reusable-deploy-contracts.yml
         with:
-          msg: ${{ github.ref_name }}
-          separator: '-'
-      - name: Export arbitrum Network Info
-        id: arbitrum-network
-        if: ${{steps.split.outputs._2 == 'arbitrum'}}
-        run: |
-          echo "LIB_CONSTANT_NETWORK=arbitrum-goerli" >> $GITHUB_OUTPUT|
-          echo "CONTRACT_DEPLOY_NETWORK=arbitrum-goerli-dev" >> $GITHUB_OUTPUT
-      - name: Export ethereum Network Info
-        id: ethereum-network
-        if: ${{steps.split.outputs._2 == 'ethereum'}}
-        run: |
-          echo "LIB_CONSTANT_NETWORK=goerli" >> $GITHUB_OUTPUT|
-          echo "CONTRACT_DEPLOY_NETWORK=goerli-dev" >> $GITHUB_OUTPUT
-      - name: Export polygon Network Info
-        id: polygon-network
-        if: ${{steps.split.outputs._2 == 'polygon'}}
-        run: |
-          echo "LIB_CONSTANT_NETWORK=mumbai" >> $GITHUB_OUTPUT|
-          echo "CONTRACT_DEPLOY_NETWORK=mumbai-dev" >> $GITHUB_OUTPUT
-    outputs:
-      LIB_CONSTANT_NETWORK: ${{ steps.ethereum-network.outputs.LIB_CONSTANT_NETWORK || steps.arbitrum-network.outputs.LIB_CONSTANT_NETWORK || steps.polygon-network.outputs.LIB_CONSTANT_NETWORK}}
-      CONTRACT_DEPLOY_NETWORK: ${{ steps.ethereum-network.outputs.CONTRACT_DEPLOY_NETWORK || steps.arbitrum-network.outputs.CONTRACT_DEPLOY_NETWORK || steps.polygon-network.outputs.CONTRACT_DEPLOY_NETWORK}}
-      
-  deploy-contracts:
-    needs: config-network-const
-    name: Deploy Contract
-    uses: ./.github/workflows/reusable-deploy-contracts.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-      LIB_CONSTANT_NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
-      CONTRACT_DEPLOY_NETWORK: ${{ needs.config-network-const.outputs.CONTRACT_DEPLOY_NETWORK }}
-    secrets:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-      GH_PAT: ${{ secrets.GH_PAT }}
-      ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-      GOERLI_URL: ${{ secrets.GOERLI_URL }}
-      ARBITRUM_GOERLI_URL: ${{ secrets.ARBITRUM_GOERLI_URL }}
-      MUMBAI_URL: ${{ secrets.MUMBAI_URL }}
+            GIT_REF: ${{ github.ref_name }}
+            LIB_CONSTANT_NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
+            CONTRACT_DEPLOY_NETWORK: ${{ needs.config-network-const.outputs.CONTRACT_DEPLOY_NETWORK }}
+        secrets:
+            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+            GH_PAT: ${{ secrets.GH_PAT }}
+            ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+            GOERLI_URL: ${{ secrets.GOERLI_URL }}
+            MUMBAI_URL: ${{ secrets.MUMBAI_URL }}
 
-  sync-subgraph:
-    name: Sync Subgraph
-    needs: [deploy-contracts,config-network-const]
-    uses: ./.github/workflows/reusable-sync-subgraph.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-      LIB_CONSTANT_NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
-      CONTRACT_DEPLOY_NETWORK: ${{ needs.config-network-const.outputs.CONTRACT_DEPLOY_NETWORK }}
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
+    sync-subgraph:
+        name: Sync Subgraph
+        needs: [deploy-contracts, config-network-const]
+        uses: ./.github/workflows/reusable-sync-subgraph.yml
+        with:
+            GIT_REF: ${{ github.ref_name }}
+            LIB_CONSTANT_NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
+            CONTRACT_DEPLOY_NETWORK: ${{ needs.config-network-const.outputs.CONTRACT_DEPLOY_NETWORK }}
+        secrets:
+            GH_PAT: ${{ secrets.GH_PAT }}
 
-  sync-frontend:
-    name: Sync Frontend
-    needs: [deploy-contracts,config-network-const]
-    uses: ./.github/workflows/reusable-sync-frontend.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-      DEPLOY_ENV: dev
-      NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
-  
-  sync-sdk:
-    name: Sync SDK
-    needs: [deploy-contracts,config-network-const]
-    uses: ./.github/workflows/reusable-sync-sdk.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-      DEPLOY_ENV: dev
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
+    sync-frontend:
+        name: Sync Frontend
+        needs: [deploy-contracts, config-network-const]
+        uses: ./.github/workflows/reusable-sync-frontend.yml
+        with:
+            GIT_REF: ${{ github.ref_name }}
+            DEPLOY_ENV: dev
+            NETWORK: ${{ needs.config-network-const.outputs.LIB_CONSTANT_NETWORK }}
+        secrets:
+            GH_PAT: ${{ secrets.GH_PAT }}
 
-  sync-discord-integration:
-    name: Sync Discord Integration
-    needs: deploy-contracts
-    uses: ./.github/workflows/reusable-sync-discord-integration.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
+    sync-sdk:
+        name: Sync SDK
+        needs: [deploy-contracts, config-network-const]
+        uses: ./.github/workflows/reusable-sync-sdk.yml
+        with:
+            GIT_REF: ${{ github.ref_name }}
+            DEPLOY_ENV: dev
+        secrets:
+            GH_PAT: ${{ secrets.GH_PAT }}
 
-  sync-centralized-backend:
-    name: Sync Centralized Backend
-    needs: deploy-contracts
-    uses: ./.github/workflows/reusable-sync-centralized-backend.yml
-    with:
-      GIT_REF: ${{ github.ref_name }}
-    secrets:
-      GH_PAT: ${{ secrets.GH_PAT }}
+    sync-discord-integration:
+        name: Sync Discord Integration
+        needs: deploy-contracts
+        uses: ./.github/workflows/reusable-sync-discord-integration.yml
+        with:
+            GIT_REF: ${{ github.ref_name }}
+        secrets:
+            GH_PAT: ${{ secrets.GH_PAT }}
+
+    sync-centralized-backend:
+        name: Sync Centralized Backend
+        needs: deploy-contracts
+        uses: ./.github/workflows/reusable-sync-centralized-backend.yml
+        with:
+            GIT_REF: ${{ github.ref_name }}
+        secrets:
+            GH_PAT: ${{ secrets.GH_PAT }}

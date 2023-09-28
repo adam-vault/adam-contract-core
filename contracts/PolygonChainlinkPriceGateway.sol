@@ -125,7 +125,7 @@ contract PolygonChainlinkPriceGateway is PriceGateway {
     /// @notice Get USD Price in term of Asset
     /// @dev Get the rate in Chainlink and scale the Price to asset decimal
     /// @param asset the asset token address, support WETH, MATIC, WMATIC and other ERC20, used as base token address
-    /// @param usdAmount Usd Amount with 8 decimal (arbitrum)
+    /// @param usdAmount Usd Amount with 8 decimal (polygon)
     /// @return uint256 the price by using asset as base with assets decimal
     function usdAssetPrice(address asset, uint256 usdAmount)
         public
