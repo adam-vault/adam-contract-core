@@ -60,7 +60,7 @@ const createFeedRegistry = async (token, signer) => {
     return feedRegistry;
 };
 
-const createAdam = async (budgetApprovalAddresses) => {
+const createAdam = async () => {
     const [creator] = await ethers.getSigners();
 
     const Dao = await ethers.getContractFactory('MockDao', { signer: creator });

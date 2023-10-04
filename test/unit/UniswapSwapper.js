@@ -1,15 +1,10 @@
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
+const { BigNumber } = require('ethers');
 const findEventArgs = require('../../utils/findEventArgs');
 const encodeCall = require('../../utils/encodeCall');
 
-const {
-    createAdam,
-    createBudgetApprovals,
-    createTokens,
-    createPriceGateways,
-    getMockFeedRegistry,
-} = require('../utils/createContract');
+const { createAdam, createTokens } = require('../utils/createContract');
 
 const { parseEther } = ethers.utils;
 const { AddressZero } = ethers.constants;
@@ -17,18 +12,14 @@ const { AddressZero } = ethers.constants;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
 const paramsStruct = require('../../utils/paramsStruct');
-const { BigNumber } = require('ethers');
 
 const RECIPIENT_UNISWAP = '0x0000000000000000000000000000000000000002';
 
 describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
-    let tokenA;
     let feedRegistry;
-    let budgetApprovalAddresses;
     let adam;
     let executor;
     let contract;
-    let priceGatewayAddresses;
     let ethereumChainlinkPriceGateway;
 
     const {
@@ -65,10 +56,7 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
         await feedRegistry.setPrice(ADDRESS_DAI, ADDRESS_ETH, parseEther('1'));
         await feedRegistry.setPrice(ADDRESS_UNI, ADDRESS_ETH, parseEther('1'));
 
-        const result = await createAdam({
-            budgetApprovalAddresses,
-            priceGatewayAddresses,
-        });
+        const result = await createAdam();
         adam = result.adam;
         ethereumChainlinkPriceGateway = result.ethPriceGateway.address;
         const tx1 = await adam.createDao(

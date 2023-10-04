@@ -53,10 +53,7 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
             ADDRESS_MOCK_AGGRGATOR,
         );
 
-        const result = await createAdam({
-            budgetApprovalAddresses,
-            priceGatewayAddresses,
-        });
+        const result = await createAdam();
         adam = result.adam;
         ethereumChainlinkPriceGateway = result.ethPriceGateway.address;
         transferLiquidERC20BAImplementation =
