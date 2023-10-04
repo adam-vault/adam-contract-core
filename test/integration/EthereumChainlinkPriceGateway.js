@@ -12,12 +12,19 @@ const {
     ADDRESS_MOCK_FEED_REGISTRY,
 } = require('../utils/constants');
 
-describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async function () {
-    let adam, tokenA, tokenB;
-    let creator, daoMember;
+describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async () => {
+    let adam;
+    let tokenA;
+    let tokenB;
+    let creator;
+    let daoMember;
     let budgetApprovalAddresses;
-    let priceGatewayAddresses, ethereumChainlinkPriceGateway, dao, feedRegistry;
-    let tokenBEthAggregator, tokenAEthAggregator;
+    let priceGatewayAddresses;
+    let ethereumChainlinkPriceGateway;
+    let dao;
+    let feedRegistry;
+    let tokenBEthAggregator;
+    let tokenAEthAggregator;
     let SmockERC20;
 
     function createDao() {
@@ -32,11 +39,11 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async fun
         );
     }
 
-    before(async function () {
+    before(async () => {
         SmockERC20 = await smock.mock('ERC20');
     });
 
-    beforeEach(async function () {
+    beforeEach(async () => {
         [creator, daoMember] = await ethers.getSigners();
 
         await ethers.provider.send('hardhat_setCode', [
@@ -101,8 +108,8 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async fun
         dao = await ethers.getContractAt('Dao', daoAddr);
     });
 
-    describe('CreateDao()', async function () {
-        it('creates Dao successfully with correct param', async function () {
+    describe('CreateDao()', async () => {
+        it('creates Dao successfully with correct param', async () => {
             const accountingSystem = await ethers.getContractAt(
                 'AccountingSystem',
                 await dao.accountingSystem(),
@@ -116,7 +123,7 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async fun
                 ethereumChainlinkPriceGateway,
             );
         });
-        it('creates Liquid successfully with correct param', async function () {
+        it('creates Liquid successfully with correct param', async () => {
             const accountingSystem = await ethers.getContractAt(
                 'AccountingSystem',
                 await dao.accountingSystem(),
@@ -131,25 +138,21 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async fun
         });
     });
 
-    describe('Deposit()', async function () {
-        it('creates mint correct amount of Liquid Pool token', async function () {
+    describe('Deposit()', async () => {
+        it('creates mint correct amount of Liquid Pool token', async () => {
             const liquidPool = await ethers.getContractAt(
                 'LiquidPool',
                 await dao.liquidPool(),
             );
-            await liquidPool
-                .connect(daoMember)
-                .deposit(daoMember.address, {
-                    value: ethers.utils.parseEther('0.5'),
-                });
+            await liquidPool.connect(daoMember).deposit(daoMember.address, {
+                value: ethers.utils.parseEther('0.5'),
+            });
             expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(
                 ethers.utils.parseEther('0.5'),
             );
-            await liquidPool
-                .connect(daoMember)
-                .deposit(daoMember.address, {
-                    value: ethers.utils.parseEther('0.5'),
-                });
+            await liquidPool.connect(daoMember).deposit(daoMember.address, {
+                value: ethers.utils.parseEther('0.5'),
+            });
             expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(
                 ethers.utils.parseEther('1'),
             );

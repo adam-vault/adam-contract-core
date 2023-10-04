@@ -1,5 +1,6 @@
 const hre = require('hardhat');
 const inquirer = require('inquirer');
+
 const abiCoder = hre.ethers.utils.defaultAbiCoder;
 const _ = require('lodash');
 const getDaoInfo = require('./utils/getDaoInfo');

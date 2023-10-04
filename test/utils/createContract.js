@@ -1,6 +1,6 @@
 const { ethers, upgrades } = require('hardhat');
 
-const { ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR } = require('../utils/constants');
+const { ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR } = require('./constants');
 
 const createBudgetApprovals = async (signer) => {
     const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory(

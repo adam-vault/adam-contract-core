@@ -2,6 +2,7 @@ const hre = require('hardhat');
 const inquirer = require('inquirer');
 const ethers = require('ethers');
 const getDaoInfo = require('./utils/getDaoInfo');
+
 async function main() {
     const daos = await getDaoInfo();
     inquirer

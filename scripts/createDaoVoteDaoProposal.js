@@ -89,7 +89,7 @@ async function main() {
             name: 'proposalId',
             message: 'Proposal?',
             choices: proposals.map(({ proposalId, name }) => ({
-                name: name,
+                name,
                 value: proposalId,
             })),
         },

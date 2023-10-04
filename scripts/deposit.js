@@ -64,41 +64,32 @@ async function main() {
                         to: daoAddress,
                         value: ethers.utils.parseEther(amount),
                     });
-                } else {
-                    const erc20 = await hre.ethers.getContractAt(
-                        'ERC20',
-                        tokenAddress,
-                    );
-                    const decimals = await erc20.decimals();
-                    return erc20.transfer(
-                        daoAddress,
-                        toBigNumber(amount, decimals),
-                    );
                 }
-            } else {
-                const dao = await hre.ethers.getContractAt('Dao', daoAddress);
-                const lpAddress = await dao.liquidPool();
-                const lp = await hre.ethers.getContractAt(
-                    'LiquidPool',
-                    lpAddress,
+                const erc20 = await hre.ethers.getContractAt(
+                    'ERC20',
+                    tokenAddress,
                 );
-
-                if (token === 'NATIVE') {
-                    const [signer] = await hre.ethers.getSigners();
-                    return lp.deposit(signer.address, {
-                        value: hre.ethers.utils.parseEther(amount),
-                    });
-                } else {
-                    const erc20 = await hre.ethers.getContractAt(
-                        'ERC20',
-                        tokenAddress,
-                    );
-                    const decimals = await erc20.decimals();
-                    const amountBN = toBigNumber(amount, decimals);
-                    await erc20.approve(lpAddress, amountBN);
-                    return erc20.depositToken(tokenAddress, amountBN);
-                }
+                const decimals = await erc20.decimals();
+                return erc20.transfer(
+                    daoAddress,
+                    toBigNumber(amount, decimals),
+                );
             }
+            const dao = await hre.ethers.getContractAt('Dao', daoAddress);
+            const lpAddress = await dao.liquidPool();
+            const lp = await hre.ethers.getContractAt('LiquidPool', lpAddress);
+
+            if (token === 'NATIVE') {
+                const [signer] = await hre.ethers.getSigners();
+                return lp.deposit(signer.address, {
+                    value: hre.ethers.utils.parseEther(amount),
+                });
+            }
+            const erc20 = await hre.ethers.getContractAt('ERC20', tokenAddress);
+            const decimals = await erc20.decimals();
+            const amountBN = toBigNumber(amount, decimals);
+            await erc20.approve(lpAddress, amountBN);
+            return erc20.depositToken(tokenAddress, amountBN);
         })
         .then((tx) => {
             console.log(tx);

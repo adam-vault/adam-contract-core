@@ -20,15 +20,13 @@ async function main() {
     const dao = await hre.ethers.getContractAt('Dao', daoAddress);
     const fns = Object.entries(dao.interface.functions)
         .filter(([key, value]) => !value.constant)
-        .map(([key, value]) => {
-            return {
-                name: key,
-                value: {
-                    key,
-                    ...value,
-                },
-            };
-        });
+        .map(([key, value]) => ({
+            name: key,
+            value: {
+                key,
+                ...value,
+            },
+        }));
     const { contractFn, txValue } = await inquirer.prompt([
         { type: 'list', name: 'contractFn', message: 'Dao?', choices: fns },
         {
