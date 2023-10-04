@@ -60,82 +60,52 @@ const createFeedRegistry = async (token, signer) => {
     return feedRegistry;
 };
 
+const createAndDeploy = async (contractName, signer) => {
+    const contractFactory = await ethers.getContractFactory(contractName);
+    const contract = await contractFactory.deploy();
+    await contract.deployed();
+    return contract;
+};
 const createAdam = async () => {
     const [creator] = await ethers.getSigners();
 
-    const Dao = await ethers.getContractFactory('MockDao', { signer: creator });
-    const Membership = await ethers.getContractFactory('Membership', {
-        signer: creator,
-    });
+    const [
+        dao,
+        membership,
+        govern,
+        liquidPool,
+        memberToken,
+        team,
+        accountingSystem,
+        ethPriceGateway,
+        transferLiquidERC20BudgetApproval,
+        uniswapLiquidBudgetApproval,
+        transferERC721BudgetApproval,
+        transferERC20BudgetApproval,
+        uniswapV3LiquidBudgetApproval,
+    ] = await Promise.all(
+        [
+            'MockDao',
+            'Membership',
+            'Govern',
+            'LiquidPool',
+            'MemberToken',
+            'Team',
+            'AccountingSystem',
+            'EthereumChainlinkPriceGateway',
+            'TransferLiquidERC20BudgetApproval',
+            'UniswapLiquidBudgetApproval',
+            'TransferERC721BudgetApproval',
+            'TransferERC20BudgetApproval',
+            'UniswapV3LiquidBudgetApproval',
+        ].map((contractName) => createAndDeploy(contractName, creator)),
+    );
+
     const Adam = await ethers.getContractFactory('Adam', { signer: creator });
-    const Govern = await ethers.getContractFactory('Govern', {
-        signer: creator,
-    });
-    const LiquidPool = await ethers.getContractFactory('LiquidPool', {
-        signer: creator,
-    });
-    const Team = await ethers.getContractFactory('Team', { signer: creator });
-    const MemberToken = await ethers.getContractFactory('MemberToken', {
-        signer: creator,
-    });
+
     const DaoBeacon = await ethers.getContractFactory('DaoBeacon', {
         signer: creator,
     });
-    const AccountingSystem = await ethers.getContractFactory(
-        'AccountingSystem',
-        { signer: creator },
-    );
-    const EthereumChainlinkPriceGateway = await ethers.getContractFactory(
-        'EthereumChainlinkPriceGateway',
-        { signer: creator },
-    );
-    const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory(
-        'TransferLiquidERC20BudgetApproval',
-        { signer: creator },
-    );
-    const UniswapLiquidBudgetApproval = await ethers.getContractFactory(
-        'UniswapLiquidBudgetApproval',
-        { signer: creator },
-    );
-    const TransferERC721BudgetApproval = await ethers.getContractFactory(
-        'TransferERC721BudgetApproval',
-        { signer: creator },
-    );
-    const TransferERC20BudgetApproval = await ethers.getContractFactory(
-        'TransferERC20BudgetApproval',
-        { signer: creator },
-    );
-
-    const dao = await Dao.deploy();
-    const membership = await Membership.deploy();
-    const liquidPool = await LiquidPool.deploy();
-    const team = await Team.deploy();
-    const govern = await Govern.deploy();
-    const memberToken = await MemberToken.deploy();
-    const accountingSystem = await AccountingSystem.deploy();
-    const ethPriceGateway = await EthereumChainlinkPriceGateway.deploy();
-    const transferLiquidERC20BudgetApproval =
-        await TransferLiquidERC20BudgetApproval.deploy();
-    const uniswapLiquidBudgetApproval =
-        await UniswapLiquidBudgetApproval.deploy();
-    const transferERC721BudgetApproval =
-        await TransferERC721BudgetApproval.deploy();
-    const transferERC20BudgetApproval =
-        await TransferERC20BudgetApproval.deploy();
-
-    await dao.deployed();
-    await membership.deployed();
-    await govern.deployed();
-    await liquidPool.deployed();
-    await memberToken.deployed();
-    await team.deployed();
-    await accountingSystem.deployed();
-    await ethPriceGateway.deployed();
-    await transferLiquidERC20BudgetApproval.deployed();
-    await uniswapLiquidBudgetApproval.deployed();
-    await transferERC721BudgetApproval.deployed();
-    await transferERC20BudgetApproval.deployed();
-
     const beacon = await DaoBeacon.deploy('', [
         [ethers.utils.id('adam.dao'), dao.address],
         [ethers.utils.id('adam.dao.membership'), membership.address],
@@ -158,6 +128,7 @@ const createAdam = async () => {
                 uniswapLiquidBudgetApproval.address,
                 transferERC721BudgetApproval.address,
                 transferERC20BudgetApproval.address,
+                uniswapV3LiquidBudgetApproval.address,
             ],
             [ethPriceGateway.address],
         ],
@@ -181,6 +152,7 @@ const createAdam = async () => {
         uniswapLiquidBudgetApproval,
         transferERC721BudgetApproval,
         transferERC20BudgetApproval,
+        uniswapV3LiquidBudgetApproval,
     };
 };
 
