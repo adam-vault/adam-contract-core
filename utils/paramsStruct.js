@@ -407,11 +407,11 @@ function getCreateCommonBudgetApprovalParams({
     approvers = [],
     approverTeamId = 0,
     minApproval = 0,
-    text,
+    text = 'Not Defined',
     transactionType,
     startTime = 0,
     endTime = constants.MaxUint256,
-    allowUnlimitedUsageCount,
+    allowUnlimitedUsageCount = true,
     usageCount = 0,
 }) {
     return Object.entries({

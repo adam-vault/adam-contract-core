@@ -162,10 +162,6 @@ async function main() {
             })),
         },
     ]);
-    console.log(
-        'MC: ~ file: createDao.js:85 ~ main ~ answers.priceGatewayOptions.address:',
-        answers.priceGatewayOptions.address,
-    );
 
     const adamDeployment = await get('Adam');
     const adam = await hre.ethers.getContractAt('Adam', adamDeployment.address);

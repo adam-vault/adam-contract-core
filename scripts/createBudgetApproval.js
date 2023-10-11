@@ -474,10 +474,6 @@ async function main() {
     }
 
     let tx;
-    console.log(
-        'MC: ~ file: createBudgetApproval.js:199 ~ main ~ answers.budgetApprovalOptions.address:',
-        answers.budgetApprovalOptions.address,
-    );
 
     if (answers.dest === 'LiquidPool') {
         tx = await dao.executePlugin(

@@ -5,6 +5,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 const encodeCall = require('../../utils/encodeCall');
 
 const { createAdam, createTokens } = require('../utils/createContract');
+const feedRegistry = require('../utils/feedRegistry');
 
 const { parseEther } = ethers.utils;
 const { AddressZero } = ethers.constants;
@@ -34,27 +35,9 @@ describe('UniswapSwapper.sol - test/unit/UniswapSwapper.js', async () => {
     beforeEach(async () => {
         ({ tokenA } = await createTokens());
         [executor] = await ethers.getSigners();
-        const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-        await ethers.provider.send('hardhat_setCode', [
-            ADDRESS_MOCK_FEED_REGISTRY,
-            feedRegistryArticfact.deployedBytecode,
-        ]);
-        feedRegistry = await ethers.getContractAt(
-            'MockFeedRegistry',
-            ADDRESS_MOCK_FEED_REGISTRY,
-        );
-        await feedRegistry.setAggregator(
-            ADDRESS_DAI,
-            ADDRESS_ETH,
-            ADDRESS_MOCK_AGGRGATOR,
-        );
-        await feedRegistry.setAggregator(
-            ADDRESS_UNI,
-            ADDRESS_ETH,
-            ADDRESS_MOCK_AGGRGATOR,
-        );
-        await feedRegistry.setPrice(ADDRESS_DAI, ADDRESS_ETH, parseEther('1'));
-        await feedRegistry.setPrice(ADDRESS_UNI, ADDRESS_ETH, parseEther('1'));
+        await feedRegistry.setMock();
+        await feedRegistry.setFeed(ADDRESS_ETH, ADDRESS_DAI, parseEther('1'));
+        await feedRegistry.setFeed(ADDRESS_ETH, ADDRESS_UNI, parseEther('1'));
 
         const result = await createAdam();
         adam = result.adam;
