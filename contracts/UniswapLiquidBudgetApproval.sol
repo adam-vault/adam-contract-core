@@ -114,9 +114,9 @@ contract UniswapLiquidBudgetApproval is CommonBudgetApproval, UniswapSwapper, Pr
         uint256 priceBefore = _fromTokensPrice();
         address __executee = executee();
 
-        bytes memory response = IBudgetApprovalExecutee(__executee).executeByBudgetApproval(to, executeData, value);
-        MulticallData[] memory mDataArr = this.decodeUniswapMulticall(executeData, value, response);
-
+        IBudgetApprovalExecutee(__executee).executeByBudgetApproval(to, executeData, value);
+        
+        MulticallData[] memory mDataArr = this.decodeExecute(executeData, value);
         address[] storage _tokenIn = _tokenInOfTransaction[transactionId];
         mapping(address => uint256) storage _tokenInAmountMapping = _tokenInAmountOfTransaction[transactionId];
 

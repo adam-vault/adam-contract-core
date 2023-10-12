@@ -11,6 +11,15 @@ const {
     ADDRESS_WETH,
 } = require('../utils/constants');
 
+const {
+    encodeV2SwapExactOut,
+    UNISWAP_COMMAND_TYPE,
+    encodeWrapETH,
+} = require('../utils/uniswapV3PayloadEncoder');
+
+const RECIPIENT_UNISWAP = '0x0000000000000000000000000000000000000002';
+const RECIPIENT_EXECUTER = '0x0000000000000000000000000000000000000001';
+
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
@@ -26,6 +35,31 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
     let executee;
     let UniswapLiquidBudgetApproval;
     let WETH;
+
+    function encodeTxData(to, data, value) {
+        return abiCoder.encode(
+            ['address to', 'bytes data', 'uint256 value'],
+            [to, data, value],
+        );
+    }
+
+    function encodeExecuteData(commands, datas) {
+        return uniswapRouter.interface.encodeFunctionData(
+            'execute(bytes,bytes[],uint256)',
+            [commands, datas, ethers.constants.MaxUint256],
+        );
+    }
+
+    async function executeUniswapBA(budget, executor, calldata, value = 0) {
+        return budget
+            .connect(executor)
+            .createTransaction(
+                [encodeTxData(ADDRESS_UNISWAP_ROUTER, calldata, value)],
+                Math.round(Date.now() / 1000) + 86400,
+                true,
+                '',
+            );
+    }
 
     beforeEach(async () => {
         [executor, approver] = await ethers.getSigners();
@@ -55,13 +89,13 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
         );
         await executee.setVariable('_team', team.address);
 
-        const uniswapRouterArticfact = require('../../artifacts/contracts/mocks/MockUniswapRouter.sol/MockUniswapRouter');
+        const uniswapRouterArticfact = require('../../artifacts/contracts/mocks/MockUniswapV3Router.sol/MockUniswapV3Router');
         await ethers.provider.send('hardhat_setCode', [
             ADDRESS_UNISWAP_ROUTER,
             uniswapRouterArticfact.deployedBytecode,
         ]);
         uniswapRouter = await ethers.getContractAt(
-            'MockUniswapRouter',
+            'MockUniswapV3Router',
             ADDRESS_UNISWAP_ROUTER,
         );
         const wethArticfact = require('../../artifacts/contracts/mocks/MockWETH9.sol/MockWETH9');
@@ -245,37 +279,24 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
                     executee.address,
                     parseEther('200'),
                 );
-                const functionCallData =
-                    uniswapRouter.interface.encodeFunctionData(
-                        'exactOutputSingle',
-                        [
-                            [
-                                ADDRESS_WETH,
-                                tokenA.address,
-                                0,
-                                executee.address,
-                                200,
-                                100,
-                                0,
-                            ],
-                        ],
-                    );
 
-                const callData = uniswapRouter.interface.encodeFunctionData(
-                    'multicall(uint256,bytes[])',
-                    [Math.round(Date.now() / 1000) + 86400, [functionCallData]],
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    executee.address,
+                    200,
+                    100,
+                    [ADDRESS_WETH, tokenA.address],
                 );
 
-                const transactionData = abiCoder.encode(
-                    await budgetApproval.executeParams(),
-                    [ADDRESS_UNISWAP_ROUTER, callData, 100],
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_OUT,
+                    [encodeV2SwapExactInData],
                 );
 
-                await budgetApproval.createTransaction(
-                    [transactionData],
-                    Math.round(Date.now() / 1000) + 86400,
-                    true,
-                    '',
+                await executeUniswapBA(
+                    budgetApproval,
+                    executor,
+                    encodeExecuteInput,
+                    100,
                 );
 
                 expect(await tokenA.balanceOf(executee.address)).to.eq(200);
@@ -296,37 +317,25 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
                 const originalBalance = await ethers.provider.getBalance(
                     executee.address,
                 );
-                const functionCallData =
-                    uniswapRouter.interface.encodeFunctionData(
-                        'exactOutputSingle',
-                        [
-                            [
-                                tokenA.address,
-                                ADDRESS_ETH,
-                                0,
-                                executee.address,
-                                100,
-                                200,
-                                0,
-                            ],
-                        ],
-                    );
-
-                const callData = uniswapRouter.interface.encodeFunctionData(
-                    'multicall(uint256,bytes[])',
-                    [Math.round(Date.now() / 1000) + 86400, [functionCallData]],
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    executee.address,
+                    100,
+                    200,
+                    [tokenA.address, ADDRESS_ETH],
                 );
 
-                const transactionData = abiCoder.encode(
-                    await budgetApproval.executeParams(),
-                    [ADDRESS_UNISWAP_ROUTER, callData, 0],
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_OUT,
+                    [encodeV2SwapExactInData],
                 );
-                await budgetApproval.createTransaction(
-                    [transactionData],
-                    Math.round(Date.now() / 1000) + 86400,
-                    true,
-                    '',
-                );
+
+                await expect(
+                    executeUniswapBA(
+                        budgetApproval,
+                        executor,
+                        encodeExecuteInput,
+                    ),
+                ).to.not.be.reverted;
 
                 expect(
                     (await ethers.provider.getBalance(executee.address)).sub(
@@ -348,38 +357,25 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
                 );
                 await WETH.mint(executee.address, 100);
 
-                const functionCallData =
-                    uniswapRouter.interface.encodeFunctionData(
-                        'exactOutputSingle',
-                        [
-                            [
-                                ADDRESS_WETH,
-                                tokenA.address,
-                                0,
-                                executee.address,
-                                200,
-                                100,
-                                0,
-                            ],
-                        ],
-                    );
-
-                const callData = uniswapRouter.interface.encodeFunctionData(
-                    'multicall(uint256,bytes[])',
-                    [Math.round(Date.now() / 1000) + 86400, [functionCallData]],
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    executee.address,
+                    200,
+                    100,
+                    [ADDRESS_WETH, tokenA.address],
                 );
 
-                const transactionData = abiCoder.encode(
-                    await budgetApproval.executeParams(),
-                    [ADDRESS_UNISWAP_ROUTER, callData, 0],
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_OUT,
+                    [encodeV2SwapExactInData],
                 );
 
-                await budgetApproval.createTransaction(
-                    [transactionData],
-                    Math.round(Date.now() / 1000) + 86400,
-                    true,
-                    '',
-                );
+                await expect(
+                    executeUniswapBA(
+                        budgetApproval,
+                        executor,
+                        encodeExecuteInput,
+                    ),
+                ).to.not.be.reverted;
 
                 expect(await tokenA.balanceOf(executee.address)).to.eq(200);
             });
@@ -396,38 +392,25 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
                     parseEther('200'),
                 );
                 await tokenA.mint(executee.address, 200);
-                const functionCallData =
-                    uniswapRouter.interface.encodeFunctionData(
-                        'exactOutputSingle',
-                        [
-                            [
-                                tokenA.address,
-                                ADDRESS_WETH,
-                                0,
-                                executee.address,
-                                100,
-                                200,
-                                0,
-                            ],
-                        ],
-                    );
-
-                const callData = uniswapRouter.interface.encodeFunctionData(
-                    'multicall(uint256,bytes[])',
-                    [Math.round(Date.now() / 1000) + 86400, [functionCallData]],
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    executee.address,
+                    100,
+                    200,
+                    [tokenA.address, ADDRESS_WETH],
                 );
 
-                const transactionData = abiCoder.encode(
-                    await budgetApproval.executeParams(),
-                    [ADDRESS_UNISWAP_ROUTER, callData, 0],
-                );
-                await budgetApproval.createTransaction(
-                    [transactionData],
-                    Math.round(Date.now() / 1000) + 86400,
-                    true,
-                    '',
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_OUT,
+                    [encodeV2SwapExactInData],
                 );
 
+                await expect(
+                    executeUniswapBA(
+                        budgetApproval,
+                        executor,
+                        encodeExecuteInput,
+                    ),
+                ).to.not.be.reverted;
                 expect(await WETH.balanceOf(executee.address)).to.eq(100);
             });
         });

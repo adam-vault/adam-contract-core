@@ -82,7 +82,6 @@ const createAdam = async () => {
         uniswapLiquidBudgetApproval,
         transferERC721BudgetApproval,
         transferERC20BudgetApproval,
-        uniswapV3LiquidBudgetApproval,
     ] = await Promise.all(
         [
             'MockDao',
@@ -97,7 +96,6 @@ const createAdam = async () => {
             'UniswapLiquidBudgetApproval',
             'TransferERC721BudgetApproval',
             'TransferERC20BudgetApproval',
-            'UniswapV3LiquidBudgetApproval',
         ].map((contractName) => createAndDeploy(contractName, creator)),
     );
 
@@ -128,7 +126,6 @@ const createAdam = async () => {
                 uniswapLiquidBudgetApproval.address,
                 transferERC721BudgetApproval.address,
                 transferERC20BudgetApproval.address,
-                uniswapV3LiquidBudgetApproval.address,
             ],
             [ethPriceGateway.address],
         ],
@@ -152,7 +149,6 @@ const createAdam = async () => {
         uniswapLiquidBudgetApproval,
         transferERC721BudgetApproval,
         transferERC20BudgetApproval,
-        uniswapV3LiquidBudgetApproval,
     };
 };
 

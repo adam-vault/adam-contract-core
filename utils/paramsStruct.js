@@ -411,8 +411,8 @@ function getCreateCommonBudgetApprovalParams({
     transactionType,
     startTime = 0,
     endTime = constants.MaxUint256,
-    allowUnlimitedUsageCount = true,
-    usageCount = 0,
+    allowUnlimitedUsageCount = false,
+    usageCount = 1,
 }) {
     return Object.entries({
         executor,

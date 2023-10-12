@@ -66,6 +66,7 @@ describe('Integration - TransferERC721BudgetApproval.sol - test/integration/Tran
                         endTime,
                         toAddresses: [receiver.address],
                         tokens: [tokenC721.address],
+                        usageCount: 10,
                     }),
                 );
 
@@ -283,6 +284,7 @@ describe('Integration - TransferERC721BudgetApproval.sol 2 - test/integration/Tr
                         toAddresses: [receiver.address],
                         tokens: [tokenC721.address],
                         totalAmount: 2,
+                        usageCount: 10,
                     }),
                 );
 

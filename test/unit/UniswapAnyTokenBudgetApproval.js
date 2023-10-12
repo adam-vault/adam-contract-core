@@ -4,12 +4,18 @@ const { smock } = require('@defi-wonderland/smock');
 
 const { ADDRESS_UNISWAP_ROUTER } = require('../utils/constants');
 
+const {
+    encodeV2SwapExactOut,
+    UNISWAP_COMMAND_TYPE,
+} = require('../utils/uniswapV3PayloadEncoder');
+
 const { expect } = chai;
-const { BigNumber } = ethers;
 chai.should();
 chai.use(smock.matchers);
 
 const abiCoder = ethers.utils.defaultAbiCoder;
+
+const RECIPIENT_EXECUTER = '0x0000000000000000000000000000000000000001';
 
 describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApproval.js', async () => {
     let executor;
@@ -55,6 +61,24 @@ describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApp
         );
     }
 
+    function encodeExecuteData(commands, datas) {
+        return mockUniswapV3Router.interface.encodeFunctionData(
+            'execute(bytes,bytes[],uint256)',
+            [commands, datas, ethers.constants.MaxUint256],
+        );
+    }
+
+    async function executeUniswapBA(budget, executor, calldata, value = 0) {
+        return budget
+            .connect(executor)
+            .createTransaction(
+                [encodeTxData(ADDRESS_UNISWAP_ROUTER, calldata, value)],
+                Math.round(Date.now() / 1000) + 86400,
+                true,
+                '',
+            );
+    }
+
     function encodeExactInputSwapData(
         tokenIn,
         tokenOut,
@@ -80,7 +104,7 @@ describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApp
         executee = await smock.fake('MockBudgetApprovalExecutee');
         mockToken = await smock.fake('ERC20');
         mockTokenB = await smock.fake('ERC20');
-        mockUniswapRouter = await smock.fake('MockUniswapRouter');
+        mockUniswapV3Router = await smock.fake('MockUniswapV3Router');
         executee.team.returns(team.address);
         await network.provider.request({
             method: 'hardhat_impersonateAccount',
@@ -234,149 +258,111 @@ describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApp
             });
 
             it('allows user to swap under allow amount', async () => {
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     99,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
-
-                executee.executeByBudgetApproval
-                    .atCall(0)
-                    .should.be.calledWith(
-                        ADDRESS_UNISWAP_ROUTER,
-                        callData,
-                        BigNumber.from('0'),
-                    );
             });
 
             it('allows user to swap equal allow amount', async () => {
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     100,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
             });
 
             it('allows user to swap amount twice', async () => {
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     50,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
-
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
             });
 
             it('throws "AmountLimitExceeded" error if the 1st time outflow exceeds amount limit', async () => {
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     101,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.be.revertedWith('Exceeded max amount');
             });
 
             it('throws "AmountLimitExceeded" error if the 2nd time outflow exceeds amount limit', async () => {
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     50,
                     10,
+                    [mockToken.address, mockTokenB.address],
                 );
 
-                await uniswapBA
-                    .connect(executor)
-                    .createTransaction(
-                        [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                        Math.round(Date.now() / 1000) + 86400,
-                        true,
-                        '',
-                    );
-
-                const callData2 = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
-                    51,
-                    10,
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [
-                                encodeTxData(
-                                    ADDRESS_UNISWAP_ROUTER,
-                                    callData2,
-                                    0,
-                                ),
-                            ],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
+                ).to.not.be.reverted;
+
+                const encodeV2SwapExactInData2 = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
+                    51,
+                    10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput2 = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData2],
+                );
+
+                await expect(
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput2),
                 ).to.be.revertedWith('Exceeded max amount');
             });
         });
@@ -402,100 +388,81 @@ describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApp
 
             it('allows user to swap under allow percentage amount', async () => {
                 mockToken.balanceOf.returns(200);
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     50,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
             });
 
             it('allows user to swap equal allow percentage amount', async () => {
                 mockToken.balanceOf.returns(100);
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     25,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
             });
 
             it('allows user to swap percentage amount twice', async () => {
                 mockToken.balanceOf.returns(50);
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     10,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
             });
 
             it('throws "Exceeded percentage" if swap exceeds percentage limit', async () => {
                 mockToken.balanceOf.returns(50);
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     40,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.be.revertedWith('Exceeded percentage');
             });
         });
@@ -521,44 +488,38 @@ describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApp
             });
 
             it('allows user to swap fromToken', async () => {
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     10,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
             });
 
             it('throws "Source token not whitelisted" if swap not whitelisted token', async () => {
-                const callData = encodeExactInputSwapData(
-                    mockTokenB.address,
-                    mockToken.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     10,
                     10,
+                    [mockTokenB.address, mockToken.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.be.revertedWith('Source token not whitelisted');
             });
         });
@@ -583,44 +544,38 @@ describe('UniswapAnyTokenBudgetApproval.sol - test/unit/UniswapAnyTokenBudgetApp
             });
 
             it('allows user to swap to toTokens', async () => {
-                const callData = encodeExactInputSwapData(
-                    mockToken.address,
-                    mockTokenB.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     10,
                     10,
+                    [mockToken.address, mockTokenB.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.not.be.reverted;
             });
 
             it('throws "Target token not whitelisted" error if swap to not whitelisted token', async () => {
-                const callData = encodeExactInputSwapData(
-                    mockTokenB.address,
-                    mockToken.address,
-                    executee.address,
+                const encodeV2SwapExactInData = encodeV2SwapExactOut(
+                    RECIPIENT_EXECUTER,
                     10,
                     10,
+                    [mockTokenB.address, mockToken.address],
+                );
+
+                const encodeExecuteInput = encodeExecuteData(
+                    UNISWAP_COMMAND_TYPE.V2_SWAP_EXACT_IN,
+                    [encodeV2SwapExactInData],
                 );
 
                 await expect(
-                    uniswapBA
-                        .connect(executor)
-                        .createTransaction(
-                            [encodeTxData(ADDRESS_UNISWAP_ROUTER, callData, 0)],
-                            Math.round(Date.now() / 1000) + 86400,
-                            true,
-                            '',
-                        ),
+                    executeUniswapBA(uniswapBA, executor, encodeExecuteInput),
                 ).to.be.revertedWith('Target token not whitelisted');
             });
         });

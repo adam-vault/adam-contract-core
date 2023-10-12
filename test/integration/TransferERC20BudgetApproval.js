@@ -96,6 +96,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
                         endTime,
                         minApproval: 1,
                         totalAmount: parseEther('100'),
+                        usageCount: 2,
                     }),
                 );
 
@@ -204,6 +205,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
                         endTime,
                         minApproval: 1,
                         totalAmount: parseEther('100'),
+                        usageCount: 2,
                     }),
                 );
 
@@ -970,6 +972,7 @@ describe('Integration - TransferERC20BudgetApproval.sol 2 - test/integration/Tra
                         dao: executee.address,
                         executor: executor.address,
                         allowAllTokens: true,
+                        usageCount: 2,
                     }),
                 );
 

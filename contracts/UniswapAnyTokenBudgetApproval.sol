@@ -109,8 +109,8 @@ contract UniswapAnyTokenBudgetApproval is CommonBudgetApproval, UniswapSwapper {
     function _executeUniswapCall(uint256 transactionId, address to, bytes memory executeData, uint256 value) private {
         address __executee = executee();
 
-        bytes memory response = IBudgetApprovalExecutee(__executee).executeByBudgetApproval(to, executeData, value);
-        MulticallData[] memory mDataArr = this.decodeUniswapMulticall(executeData, value, response);
+        IBudgetApprovalExecutee(__executee).executeByBudgetApproval(to, executeData, value);
+        MulticallData[] memory mDataArr = this.decodeExecute(executeData, value);
 
         address[] storage _tokenIn = _tokenInOfTransaction[transactionId];
         mapping(address => uint256) storage _tokenInAmount = _tokenInAmountOfTransaction[transactionId];
