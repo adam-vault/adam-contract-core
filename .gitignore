@@ -27,3 +27,4 @@ build
 deploy-results/results.json
 deployments/goerli-predev
 deployments/arbitrum-goerli-predev
+deployments/mumbai-predev

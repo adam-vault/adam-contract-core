@@ -95,6 +95,7 @@ module.exports = {
         'goerli-qa': goerliConfig,
         'goerli-stg': goerliConfig,
         'goerli-alpha': goerliConfig,
+        'mumbai-predev': mumbaiConfig,
         'mumbai-dev': mumbaiConfig,
         'mumbai-qa': mumbaiConfig,
     },
