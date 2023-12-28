@@ -1,8 +1,10 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { smock } = require('@defi-wonderland/smock');
 
 const { parseEther } = ethers.utils;
 const { parseUnits } = require('ethers/lib/utils');
+const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
 
 const {
     ADDRESS_ETH,
@@ -23,6 +25,7 @@ describe('EthereumChainlinkPriceGateway', async () => {
     let tokenBEthAggregator;
     const TOKEN_A_DECIMALS = 18;
     const TOKEN_B_DECIMALS = 6;
+    const TOKEN_C_DECIMALS = 6;
 
     beforeEach(async () => {
         [creator, unknown] = await ethers.getSigners();
@@ -32,70 +35,33 @@ describe('EthereumChainlinkPriceGateway', async () => {
         );
         priceGateway = await EthereumChainlinkPriceGateway.deploy();
 
-        const MockToken = await ethers.getContractFactory('MockToken', {
-            signer: creator,
-        });
-        const MockAggregatorV3 = await ethers.getContractFactory(
-            'MockAggregatorV3',
-            { signer: creator },
-        );
-
-        const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-        await ethers.provider.send('hardhat_setCode', [
-            ADDRESS_MOCK_FEED_REGISTRY,
-            feedRegistryArticfact.deployedBytecode,
-        ]);
-        feedRegistry = await ethers.getContractAt(
-            'MockFeedRegistry',
-            ADDRESS_MOCK_FEED_REGISTRY,
-        );
-
-        tokenA = await MockToken.deploy();
-        tokenAEthAggregator = await MockAggregatorV3.deploy();
-        tokenAEthAggregator.setPrice(parseEther('0.25'));
-        await feedRegistry.setPrice(
-            tokenA.address,
-            ADDRESS_ETH,
-            parseEther('0.25'),
-        );
-        await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
-        await feedRegistry.setAggregator(
-            tokenA.address,
-            ADDRESS_ETH,
-            tokenAEthAggregator.address,
-        );
-
-        tokenB = await MockToken.deploy();
-        await tokenB.setDecimals(6);
-        tokenBEthAggregator = await MockAggregatorV3.deploy();
-        tokenBEthAggregator.setPrice(parseEther('0.5'));
-        await feedRegistry.setPrice(
-            tokenB.address,
-            ADDRESS_ETH,
-            parseEther('0.5'),
-        );
-        await feedRegistry.setDecimal(tokenB.address, ADDRESS_ETH, 18);
-        await feedRegistry.setAggregator(
-            tokenB.address,
-            ADDRESS_ETH,
-            tokenBEthAggregator.address,
-        );
-
-        tokenC = await MockToken.deploy();
-        await tokenC.setDecimals(6);
-        const tokenCEthAggregator = await MockAggregatorV3.deploy();
-        tokenCEthAggregator.setPrice(parseEther('-1'));
-        await feedRegistry.setPrice(
-            tokenC.address,
-            ADDRESS_ETH,
-            parseEther('-1'),
-        );
-        await feedRegistry.setDecimal(tokenC.address, ADDRESS_ETH, 18);
-        await feedRegistry.setAggregator(
-            tokenC.address,
-            ADDRESS_ETH,
-            tokenCEthAggregator.address,
-        );
+        tokenA = await getMockERC20Token(TOKEN_A_DECIMALS);
+        tokenB = await getMockERC20Token(TOKEN_B_DECIMALS);
+        tokenC = await getMockERC20Token(TOKEN_C_DECIMALS);
+        const { feedRegistry: _feedRegistry, aggregators } =
+            await setMockFeedRegistry([
+                {
+                    token1: tokenA.address,
+                    token2: ADDRESS_ETH,
+                    price: parseEther('0.25'),
+                    decimal: 18,
+                },
+                {
+                    token1: tokenB.address,
+                    token2: ADDRESS_ETH,
+                    price: parseEther('0.5'),
+                    decimal: 18,
+                },
+                {
+                    token1: tokenC.address,
+                    token2: ADDRESS_ETH,
+                    price: parseEther('-1'),
+                    decimal: 18,
+                },
+            ]);
+        feedRegistry = _feedRegistry;
+        tokenAEthAggregator = aggregators[0];
+        tokenBEthAggregator = aggregators[1];
     });
 
     describe('isSupportedPair()', async () => {
@@ -471,3 +437,10 @@ describe('EthereumChainlinkPriceGateway', async () => {
         });
     });
 });
+
+async function getMockERC20Token(decimal) {
+    const SmockERC20 = await smock.mock('MockToken');
+    token = await SmockERC20.deploy();
+    await token.setDecimals(decimal);
+    return token;
+}

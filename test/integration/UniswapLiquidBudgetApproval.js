@@ -4,7 +4,7 @@ const { smock } = require('@defi-wonderland/smock');
 const findEventArgs = require('../../utils/findEventArgs');
 const { createTokens } = require('../utils/createContract');
 const { getCreateUniswapBAParams } = require('../../utils/paramsStruct');
-
+const { setMockUniswapRouter } = require('../utils/mockUniswapRouterHelper');
 const {
     ADDRESS_ETH,
     ADDRESS_UNISWAP_ROUTER,
@@ -14,11 +14,7 @@ const {
 const {
     encodeV2SwapExactOut,
     UNISWAP_COMMAND_TYPE,
-    encodeWrapETH,
 } = require('../utils/uniswapV3PayloadEncoder');
-
-const RECIPIENT_UNISWAP = '0x0000000000000000000000000000000000000002';
-const RECIPIENT_EXECUTER = '0x0000000000000000000000000000000000000001';
 
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
@@ -61,6 +57,10 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
             );
     }
 
+    /*
+    instead of creating whole Adam and a Dao to test the budget approval, 
+    we can just mock the executee contract and test the budget approval directly
+    */
     beforeEach(async () => {
         [executor, approver] = await ethers.getSigners();
 
@@ -89,15 +89,7 @@ describe('Integration - UniswapLiquidBudgetApproval.sol - test/integration/Unisw
         );
         await executee.setVariable('_team', team.address);
 
-        const uniswapRouterArticfact = require('../../artifacts/contracts/mocks/MockUniswapV3Router.sol/MockUniswapV3Router');
-        await ethers.provider.send('hardhat_setCode', [
-            ADDRESS_UNISWAP_ROUTER,
-            uniswapRouterArticfact.deployedBytecode,
-        ]);
-        uniswapRouter = await ethers.getContractAt(
-            'MockUniswapV3Router',
-            ADDRESS_UNISWAP_ROUTER,
-        );
+        uniswapRouter = await setMockUniswapRouter();
         const wethArticfact = require('../../artifacts/contracts/mocks/MockWETH9.sol/MockWETH9');
         await ethers.provider.send('hardhat_setCode', [
             ADDRESS_WETH,

@@ -41,25 +41,6 @@ const createBudgetApprovals = async (signer) => {
         transferERC20BudgetApproval.address,
     ];
 };
-
-const createFeedRegistry = async (token, signer) => {
-    const FeedRegistry = await ethers.getContractFactory('MockFeedRegistry', {
-        signer,
-    });
-    const feedRegistry = await FeedRegistry.deploy();
-    await feedRegistry.setPrice(
-        token.address,
-        ADDRESS_ETH,
-        ethers.utils.parseEther('0.0046'),
-    );
-    await feedRegistry.setAggregator(
-        token.address,
-        ADDRESS_ETH,
-        ADDRESS_MOCK_AGGRGATOR,
-    );
-    return feedRegistry;
-};
-
 const createAndDeploy = async (contractName, signer) => {
     const contractFactory = await ethers.getContractFactory(contractName);
     const contract = await contractFactory.deploy();
@@ -197,7 +178,6 @@ const createGovern = async () => {
 };
 
 module.exports = {
-    createFeedRegistry,
     createAdam,
     createTokens,
     createGovern,

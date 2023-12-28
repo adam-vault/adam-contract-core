@@ -4,8 +4,8 @@ const { BigNumber } = require('ethers');
 const findEventArgs = require('../../utils/findEventArgs');
 const { getCreateUniswapBAParams } = require('../../utils/paramsStruct');
 const { createAdam } = require('../utils/createContract');
-const feedRegistry = require('../utils/feedRegistry');
 const paramsStruct = require('../../utils/paramsStruct');
+const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
 
 const { parseEther } = ethers.utils;
 const { AddressZero } = ethers.constants;
@@ -28,19 +28,21 @@ describe('UniswapV3Swapper.sol - test/unit/UniswapSwapper.js', async () => {
 
     beforeEach(async () => {
         [executor] = await ethers.getSigners();
-        await feedRegistry.setMock();
-        await feedRegistry.setFeed(
-            ADDRESS_ETH,
-            ADDRESS_DAI,
-            parseEther('1'),
-            {},
-        );
-        await feedRegistry.setFeed(
-            ADDRESS_ETH,
-            ADDRESS_UNI,
-            parseEther('1'),
-            {},
-        );
+
+        await setMockFeedRegistry([
+            {
+                token1: ADDRESS_ETH,
+                token2: ADDRESS_DAI,
+                price: parseEther('1'),
+                decimal: 8,
+            },
+            {
+                token1: ADDRESS_ETH,
+                token2: ADDRESS_UNI,
+                price: parseEther('1'),
+                decimal: 8,
+            },
+        ]);
 
         const {
             adam,

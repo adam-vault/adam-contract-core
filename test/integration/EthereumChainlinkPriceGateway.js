@@ -2,10 +2,10 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 const findEventArgs = require('../../utils/findEventArgs');
-const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
 const { createAdam } = require('../utils/createContract.js');
 
 const { getCreateDaoParams } = require('../../utils/paramsStruct');
+const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
 
 const {
     ADDRESS_ETH,
@@ -18,17 +18,11 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async () 
     let tokenB;
     let creator;
     let daoMember;
-    let budgetApprovalAddresses;
-    let priceGatewayAddresses;
     let ethereumChainlinkPriceGateway;
     let dao;
-    let feedRegistry;
-    let tokenBEthAggregator;
-    let tokenAEthAggregator;
-    let SmockERC20;
 
-    function createDao() {
-        return adam.createDao(
+    async function createDao() {
+        const tx = await adam.createDao(
             ...getCreateDaoParams({
                 name: 'A Company',
                 priceGateways: [ethereumChainlinkPriceGateway],
@@ -37,75 +31,46 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async () 
                 creator: creator.address,
             }),
         );
+        const { dao: daoAddr } = await findEventArgs(tx, 'CreateDao');
+        return ethers.getContractAt('Dao', daoAddr);
     }
-
-    before(async () => {
-        SmockERC20 = await smock.mock('ERC20');
-    });
 
     beforeEach(async () => {
         [creator, daoMember] = await ethers.getSigners();
 
-        await ethers.provider.send('hardhat_setCode', [
-            ADDRESS_MOCK_FEED_REGISTRY,
-            feedRegistryArticfact.deployedBytecode,
+        tokenA = await getMockERC20Token([
+            {
+                address: daoMember.address,
+                balance: ethers.utils.parseEther('100'),
+            },
+        ]);
+        tokenB = await getMockERC20Token([
+            {
+                address: daoMember.address,
+                balance: ethers.utils.parseEther('100'),
+            },
         ]);
 
-        feedRegistry = await ethers.getContractAt(
-            'MockFeedRegistry',
-            ADDRESS_MOCK_FEED_REGISTRY,
-        );
-        const MockAggregatorV3 = await ethers.getContractFactory(
-            'MockAggregatorV3',
-            { signer: creator },
-        );
-
-        tokenA = await SmockERC20.deploy('', '');
-        tokenB = await SmockERC20.deploy('', '');
-
-        await tokenA.setVariable('_balances', {
-            [daoMember.address]: ethers.utils.parseEther('100'),
-        });
-
-        tokenAEthAggregator = await MockAggregatorV3.deploy();
-        tokenAEthAggregator.setPrice(ethers.utils.parseEther('0.25'));
-        await feedRegistry.setPrice(
-            tokenA.address,
-            ADDRESS_ETH,
-            ethers.utils.parseEther('0.25'),
-        );
-        await feedRegistry.setDecimal(tokenA.address, ADDRESS_ETH, 18);
-        await feedRegistry.setAggregator(
-            tokenA.address,
-            ADDRESS_ETH,
-            tokenAEthAggregator.address,
-        );
-
-        await tokenB.setVariable('_balances', {
-            [daoMember.address]: ethers.utils.parseEther('100'),
-        });
-
-        tokenBEthAggregator = await MockAggregatorV3.deploy();
-        tokenBEthAggregator.setPrice(ethers.utils.parseEther('0.25'));
-        await feedRegistry.setPrice(
-            tokenB.address,
-            ADDRESS_ETH,
-            ethers.utils.parseEther('0.25'),
-        );
-        await feedRegistry.setDecimal(tokenB.address, ADDRESS_ETH, 18);
-        await feedRegistry.setAggregator(
-            tokenB.address,
-            ADDRESS_ETH,
-            tokenBEthAggregator.address,
-        );
+        await setMockFeedRegistry([
+            {
+                token1: tokenA.address,
+                token2: ADDRESS_ETH,
+                price: ethers.utils.parseEther('0.25'),
+                decimal: 18,
+            },
+            {
+                token1: tokenB.address,
+                token2: ADDRESS_ETH,
+                price: ethers.utils.parseEther('0.25'),
+                decimal: 18,
+            },
+        ]);
 
         const result = await createAdam();
         adam = result.adam;
         ethereumChainlinkPriceGateway = result.ethPriceGateway.address;
 
-        const tx1 = await createDao();
-        const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-        dao = await ethers.getContractAt('Dao', daoAddr);
+        dao = await createDao();
     });
 
     describe('CreateDao()', async () => {
@@ -173,3 +138,14 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async () 
         });
     });
 });
+
+async function getMockERC20Token(addressBalances) {
+    const SmockERC20 = await smock.mock('ERC20');
+    token = await SmockERC20.deploy('', '');
+    addressBalances.forEach(async ({ address, balance }) => {
+        await token.setVariable('_balances', {
+            [address]: balance,
+        });
+    });
+    return token;
+}

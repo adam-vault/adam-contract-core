@@ -1,13 +1,11 @@
 const chai = require('chai');
 const { smock } = require('@defi-wonderland/smock');
-const { ethers, upgrades, network, testUtils } = require('hardhat');
+const { ethers, testUtils } = require('hardhat');
 
 const { parseEther } = ethers.utils;
+const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
 
-const {
-    ADDRESS_ETH,
-    ADDRESS_MOCK_FEED_REGISTRY,
-} = require('../utils/constants');
+const { ADDRESS_ETH } = require('../utils/constants');
 
 const { expect } = chai;
 chai.should();
@@ -45,11 +43,7 @@ describe('LiquidPoolV2.sol - test/unit/LiquidPool.js', async () => {
 
         daoAsSigner = await testUtils.address.impersonate(dao.address);
 
-        const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-        await ethers.provider.send('hardhat_setCode', [
-            ADDRESS_MOCK_FEED_REGISTRY,
-            feedRegistryArticfact.deployedBytecode,
-        ]);
+        await setMockFeedRegistry([]);
 
         const Team = await ethers.getContractFactory('Team', {
             signer: creator,
@@ -778,11 +772,7 @@ describe('LiquidPool.sol - one ERC20 asset only', async () => {
 
         daoAsSigner = await testUtils.address.impersonate(dao.address);
 
-        const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-        await ethers.provider.send('hardhat_setCode', [
-            ADDRESS_MOCK_FEED_REGISTRY,
-            feedRegistryArticfact.deployedBytecode,
-        ]);
+        await setMockFeedRegistry([]);
 
         const Team = await ethers.getContractFactory('Team', {
             signer: creator,

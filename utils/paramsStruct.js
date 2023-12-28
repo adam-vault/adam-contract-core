@@ -83,7 +83,6 @@ function getCreateDaoParams({
     const accountingSystemIface = new ethers.utils.Interface(
         accountingSystemArtifact.abi,
     );
-
     return [
         name,
         description,
@@ -102,6 +101,22 @@ function getCreateDaoParams({
                     priceGateways,
                 ]),
             ]),
+            ...[].concat(
+                iface.encodeFunctionData('executePlugin', [
+                    ethers.utils.id('adam.dao.accounting_system'),
+                    accountingSystemIface.encodeFunctionData(
+                        'setTokenPairPriceGatewayMap',
+                        [
+                            depositTokens,
+                            depositTokens.map(() => {
+                                return ETH;
+                            }),
+                            priceGateways[0],
+                        ],
+                    ),
+                    0,
+                ]),
+            ),
             iface.encodeFunctionData('createPlugin', [
                 ethers.utils.id('adam.dao.liquid_pool'),
                 liquidPoolIface.encodeFunctionData('initialize', [
@@ -153,7 +168,6 @@ function getCreateDaoParams({
                   ])
                 : '',
             logoCID ? iface.encodeFunctionData('setLogoCID', [logoCID]) : '',
-
             ...admissionTokens.map(
                 ([token, minTokenToAdmit, tokenId, isMemberToken]) => {
                     if (isMemberToken) {

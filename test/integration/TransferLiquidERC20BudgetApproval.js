@@ -7,13 +7,8 @@ const {
 
 const { createTokens, createAdam } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
-
-const {
-    ADDRESS_ETH,
-    ADDRESS_MOCK_AGGRGATOR,
-    ADDRESS_MOCK_FEED_REGISTRY,
-} = require('../utils/constants');
-
+const { ADDRESS_ETH } = require('../utils/constants');
+const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
 
@@ -29,8 +24,6 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
     let daoSigner;
     let tokenA;
     let feedRegistry;
-    let budgetApprovalAddresses;
-    let priceGatewayAddresses;
     let ethereumChainlinkPriceGateway;
 
     beforeEach(async () => {
@@ -38,20 +31,16 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
 
         ({ tokenA } = await createTokens());
 
-        const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-        await ethers.provider.send('hardhat_setCode', [
-            ADDRESS_MOCK_FEED_REGISTRY,
-            feedRegistryArticfact.deployedBytecode,
-        ]);
-        feedRegistry = await ethers.getContractAt(
-            'MockFeedRegistry',
-            ADDRESS_MOCK_FEED_REGISTRY,
-        );
-        await feedRegistry.setAggregator(
-            tokenA.address,
-            ADDRESS_ETH,
-            ADDRESS_MOCK_AGGRGATOR,
-        );
+        feedRegistry = (
+            await setMockFeedRegistry([
+                {
+                    token1: tokenA.address,
+                    token2: ADDRESS_ETH,
+                    price: parseEther('1'),
+                    decimal: 8,
+                },
+            ])
+        ).feedRegistry;
 
         const result = await createAdam();
         adam = result.adam;

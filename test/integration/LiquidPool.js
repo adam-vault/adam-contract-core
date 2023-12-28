@@ -3,19 +3,12 @@ const { ethers } = require('hardhat');
 const _ = require('lodash');
 const findEventArgs = require('../../utils/findEventArgs');
 const decodeBase64 = require('../utils/decodeBase64');
-const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-const {
-    createAdam,
-    createTokens,
-    createPriceGateways,
-} = require('../utils/createContract.js');
-const paramsStruct = require('../../utils/paramsStruct');
+const { createAdam, createTokens } = require('../utils/createContract.js');
 
-const {
-    ADDRESS_ETH,
-    ADDRESS_MOCK_FEED_REGISTRY,
-    ADDRESS_MOCK_AGGRGATOR,
-} = require('../utils/constants');
+const paramsStruct = require('../../utils/paramsStruct');
+const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
+
+const { ADDRESS_ETH } = require('../utils/constants');
 
 describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async () => {
     let adam;
@@ -25,7 +18,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
     let creator;
     let member;
     let anyone;
-    let feedRegistry;
     let ethereumChainlinkPriceGateway;
     let membership;
 
@@ -41,21 +33,14 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
     beforeEach(async () => {
         [creator, member, anyone] = await ethers.getSigners();
         ({ tokenA, tokenC721, tokenD1155 } = await createTokens());
-
-        await ethers.provider.send('hardhat_setCode', [
-            ADDRESS_MOCK_FEED_REGISTRY,
-            feedRegistryArticfact.deployedBytecode,
+        await setMockFeedRegistry([
+            {
+                token1: tokenA.address,
+                token2: ADDRESS_ETH,
+                price: ethers.utils.parseEther('0.25'),
+                decimal: 18,
+            },
         ]);
-        feedRegistry = await ethers.getContractAt(
-            'MockFeedRegistry',
-            ADDRESS_MOCK_FEED_REGISTRY,
-        );
-        await feedRegistry.setAggregator(
-            tokenA.address,
-            ADDRESS_ETH,
-            ADDRESS_MOCK_AGGRGATOR,
-        );
-
         const result = await createAdam();
         adam = result.adam;
         membership = result.membership;
@@ -214,15 +199,6 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
                     await dao.liquidPool(),
                 );
             });
-
-            // TODO: Move to unit test
-            // it('should be able to create member token', async function () {
-            //   await expect(dao.exposedCreateMemberToken(memberTokenImpl, ['name1', 'symbol1'], 100));
-            //   const memberTokenAddr = await dao.memberToken();
-            //   const memberToken = await ethers.getContractAt('MemberToken', memberTokenAddr);
-
-            //   await expect(await memberToken.balanceOf(dao.address)).to.eq(100);
-            // });
 
             it('allows EOA to deposit successfully with enough ERC20 Admission Token', async () => {
                 await tokenA.mint(member.getAddress(), 1);
@@ -428,6 +404,7 @@ describe('Integration - LiquidPool.sol - test/integration/LiquidPool.js', async 
                             admissionTokens: [
                                 [ethers.constants.AddressZero, 1, 0, false],
                             ],
+                            priceGateways: [ethereumChainlinkPriceGateway],
                         }),
                     ),
                 ).to.be.revertedWithCustomError(dao, 'ContractCallFail');

@@ -25,6 +25,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
     let SmockLiquidPool;
     let SmockGovern;
     let SmockERC20;
+    let ethereumChainlinkPriceGateway;
 
     before(async () => {
         [creator, owner1, owner2] = await ethers.getSigners();
@@ -38,6 +39,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
     beforeEach(async () => {
         const result = await createAdam();
         adam = result.adam;
+        ethereumChainlinkPriceGateway = result.ethPriceGateway;
 
         dao = await SmockDao.deploy();
         memberToken = await SmockMemberToken.deploy();
@@ -178,6 +180,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                         general: [13, 3000, 5000, 0], // general,
                         daoSettingApproval: [13, 3000, 5000, 1], // daoSetting,
                         mintMemberToken: true,
+                        priceGateways: [ethereumChainlinkPriceGateway.address],
                     }),
                 );
                 const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -264,6 +267,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                             5,
                         ],
                         mintMemberToken: true,
+                        priceGateways: [ethereumChainlinkPriceGateway.address],
                     }),
                 );
 
@@ -354,6 +358,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                     5,
                 ],
                 mintMemberToken: true,
+                priceGateways: [ethereumChainlinkPriceGateway.address],
             }),
         );
 
@@ -399,6 +404,7 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                     5,
                 ],
                 mintMemberToken: true,
+                priceGateways: [ethereumChainlinkPriceGateway.address],
             }),
         );
 

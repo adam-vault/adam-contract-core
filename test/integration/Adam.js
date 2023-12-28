@@ -59,6 +59,7 @@ describe('Integration - Adam.sol - test/integration/Adam.js', async () => {
                     ...paramsStruct.getCreateDaoParams({
                         mintMemberToken: true,
                         admissionTokens: [[creator.address, 50, 0, false]],
+                        priceGateways: [ethereumChainlinkPriceGateway.address],
                     }),
                 ),
             ).to.be.revertedWithCustomError(Dao, 'ContractCallFail');

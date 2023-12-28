@@ -1,22 +1,15 @@
 const { expect } = require('chai');
 const { ethers, testUtils } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
+
 const findEventArgs = require('../../utils/findEventArgs');
-const paramsStruct = require('../../utils/paramsStruct');
-
+const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
+const { createTokens, createAdam } = require('../utils/createContract');
 const {
-    createTokens,
-    createAdam,
-    createBudgetApprovals,
-    createPriceGateways,
-} = require('../utils/createContract');
-const { getCreateTransferERC20BAParams } = require('../../utils/paramsStruct');
-
-const {
-    ADDRESS_ETH,
-    ADDRESS_MOCK_AGGRGATOR,
-    ADDRESS_MOCK_FEED_REGISTRY,
-} = require('../utils/constants');
+    getCreateTransferERC20BAParams,
+    getCreateDaoParams,
+} = require('../../utils/paramsStruct');
+const { ADDRESS_ETH } = require('../utils/constants');
 
 const { parseEther } = ethers.utils;
 const abiCoder = ethers.utils.defaultAbiCoder;
@@ -39,28 +32,22 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
         [executor, approver, receiver] = await ethers.getSigners();
 
         tokenA = await (await smock.mock('ERC20')).deploy('', '');
-
-        const feedRegistryArticfact = require('../../artifacts/contracts/mocks/MockFeedRegistry.sol/MockFeedRegistry');
-        await ethers.provider.send('hardhat_setCode', [
-            ADDRESS_MOCK_FEED_REGISTRY,
-            feedRegistryArticfact.deployedBytecode,
-        ]);
-        feedRegistry = await ethers.getContractAt(
-            'MockFeedRegistry',
-            ADDRESS_MOCK_FEED_REGISTRY,
-        );
-        await feedRegistry.setAggregator(
-            tokenA.address,
-            ADDRESS_ETH,
-            ADDRESS_MOCK_AGGRGATOR,
-        );
-
+        feedRegistry = (
+            await setMockFeedRegistry([
+                {
+                    token1: tokenA.address,
+                    token2: ADDRESS_ETH,
+                    price: parseEther('1'),
+                    decimal: 8,
+                },
+            ])
+        ).feedRegistry;
         const result = await createAdam();
         adam = result.adam;
         ethereumChainlinkPriceGateway = result.ethPriceGateway.address;
 
         const tx1 = await adam.createDao(
-            ...paramsStruct.getCreateDaoParams({
+            ...getCreateDaoParams({
                 priceGateways: [ethereumChainlinkPriceGateway],
                 creator: executor.address,
             }),
