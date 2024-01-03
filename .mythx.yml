@@ -43,6 +43,5 @@ analyze:
         - contracts/Govern.sol
         - contracts/Adam.sol
         - contracts/TransferERC721BudgetApproval.sol
-        - contracts/base/PriceResolver.sol
         - contracts/base/BudgetApprovalExecutee.sol
         - contracts/base/CommonBudgetApproval.sol

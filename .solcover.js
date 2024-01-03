@@ -6,7 +6,6 @@ module.exports = {
         'mocks/MockDao.sol',
         'mocks/MockFeedRegistry.sol',
         'mocks/MockLPDao.sol',
-        'mocks/MockPriceResolver.sol',
         'mocks/MockToken.sol',
         'mocks/MockWETH9.sol',
         'mocks/MockVersionUpgrade.sol',
