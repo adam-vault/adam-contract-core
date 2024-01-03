@@ -21,8 +21,8 @@
   "event AllowToken(address token)",
   "event ApproveTransaction(uint256 indexed id, address approver, string comment)",
   "event CreateTransaction(uint256 indexed id, bytes[] data, uint256 deadline, uint8 status, string comment, address creator)",
+  "event ExecuteSelfClaimTransferERC20Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount)",
   "event ExecuteTransaction(uint256 indexed id, bytes[] data, address _executor)",
-  "event ExecuteTransferERC20Transaction(uint256 indexed id, address indexed executor, address indexed toAddress, address token, uint256 amount)",
   "event Initialized(uint8 version)",
   "event RevokeTransaction(uint256 indexed id)",
   "event SetApprover(address approver)",
@@ -34,6 +34,7 @@
   "function approveTransaction(uint256 id, string comment)",
   "function approverTeamId() view returns (uint256)",
   "function approversMapping(address eoa) view returns (bool)",
+  "function claimedAddresses(address) view returns (bool)",
   "function createTransaction(bytes[] _data, uint32 _deadline, bool _isExecute, string comment) payable returns (uint256)",
   "function endTime() view returns (uint256)",
   "function executeParams() pure returns (string[])",
@@ -42,7 +43,8 @@
   "function executor() view returns (address)",
   "function executorTeamId() view returns (uint256)",
   "function fixAmount() view returns (uint256)",
-  "function getMessageHash(address _entity, uint256 nonce) pure returns (bytes32)",
+  "function getEthSignedMessageHash(bytes32 _messageHash) pure returns (bytes32)",
+  "function getMessageHash(address _to, uint256 _nonce) pure returns (bytes32)",
   "function initialize(tuple(address executor, uint256 executorTeamId, address[] approvers, uint256 approverTeamId, uint256 minApproval, string text, string transactionType, uint256 startTime, uint256 endTime, bool allowUnlimitedUsageCount, uint256 usageCount) params, bool _allowAllAddresses, address[] _toAddresses, bool _allowAllTokens, address _token, uint256 _fixAmount, address _validator)",
   "function minApproval() view returns (uint256)",
   "function name() view returns (string)",
@@ -55,5 +57,5 @@
   "function transactions(uint256) view returns (uint256 id, uint8 status, uint32 deadline, bool isExist, uint256 approvedCount)",
   "function usageCount() view returns (uint256)",
   "function validator() view returns (address)",
-  "function verifySignature(address to, uint256 nonce, bytes signature) view returns (bool)"
+  "function verify(address _signer, address _to, uint256 _nonce, bytes signature) pure returns (bool)"
 ]

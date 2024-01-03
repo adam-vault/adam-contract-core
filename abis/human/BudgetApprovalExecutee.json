@@ -1,4 +1,7 @@
 [
+  "error BudgetApprovalNotExists(address budgetApproval)",
+  "error InputLengthNotMatch(uint256 count1, uint256 count2)",
+  "error OnlyBudgetApproval()",
   "event CreateBudgetApproval(address budgetApproval, bytes data)",
   "event ExecuteByBudgetApproval(address budgetApproval, bytes data)",
   "event RevokeBudgetApproval(address budgetApproval)",
