@@ -7,22 +7,8 @@ const ETH = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const MATIC = '0x0000000000000000000000000000000000001010';
 const USD = '0x0000000000000000000000000000000000000348';
 
-const PRICE_GATEWAY_TYPE = [
-    'EthereumChainlinkPriceGateway',
-    'PolygonChainlinkPriceGateway',
-];
 async function main() {
     const { get, getOrNull } = hre.deployments;
-
-    const priceGatewayAddresses = (
-        await Promise.all(
-            PRICE_GATEWAY_TYPE.map(async (key) => {
-                const d = await getOrNull(key);
-                if (!d) return null;
-                return [key, d.address];
-            }),
-        )
-    ).filter((deployment) => !!deployment);
 
     const answers = await inquirer.prompt([
         {
@@ -152,15 +138,6 @@ async function main() {
             message:
                 'creator? This Creator will be the first member of the dao.',
         },
-        {
-            type: 'list',
-            name: 'priceGatewayOptions',
-            message: 'Price Gateway Type?',
-            choices: priceGatewayAddresses.map(([key, address]) => ({
-                name: key,
-                value: { key, address },
-            })),
-        },
     ]);
 
     const adamDeployment = await get('Adam');
@@ -168,7 +145,6 @@ async function main() {
     const tx = await adam.createDao(
         ...paramsStruct.getCreateDaoParams({
             ...answers,
-            priceGateways: [answers.priceGatewayOptions.address],
         }),
     );
     console.log(tx);

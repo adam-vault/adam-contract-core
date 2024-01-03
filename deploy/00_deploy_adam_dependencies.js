@@ -46,12 +46,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         gasLimit: 5000000,
         ...(await gasFeeConfig()),
     });
-    await deploy('AccountingSystem', {
-        from: deployer,
-        log: true,
-        gasLimit: 5000000,
-        ...(await gasFeeConfig()),
-    });
 };
 
 module.exports.tags = ['phase1'];

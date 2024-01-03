@@ -4,7 +4,6 @@ const daoArtifact = require('../artifacts/contracts/Dao.sol/Dao.json');
 const membershipArtifact = require('../artifacts/contracts/Membership.sol/Membership.json');
 const memberTokenArtifact = require('../artifacts/contracts/MemberToken.sol/MemberToken.json');
 const teamArtifact = require('../artifacts/contracts/Team.sol/Team.json');
-const accountingSystemArtifact = require('../artifacts/contracts/AccountingSystem.sol/AccountingSystem.json');
 
 const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
@@ -70,7 +69,6 @@ function getCreateDaoParams({
     maxMemberLimit = ethers.constants.MaxUint256,
     referer = constants.AddressZero,
     creator,
-    priceGateways = [],
 }) {
     const iface = new ethers.utils.Interface(daoArtifact.abi);
     const membershipIface = new ethers.utils.Interface(membershipArtifact.abi);
@@ -78,9 +76,6 @@ function getCreateDaoParams({
         memberTokenArtifact.abi,
     );
     const teamIface = new ethers.utils.Interface(teamArtifact.abi);
-    const accountingSystemIface = new ethers.utils.Interface(
-        accountingSystemArtifact.abi,
-    );
     return [
         name,
         description,
@@ -93,28 +88,6 @@ function getCreateDaoParams({
                     maxMemberLimit,
                 ]),
             ]),
-            iface.encodeFunctionData('createPlugin', [
-                ethers.utils.id('adam.dao.accounting_system'),
-                accountingSystemIface.encodeFunctionData('initialize', [
-                    priceGateways,
-                ]),
-            ]),
-            ...[].concat(
-                iface.encodeFunctionData('executePlugin', [
-                    ethers.utils.id('adam.dao.accounting_system'),
-                    accountingSystemIface.encodeFunctionData(
-                        'setTokenPairPriceGatewayMap',
-                        [
-                            depositTokens,
-                            depositTokens.map(() => {
-                                return ETH;
-                            }),
-                            priceGateways[0],
-                        ],
-                    ),
-                    0,
-                ]),
-            ),
             iface.encodeFunctionData('createPlugin', [
                 ethers.utils.id('adam.dao.member_token'),
                 memberTokenIface.encodeFunctionData('initialize', [

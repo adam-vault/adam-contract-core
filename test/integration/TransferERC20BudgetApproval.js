@@ -3,7 +3,6 @@ const { ethers, testUtils } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 
 const findEventArgs = require('../../utils/findEventArgs');
-const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
 const { createTokens, createAdam } = require('../utils/createContract');
 const {
     getCreateTransferERC20BAParams,
@@ -24,30 +23,17 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     let receiver;
     let daoSigner;
     let tokenA;
-    let feedRegistry;
-    let ethereumChainlinkPriceGateway;
 
     before(async () => {
         [executor, approver, receiver] = await ethers.getSigners();
 
         tokenA = await (await smock.mock('ERC20')).deploy('', '');
-        feedRegistry = (
-            await setMockFeedRegistry([
-                {
-                    token1: tokenA.address,
-                    token2: ADDRESS_ETH,
-                    price: parseEther('1'),
-                    decimal: 8,
-                },
-            ])
-        ).feedRegistry;
+
         const result = await createAdam();
         adam = result.adam;
-        ethereumChainlinkPriceGateway = result.ethPriceGateway.address;
 
         const tx1 = await adam.createDao(
             ...getCreateDaoParams({
-                priceGateways: [ethereumChainlinkPriceGateway],
                 creator: executor.address,
             }),
         );

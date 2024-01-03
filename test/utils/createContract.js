@@ -16,8 +16,6 @@ const createAdam = async () => {
         govern,
         memberToken,
         team,
-        accountingSystem,
-        ethPriceGateway,
         uniswapAnyTokenBudgetApproval,
         transferERC721BudgetApproval,
         transferERC20BudgetApproval,
@@ -28,8 +26,6 @@ const createAdam = async () => {
             'Govern',
             'MemberToken',
             'Team',
-            'AccountingSystem',
-            'EthereumChainlinkPriceGateway',
             'UniswapAnyTokenBudgetApproval',
             'TransferERC721BudgetApproval',
             'TransferERC20BudgetApproval',
@@ -48,10 +44,6 @@ const createAdam = async () => {
         [ethers.utils.id('adam.dao.member_token'), memberToken.address],
         [ethers.utils.id('adam.dao.govern'), govern.address],
         [ethers.utils.id('adam.dao.team'), team.address],
-        [
-            ethers.utils.id('adam.dao.accounting_system'),
-            accountingSystem.address,
-        ],
     ]);
     console.log('MC: ~ file: createContract.js:97 ~ createAdam ~ beacon:');
 
@@ -64,7 +56,6 @@ const createAdam = async () => {
                 transferERC721BudgetApproval.address,
                 transferERC20BudgetApproval.address,
             ],
-            [ethPriceGateway.address],
         ],
         { kind: 'uups' },
     );
@@ -74,13 +65,11 @@ const createAdam = async () => {
 
     return {
         adam,
-        ethPriceGateway,
         dao,
         membership,
         govern,
         memberToken,
         team,
-        accountingSystem,
         beacon,
         uniswapAnyTokenBudgetApproval,
         transferERC721BudgetApproval,
