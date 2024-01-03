@@ -12,7 +12,6 @@ chai.use(smock.matchers);
 describe('Integration - Adam.sol - test/integration/Adam.js', async () => {
     let creator;
     let adam;
-    let ethereumChainlinkPriceGateway;
     let Dao;
 
     before(async () => {
@@ -20,7 +19,6 @@ describe('Integration - Adam.sol - test/integration/Adam.js', async () => {
         [creator] = await ethers.getSigners();
         const result = await createAdam();
         adam = result.adam;
-        ethereumChainlinkPriceGateway = result.ethPriceGateway;
     });
 
     describe('when createDao() called', async () => {
@@ -30,7 +28,6 @@ describe('Integration - Adam.sol - test/integration/Adam.js', async () => {
                     ...paramsStruct.getCreateDaoParams({
                         name: 'A Company',
                         depositTokens: [],
-                        priceGateways: [ethereumChainlinkPriceGateway.address],
                     }),
                 ),
             ).to.emit(adam, 'CreateDao');
@@ -44,7 +41,6 @@ describe('Integration - Adam.sol - test/integration/Adam.js', async () => {
                         admissionTokens: [
                             [ethers.constants.AddressZero, 50, 0, true],
                         ],
-                        priceGateways: [ethereumChainlinkPriceGateway.address],
                     }),
                 ),
             ).to.not.be.reverted;
@@ -56,7 +52,6 @@ describe('Integration - Adam.sol - test/integration/Adam.js', async () => {
                     ...paramsStruct.getCreateDaoParams({
                         mintMemberToken: true,
                         admissionTokens: [[creator.address, 50, 0, false]],
-                        priceGateways: [ethereumChainlinkPriceGateway.address],
                     }),
                 ),
             ).to.be.revertedWithCustomError(Dao, 'ContractCallFail');

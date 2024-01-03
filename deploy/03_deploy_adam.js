@@ -14,7 +14,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const memberToken = await get('MemberToken');
     const team = await get('Team');
     const govern = await get('Govern');
-    const accountingSystem = await get('AccountingSystem');
 
     const budgetApprovalsAddress = (
         await Promise.all([
@@ -25,14 +24,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
             get('DepositRewardBudgetApproval'),
         ])
     ).map((deployment) => deployment.address);
-
-    let priceGateway;
-
-    if (deployNetwork.includes('mumbai') || deployNetwork.includes('polygon')) {
-        priceGateway = await get('PolygonChainlinkPriceGateway');
-    } else {
-        priceGateway = await get('EthereumChainlinkPriceGateway');
-    }
 
     const daoBeacon = await deploy('DaoBeacon', {
         from: deployer,
@@ -48,10 +39,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
                 [ethers.utils.id('adam.dao.liquid_pool'), liquidPool.address],
                 [ethers.utils.id('adam.dao.govern'), govern.address],
                 [ethers.utils.id('adam.dao.team'), team.address],
-                [
-                    ethers.utils.id('adam.dao.accounting_system'),
-                    accountingSystem.address,
-                ],
             ],
         ],
     });
@@ -69,11 +56,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
             execute: {
                 init: {
                     methodName: 'initialize',
-                    args: [
-                        daoBeacon.address,
-                        budgetApprovalsAddress,
-                        [priceGateway.address],
-                    ],
+                    args: [daoBeacon.address, budgetApprovalsAddress],
                 },
             },
         },

@@ -23,7 +23,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
     let SmockMemberToken;
     let SmockGovern;
     let SmockERC20;
-    let ethereumChainlinkPriceGateway;
 
     before(async () => {
         [creator, owner1, owner2] = await ethers.getSigners();
@@ -33,7 +32,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
         SmockERC20 = await smock.mock('ERC20');
         const result = await createAdam();
         adam = result.adam;
-        ethereumChainlinkPriceGateway = result.ethPriceGateway;
         memberToken = await SmockMemberToken.deploy();
         tokenA = await SmockERC20.deploy('Name', 'Symbol');
     });
@@ -172,7 +170,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                         general: [13, 3000, 5000, 0], // general,
                         daoSettingApproval: [13, 3000, 5000, 1], // daoSetting,
                         mintMemberToken: true,
-                        priceGateways: [ethereumChainlinkPriceGateway.address],
                     }),
                 );
                 const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
@@ -250,7 +247,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                             5,
                         ],
                         mintMemberToken: true,
-                        priceGateways: [ethereumChainlinkPriceGateway.address],
                     }),
                 );
 
@@ -330,7 +326,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                     5,
                 ],
                 mintMemberToken: true,
-                priceGateways: [ethereumChainlinkPriceGateway.address],
             }),
         );
 
@@ -375,7 +370,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                     5,
                 ],
                 mintMemberToken: true,
-                priceGateways: [ethereumChainlinkPriceGateway.address],
             }),
         );
 

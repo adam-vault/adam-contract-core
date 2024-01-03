@@ -5,7 +5,6 @@ const findEventArgs = require('../../utils/findEventArgs');
 const { getCreateUniswapBAParams } = require('../../utils/paramsStruct');
 const { createAdam } = require('../utils/createContract');
 const paramsStruct = require('../../utils/paramsStruct');
-const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
 
 const { parseEther } = ethers.utils;
 const { AddressZero } = ethers.constants;
@@ -20,7 +19,6 @@ describe('UniswapV3Swapper.sol - test/unit/UniswapSwapper.js', async () => {
     const {
         ADDRESS_ETH,
         ADDRESS_WETH,
-        ADDRESS_DAI,
         ADDRESS_UNI,
         ADDRESS_V3_DAI,
     } = require('../utils/constants');
@@ -28,30 +26,13 @@ describe('UniswapV3Swapper.sol - test/unit/UniswapSwapper.js', async () => {
     beforeEach(async () => {
         [executor] = await ethers.getSigners();
 
-        await setMockFeedRegistry([
-            {
-                token1: ADDRESS_ETH,
-                token2: ADDRESS_DAI,
-                price: parseEther('1'),
-                decimal: 8,
-            },
-            {
-                token1: ADDRESS_ETH,
-                token2: ADDRESS_UNI,
-                price: parseEther('1'),
-                decimal: 8,
-            },
-        ]);
-
         const {
             adam,
-            ethPriceGateway,
             uniswapAnyTokenBudgetApproval: uniswapAnyTokenBudgetApproval,
         } = await createAdam();
 
         const tx1 = await adam.createDao(
             ...paramsStruct.getCreateDaoParams({
-                priceGateways: [ethPriceGateway.address],
                 creator: executor.address,
             }),
         );
