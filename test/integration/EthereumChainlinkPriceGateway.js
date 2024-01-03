@@ -7,10 +7,7 @@ const { createAdam } = require('../utils/createContract.js');
 const { getCreateDaoParams } = require('../../utils/paramsStruct');
 const { setMockFeedRegistry } = require('../utils/mockFeedRegistryHelper');
 
-const {
-    ADDRESS_ETH,
-    ADDRESS_MOCK_FEED_REGISTRY,
-} = require('../utils/constants');
+const { ADDRESS_ETH } = require('../utils/constants');
 
 describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async () => {
     let adam;
@@ -88,64 +85,16 @@ describe('Integration - Dao.sol to EthereumChainlinkPriceGateway.sol', async () 
                 ethereumChainlinkPriceGateway,
             );
         });
-        it('creates Liquid successfully with correct param', async () => {
-            const accountingSystem = await ethers.getContractAt(
-                'AccountingSystem',
-                await dao.accountingSystem(),
-            );
-            const liquidPool = await ethers.getContractAt(
-                'LiquidPool',
-                await dao.liquidPool(),
-            );
-            expect(await liquidPool.accountingSystem()).to.be.equal(
-                accountingSystem.address,
-            );
-        });
-    });
-
-    describe('Deposit()', async () => {
-        it('creates mint correct amount of Liquid Pool token', async () => {
-            const liquidPool = await ethers.getContractAt(
-                'LiquidPool',
-                await dao.liquidPool(),
-            );
-            await liquidPool.connect(daoMember).deposit(daoMember.address, {
-                value: ethers.utils.parseEther('0.5'),
-            });
-            expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(
-                ethers.utils.parseEther('0.5'),
-            );
-            await liquidPool.connect(daoMember).deposit(daoMember.address, {
-                value: ethers.utils.parseEther('0.5'),
-            });
-            expect(await liquidPool.balanceOf(daoMember.address)).to.be.equal(
-                ethers.utils.parseEther('1'),
-            );
-
-            await tokenA.setVariable('_balances', {
-                [daoMember.address]: ethers.utils.parseEther('1'),
-            });
-            await tokenA
-                .connect(daoMember)
-                .approve(liquidPool.address, ethers.utils.parseEther('1'));
-            await liquidPool
-                .connect(daoMember)
-                .depositToken(
-                    daoMember.address,
-                    tokenA.address,
-                    ethers.utils.parseEther('1'),
-                );
-        });
     });
 });
 
 async function getMockERC20Token(addressBalances) {
     const SmockERC20 = await smock.mock('ERC20');
-    token = await SmockERC20.deploy('', '');
-    addressBalances.forEach(async ({ address, balance }) => {
-        await token.setVariable('_balances', {
-            [address]: balance,
-        });
-    });
+    token = await SmockERC20.deploy('name', 'SYM');
+    await Promise.all(
+        addressBalances.map(({ address, balance }) =>
+            token.setVariable('_balances', { [address]: balance }),
+        ),
+    );
     return token;
 }

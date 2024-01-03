@@ -17,9 +17,6 @@ describe('Integration - Adam.sol - test/integration/Adam.js', async () => {
 
     before(async () => {
         Dao = await ethers.getContractFactory('Dao');
-    });
-
-    beforeEach(async () => {
         [creator] = await ethers.getSigners();
         const result = await createAdam();
         adam = result.adam;

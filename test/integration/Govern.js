@@ -13,7 +13,6 @@ chai.use(smock.matchers);
 describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
     let adam;
     let dao;
-    let lp;
     let creator;
     let owner1;
     let owner2;
@@ -22,7 +21,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
     let govern;
     let SmockDao;
     let SmockMemberToken;
-    let SmockLiquidPool;
     let SmockGovern;
     let SmockERC20;
     let ethereumChainlinkPriceGateway;
@@ -31,35 +29,29 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
         [creator, owner1, owner2] = await ethers.getSigners();
         SmockDao = await smock.mock('Dao');
         SmockMemberToken = await smock.mock('MemberToken');
-        SmockLiquidPool = await smock.mock('LiquidPool');
         SmockGovern = await smock.mock('Govern');
         SmockERC20 = await smock.mock('ERC20');
-    });
-
-    beforeEach(async () => {
         const result = await createAdam();
         adam = result.adam;
         ethereumChainlinkPriceGateway = result.ethPriceGateway;
-
-        dao = await SmockDao.deploy();
         memberToken = await SmockMemberToken.deploy();
-        lp = await SmockLiquidPool.deploy();
-        govern = await SmockGovern.deploy();
         tokenA = await SmockERC20.deploy('Name', 'Symbol');
+    });
 
+    beforeEach(async () => {
+        govern = await SmockGovern.deploy();
         await govern.setVariables({
             voteToken: memberToken.address,
             durationInBlock: 5,
         });
 
+        dao = await SmockDao.deploy();
         await dao.setVariables({
             plugins: {
                 [ethers.utils.id('adam.dao.member_token')]: memberToken.address,
-                [ethers.utils.id('adam.dao.liquid_pool')]: lp.address,
             },
             isPlugin: {
                 [memberToken.address]: true,
-                [lp.address]: true,
             },
             govern: {
                 [ethers.utils.id('General')]: govern.address,
@@ -184,24 +176,15 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                     }),
                 );
                 const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
-                dao = await ethers.getContractAt('MockDao', daoAddr);
-                lp = await ethers.getContractAt(
-                    'LiquidPool',
-                    await dao.liquidPool(),
-                );
+                dao = await ethers.getContractAt('Dao', daoAddr);
 
                 const membershipAddr = await dao.membership();
                 const membership = await ethers.getContractAt(
                     'Membership',
                     membershipAddr,
                 );
-
-                await lp.connect(owner1).deposit(owner1.address, {
-                    value: ethers.utils.parseEther('1'),
-                });
-                await lp.connect(owner2).deposit(owner2.address, {
-                    value: ethers.utils.parseEther('2'),
-                });
+                await dao.connect(owner1).join(owner1.address);
+                await dao.connect(owner2).join(owner2.address);
                 expect(await membership.balanceOf(owner1.address)).to.eq(1);
 
                 expect(await membership.getVotes(owner1.address)).to.eq(1);
@@ -274,24 +257,13 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
                 const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
                 dao = await ethers.getContractAt('MockDao', daoAddr);
-                lp = await ethers.getContractAt(
-                    'LiquidPool',
-                    await dao.liquidPool(),
-                );
-
                 const membershipAddr = await dao.membership();
                 const membership = await ethers.getContractAt(
                     'Membership',
                     membershipAddr,
                 );
-
-                await lp.connect(owner1).deposit(owner1.address, {
-                    value: ethers.utils.parseEther('1'),
-                });
-
-                await lp.connect(owner2).deposit(owner2.address, {
-                    value: ethers.utils.parseEther('2'),
-                });
+                await dao.connect(owner1).join(owner1.address);
+                await dao.connect(owner2).join(owner2.address);
 
                 expect(await membership.getVotes(owner1.address)).to.eq(1);
                 expect(await membership.getVotes(owner2.address)).to.eq(1);
@@ -365,7 +337,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
         dao = await ethers.getContractAt('MockDao', daoAddr);
-        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
 
         const governAddr = await dao.govern('General');
         const govern = await ethers.getContractAt('Govern', governAddr);
@@ -411,15 +382,6 @@ describe('Integration - Govern.sol - test/integration/Govern.js', async () => {
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
 
         dao = await ethers.getContractAt('MockDao', daoAddr);
-        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-
-        await lp
-            .connect(owner1)
-            .deposit(owner1.address, { value: ethers.utils.parseEther('1') });
-        await lp
-            .connect(owner2)
-            .deposit(owner2.address, { value: ethers.utils.parseEther('2') });
-
         const governAddr = await dao.govern('General');
         const govern = await ethers.getContractAt('Govern', governAddr);
 

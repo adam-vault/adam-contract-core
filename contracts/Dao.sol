@@ -16,7 +16,6 @@ import "./interface/IMembership.sol";
 import "./interface/IGovern.sol";
 import "./interface/IMemberToken.sol";
 import "./interface/ITeam.sol";
-import "./interface/ILiquidPool.sol";
 
 import "./lib/Constant.sol";
 
@@ -53,7 +52,7 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     event SetFirstDepositTime(address owner, uint256 time);
     event WhitelistTeam(uint256 tokenId);
     event AddAdmissionToken(address token, uint256 minTokenToAdmit, uint256 tokenId, bool isMemberToken);
-    event CreateMember(address account, uint256 depositAmount);
+    event CreateMember(address account);
     event Deposit(address account, uint256 amount);
     event UpgradeDaoBeacon(address daoBeacon);
 
@@ -78,10 +77,8 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     error PluginAlreadyExists(bytes32 contractName);
     error PluginNotAllowed(bytes32 contractName);
     error GovernAlreadyExists(string gName);
-    error InsufficientDeposit();
     error BudgetApprovalTemplateNotWhitelisted(address template);
     error UnsupportedDowngrade();
-
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
       _disableInitializers();
@@ -143,9 +140,6 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     function membership() public view returns(address) {
         return plugins[Constant.BEACON_NAME_MEMBERSHIP];
     }
-    function liquidPool() public view returns(address) {
-        return plugins[Constant.BEACON_NAME_LIQUID_POOL];
-    }
     function memberToken() public view returns(address) {
         return plugins[Constant.BEACON_NAME_MEMBER_TOKEN];
     }
@@ -197,6 +191,10 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
     }
 
     function setFirstDepositTime(address owner, uint256 timestamp) public onlyPlugins {
+       _setFirstDepositTime(owner, timestamp);
+    }
+
+    function _setFirstDepositTime(address owner, uint256 timestamp) internal {
         firstDepositTime[owner] = timestamp;
         emit SetFirstDepositTime(owner, timestamp);
     }
@@ -280,19 +278,15 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         _addAssets(erc20s);
     }
 
-    function afterDeposit(address account, uint256 amount) external onlyPlugins {
+    function afterDeposit(address account) internal {
         if (firstDepositTime[account] == 0) {
-            setFirstDepositTime(account, block.timestamp);
-            if (amount < minDepositAmount) {
-                revert InsufficientDeposit();
-            }
-            
+            _setFirstDepositTime(account, block.timestamp);
             if (IMembership(membership()).isMember(account)) {
                 return;
-            }
+            } 
             _mintMember(account);
 
-            emit CreateMember(account, amount);
+            emit CreateMember(account);
         }
     }
 
@@ -355,6 +349,11 @@ contract Dao is Initializable, ERC721HolderUpgradeable, ERC1155HolderUpgradeable
         }
         return results;
     }
+
+    function join(address receiver) public payable {
+        afterDeposit(receiver);
+    }
+    
 
     receive() external payable {
       if (msg.sender != address(0) && msg.value != 0) {

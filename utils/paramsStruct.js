@@ -3,7 +3,6 @@ const { ethers } = require('hardhat');
 const daoArtifact = require('../artifacts/contracts/Dao.sol/Dao.json');
 const membershipArtifact = require('../artifacts/contracts/Membership.sol/Membership.json');
 const memberTokenArtifact = require('../artifacts/contracts/MemberToken.sol/MemberToken.json');
-const liquidPoolArtifact = require('../artifacts/contracts/LiquidPool.sol/LiquidPool.json');
 const teamArtifact = require('../artifacts/contracts/Team.sol/Team.json');
 const accountingSystemArtifact = require('../artifacts/contracts/AccountingSystem.sol/AccountingSystem.json');
 
@@ -78,7 +77,6 @@ function getCreateDaoParams({
     const memberTokenIface = new ethers.utils.Interface(
         memberTokenArtifact.abi,
     );
-    const liquidPoolIface = new ethers.utils.Interface(liquidPoolArtifact.abi);
     const teamIface = new ethers.utils.Interface(teamArtifact.abi);
     const accountingSystemIface = new ethers.utils.Interface(
         accountingSystemArtifact.abi,
@@ -117,13 +115,6 @@ function getCreateDaoParams({
                     0,
                 ]),
             ),
-            iface.encodeFunctionData('createPlugin', [
-                ethers.utils.id('adam.dao.liquid_pool'),
-                liquidPoolIface.encodeFunctionData('initialize', [
-                    depositTokens,
-                    baseCurrency,
-                ]),
-            ]),
             iface.encodeFunctionData('createPlugin', [
                 ethers.utils.id('adam.dao.member_token'),
                 memberTokenIface.encodeFunctionData('initialize', [

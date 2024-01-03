@@ -19,7 +19,6 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     let dao;
     let transferERC20BAImplementation;
     let budgetApproval;
-    let lp;
     let executor;
     let approver;
     let receiver;
@@ -28,7 +27,7 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
     let feedRegistry;
     let ethereumChainlinkPriceGateway;
 
-    beforeEach(async () => {
+    before(async () => {
         [executor, approver, receiver] = await ethers.getSigners();
 
         tokenA = await (await smock.mock('ERC20')).deploy('', '');
@@ -54,124 +53,17 @@ describe('Integration - TransferERC20BudgetApproval.sol - test/integration/Trans
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
         dao = await ethers.getContractAt('Dao', daoAddr);
-        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
 
         daoSigner = await testUtils.address.impersonate(daoAddr);
-        await testUtils.address.setBalance(
-            daoAddr,
-            ethers.utils.parseEther('1'),
-        );
 
         transferERC20BAImplementation = result.transferERC20BudgetApproval;
     });
 
-    describe('On Liquid Pool', async () => {
-        let budgetApprovalAddress;
-        beforeEach(async () => {
-            const startTime = Math.round(Date.now() / 1000) - 86400;
-            const endTime = Math.round(Date.now() / 1000) + 86400;
-            const initData =
-                transferERC20BAImplementation.interface.encodeFunctionData(
-                    'initialize',
-                    getCreateTransferERC20BAParams({
-                        dao: dao.address,
-                        executor: executor.address,
-                        approvers: [approver.address],
-                        toAddresses: [receiver.address],
-                        token: tokenA.address,
-                        startTime,
-                        endTime,
-                        minApproval: 1,
-                        totalAmount: parseEther('100'),
-                        usageCount: 2,
-                    }),
-                );
-
-            const tx = await lp
-                .connect(daoSigner)
-                .createBudgetApprovals(
-                    [transferERC20BAImplementation.address],
-                    [initData],
-                );
-            budgetApprovalAddress = (
-                await findEventArgs(tx, 'CreateBudgetApproval')
-            ).budgetApproval;
-            budgetApproval = await ethers.getContractAt(
-                'TransferERC20BudgetApproval',
-                budgetApprovalAddress,
-            );
-        });
-
-        it('create ERC 20 BA should success', async () => {
-            expect(await lp.budgetApprovals(budgetApprovalAddress)).to.eq(true);
-        });
-
-        it('transfer ERC20 Token should success', async () => {
-            await tokenA.setVariable('_balances', {
-                [lp.address]: parseEther('200'),
-            });
-            const transactionData = abiCoder.encode(
-                await budgetApproval.executeParams(),
-                [tokenA.address, receiver.address, parseEther('10')],
-            );
-
-            const deadline = Math.round(Date.now() / 1000) + 86400;
-            const tx = await budgetApproval
-                .connect(executor)
-                .createTransaction([transactionData], deadline, false, '');
-            const { id } = await findEventArgs(tx, 'CreateTransaction');
-            const orgReceiverBalance = await tokenA.balanceOf(receiver.address);
-            expect((await budgetApproval.transactions(id)).status).to.eq(0);
-            expect((await budgetApproval.transactions(id)).deadline).to.eq(
-                deadline,
-            );
-            expect((await budgetApproval.transactions(id)).approvedCount).to.eq(
-                ethers.BigNumber.from('0'),
-            );
-
-            await budgetApproval.connect(approver).approveTransaction(id, '');
-            expect((await budgetApproval.transactions(id)).status).to.eq(1);
-            expect((await budgetApproval.transactions(id)).approvedCount).to.eq(
-                ethers.BigNumber.from('1'),
-            );
-
-            await budgetApproval.connect(executor).executeTransaction(id);
-            expect((await budgetApproval.transactions(id)).status).to.eq(2);
-
-            expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('190'));
-            expect(await tokenA.balanceOf(receiver.address)).to.eq(
-                parseEther('10').add(orgReceiverBalance),
-            );
-        });
-
-        it('transfer multiple ERC20 should success', async () => {
-            await tokenA.setVariable('_balances', {
-                [lp.address]: parseEther('190'),
-            });
-
-            const transactionData = abiCoder.encode(
-                await budgetApproval.executeParams(),
-                [tokenA.address, receiver.address, parseEther('10')],
-            );
-            const tx = await budgetApproval
-                .connect(executor)
-                .createTransaction(
-                    [transactionData, transactionData],
-                    Math.round(Date.now() / 1000) + 86400,
-                    false,
-                    '',
-                );
-            const { id } = await findEventArgs(tx, 'CreateTransaction');
-
-            const originalBalance = await tokenA.balanceOf(receiver.address);
-            await budgetApproval.connect(approver).approveTransaction(id, '');
-            await budgetApproval.connect(executor).executeTransaction(id);
-
-            expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('170'));
-            expect(await tokenA.balanceOf(receiver.address)).to.eq(
-                parseEther('20').add(originalBalance),
-            );
-        });
+    beforeEach(async () => {
+        await testUtils.address.setBalance(
+            dao.address,
+            ethers.utils.parseEther('1'),
+        );
     });
 
     describe('On Treasury', async () => {

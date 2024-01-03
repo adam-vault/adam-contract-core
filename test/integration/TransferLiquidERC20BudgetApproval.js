@@ -17,7 +17,6 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
     let dao;
     let transferLiquidERC20BAImplementation;
     let budgetApproval;
-    let lp;
     let executor;
     let approver;
     let receiver;
@@ -26,8 +25,8 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
     let feedRegistry;
     let ethereumChainlinkPriceGateway;
 
-    beforeEach(async () => {
-        [executor, approver, receiver] = await ethers.getSigners();
+    before(async () => {
+        [executor, approver, receiver, daoCreator] = await ethers.getSigners();
 
         ({ tokenA } = await createTokens());
 
@@ -48,7 +47,7 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
         transferLiquidERC20BAImplementation =
             result.transferLiquidERC20BudgetApproval;
 
-        const tx1 = await adam.createDao(
+        const tx1 = await adam.connect(daoCreator).createDao(
             ...paramsStruct.getCreateDaoParams({
                 depositTokens: [ADDRESS_ETH, tokenA.address],
                 priceGateways: [ethereumChainlinkPriceGateway],
@@ -56,15 +55,16 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
         );
         const { dao: daoAddr } = await findEventArgs(tx1, 'CreateDao');
         dao = await ethers.getContractAt('Dao', daoAddr);
-        lp = await ethers.getContractAt('LiquidPool', await dao.liquidPool());
-
         daoSigner = await testUtils.address.impersonate(dao.address);
+    });
+
+    beforeEach(async () => {
         await testUtils.address.setBalance(dao.address, parseEther('1'));
     });
 
-    describe('On Liquid Pool', async () => {
+    describe('On Treasury', async () => {
         let budgetApprovalAddress;
-        beforeEach(async () => {
+        before(async () => {
             const initData =
                 transferLiquidERC20BAImplementation.interface.encodeFunctionData(
                     'initialize',
@@ -78,9 +78,9 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
                         usageCount: 10,
                     }),
                 );
-
-            const tx = await lp
-                .connect(daoSigner)
+            await dao.connect(daoCreator).join(daoCreator.address);
+            const tx = await dao
+                .connect(daoCreator)
                 .createBudgetApprovals(
                     [transferLiquidERC20BAImplementation.address],
                     [initData],
@@ -92,13 +92,17 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
                 'TransferLiquidERC20BudgetApproval',
                 budgetApprovalAddress,
             );
-            await lp
-                .connect(executor)
-                .deposit(executor.address, { value: parseEther('200') });
+        });
+        beforeEach(async () => {
+            await dao
+                .connect(daoCreator)
+                .join(daoCreator.address, { value: parseEther('200') });
         });
 
         it('creates Liquid ERC 20 BA', async () => {
-            expect(await lp.budgetApprovals(budgetApprovalAddress)).to.eq(true);
+            expect(await dao.budgetApprovals(budgetApprovalAddress)).to.eq(
+                true,
+            );
         });
 
         it('transfer ETH should success', async () => {
@@ -127,7 +131,7 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
         });
 
         it('transfer ERC 20 should success', async () => {
-            await tokenA.mint(lp.address, parseEther('10'));
+            await tokenA.mint(dao.address, parseEther('10'));
             const transactionData = abiCoder.encode(
                 await budgetApproval.executeParams(),
                 [tokenA.address, receiver.address, parseEther('10')],
@@ -148,14 +152,14 @@ describe('Integration - TransferLiquidERC20BudgetApproval.sol - test/integration
             await budgetApproval.connect(approver).approveTransaction(id, '');
             await budgetApproval.connect(executor).executeTransaction(id);
 
-            expect(await tokenA.balanceOf(lp.address)).to.eq(parseEther('0'));
+            expect(await tokenA.balanceOf(dao.address)).to.eq(parseEther('0'));
             expect(await tokenA.balanceOf(receiver.address)).to.eq(
                 parseEther('10'),
             );
         });
 
         it('transfer 0 amount should not success', async () => {
-            await tokenA.mint(lp.address, parseEther('10'));
+            await tokenA.mint(dao.address, parseEther('10'));
             const transactionData = abiCoder.encode(
                 await budgetApproval.executeParams(),
                 [tokenA.address, receiver.address, parseEther('10')],

@@ -71,7 +71,6 @@ jobs:
                     artifacts/contracts/TransferLiquidERC20BudgetApproval.sol/TransferLiquidERC20BudgetApproval.json\
                     artifacts/contracts/UniswapAnyTokenBudgetApproval.sol/UniswapAnyTokenBudgetApproval.json\
                     artifacts/contracts/UniswapLiquidBudgetApproval.sol/UniswapLiquidBudgetApproval.json\
-                    artifacts/contracts/LiquidPool.sol/LiquidPool.json\
                     artifacts/contracts/Team.sol/Team.json\
                     abis/machine
 

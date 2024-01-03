@@ -11,7 +11,6 @@ describe('Membership.sol - test/unit/Membership.js', async () => {
     let MockERC721;
     let MockERC1155;
     let MockDao;
-    let MockLiquidPool;
 
     let signerDao;
     let signerUnknown;
@@ -27,7 +26,6 @@ describe('Membership.sol - test/unit/Membership.js', async () => {
         MockERC721 = await smock.mock('ERC721');
         MockERC1155 = await smock.mock('ERC1155');
         MockDao = await smock.mock('Dao');
-        MockLiquidPool = await smock.mock('LiquidPool');
     });
 
     beforeEach(async () => {
@@ -475,31 +473,11 @@ describe('Membership.sol - test/unit/Membership.js', async () => {
             await membership.connect(signerDao).createMember(member.address);
             dao.setFirstDepositTime.returns();
         });
-        it('quit if no liquidPool', async () => {
+        it('quit success', async () => {
             await membership.connect(member).quit(2);
             expect(await membership.isMember(member.address)).to.be.false;
             expect(await membership.totalSupply()).to.deep.equal(
                 BigNumber.from('1'),
-            );
-        });
-        it('quit if hv liquidPool but zero balance', async () => {
-            const liquidPool = await MockLiquidPool.deploy();
-            dao.liquidPool.returns(liquidPool.address);
-            await membership.connect(member).quit(2);
-            expect(await membership.isMember(member.address)).to.be.false;
-            expect(await membership.totalSupply()).to.deep.equal(
-                BigNumber.from('1'),
-            );
-        });
-        it('throws "OwnerLiquidPoolBalanceNonZero" if lp still hv balance', async () => {
-            const liquidPool = await MockLiquidPool.deploy();
-            dao.liquidPool.returns(liquidPool.address);
-            liquidPool.balanceOf.returns(1);
-            await expect(
-                membership.connect(member).quit(2),
-            ).to.be.revertedWithCustomError(
-                membership,
-                'OwnerLiquidPoolBalanceNonZero',
             );
         });
         it('throws "Unauthorized" if non owner', async () => {

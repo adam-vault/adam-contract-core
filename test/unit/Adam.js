@@ -13,7 +13,6 @@ describe('Adam.sol - test/unit/Adam.js', async () => {
     let unknown;
     let dao;
     let membership;
-    let liquidPool;
     let memberToken;
     let govern;
     let team;
@@ -22,13 +21,12 @@ describe('Adam.sol - test/unit/Adam.js', async () => {
     let Adam;
     let DaoBeacon;
     let ethereumChainlinkPriceGateway;
-    beforeEach(async () => {
+    before(async () => {
         [deployer, daoCreator, unknown] = await ethers.getSigners();
 
         dao = await smock.fake('Dao');
         membership = await smock.fake('Membership');
         memberToken = await smock.fake('MemberToken');
-        liquidPool = await smock.fake('LiquidPool');
         budgetApproval = await smock.fake('TransferERC20BudgetApproval');
         ethereumChainlinkPriceGateway = await smock.fake(
             'EthereumChainlinkPriceGateway',
@@ -39,11 +37,12 @@ describe('Adam.sol - test/unit/Adam.js', async () => {
         DaoBeacon = await ethers.getContractFactory('DaoBeacon', {
             signer: deployer,
         });
+    });
 
+    beforeEach(async () => {
         beacon = await DaoBeacon.deploy('v1', [
             [ethers.utils.id('adam.dao'), dao.address],
             [ethers.utils.id('adam.dao.membership'), membership.address],
-            [ethers.utils.id('adam.dao.liquid_pool'), liquidPool.address],
             [ethers.utils.id('adam.dao.member_token'), memberToken.address],
             [ethers.utils.id('adam.dao.govern'), govern.address],
             [ethers.utils.id('adam.dao.team'), team.address],
