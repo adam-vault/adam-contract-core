@@ -1,44 +1,5 @@
 const { ethers, upgrades } = require('hardhat');
 
-const createBudgetApprovals = async (signer) => {
-    const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory(
-        'TransferLiquidERC20BudgetApproval',
-        { signer },
-    );
-    const transferLiquidERC20BudgetApproval =
-        await TransferLiquidERC20BudgetApproval.deploy();
-    await transferLiquidERC20BudgetApproval.deployed();
-
-    const UniswapLiquidBudgetApproval = await ethers.getContractFactory(
-        'UniswapLiquidBudgetApproval',
-    );
-    const uniswapLiquidBudgetApproval =
-        await UniswapLiquidBudgetApproval.deploy();
-    await uniswapLiquidBudgetApproval.deployed();
-
-    const TransferERC721BudgetApproval = await ethers.getContractFactory(
-        'TransferERC721BudgetApproval',
-        { signer },
-    );
-    const transferERC721BudgetApproval =
-        await TransferERC721BudgetApproval.deploy();
-    await transferERC721BudgetApproval.deployed();
-
-    const TransferERC20BudgetApproval = await ethers.getContractFactory(
-        'TransferERC20BudgetApproval',
-        { signer },
-    );
-    const transferERC20BudgetApproval =
-        await TransferERC20BudgetApproval.deploy();
-    await transferERC20BudgetApproval.deployed();
-
-    return [
-        transferLiquidERC20BudgetApproval.address,
-        uniswapLiquidBudgetApproval.address,
-        transferERC721BudgetApproval.address,
-        transferERC20BudgetApproval.address,
-    ];
-};
 const createAndDeploy = async (contractName, signer) => {
     const contractFactory = await ethers.getContractFactory(contractName);
     const contract = await contractFactory.deploy();
@@ -57,8 +18,7 @@ const createAdam = async () => {
         team,
         accountingSystem,
         ethPriceGateway,
-        transferLiquidERC20BudgetApproval,
-        uniswapLiquidBudgetApproval,
+        uniswapAnyTokenBudgetApproval,
         transferERC721BudgetApproval,
         transferERC20BudgetApproval,
     ] = await Promise.all(
@@ -70,8 +30,7 @@ const createAdam = async () => {
             'Team',
             'AccountingSystem',
             'EthereumChainlinkPriceGateway',
-            'TransferLiquidERC20BudgetApproval',
-            'UniswapLiquidBudgetApproval',
+            'UniswapAnyTokenBudgetApproval',
             'TransferERC721BudgetApproval',
             'TransferERC20BudgetApproval',
         ].map((contractName) => createAndDeploy(contractName, creator)),
@@ -101,8 +60,7 @@ const createAdam = async () => {
         [
             beacon.address,
             [
-                transferLiquidERC20BudgetApproval.address,
-                uniswapLiquidBudgetApproval.address,
+                uniswapAnyTokenBudgetApproval.address,
                 transferERC721BudgetApproval.address,
                 transferERC20BudgetApproval.address,
             ],
@@ -124,8 +82,7 @@ const createAdam = async () => {
         team,
         accountingSystem,
         beacon,
-        transferLiquidERC20BudgetApproval,
-        uniswapLiquidBudgetApproval,
+        uniswapAnyTokenBudgetApproval,
         transferERC721BudgetApproval,
         transferERC20BudgetApproval,
     };
@@ -151,33 +108,7 @@ const createTokens = async () => {
     return { tokenA, tokenB, tokenC721, tokenD1155 };
 };
 
-const createGovern = async () => {
-    const [creator] = await ethers.getSigners();
-
-    const TokenA = await ethers.getContractFactory('TokenA');
-    const tokenA = await TokenA.deploy();
-    await tokenA.deployed();
-
-    const Govern = await ethers.getContractFactory('Govern', {
-        signer: creator,
-    });
-    const govern = await Govern.deploy(
-        tokenA.address,
-        '123',
-        1,
-        1,
-        1,
-        [1],
-        [tokenA.address],
-    );
-
-    await govern.deployed();
-    return govern;
-};
-
 module.exports = {
     createAdam,
     createTokens,
-    createGovern,
-    createBudgetApprovals,
 };

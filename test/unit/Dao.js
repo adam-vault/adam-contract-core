@@ -8,7 +8,7 @@ const findEventArgs = require('../../utils/findEventArgs');
 chai.should();
 chai.use(smock.matchers);
 
-describe.only('Dao.sol - test/unit/Dao.js', async () => {
+describe('Dao.sol - test/unit/Dao.js', async () => {
     let creator;
     let pluginAsSigner;
     let mockGovern;

@@ -5,9 +5,7 @@ const inquirer = require('inquirer');
 const getDaoInfo = require('./utils/getDaoInfo');
 const {
     getCreateTransferERC20BAParams,
-    getCreateTransferLiquidErc20TokenBAParams,
     getCreateTransferERC721BAParams,
-    getCreateUniswapBAParams,
     getCreateVestingERC20BAParams,
     getCreateBasicBudgetApprovalParams,
     getCreateSelfClaimErc20TokenBAParams,
@@ -62,51 +60,6 @@ const commonTransferERC20Prompts = [
 
 const questions = {
     TransferERC20BudgetApproval: commonTransferERC20Prompts,
-    TransferLiquidERC20BudgetApproval: [
-        {
-            type: 'input',
-            name: 'text',
-            message: 'Text',
-            default: 'Transfer Liquid ERC20 Token',
-        },
-        {
-            type: 'input',
-            name: 'transactionType',
-            message: 'Transaction Type',
-            default: 'outflow',
-        },
-        {
-            type: 'confirm',
-            name: 'allowAllAddress',
-            message: 'Allow all toAddresses?',
-        },
-        {
-            type: 'input',
-            name: 'toAddresses',
-            message: 'To addresses? (comma separated)',
-            when: ({ allowAllAddress }) => !allowAllAddress,
-        },
-        { type: 'input', name: 'tokens', message: 'tokens? (comma separated)' },
-        { type: 'input', name: 'baseCurrency', message: 'baseCurrency?' },
-        {
-            type: 'confirm',
-            name: 'allowAnyAmount',
-            message: 'Allow all amount?',
-        },
-        {
-            type: 'number',
-            name: 'totalAmount',
-            message: 'Total Amount limited?',
-            when: ({ allowAnyAmount }) => !allowAnyAmount,
-        },
-        {
-            type: 'input',
-            name: 'team',
-            message: 'Team address?',
-            default: ethers.constants.AddressZero,
-        },
-        { type: 'input', name: 'toTeamIds', message: 'Team Ids? (Comma sep)' },
-    ],
     TransferERC721BudgetApproval: [
         {
             type: 'input',
@@ -147,61 +100,6 @@ const questions = {
             name: 'totalAmount',
             message: 'Total Amount limited?',
             when: ({ allowAnyAmount }) => !allowAnyAmount,
-        },
-        {
-            type: 'input',
-            name: 'team',
-            message: 'Team address?',
-            default: ethers.constants.AddressZero,
-        },
-        { type: 'input', name: 'toTeamIds', message: 'Team Ids? (Comma sep)' },
-    ],
-    UniswapLiquidBudgetApproval: [
-        {
-            type: 'input',
-            name: 'text',
-            message: 'Text',
-            default: 'Uniswap Liquid',
-        },
-        {
-            type: 'input',
-            name: 'transactionType',
-            message: 'Transaction Type',
-            default: 'swap',
-        },
-        {
-            type: 'input',
-            name: 'fromTokens',
-            message: 'From Tokens? (comma separated)',
-        },
-        {
-            type: 'confirm',
-            name: 'allowAllToTokens',
-            message: 'Allow all to tokens?',
-        },
-        {
-            type: 'input',
-            name: 'toTokens',
-            message: 'To Tokens? (comma separated)',
-            when: ({ allowAllToTokens }) => !allowAllToTokens,
-        },
-        {
-            type: 'confirm',
-            name: 'allowAnyAmount',
-            message: 'Allow all amount?',
-        },
-        { type: 'input', name: 'baseCurrency', message: 'baseCurrency?' },
-        {
-            type: 'number',
-            name: 'totalAmount',
-            message: 'Total Amount limited?',
-            when: ({ allowAnyAmount }) => !allowAnyAmount,
-        },
-        {
-            type: 'number',
-            name: 'amountPercentage',
-            message: 'Amount Percentage?',
-            default: 100,
         },
         {
             type: 'input',
@@ -312,10 +210,7 @@ const questions = {
 
 const encodeFn = {
     TransferERC20BudgetApproval: getCreateTransferERC20BAParams,
-    TransferLiquidERC20BudgetApproval:
-        getCreateTransferLiquidErc20TokenBAParams,
     TransferERC721BudgetApproval: getCreateTransferERC721BAParams,
-    UniswapLiquidBudgetApproval: getCreateUniswapBAParams,
     VestingERC20BudgetApproval: getCreateVestingERC20BAParams,
     SelfClaimERC20BudgetApproval: getCreateSelfClaimErc20TokenBAParams,
     GMXAnyTokenBudgetApproval: getCreateBasicBudgetApprovalParams,
@@ -324,9 +219,7 @@ const encodeFn = {
 const BA_TYPES = [
     'TransferERC20BudgetApproval',
     'TransferERC721BudgetApproval',
-    'TransferLiquidERC20BudgetApproval',
     'UniswapAnyTokenBudgetApproval',
-    'UniswapLiquidBudgetApproval',
     'VestingERC20BudgetApproval',
     'SelfClaimERC20BudgetApproval',
     'GMXAnyTokenBudgetApproval',

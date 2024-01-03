@@ -18,11 +18,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
     const budgetApprovalsAddress = (
         await Promise.all([
-            get('TransferLiquidERC20BudgetApproval'),
             get('TransferERC721BudgetApproval'),
             get('TransferERC20BudgetApproval'),
             get('UniswapAnyTokenBudgetApproval'),
-            get('UniswapLiquidBudgetApproval'),
             get('VestingERC20BudgetApproval'),
             get('DepositRewardBudgetApproval'),
         ])

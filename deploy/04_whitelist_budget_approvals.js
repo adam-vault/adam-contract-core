@@ -2,10 +2,6 @@ const { gasFeeConfig } = require('../utils/getGasInfo');
 
 const toBeAddBudgetApprovals = [
     {
-        name: 'TransferLiquidERC20BudgetApproval',
-        contract: 'TransferLiquidERC20BudgetApproval',
-    },
-    {
         name: 'TransferERC721BudgetApproval',
         contract: 'TransferERC721BudgetApproval',
     },
@@ -24,10 +20,6 @@ const toBeAddBudgetApprovals = [
     {
         name: 'UniswapAnyTokenBudgetApproval',
         contract: 'UniswapAnyTokenBudgetApproval',
-    },
-    {
-        name: 'UniswapLiquidBudgetApproval',
-        contract: 'UniswapLiquidBudgetApproval',
     },
     {
         name: 'SelfClaimERC20BudgetApproval',

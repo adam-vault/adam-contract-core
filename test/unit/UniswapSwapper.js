@@ -14,7 +14,6 @@ const RECIPIENT_EXECUTEE = '0x0000000000000000000000000000000000000001';
 const RECIPIENT_UNISWAP = '0x0000000000000000000000000000000000000002';
 
 describe('UniswapV3Swapper.sol - test/unit/UniswapSwapper.js', async () => {
-    let adam;
     let executor;
     let contract;
 
@@ -47,7 +46,7 @@ describe('UniswapV3Swapper.sol - test/unit/UniswapSwapper.js', async () => {
         const {
             adam,
             ethPriceGateway,
-            uniswapLiquidBudgetApproval: uniswapLiquidBAImplementation,
+            uniswapAnyTokenBudgetApproval: uniswapAnyTokenBudgetApproval,
         } = await createAdam();
 
         const tx1 = await adam.createDao(
@@ -61,13 +60,14 @@ describe('UniswapV3Swapper.sol - test/unit/UniswapSwapper.js', async () => {
         const dao = await ethers.getContractAt('Dao', daoAddr);
 
         const initData =
-            uniswapLiquidBAImplementation.interface.encodeFunctionData(
+            uniswapAnyTokenBudgetApproval.interface.encodeFunctionData(
                 'initialize',
                 getCreateUniswapBAParams({
                     executor: executor.address,
                     allowUnlimitedUsageCount: true,
                     approvers: [],
-                    fromTokens: [ADDRESS_ETH, ADDRESS_WETH],
+                    allowAllFromTokens: false,
+                    fromToken: ADDRESS_ETH,
                     toTokens: [ADDRESS_ETH, ADDRESS_WETH],
                     allowAnyAmount: true,
                     totalAmount: ethers.utils.parseEther('0'),
@@ -78,7 +78,7 @@ describe('UniswapV3Swapper.sol - test/unit/UniswapSwapper.js', async () => {
                 }),
             );
         const tx = await dao.createBudgetApprovals(
-            [uniswapLiquidBAImplementation.address],
+            [uniswapAnyTokenBudgetApproval.address],
             [initData],
         );
         const { budgetApproval: budgetApprovalAddress } = await findEventArgs(
@@ -86,7 +86,7 @@ describe('UniswapV3Swapper.sol - test/unit/UniswapSwapper.js', async () => {
             'CreateBudgetApproval',
         );
         contract = await ethers.getContractAt(
-            'UniswapLiquidBudgetApproval',
+            'UniswapAnyTokenBudgetApproval',
             budgetApprovalAddress,
         );
     });
