@@ -17,9 +17,6 @@ async function main() {
         memberToken: (await get('MemberToken')).address,
         liquidPool: (await get('LiquidPool')).address,
         team: (await get('Team')).address,
-        transferLiquidERC20BudgetApproval: (
-            await get('TransferLiquidERC20BudgetApproval')
-        ).address,
         transferErc721BudgetApproval: (
             await get('TransferERC721BudgetApproval')
         ).address,
@@ -28,8 +25,6 @@ async function main() {
         uniswapAnyTokenBudgetApproval: (
             await get('UniswapAnyTokenBudgetApproval')
         ).address,
-        uniswapLiquidBudgetApproval: (await get('UniswapLiquidBudgetApproval'))
-            .address,
     };
 
     console.log(contractAddresses);

@@ -284,13 +284,13 @@ function getCreateUniswapBAParams({
     endTime,
     allowUnlimitedUsageCount,
     usageCount,
-    fromTokens = [],
+    allowAllFromTokens = true,
+    fromToken = ETH,
     allowAllToTokens,
     toTokens = [],
     allowAnyAmount,
     totalAmount = 0,
     amountPercentage = 100,
-    baseCurrency = ETH,
 }) {
     return Object.entries({
         params: getCreateCommonBudgetApprovalParams({
@@ -306,13 +306,13 @@ function getCreateUniswapBAParams({
             allowUnlimitedUsageCount,
             usageCount,
         }),
-        fromTokens,
+        allowAllFromTokens,
+        fromToken,
         allowAllToTokens: allowAllToTokens ?? toTokens.length === 0,
         toTokens,
         allowAnyAmount: allowAnyAmount ?? totalAmount === 0,
         totalAmount,
         amountPercentage,
-        baseCurrency,
     }).map(([key, value]) => value);
 }
 

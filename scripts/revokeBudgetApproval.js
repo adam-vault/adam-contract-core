@@ -6,10 +6,7 @@ const getDaoInfo = require('./utils/getDaoInfo');
 const BA_TYPES_MAPPING = {
     'Transfer ERC20 Budget Approval': 'TransferERC20BudgetApproval',
     'Transfer ERC721 Budget Approval': 'TransferERC721BudgetApproval',
-    'Transfer Liquid ERC20 Budget Approval':
-        'TransferLiquidERC20BudgetApproval',
     'Uniswap Any Token Budget Approval': 'UniswapAnyTokenBudgetApproval',
-    'Uniswap Liquid Budget Approval': 'UniswapLiquidBudgetApproval',
     'Vesting ERC20 Budget Approval': 'VestingERC20BudgetApproval',
     'Self Claim ERC20 Budget Approval': 'SelfClaimERC20BudgetApproval',
 };

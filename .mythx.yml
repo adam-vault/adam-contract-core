@@ -7,20 +7,18 @@ analyze:
     group-name: AdamVault
     solc: 0.8.7
     remappings:
-        - "@openzeppelin/=node_modules/@openzeppelin/"
-        - "hardhat=node_modules/hardhat"
-        - "@chainlink=node_modules/@chainlink"
+        - '@openzeppelin/=node_modules/@openzeppelin/'
+        - 'hardhat=node_modules/hardhat'
+        - '@chainlink=node_modules/@chainlink'
     targets:
         - contracts/interface/ITransferERC721BudgetApproval.sol
         - contracts/interface/IAdam.sol
         - contracts/interface/IMembership.sol
         - contracts/interface/IDao.sol
-        - contracts/interface/ITransferLiquidERC20BudgetApproval.sol
         - contracts/interface/ICommonBudgetApproval.sol
         - contracts/interface/IBudgetApprovalExecutee.sol
         - contracts/interface/ITransferERC20BudgetApproval.sol
         - contracts/interface/IUniswapBudgetApproval.sol
-        - contracts/interface/IUniswapLiquidBudgetApproval.sol
         - contracts/interface/IUniswapAnyTokenBudgetApproval.sol
         - contracts/interface/IGovern.sol
         - contracts/interface/ITeam.sol
@@ -29,10 +27,8 @@ analyze:
         - contracts/Team.sol
         - contracts/LiquidPool.sol
         - contracts/Dao.sol
-        - contracts/TransferLiquidERC20BudgetApproval.sol
         - contracts/TransferERC20BudgetApproval.sol
         - contracts/UniswapBudgetApproval.sol
-        - contracts/UniswapLiquidBudgetApproval.sol
         - contracts/UniswapAnyTokenBudgetApproval.sol
         - contracts/MemberToken.sol
         - contracts/Membership.sol
