@@ -8,14 +8,13 @@ const findEventArgs = require('../../utils/findEventArgs');
 chai.should();
 chai.use(smock.matchers);
 
-describe('Dao.sol - test/unit/Dao.js', async () => {
+describe.only('Dao.sol - test/unit/Dao.js', async () => {
     let creator;
-    let member;
+    let pluginAsSigner;
     let mockGovern;
     let dao;
     let mockAdam;
     let mockMembership;
-    let lpAsSigner;
     let mockMemberToken;
     let mockTeam;
     let tokenA;
@@ -31,7 +30,6 @@ describe('Dao.sol - test/unit/Dao.js', async () => {
         mockAdam = await smock.fake('Adam');
         mockMembership = await (await smock.mock('Membership')).deploy();
         mockGovernImp = await (await smock.mock('Govern')).deploy();
-        const mockLiquidPool = await smock.fake('LiquidPool');
         mockTeam = await smock.fake('Team');
         mockMemberToken = await (await smock.mock('MemberToken')).deploy();
 
@@ -64,7 +62,6 @@ describe('Dao.sol - test/unit/Dao.js', async () => {
             [ethers.utils.id('adam.dao'), implDao.address],
             [ethers.utils.id('adam.dao.membership'), mockMembership.address],
             [ethers.utils.id('adam.dao.member_token'), mockMemberToken.address],
-            [ethers.utils.id('adam.dao.liquid_pool'), mockLiquidPool.address],
             [ethers.utils.id('adam.dao.govern'), mockGovernImp.address],
             [ethers.utils.id('adam.dao.team'), mockTeam.address],
         ]);
@@ -96,13 +93,6 @@ describe('Dao.sol - test/unit/Dao.js', async () => {
                     mockMemberToken.interface.encodeFunctionData('initialize', [
                         'tokenName',
                         'T1',
-                    ]),
-                ]),
-                Dao.interface.encodeFunctionData('createPlugin', [
-                    ethers.utils.id('adam.dao.liquid_pool'),
-                    mockLiquidPool.interface.encodeFunctionData('initialize', [
-                        ['0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'],
-                        '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
                     ]),
                 ]),
                 Dao.interface.encodeFunctionData('createGovern', [
@@ -140,19 +130,19 @@ describe('Dao.sol - test/unit/Dao.js', async () => {
             ],
         );
 
-        lpAsSigner = await testUtils.address.impersonate(
-            await dao.liquidPool(),
+        pluginAsSigner = await testUtils.address.impersonate(
+            await dao.membership(),
         );
     });
 
     describe('setFirstDepositTime()', async () => {
-        it('sets first deposit time when msg.sender is liquid pool', async () => {
+        it('sets first deposit time when msg.sender is plugin', async () => {
             await testUtils.address.setBalance(
-                lpAsSigner.address,
+                pluginAsSigner.address,
                 ethers.utils.parseEther('1'),
             );
             await dao
-                .connect(lpAsSigner)
+                .connect(pluginAsSigner)
                 .setFirstDepositTime(creator.address, 10);
             expect(await dao.firstDepositTime(creator.address)).to.equal(10);
         });
@@ -173,14 +163,6 @@ describe('Dao.sol - test/unit/Dao.js', async () => {
             await mockAdam.budgetApprovals.returns(false);
             expect(await dao.canCreateBudgetApproval(creator.address)).to.equal(
                 false,
-            );
-        });
-    });
-
-    describe('liquidPool()', async () => {
-        it('returns address from dao.plugins()', async () => {
-            expect(await dao.liquidPool()).to.be.equal(
-                await dao.plugins(ethers.utils.id('adam.dao.liquid_pool')),
             );
         });
     });

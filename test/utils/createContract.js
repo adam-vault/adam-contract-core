@@ -1,7 +1,5 @@
 const { ethers, upgrades } = require('hardhat');
 
-const { ADDRESS_ETH, ADDRESS_MOCK_AGGRGATOR } = require('./constants');
-
 const createBudgetApprovals = async (signer) => {
     const TransferLiquidERC20BudgetApproval = await ethers.getContractFactory(
         'TransferLiquidERC20BudgetApproval',
@@ -48,13 +46,13 @@ const createAndDeploy = async (contractName, signer) => {
     return contract;
 };
 const createAdam = async () => {
+    console.log('MC: ~ file: createContract.js:49 ~ createAdam ~ createAdam:');
     const [creator] = await ethers.getSigners();
 
     const [
         dao,
         membership,
         govern,
-        liquidPool,
         memberToken,
         team,
         accountingSystem,
@@ -68,7 +66,6 @@ const createAdam = async () => {
             'MockDao',
             'Membership',
             'Govern',
-            'LiquidPool',
             'MemberToken',
             'Team',
             'AccountingSystem',
@@ -81,6 +78,7 @@ const createAdam = async () => {
     );
 
     const Adam = await ethers.getContractFactory('Adam', { signer: creator });
+    console.log('MC: ~ file: createContract.js:81 ~ createAdam ~ Adam:');
 
     const DaoBeacon = await ethers.getContractFactory('DaoBeacon', {
         signer: creator,
@@ -89,7 +87,6 @@ const createAdam = async () => {
         [ethers.utils.id('adam.dao'), dao.address],
         [ethers.utils.id('adam.dao.membership'), membership.address],
         [ethers.utils.id('adam.dao.member_token'), memberToken.address],
-        [ethers.utils.id('adam.dao.liquid_pool'), liquidPool.address],
         [ethers.utils.id('adam.dao.govern'), govern.address],
         [ethers.utils.id('adam.dao.team'), team.address],
         [
@@ -97,6 +94,7 @@ const createAdam = async () => {
             accountingSystem.address,
         ],
     ]);
+    console.log('MC: ~ file: createContract.js:97 ~ createAdam ~ beacon:');
 
     const adam = await upgrades.deployProxy(
         Adam,
@@ -112,6 +110,7 @@ const createAdam = async () => {
         ],
         { kind: 'uups' },
     );
+    console.log('MC: ~ file: createContract.js:113 ~ createAdam ~ adam:');
 
     await adam.deployed();
 
@@ -121,7 +120,6 @@ const createAdam = async () => {
         dao,
         membership,
         govern,
-        liquidPool,
         memberToken,
         team,
         accountingSystem,

@@ -11,7 +11,6 @@ import "./lib/Constant.sol";
 import "./interface/IDao.sol";
 import "./interface/IDaoBeacon.sol";
 import "./interface/IMembership.sol";
-import "./interface/ILiquidPool.sol";
 import "./interface/IAccountingSystem.sol";
 import "./base/DaoBeaconProxy.sol";
 import "./base/DaoChildBeaconProxy.sol";

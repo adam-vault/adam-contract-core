@@ -12,7 +12,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "./interface/IDao.sol";
-import "./interface/ILiquidPool.sol";
 import "./lib/Base64.sol";
 import "./lib/ToString.sol";
 import "./lib/Concat.sol";
@@ -59,7 +58,6 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
     error InvalidContract(address _contract);
     error AdmissionTokenLimitExceeds();
     error Unauthorized();
-    error OwnerLiquidPoolBalanceNonZero();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -231,13 +229,8 @@ contract Membership is Initializable, ERC721VotesUpgradeable, OwnableUpgradeable
 
     function quit(uint256 tokenId) public {
         address owner = ownerOf(tokenId);
-        address liquidPool = _dao().liquidPool();
-
         if (msg.sender != owner) {
             revert Unauthorized();
-        }
-        if (liquidPool != address(0) && ILiquidPool(payable(liquidPool)).balanceOf(owner) != 0) {
-            revert OwnerLiquidPoolBalanceNonZero();
         }
     
         _burn(tokenId);
