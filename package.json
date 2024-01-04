@@ -1,5 +1,19 @@
 {
     "name": "adam-contract-core",
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com"
+    },
+    "keywords": [
+        "adam",
+        "web3"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/adam-vault/adam-contract-core.git"
+    },
+    "files": [
+        "contracts"
+    ],
     "scripts": {
         "test": "hardhat test",
         "clean": "hardhat clean",
