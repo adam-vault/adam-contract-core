@@ -1,5 +1,5 @@
 {
-    "name": "adam-contract-core",
+    "name": "@adam-vault/contract",
     "publishConfig": {
         "registry": "https://npm.pkg.github.com"
     },
