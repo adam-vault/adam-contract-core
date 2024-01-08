@@ -10,16 +10,12 @@ const toBeAddBudgetApprovals = [
         contract: 'TransferERC20BudgetApproval',
     },
     {
-        name: 'DepositRewardBudgetApproval',
-        contract: 'DepositRewardBudgetApproval',
+        name: 'UniswapAnyTokenBudgetApproval',
+        contract: 'UniswapAnyTokenBudgetApproval',
     },
     {
         name: 'VestingERC20BudgetApproval',
         contract: 'VestingERC20BudgetApproval',
-    },
-    {
-        name: 'UniswapAnyTokenBudgetApproval',
-        contract: 'UniswapAnyTokenBudgetApproval',
     },
     {
         name: 'SelfClaimERC20BudgetApproval',

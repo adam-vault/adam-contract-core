@@ -5,41 +5,18 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    await deploy('TransferERC721BudgetApproval', {
+    const baDeploymentOptions = {
         from: deployer,
         log: true,
-        skipIfAlreadyDeployed: true,
         gasLimit: 6000000,
         ...(await gasFeeConfig()),
-    });
-    await deploy('TransferERC20BudgetApproval', {
-        from: deployer,
-        log: true,
-        skipIfAlreadyDeployed: true,
-        gasLimit: 6000000,
-        ...(await gasFeeConfig()),
-    });
-    await deploy('UniswapAnyTokenBudgetApproval', {
-        from: deployer,
-        log: true,
-        skipIfAlreadyDeployed: true,
-        gasLimit: 6000000,
-        ...(await gasFeeConfig()),
-    });
-    await deploy('VestingERC20BudgetApproval', {
-        from: deployer,
-        log: true,
-        skipIfAlreadyDeployed: true,
-        gasLimit: 6000000,
-        ...(await gasFeeConfig()),
-    });
-    await deploy('DepositRewardBudgetApproval', {
-        from: deployer,
-        log: true,
-        skipIfAlreadyDeployed: true,
-        gasLimit: 6000000,
-        ...(await gasFeeConfig()),
-    });
+    };
+
+    await deploy('TransferERC721BudgetApproval', baDeploymentOptions);
+    await deploy('TransferERC20BudgetApproval', baDeploymentOptions);
+    await deploy('UniswapAnyTokenBudgetApproval', baDeploymentOptions);
+    await deploy('VestingERC20BudgetApproval', baDeploymentOptions);
+    await deploy('SelfClaimERC20BudgetApproval', baDeploymentOptions);
 };
 
 module.exports.tags = ['phase2'];

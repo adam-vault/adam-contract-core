@@ -22,12 +22,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         gasLimit: 6000000,
         ...(await gasFeeConfig()),
     });
-    await deploy('LiquidPool', {
-        from: deployer,
-        log: true,
-        gasLimit: 7000000,
-        ...(await gasFeeConfig()),
-    });
     await deploy('MemberToken', {
         from: deployer,
         log: true,
