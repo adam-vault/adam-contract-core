@@ -12,7 +12,8 @@
         "url": "git://github.com/adam-vault/adam-contract-core.git"
     },
     "files": [
-        "contracts/*"
+        "contracts/*",
+        "abis/human"
     ],
     "scripts": {
         "test": "hardhat test",

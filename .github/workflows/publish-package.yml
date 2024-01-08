@@ -22,6 +22,26 @@ jobs:
 
             - run: npm install
 
+            - name: Compile Contracts # This also copies Machine ABIs to "abis/machine"
+              run: |
+                  npm run compile && mkdir -p abis/machine && cp \
+                    artifacts/contracts/Adam.sol/Adam.json\
+                    artifacts/contracts/base/CommonBudgetApproval.sol/CommonBudgetApproval.json\
+                    artifacts/contracts/Dao.sol/Dao.json\
+                    artifacts/@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol/IERC20Metadata.json\
+                    artifacts/@openzeppelin/contracts/token/ERC721/ERC721.sol/ERC721.json\
+                    artifacts/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol/IERC721Metadata.json\
+                    artifacts/contracts/Govern.sol/Govern.json\
+                    artifacts/contracts/Membership.sol/Membership.json\
+                    artifacts/contracts/TransferERC20BudgetApproval.sol/TransferERC20BudgetApproval.json\
+                    artifacts/contracts/TransferERC721BudgetApproval.sol/TransferERC721BudgetApproval.json\
+                    artifacts/contracts/UniswapAnyTokenBudgetApproval.sol/UniswapAnyTokenBudgetApproval.json\
+                    artifacts/contracts/Team.sol/Team.json\
+                    abis/machine
+
+            - name: Generate Human Readable ABIs
+              run: npx hardhat export-abi-human # This generates json files into "abis/human" folder
+
             - name: 'change version'
               uses: reedyuk/npm-version@1.1.1
               with:
