@@ -1,5 +1,20 @@
 {
-    "name": "adam-contract-core",
+    "name": "@adam-vault/contract",
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com"
+    },
+    "keywords": [
+        "adam",
+        "web3"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/adam-vault/adam-contract-core.git"
+    },
+    "files": [
+        "contracts/*",
+        "abis/human"
+    ],
     "scripts": {
         "test": "hardhat test",
         "clean": "hardhat clean",
