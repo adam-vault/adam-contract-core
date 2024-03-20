@@ -19,4 +19,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     await deploy('SelfClaimERC20BudgetApproval', baDeploymentOptions);
 };
 
-module.exports.tags = ['phase2'];
+module.exports.tags = ['Adam2.0'];

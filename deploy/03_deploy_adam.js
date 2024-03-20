@@ -83,4 +83,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     });
 };
 
-module.exports.tags = ['phase3'];
+module.exports.tags = ['Adam2.0'];

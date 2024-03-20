@@ -101,4 +101,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     }
 };
 
-module.exports.tags = ['budgetApproval'];
+module.exports.tags = ['Adam2.0'];
